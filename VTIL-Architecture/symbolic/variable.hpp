@@ -46,16 +46,15 @@ namespace vtil::symbolic
 			//
 			if ( origin->base->writes_memory() )
 			{
-				auto mem_loc = origin->get_mem_loc( arch::write );
-				fassert( operand_index == origin->base->memory_operand_index && mem_loc );
+				auto [mem_base, mem_off] = origin->get_mem_loc( arch::write );
+				fassert( operand_index == origin->base->memory_operand_index && mem_base.is_valid() );
 
 				// TODO: Handle external memory?
-				fassert( mem_loc->first.base == X86_REG_RSP );
+				fassert( mem_base.base == X86_REG_RSP );
 
-				int64_t stack_offset = mem_loc->second;
-				name = stack_offset >= 0 ? L"arg" : L"var";
+				name = mem_off >= 0 ? L"arg" : L"var";
 				name += format::suffix_map[ origin->access_size() ];
-				name += utf_cvt_t{}.from_bytes( format::hex( abs( stack_offset ) ) );
+				name += utf_cvt_t{}.from_bytes( format::hex( abs( mem_off ) ) );
 			}
 			// Identifier for register/temporary:
 			//

@@ -1,7 +1,6 @@
 #pragma once
 #include <vector>
 #include <string>
-#include <optional>
 #include "..\arch\instruction_set.hpp"
 #include "..\misc\format.hpp"
 
@@ -130,7 +129,7 @@ namespace vtil
 
 		// Returns all memory accesses matching the criteria.
 		//
-		std::optional<std::pair<arch::register_view, int64_t>> get_mem_loc( arch::operand_access access = arch::invalid ) const
+		std::pair<arch::register_view, int64_t> get_mem_loc( arch::operand_access access = arch::invalid ) const
 		{
 			// Validate arguments.
 			//
@@ -150,7 +149,7 @@ namespace vtil
 				else if ( base->memory_write && ( access == arch::write || access == arch::invalid ) )
 					return { mem_base, mem_offset.i64 };
 			}
-			return std::nullopt;
+			return {};
 		}
 
 		// Checks whether the instruction reads from the given register or not.
