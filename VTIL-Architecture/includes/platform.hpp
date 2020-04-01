@@ -63,6 +63,7 @@ namespace io
 
 	static int log_padding = 0;
 	static std::mutex print_mutex;
+	static bool log_init = false;
 
 	template<typename T>
 	__forceinline static auto fix_format_paramter( const T& x )
@@ -80,6 +81,11 @@ namespace io
 		std::lock_guard g( print_mutex );
 #if _WIN64
 		SetConsoleTextAttribute( GetStdHandle( STD_OUTPUT_HANDLE ), color );
+		if ( !log_init )
+		{
+			SetConsoleOutputCP( CP_UTF8 );
+			log_init = true;
+		}
 #endif
 		int v = printf( fmt, fix_format_paramter( ps )... );
 		if ( fmt[ strlen( fmt ) - 1 ] == '\n' && log_padding > 0 )
