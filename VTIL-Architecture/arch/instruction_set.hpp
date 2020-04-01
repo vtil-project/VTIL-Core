@@ -107,8 +107,8 @@ namespace vtil::arch
 
             // Validate all operand indices.
             //
-            fassert( access_size_index != 0 && abs( access_size_index ) <= operand_count() );
-            fassert( memory_operands.first == 0 && abs( memory_operands.first ) <= operand_count() );
+            fassert( access_size_index == 0 || abs( access_size_index ) <= operand_count() );
+            fassert( memory_operands.first == 0 || abs( memory_operands.first ) <= operand_count() );
             for ( int op : branch_operands )
                 fassert( op != 0 && abs( op ) <= operand_count() );
 
@@ -162,8 +162,8 @@ namespace vtil::arch
         /*                                          [Name]        [Operands...]                                     [ASizeOp]   [Volatile]  [Operator]  [BranchOps] [MemOps]     */
         static const instruction_desc mov =        { "mov",        { write,        read_any                   },    2,          false,      {},         {},         {}           };
         static const instruction_desc movr =       { "movr",       { write,        read_imm                   },    2,          false,      {},         {},         {}           };
-        static const instruction_desc str =        { "str",        { read_reg,     read_imm,        read_any  },    3,          false,      {},         {},         { 1, true }  };
-        static const instruction_desc ldd =        { "ldd",        { write,        read_reg,        read_imm  },    1,          false,      {},         {},         { 2, false } };
+        static const instruction_desc str =        { "str",        { read_reg,     read_imm,        read_any  },    1,          false,      {},         {},         { 1, true }  };
+        static const instruction_desc ldd =        { "ldd",        { write,        read_reg,        read_imm  },    2,          false,      {},         {},         { 2, false } };
         /*-----------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
 
         //    -- Arithmetic instructions
@@ -238,13 +238,13 @@ namespace vtil::arch
         //
         /*-----------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
         /*                                          [Name]        [Operands...]                                     [ASizeOp]   [Volatile]  [Operator]  [BranchOps] [MemOps]     */
-        static const instruction_desc nop =        { "nop",       {                                             },  1,          false,      {},         {},         {}           };
+        static const instruction_desc nop =        { "nop",       {                                             },  0,          false,      {},         {},         {}           };
         static const instruction_desc vcmp0 =      { "vcmp0",     { read_reg,        write                      },  1,          false,      {},         {},         {}           };
         static const instruction_desc vsetcc =     { "vsetcc",    { write,        read_imm                      },  1,          false,      {},         {},         {}           };
         static const instruction_desc vemit =      { "vemit",     { read_imm                                    },  1,          true,       {},         {},         {}           };
         static const instruction_desc vpinr =      { "vpinr",     { read_reg                                    },  1,          true,       {},         {},         {}           };
         static const instruction_desc vpinw =      { "vpinw",     { write                                       },  1,          true,       {},         {},         {}           };
-        static const instruction_desc vhmemv =     { "vhmemv",    {                                             },  1,          true,       {},         {},         {}           };
+        static const instruction_desc vhmemv =     { "vhmemv",    {                                             },  0,          true,       {},         {},         {}           };
         static const instruction_desc vhspsh =     { "vhspsh",    { read_imm                                    },  1,          true,       {},         {},         {}           };
         /*-----------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
     };
