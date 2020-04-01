@@ -121,7 +121,7 @@ namespace vtil::symbolic::rules
 		{ (A^B)>>C,	(A>>C)^(B>>C) },
 		{ (A^B)<<C,	(A<<C)^(B<<C) },
 
-		// Bitwise distribution
+		// Generic distribution
 		//
 		{ ~(A&B), (~A)|(~B) },
 		{ ~(A|B), (~A)&(~B) },
@@ -178,7 +178,7 @@ namespace vtil::symbolic::rules
 			}
 			else
 			{
-				if ( it->second.is_variable() && it->second == input )
+				if ( it->second == input )
 					return { true, sym_map };
 				else
 					return { false, {} };
