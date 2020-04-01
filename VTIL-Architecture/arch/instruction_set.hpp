@@ -63,7 +63,7 @@ namespace vtil::arch
 		// A pointer to the expression operator that describes the
 		// operation of this instruction if applicable.
 		//
-		const symbolic::operator_desc* symbolic_operator = nullptr;
+		std::string symbolic_operator = "";
 
 		// List of operands that are thread as branching destinations.
 		// - Negative indices are used to indicate "real" destinations
@@ -79,7 +79,7 @@ namespace vtil::arch
 						  std::vector<operand_access> access_types,
 						  int access_size_index,
 						  bool is_volatile,
-						  const symbolic::operator_desc* symbolic_operator,
+						  const std::string& symbolic_operator,
 						  std::vector<int> branch_operands ) :
 			name( name ), access_types( access_types ), access_size_index( access_size_index ),
 			is_volatile( is_volatile ), symbolic_operator( symbolic_operator ), branch_operands( branch_operands )
@@ -108,8 +108,6 @@ namespace vtil::arch
 	
 	namespace ins
 	{
-		using namespace vtil::symbolic;
-
 		//  -- Data/Memory instructions
 		//
 		//	MOV		Reg,	Reg/Imm									 | OP1 = OP2
@@ -119,10 +117,10 @@ namespace vtil::arch
 		//
 		/*-------------------------------------------------------------------------------------------------------------------------------------------------------------*/
 		/*										  [Name]		[Operands...]								     [ASizeOp]	  [Volatile]		[Operator]	[BranchOps]*/
-		static const instruction_desc mov =		{ "mov",		{ write,		read_any					 },		1,			false,			nullptr,	{}			};
-		static const instruction_desc movr =	{ "movr",		{ write,		read_imm					 },		1,			false,			nullptr,	{}			};
-		static const instruction_desc str =		{ "str",		{ read_reg,		read_imm,		read_any	 },		2,			false,			nullptr,	{}			};
-		static const instruction_desc ldd =		{ "ldd",		{ write,		read_reg,		read_imm	 },		0,			false,			nullptr,	{}			};
+		static const instruction_desc mov =		{ "mov",		{ write,		read_any					 },		1,			false,			{},			{}			};
+		static const instruction_desc movr =	{ "movr",		{ write,		read_imm					 },		1,			false,			{},			{}			};
+		static const instruction_desc str =		{ "str",		{ read_reg,		read_imm,		read_any	 },		2,			false,			{},			{}			};
+		static const instruction_desc ldd =		{ "ldd",		{ write,		read_reg,		read_imm	 },		0,			false,			{},			{}			};
 		/*--------------------------------------------------------------------------------------------------------------------------------------------------------------*/
 
 		//	-- Arithmetic instructions
@@ -137,13 +135,13 @@ namespace vtil::arch
 		//
 		/*-------------------------------------------------------------------------------------------------------------------------------------------------------------*/
 		/*										  [Name]		[Operands...]								     [ASizeOp]	  [Volatile]		[Operator]	[BranchOps]*/
-		static const instruction_desc neg =		{ "neg",		{ readwrite									},		0,			false,			&op::neg,	{}			};
-		static const instruction_desc add =		{ "add",		{ readwrite,	read_any					},		0,			false,			&op::add,	{}			};
-		static const instruction_desc sub =		{ "sub",		{ readwrite,	read_any					},		0,			false,			&op::sub,	{}			};
-		static const instruction_desc div =		{ "div",		{ readwrite,	readwrite,		read_any	},		0,			false,			nullptr,	{}			};
-		static const instruction_desc idiv =	{ "idiv",		{ readwrite,	readwrite,		read_any	},		0,			false,			nullptr,	{}			};
-		static const instruction_desc mul =		{ "mul",		{ readwrite,	readwrite					},		0,			false,			nullptr,	{}			};
-		static const instruction_desc imul =	{ "imul",		{ readwrite,	readwrite					},		0,			false,			nullptr,	{}			};
+		static const instruction_desc neg =		{ "neg",		{ readwrite									},		0,			false,			"neg",		{}			};
+		static const instruction_desc add =		{ "add",		{ readwrite,	read_any					},		0,			false,			"add",		{}			};
+		static const instruction_desc sub =		{ "sub",		{ readwrite,	read_any					},		0,			false,			"sub",		{}			};
+		static const instruction_desc div =		{ "div",		{ readwrite,	readwrite,		read_any	},		0,			false,			{},			{}			};
+		static const instruction_desc idiv =	{ "idiv",		{ readwrite,	readwrite,		read_any	},		0,			false,			{},			{}			};
+		static const instruction_desc mul =		{ "mul",		{ readwrite,	readwrite					},		0,			false,			{},			{}			};
+		static const instruction_desc imul =	{ "imul",		{ readwrite,	readwrite					},		0,			false,			{},			{}			};
 		/*-------------------------------------------------------------------------------------------------------------------------------------------------------------*/
 	
 		//  -- Bitwise instructions
@@ -159,14 +157,14 @@ namespace vtil::arch
 		//
 		/*-------------------------------------------------------------------------------------------------------------------------------------------------------------*/
 		/*										  [Name]		[Operands...]								     [ASizeOp]	  [Volatile]		[Operator]	[BranchOps]*/
-		static const instruction_desc bnot =	{ "not",		{ readwrite									},		0,			false,			&op::bnot,	{}			};
-		static const instruction_desc bshr =	{ "shr",		{ readwrite,	read_any					},		0,			false,			&op::bshr,	{}			};
-		static const instruction_desc bshl =	{ "shl",		{ readwrite,	read_any					},		0,			false,			&op::bshl,	{}			};
-		static const instruction_desc bxor =	{ "xor",		{ readwrite,	read_any					},		0,			false,			&op::bxor,	{}			};
-		static const instruction_desc bor =		{ "or",			{ readwrite,	read_any					},		0,			false,			&op::bor,	{}			};
-		static const instruction_desc band =	{ "and",		{ readwrite,	read_any					},		0,			false,			&op::band,	{}			};
-		static const instruction_desc bror =	{ "ror",		{ readwrite,	read_any					},		0,			false,			&op::bror,	{}			};
-		static const instruction_desc brol =	{ "rol",		{ readwrite,	read_any					},		0,			false,			&op::brol,	{}			};
+		static const instruction_desc bnot =	{ "not",		{ readwrite									},		0,			false,			"not",		{}			};
+		static const instruction_desc bshr =	{ "shr",		{ readwrite,	read_any					},		0,			false,			"shr",		{}			};
+		static const instruction_desc bshl =	{ "shl",		{ readwrite,	read_any					},		0,			false,			"shl",		{}			};
+		static const instruction_desc bxor =	{ "xor",		{ readwrite,	read_any					},		0,			false,			"xor",		{}			};
+		static const instruction_desc bor =		{ "or",			{ readwrite,	read_any					},		0,			false,			"or",		{}			};
+		static const instruction_desc band =	{ "and",		{ readwrite,	read_any					},		0,			false,			"and",		{}			};
+		static const instruction_desc bror =	{ "ror",		{ readwrite,	read_any					},		0,			false,			"ror",		{}			};
+		static const instruction_desc brol =	{ "rol",		{ readwrite,	read_any					},		0,			false,			"rol",		{}			};
 		/*-------------------------------------------------------------------------------------------------------------------------------------------------------------*/
 
 		//  -- Control flow instructions
@@ -178,10 +176,10 @@ namespace vtil::arch
 		//
 		/*-------------------------------------------------------------------------------------------------------------------------------------------------------------*/
 		/*										  [Name]		[Operands...]								     [ASizeOp]	  [Volatile]		[Operator]	[BranchOps]*/
-		static const instruction_desc js =		{ "js",			{ read_reg,		read_any,	read_any		},		1,			true,			nullptr,	{ 1, 2 }	};
-		static const instruction_desc jmp =		{ "jmp",		{ read_any									},		0,			true,			nullptr,	{ 1 }		};
-		static const instruction_desc vexit =	{ "vexit",		{ read_any									},		0,			true,			nullptr,	{ -1 }		};
-		static const instruction_desc vxcall =	{ "vxcall",		{ read_any									},		0,			true,			nullptr,	{}			};
+		static const instruction_desc js =		{ "js",			{ read_reg,		read_any,	read_any		},		1,			true,			{},			{ 1, 2 }	};
+		static const instruction_desc jmp =		{ "jmp",		{ read_any									},		0,			true,			{},			{ 1 }		};
+		static const instruction_desc vexit =	{ "vexit",		{ read_any									},		0,			true,			{},			{ -1 }		};
+		static const instruction_desc vxcall =	{ "vxcall",		{ read_any									},		0,			true,			{},			{}			};
 		/*-------------------------------------------------------------------------------------------------------------------------------------------------------------*/
 
 		//	-- Special instructions
@@ -197,14 +195,14 @@ namespace vtil::arch
 		//
 		/*-------------------------------------------------------------------------------------------------------------------------------------------------------------*/
 		/*										  [Name]		[Operands...]								     [ASizeOp]	  [Volatile]		[Operator]	[BranchOps]*/
-		static const instruction_desc nop =		{ "nop",		{											},		0,			false,			nullptr,	{}			};
-		static const instruction_desc vcmp0 =	{ "vcmp0",		{ read_reg,		write						},		0,			false,			nullptr,	{}			};
-		static const instruction_desc vsetcc =	{ "vsetcc",		{ write,		read_imm					},		0,			false,			nullptr,	{}			};
-		static const instruction_desc vemit =	{ "vemit",		{ read_imm									},		0,			true,			nullptr,	{}			};
-		static const instruction_desc vpinr =	{ "vpinr",		{ read_reg									},		0,			true,			nullptr,	{}			};
-		static const instruction_desc vpinw =	{ "vpinw",		{ write										},		0,			true,			nullptr,	{}			};
-		static const instruction_desc vhmemv =	{ "vhmemv",		{											},		0,			true,			nullptr,	{}			};
-		static const instruction_desc vhspsh =	{ "vhspsh",		{ read_imm									},		0,			true,			nullptr,	{}			};
+		static const instruction_desc nop =		{ "nop",		{											},		0,			false,			{},			{}			};
+		static const instruction_desc vcmp0 =	{ "vcmp0",		{ read_reg,		write						},		0,			false,			{},			{}			};
+		static const instruction_desc vsetcc =	{ "vsetcc",		{ write,		read_imm					},		0,			false,			{},			{}			};
+		static const instruction_desc vemit =	{ "vemit",		{ read_imm									},		0,			true,			{},			{}			};
+		static const instruction_desc vpinr =	{ "vpinr",		{ read_reg									},		0,			true,			{},			{}			};
+		static const instruction_desc vpinw =	{ "vpinw",		{ write										},		0,			true,			{},			{}			};
+		static const instruction_desc vhmemv =	{ "vhmemv",		{											},		0,			true,			{},			{}			};
+		static const instruction_desc vhspsh =	{ "vhspsh",		{ read_imm									},		0,			true,			{},			{}			};
 		/*-------------------------------------------------------------------------------------------------------------------------------------------------------------*/
 	};
 };
