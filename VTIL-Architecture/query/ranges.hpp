@@ -8,11 +8,11 @@ namespace vtil::query
 	// any other class adhereing to their standarts, to be used
 	// with VTIL queries.
 	//
-	template<typename _container_type, typename _iterator_type>
-	struct range_iterator : _iterator_type
+	template<typename container_type, typename iterator_type>
+	struct range_iterator : iterator_type
 	{
-		using container_type = _container_type;
-		using iterator_type = _iterator_type;
+		using container_type = container_type;
+		using iterator_type = iterator_type;
 
 		// Reference to the container.
 		//
@@ -21,8 +21,8 @@ namespace vtil::query
 		// Default constructor and the container-bound constructor.
 		//
 		range_iterator() {}
-		range_iterator( _container_type* container, _iterator_type i ) : iterator_type( i ), container( container ) {}
-		template<typename X, typename Y> range_iterator( const range_iterator<X, Y>& o ) : container( o.container ), iterator_type( o ) {}
+		range_iterator( container_type* container, iterator_type i ) : iterator_type( i ), container( container ) {}
+		template<typename X, typename Y> range_iterator( const range_iterator<X, Y>& o ) : container( o.container ), iterator_type( Y( o ) ) {}
 
 		// Simple position/validity checks.
 		//

@@ -27,11 +27,11 @@ namespace vtil
 	{
 		// Define a range iterator so queries can be used on this structure.
 		//
-		template<typename _container_type, typename _iterator_type>
-		struct riterator_base : _iterator_type
+		template<typename container_type, typename iterator_type>
+		struct riterator_base : iterator_type
 		{
-			using container_type = _container_type;
-			using iterator_type = _iterator_type;
+			using container_type = container_type;
+			using iterator_type = iterator_type;
 
 			// Reference to the block.
 			//
@@ -41,12 +41,17 @@ namespace vtil
 			//
 			riterator_base() {}
 			riterator_base( container_type* ref, const iterator_type& i ): container( ref ), iterator_type( i ) {}
-			template<typename X, typename Y> riterator_base( const riterator_base<X, Y>& o ) : container( o.container ), iterator_type( o ) {}
+			template<typename X, typename Y> riterator_base( const riterator_base<X, Y>& o ) : container( o.container ), iterator_type( Y( o ) ) {}
+
+			// Override equality operators to check container first.
+			//
+			bool operator!=( const riterator_base& o ) const { return container != o.container || iterator_type::operator!=( o ); }
+			bool operator==( const riterator_base& o ) const { return container == o.container && iterator_type::operator==( o ); }
 
 			// Simple position/validity checks.
 			//
-			bool is_end() const { return !container || _iterator_type::operator==( ( _iterator_type ) container->stream.end() ); }
-			bool is_begin() const { return !container || _iterator_type::operator==( ( _iterator_type ) container->stream.begin() ); }
+			bool is_end() const { return !container || iterator_type::operator!=( ( iterator_type ) container->stream.end() ); }
+			bool is_begin() const { return !container || iterator_type::operator==( ( iterator_type ) container->stream.begin() ); }
 			bool is_valid() const { return !is_begin() || !is_end(); }
 
 			// Returns the possible paths the iterator can follow if it reaches it's end.
@@ -491,4 +496,11 @@ namespace vtil
 			return this;
 		}
 	};
+
+	// Export iterator type for the sake of convinience.
+	// - It's called stream here because these iterators 
+	//   are recursive range iterators.
+	//
+	using ilstream_iterator = basic_block::iterator;
+	using ilstream_const_iterator = basic_block::const_iterator;
 };

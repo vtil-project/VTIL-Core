@@ -284,7 +284,7 @@ namespace vtil::query
 				{
 					// Break if we reached the target iterator.
 					//
-					return ( i.container == stop_at.container && i == stop_at ) ? -1 : prev( self, i );
+					return i == stop_at ? -1 : prev( self, i );
 				};
 				return *this;
 			}
