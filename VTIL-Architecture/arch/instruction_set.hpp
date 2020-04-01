@@ -154,8 +154,6 @@ namespace vtil::arch
 		//	XOR		Reg,	Reg/Imm									 | OP1 ^= OP2
 		//	OR		Reg,	Reg/Imm									 | OP1 |= OP2
 		//	AND		Reg,	Reg/Imm									 | OP1 &= OP2
-		//	NOR		Reg,	Reg/Imm									 | OP1 = ~(OP1|OP2)
-		//	NAND	Reg,	Reg/Imm									 | OP1 = ~(OP1&OP2)
 		//	ROR		Reg,	Reg/Imm									 | OP1 = (OP1>>OP2) | (OP1<<(N-OP2))
 		//	ROL		Reg,	Reg/Imm									 | OP1 = (OP1<<OP2) | (OP1>>(N-OP2))
 		//
@@ -167,8 +165,6 @@ namespace vtil::arch
 		static const instruction_desc bxor =	{ "xor",		{ readwrite,	read_any					},		0,			false,			&op::bxor,	{}			};
 		static const instruction_desc bor =		{ "or",			{ readwrite,	read_any					},		0,			false,			&op::bor,	{}			};
 		static const instruction_desc band =	{ "and",		{ readwrite,	read_any					},		0,			false,			&op::band,	{}			};
-		static const instruction_desc bnor =	{ "nor",		{ readwrite,	read_any					},		0,			false,			&op::bnor,	{}			};
-		static const instruction_desc bnand =	{ "nand",		{ readwrite,	read_any					},		0,			false,			&op::bnand,	{}			};
 		static const instruction_desc bror =	{ "ror",		{ readwrite,	read_any					},		0,			false,			&op::bror,	{}			};
 		static const instruction_desc brol =	{ "rol",		{ readwrite,	read_any					},		0,			false,			&op::brol,	{}			};
 		/*-------------------------------------------------------------------------------------------------------------------------------------------------------------*/

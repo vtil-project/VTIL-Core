@@ -339,8 +339,6 @@ namespace vtil
 		WRAP_LAZY( bxor );
 		WRAP_LAZY( bor );
 		WRAP_LAZY( band );
-		WRAP_LAZY( bnor );
-		WRAP_LAZY( bnand );
 		WRAP_LAZY( bror );
 		WRAP_LAZY( brol );
 		WRAP_LAZY( js );
