@@ -1,6 +1,7 @@
 #pragma once
 #include <vector>
 #include <string>
+#include <optional>
 #include "..\arch\instruction_set.hpp"
 #include "..\misc\format.hpp"
 
@@ -40,9 +41,75 @@ namespace vtil
 		//
 		vip_t vip = invalid_vip;
 
-		// Whether the instruction was explicitly declared volatile
+		// Whether the instruction was explicitly declared volatile.
 		//
 		bool explicit_volatile = false;
+
+		// Basic constructor, non-default constructor asserts the constructed
+		// instruction is valid according to the instruction descriptor.
+		//
+		instruction() {}
+		instruction( const arch::instruction_desc* base,
+					 const std::vector<operand>& operands = {},
+					 vip_t vip = invalid_vip,
+					 bool explicit_volatile = false ) :
+			base( base ), operands( operands ),
+			vip( vip ), explicit_volatile( explicit_volatile )
+		{
+			fassert( is_valid() );
+		}
+
+		// Returns whether the instruction is valid or not.
+		//
+		bool is_valid() const
+		{
+			// Instruction must have a base descriptor assigned.
+			//
+			if ( !base )
+				return false;
+
+			// Validate operand count.
+			//
+			if ( operands.size() != base->operand_count() )
+				return false;
+
+			// Validate operand types against the base access type.
+			//
+			for ( int i = 0; i < base->access_types.size(); i++ )
+			{
+				if ( !operands[ i ].is_valid() )
+					return false;
+				if ( base->access_types[ i ] == arch::read_imm && !operands[ i ].is_immediate() )
+					return false;
+				if ( base->access_types[ i ] != arch::read_any && !operands[ i ].is_register() )
+					return false;
+			}
+
+			// Validate memory operands.
+			//
+			if ( base->accesses_memory() )
+			{
+				const operand& mem_base = operands[ base->access_size_index ];
+				const operand& mem_offset = operands[ base->access_size_index + 1 ];
+				if ( !mem_base.is_register() || mem_base.size() != 8 )
+					return false;
+				if ( !mem_offset.is_immediate() )
+					return false;
+			}
+
+			// Validate branching operands.
+			//
+			for ( auto& list : { base->branch_operands_rip, base->branch_operands_vip } )
+			{
+				for ( int idx : list )
+				{
+					if ( operands[ idx ].size() != 8 )
+						return false;
+				}
+			}
+			return true;
+		}
+
 
 		// Makes the instruction explicitly volatile.
 		//
@@ -61,51 +128,58 @@ namespace vtil
 		//
 		size_t access_size() const { return operands.empty() ? 0 : operands[ base->access_size_index ].size(); }
 
-		// Lists all register operands matching the criteria
+		// Returns all memory accesses matching the criteria.
 		//
-		template<typename C, arch::operand_access V, typename T = operand>
-		std::vector<T*> enum_reg() const
+		std::optional<std::pair<arch::register_view, int64_t>> get_mem_loc( arch::operand_access access = arch::invalid ) const
 		{
-			std::vector<T*> res;
-			for ( int i = 0; i < base->access_types.size(); i++ )
-				if ( C{}( base->access_types[ i ], V ) && operands[ i ].is_register() )
-					res.push_back( &operands[ i ] );
-			return res;
+			// Validate arguments.
+			//
+			fassert( access == arch::invalid || access == arch::read || access == arch::write );
+
+			// If instruction does access memory:
+			//
+			if ( base->accesses_memory() )
+			{
+				// Fetch and validate memory operands pair.
+				//
+				const register_view& mem_base = operands[ base->access_size_index ].reg;
+				const operand& mem_offset = operands[ base->access_size_index + 1 ];
+
+				if ( !base->memory_write && ( access == arch::read || access == arch::invalid ) )
+					return { mem_base, mem_offset.i64 };
+				else if ( base->memory_write && ( access == arch::write || access == arch::invalid ) )
+					return { mem_base, mem_offset.i64 };
+			}
+			return std::nullopt;
 		}
 
 		// Checks whether the instruction reads from the given register or not.
 		//
-		const operand* reads_from( const register_view& rw ) const
+		bool reads_from( const register_view& rw ) const
 		{
-			auto reads = enum_reg<std::not_equal_to<>, arch::write, const operand>();
-			for ( auto rd : reads )
-				if ( rd->reg.overlaps( rw ) )
-					return rd;
+			for ( int i = 0; i < base->access_types.size(); i++ )
+				if ( base->access_types[ i ] != arch::write && operands[ i ].reg.overlaps( rw ) )
+					return true;
 			return false;
 		}
 
 		// Checks whether the instruction writes to the given register or not.
 		//
-		const operand* writes_to( const register_view& rw ) const
+		bool writes_to( const register_view& rw ) const
 		{
-			auto writes = enum_reg<std::greater_equal<>, arch::write, const operand>();
-			for ( auto wr : writes )
-				if ( wr->reg.overlaps( rw ) )
-					return wr;
+			for ( int i = 0; i < base->access_types.size(); i++ )
+				if ( base->access_types[ i ] >= arch::write && operands[ i ].reg.overlaps( rw ) )
+					return true;
 			return false;
 		}
 
 		// Checks whether the instruction writes to the given register or not.
 		//
-		const operand* overwrites( const register_view& rw ) const
+		bool overwrites( const register_view& rw ) const
 		{
-			auto writes = enum_reg<std::equal_to<>, arch::write, const operand>();
-			for ( auto wr : writes )
-			{
-				if ( rw.base == wr->reg.base &&
-					 !( rw.get_mask() & ( ~wr->reg.get_mask() ) ) )
-					return wr;
-			}
+			for ( int i = 0; i < base->access_types.size(); i++ )
+				if ( base->access_types[ i ] == arch::write && operands[ i ].reg.overlaps( rw ) )
+					return true;
 			return false;
 		}
 

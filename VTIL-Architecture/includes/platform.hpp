@@ -29,7 +29,7 @@ enum console_color
 
 namespace mem
 {
-	void* allocate_rwx( size_t size )
+	static void* allocate_rwx( size_t size )
 	{
 #if _WIN64
 		return VirtualAlloc( 0, size, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE );
@@ -38,7 +38,7 @@ namespace mem
 #endif
 	}
 
-	void free_rwx( void* pointer, size_t size )
+	static void free_rwx( void* pointer, size_t size )
 	{
 #if _WIN64
 		VirtualFree( pointer, 0, MEM_FREE | MEM_RELEASE );

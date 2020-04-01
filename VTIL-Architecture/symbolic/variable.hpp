@@ -42,14 +42,23 @@ namespace vtil::symbolic
 		//
 		unique_identifier( ilstream_iterator origin, int operand_index ) : operand_index( operand_index ), origin( origin )
 		{
-			if ( origin->base == &ins::str )
+			// Identifier for memory:
+			//
+			if ( origin->base->writes_memory() )
 			{
-				fassert( origin->operands[ 0 ].reg == X86_REG_RSP );
-				int64_t stack_offset = origin->operands[ 1 ].i64;
+				auto mem_loc = origin->get_mem_loc( arch::write );
+				fassert( operand_index == origin->base->memory_operand_index && mem_loc );
+
+				// TODO: Handle external memory?
+				fassert( mem_loc->first.base == X86_REG_RSP );
+
+				int64_t stack_offset = mem_loc->second;
 				name = stack_offset >= 0 ? L"arg" : L"var";
 				name += format::suffix_map[ origin->access_size() ];
 				name += utf_cvt_t{}.from_bytes( format::hex( abs( stack_offset ) ) );
 			}
+			// Identifier for register/temporary:
+			//
 			else
 			{
 				fassert( origin->operands[ operand_index ].is_register() );

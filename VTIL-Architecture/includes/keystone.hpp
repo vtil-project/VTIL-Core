@@ -36,7 +36,7 @@ namespace keystone
 		}
 	};
 
-	context create( ks_arch arch, ks_mode mode )
+	static context create( ks_arch arch, ks_mode mode )
 	{
 		context ctx;
 		if ( ks_open( arch, mode, &ctx.handle ) )

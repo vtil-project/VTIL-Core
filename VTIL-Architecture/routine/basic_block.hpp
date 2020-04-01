@@ -236,24 +236,6 @@ namespace vtil
 					 ins.base == &arch::ins::ldd ||
 					 !ins.reads_from( X86_REG_RSP ) );
 
-			// Basic validation of operands.
-			//
-			fassert( ins.operands.size() == ins.base->operand_count() );
-			for ( int i = 0; i < ins.base->access_types.size(); i++ )
-			{
-				if ( ins.base->access_types[ i ] == arch::read_imm )
-					fassert( ins.operands[ i ].is_immediate() );
-				else if ( ins.base->access_types[ i ] != arch::read_any )
-					fassert( ins.operands[ i ].is_register() );
-				else
-					fassert( ins.operands[ i ].is_valid() );
-			}
-
-			// Branching operands must always be 64-bits.
-			//
-			for ( int idx : ins.base->branch_operands )
-				fassert( ins.operands[ abs( idx ) - 1 ].size() == 8 );
-
 			// Instructions cannot be appended after a branching instruction was hit.
 			//
 			fassert( !is_complete() );
