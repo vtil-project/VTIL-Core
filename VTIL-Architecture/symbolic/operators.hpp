@@ -110,7 +110,7 @@ namespace vtil::symbolic
 
 	// Convinience wrapper for (what would be, if the map was not const) operator_map[name].
 	//
-	static const operator_desc* op( const std::string& name )
+	static const operator_desc* find_opr( const std::string& name )
 	{
 		// For each operator in the list:
 		//

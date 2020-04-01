@@ -93,9 +93,20 @@ namespace vtil::symbolic
 		// Remaps every occurance of the symbol<uid> with the 
 		// expression provided.
 		//
-		void remap_symbol( const unique_identifier& uid, const expression& as )
+		void remap_symbols( const symbol_map& sym_map )
 		{
 			enum_symbols( [ & ]( expression& v )
+			{
+				for ( auto& sym : sym_map )
+				{
+					if ( sym.first.uid == v.value->uid )
+						v = sym.second;
+				}
+			} );
+		}
+		void remap_symbol( const unique_identifier& uid, const expression& as )
+		{
+			enum_symbols( [ & ] ( expression& v )
 			{
 				if ( v.value->uid == uid )
 					v = as;
@@ -211,6 +222,57 @@ namespace vtil::symbolic
 			return out;
 		}
 
+
+		// Tries to evaluate the numeric value of a symbolic expression.
+		//
+		std::optional<variable> evaluate() const
+		{
+			// If expression is a boxed variable, return as is.
+			//
+			if ( is_variable() )
+				return is_constant() ? value : std::nullopt;
+
+			// If expression contains any non-constant operands, report failure.
+			//
+			for ( auto& op : operands )
+				if ( !op.is_constant() )
+					return {};
+
+			// ------- Unary operators ------- //
+			variable o1 = *operands[ 0 ].value;
+			if ( fn->function == "neg" )
+				return variable{ -o1.get<true>( 0 ), o1.size };
+			else if ( fn->function == "not" )
+				return variable{ ~o1.get<false>( 0 ), o1.size };
+			else if ( fn->function == "bmask" )
+				return variable{ ~0ull >> ( 64 - o1.size * 8 ), o1.size };
+
+			// ------- Binary operators ------- //
+			variable o2 = *operands[ 1 ].value;
+			size_t ns = size();
+			if ( fn->function == "or" )
+				return variable{ o1.get<false>( 0 ) | o2.get<false>( 0 ), ns };
+			else if ( fn->function == "and" )
+				return variable{ o1.get<false>( 0 ) & o2.get<false>( 0 ), ns };
+			else if ( fn->function == "xor" )
+				return variable{ o1.get<false>( 0 ) ^ o2.get<false>( 0 ), ns };
+			else if ( fn->function == "shr" )
+				return variable{ o1.get<false>( 0 ) >> o2.get<false>( 0 ), ns };
+			else if ( fn->function == "shl" )
+				return variable{ o1.get<false>( 0 ) << o2.get<false>( 0 ), ns };
+			else if ( fn->function == "ror" )
+				return variable{ ( o1.get<false>( 0 ) >> o2.get<false>( 0 ) ) | ( o1.get<false>( 0 ) << ( o1.size * 8 - o2.get<false>( 0 ) ) ), ns };
+			else if ( fn->function == "rol" )
+				return variable{ ( o1.get<false>( 0 ) << o2.get<false>( 0 ) ) | ( o1.get<false>( 0 ) >> ( o1.size * 8 - o2.get<false>( 0 ) ) ), ns };
+			else if ( fn->function == "add" )
+				return variable{ o1.get<true>( 0 ) + o2.get<true>( 0 ), ns };
+			else if ( fn->function == "sub" )
+				return variable{ o1.get<true>( 0 ) - o2.get<true>( 0 ), ns };
+
+			// Other operators should not reach here.
+			return {};
+		}
+
 		// Conversion to human readable format.
 		//
 		std::string to_string() const
@@ -252,22 +314,22 @@ namespace vtil::symbolic
 
 		// Convinience wrapper for operand access.
 		//
-		auto operator[]( size_t i ) const { return operands[ i ]; }
-		auto operator[]( size_t i ) { return operands[ i ]; }
+		auto& operator[]( size_t i ) const { return operands[ i ]; }
+		auto& operator[]( size_t i ) { return operands[ i ]; }
 
 		// Convinience wrappers around common operations.
 		//
 		expression operator+() const { return expression( *this ); }
-		expression operator~() const { return expression( op( "not" ), *this ); }
-		expression operator-() const { return expression( op( "neg" ), *this ); }
-		expression operator+( const expression& b ) const { return expression( *this, op( "add" ), b ); }
-		expression operator-( const expression& b ) const { return expression( *this, op( "sub" ), b ); }
-		expression operator|( const expression& b ) const { return expression( *this, op( "or" ), b ); }
-		expression operator&( const expression& b ) const { return expression( *this, op( "and" ), b ); }
-		expression operator^( const expression& b ) const { return expression( *this, op( "xor" ), b ); }
-		expression operator>>( const expression& b ) const { return expression( *this, op( "shr" ), b ); }
-		expression operator<<( const expression& b ) const { return expression( *this, op( "shl" ), b ); }
-		expression ror( const expression& b ) const { return expression( *this, op( "ror" ), b ); }
-		expression rol( const expression& b ) const { return expression( *this, op( "ror" ), b ); }
+		expression operator~() const { return expression( find_opr( "not" ), *this ); }
+		expression operator-() const { return expression( find_opr( "neg" ), *this ); }
+		expression operator+( const expression& b ) const { return expression( *this, find_opr( "add" ), b ); }
+		expression operator-( const expression& b ) const { return expression( *this, find_opr( "sub" ), b ); }
+		expression operator|( const expression& b ) const { return expression( *this, find_opr( "or" ), b ); }
+		expression operator&( const expression& b ) const { return expression( *this, find_opr( "and" ), b ); }
+		expression operator^( const expression& b ) const { return expression( *this, find_opr( "xor" ), b ); }
+		expression operator>>( const expression& b ) const { return expression( *this, find_opr( "shr" ), b ); }
+		expression operator<<( const expression& b ) const { return expression( *this, find_opr( "shl" ), b ); }
+		expression ror( const expression& b ) const { return expression( *this, find_opr( "ror" ), b ); }
+		expression rol( const expression& b ) const { return expression( *this, find_opr( "ror" ), b ); }
 	};
 };

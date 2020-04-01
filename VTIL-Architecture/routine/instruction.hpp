@@ -172,7 +172,7 @@ namespace vtil
 			return false;
 		}
 
-		// Checks whether the instruction writes to the given register or not.
+		// Checks whether the instruction overwrites the given register or not.
 		//
 		bool overwrites( const register_view& rw ) const
 		{

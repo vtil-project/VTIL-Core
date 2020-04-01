@@ -8,56 +8,6 @@
 
 namespace vtil::symbolic
 {
-	// Tries to evaluate the numeric value of a symbolic expression.
-	//
-	static std::optional<variable> evaluate( const expression& exp )
-	{
-		// If expression is a boxed variable, return as is.
-		//
-		if ( exp.is_variable() )
-			return exp.is_constant() ? exp.value : std::nullopt;
-
-		// If expression contains any non-constant operands, report failure.
-		//
-		for ( auto& op : exp.operands )
-			if ( !op.is_constant() )
-				return {};
-
-		// ------- Unary operators ------- //
-		variable o1 = *exp[ 0 ].value;
-		if ( exp.fn->function == "neg" )
-			return variable{ -o1.get<true>( 0 ), o1.size };
-		else if ( exp.fn->function == "not" )
-			return variable{ ~o1.get<false>( 0 ), o1.size };
-		else if ( exp.fn->function == "bmask" )
-			return variable{ ~0ull >> ( 64 - o1.size * 8 ), o1.size };
-
-		// ------- Binary operators ------- //
-		variable o2 = *exp[ 1 ].value;
-		size_t ns = exp.size();
-		if ( exp.fn->function == "or" )
-			return variable{ o1.get<false>( 0 ) | o2.get<false>( 0 ), ns };
-		else if ( exp.fn->function == "and" )
-			return variable{ o1.get<false>( 0 ) & o2.get<false>( 0 ), ns };
-		else if ( exp.fn->function == "xor" )
-			return variable{ o1.get<false>( 0 ) ^ o2.get<false>( 0 ), ns };
-		else if ( exp.fn->function == "shr" )
-			return variable{ o1.get<false>( 0 ) >> o2.get<false>( 0 ), ns };
-		else if ( exp.fn->function == "shl" )
-			return variable{ o1.get<false>( 0 ) << o2.get<false>( 0 ), ns };
-		else if ( exp.fn->function == "ror" )
-			return variable{ ( o1.get<false>( 0 ) >> o2.get<false>( 0 ) ) | ( o1.get<false>( 0 ) << ( o1.size * 8 - o2.get<false>( 0 ) ) ), ns };
-		else if ( exp.fn->function == "rol" )
-			return variable{ ( o1.get<false>( 0 ) << o2.get<false>( 0 ) ) | ( o1.get<false>( 0 ) >> ( o1.size * 8 - o2.get<false>( 0 ) ) ), ns };
-		else if ( exp.fn->function == "add" )
-			return variable{ o1.get<true>( 0 ) + o2.get<true>( 0 ), ns };
-		else if ( exp.fn->function == "sub" )
-			return variable{ o1.get<true>( 0 ) - o2.get<true>( 0 ), ns };
-		
-		// Other operators should not reach here.
-		return {};
-	}
-
 	// Tries to simplify the given symbolic expression as much as possible.
 	//
 	static std::pair<expression, bool> simplify( const expression& input )
@@ -69,7 +19,7 @@ namespace vtil::symbolic
 		// Try evaluating current expression, if we could
 		// return it as is.
 		//
-		if ( auto eval = evaluate( input ) )
+		if ( auto eval = input.evaluate() )
 			return { eval.value(), true };
 
 		// Simplify children.
@@ -153,7 +103,7 @@ namespace vtil::symbolic
 		// Try evaluating new expression, if we could
 		// return it as is.
 		//
-		if ( auto eval = evaluate( exp ) )
+		if ( auto eval = exp.evaluate() )
 			return { eval.value(), true };
 
 		return { exp, simplifed };

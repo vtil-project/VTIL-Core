@@ -25,45 +25,60 @@ namespace vtil::symbolic
 
 		// Unique name of the variable.
 		//
-		std::wstring name;
+		std::string name;
 
 		// Origin of the variable if relevant.
 		//
-		ilstream_const_iterator origin = {};
 		int operand_index;
+		ilstream_const_iterator origin = {};
+		std::optional<int32_t> stack_id;
+		std::optional<register_view> register_id = {};
 
 		// Default constructors.
 		//
 		unique_identifier() {}
-		unique_identifier( const std::string& name ) : name( utf_cvt_t{}.from_bytes( name ) ) { fassert( is_valid() ); }
-		unique_identifier( const std::wstring& name ) : name( name ) { fassert( is_valid() ); }
+		unique_identifier( const std::string& name ) : name( name ) { fassert( is_valid() ); }
+		unique_identifier( const std::wstring& name ) : name( utf_cvt_t{}.to_bytes( name ) ) { fassert( is_valid() ); }
 		
 		// Constructor for unique identifier created from stream iterator.
 		//
-		unique_identifier( ilstream_iterator origin, int operand_index ) : operand_index( operand_index ), origin( origin )
+		unique_identifier( ilstream_const_iterator origin, int operand_index ) : operand_index( operand_index ), origin( origin )
 		{
 			// Identifier for memory:
 			//
-			if ( origin->base->writes_memory() )
+			if ( operand_index == -1 )
 			{
-				auto [mem_base, mem_off] = origin->get_mem_loc( arch::write );
-				fassert( operand_index == origin->base->memory_operand_index && mem_base.is_valid() );
-
 				// TODO: Handle external memory?
+				auto [mem_base, mem_off] = origin->get_mem_loc();
+				fassert( origin->base->accesses_memory() );
 				fassert( mem_base.base == X86_REG_RSP );
-
-				name = mem_off >= 0 ? L"arg" : L"var";
-				name += format::suffix_map[ origin->access_size() ];
-				name += utf_cvt_t{}.from_bytes( format::hex( abs( mem_off ) ) );
+				stack_id = { mem_off };
 			}
 			// Identifier for register/temporary:
 			//
 			else
 			{
 				fassert( origin->operands[ operand_index ].is_register() );
-				fassert( origin->base->access_types[ operand_index ] >= arch::write );
-				name = utf_cvt_t{}.from_bytes( origin->operands[ operand_index ].reg.to_string() );
+				register_id = { origin->operands[ operand_index ].reg };
 			}
+			refresh();
+		}
+
+		// Refreshes the unique identifier if it's bound to a register value or a stack variable.
+		//
+		unique_identifier& refresh()
+		{
+			if ( register_id.has_value() )
+			{
+				name = register_id->to_string();
+			}
+			else if( stack_id.has_value() )
+			{
+				name = stack_id.value() >= 0 ? "arg" : "var";
+				name += format::suffix_map[ origin->access_size() ];
+				name += format::hex( abs( stack_id.value() ) );
+			}
+			return *this;
 		}
 	
 		// Returns whether the unique identifier is valid or not.
@@ -74,13 +89,37 @@ namespace vtil::symbolic
 		//
 		bool is_reserved() const { return name.size() == 1 && uid_reserved_dictionary.find( name[ 0 ] ) != std::wstring::npos; }
 
+		// Returns whether this is a value off of stack that is acting as a symbolic variable.
+		//
+		bool is_stack() const { return is_valid() && stack_id.has_value(); }
+		
+		// Returns whether this is a value of a register that is acting as a symbolic variable.
+		//
+		bool is_register() const { return is_valid() && register_id.has_value(); }
+		
+		// Returns the stack pointer associated with the variable.
+		//
+		int32_t get_sp() const
+		{
+			fassert( is_stack() );
+			return stack_id.value();
+		}
+
+		// Returns the register that is associated with the variable.
+		//
+		register_view get_reg() const
+		{
+			fassert( is_register() );
+			return register_id.value();
+		}
+
 		// Conversion to UTF-8.
 		//
-		std::string to_string() const { return utf_cvt_t{}.to_bytes( name ); }
+		std::string to_string() const { return name; }
 	
 		// Simple comparison operators.
-		//																										v-- Blame intel compiler.
-		bool operator==( const unique_identifier& o ) const { return name.size() == o.name.size() && !memcmp( name.data(), o.name.data(), name.size() * sizeof( wchar_t ) ); /*name == o.name*/; }
+		//
+		bool operator==( const unique_identifier& o ) const { return name.size() == o.name.size() && name == o.name; }
 		bool operator<( const unique_identifier& o ) const { return name < o.name; }
 		bool operator!=( const unique_identifier& o ) const { return name != o.name; }
 	};
@@ -115,9 +154,39 @@ namespace vtil::symbolic
 
 		// Constructor for uniquely variables.
 		//
-		variable( const std::string& uid, uint8_t size ) : size( size ), uid( uid ) { fassert( is_valid() ); }
-		variable( const std::wstring& uid, uint8_t size ) : size( size ), uid( uid ) { fassert( is_valid() ); }
-		variable( ilstream_iterator origin, int operand_index ) : size( origin->access_size()), uid( origin, operand_index ){ fassert( is_valid() ); }
+		variable( const std::string& uid, uint8_t size ) : uid( uid ), size( size ) { fassert( is_valid() ); }
+		variable( const std::wstring& uid, uint8_t size ) : uid( uid ), size( size ) { fassert( is_valid() ); }
+		variable( ilstream_const_iterator origin, int operand_index )
+		{ 
+			// If operand is an immediate or a register:
+			//
+			if ( operand_index != -1 )
+			{
+				// If immediate, assign constant:
+				//
+				if ( origin->operands[ operand_index ].is_immediate() )
+					u64 = origin->operands[ operand_index ].u64;
+				// If register, generate unique identifier:
+				//
+				else
+					uid = { origin, operand_index };
+
+				// Assing operand size as the variable size.
+				//
+				size = origin->operands[ operand_index ].size();
+			}
+			// If operand is a stack pointer:
+			//
+			else
+			{
+				// Generate a unique identifier and assign the size.
+				//
+				uid = { origin, operand_index };
+				size = origin->access_size();
+			}
+			
+			fassert( is_valid() ); 
+		}
 
 		// Constructor for variables that represent constant values.
 		//
@@ -139,6 +208,14 @@ namespace vtil::symbolic
 		bool is_valid() const { return size == 0 || size == 1 || size == 2 || size == 4 || size == 8; }
 		bool is_symbolic() const { return uid.is_valid(); }
 		bool is_constant() const { return !uid.is_valid(); }
+
+		// Wrappers around unique_identifer:: helpers used to resolve the actual operand being traced.
+		//
+		bool is_stack() const { return uid.is_stack(); }
+		bool is_register() const { return uid.is_register(); }
+		bool is_arbitrary() const { return uid.is_valid() && !uid.origin.is_valid(); }
+		int32_t get_sp() const { return uid.get_sp(); }
+		register_view get_reg() const { register_view reg = uid.get_reg(); fassert( size == reg.size ); return reg; }
 
 		// Getter for value:
 		//
@@ -187,6 +264,15 @@ namespace vtil::symbolic
 		//
 		bool operator==( const variable& o ) const { return uid == o.uid && ( is_symbolic() || ( size && o.size ? size == o.size && u64 == o.u64 : i64 == o.i64 ) ); }
 		bool operator!=( const variable& o ) const { return !operator==( o ); }
-		bool operator<( const variable& o ) const { return to_string() < o.to_string(); }
+		bool operator<( const variable& o ) const 
+		{ 
+			if ( is_symbolic() != o.is_symbolic() )
+				return o.is_symbolic();
+
+			if ( is_symbolic() )
+				return uid < o.uid;
+			else
+				return u64 < o.u64;
+		}
 	};
 };

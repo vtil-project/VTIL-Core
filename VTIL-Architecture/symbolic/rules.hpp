@@ -19,9 +19,9 @@ namespace vtil::symbolic::rules
 
 	// Special functions used in rule creation:
 	//
-	static const auto bmask = [ ] ( const expression& b ) { return expression( op( "bmask" ), b ); };
-	static const auto bcntN = [ ] ( const expression& a, const expression& b ) { return expression( a, op( "bcntN" ), b ); };
-	static const auto resize = [ ] ( const expression& a, const expression& b ) { return expression( a, op( "new" ), b ); };
+	static const auto bmask = [ ] ( const expression& b ) { return expression( find_opr( "bmask" ), b ); };
+	static const auto bcntN = [ ] ( const expression& a, const expression& b ) { return expression( a, find_opr( "bcntN" ), b ); };
+	static const auto resize = [ ] ( const expression& a, const expression& b ) { return expression( a, find_opr( "new" ), b ); };
 
 	// All simpilfications:
 	// - Note! Must not contain ( simplified[simplified[x]] == y ).
@@ -42,6 +42,7 @@ namespace vtil::symbolic::rules
 		{ A&A, A },
 		{ A^_0, A },
 		{ A&bmask(A), A },
+		{ (B&A)+((~B)&A), A },
 
 		// Variable resizing
 		//
@@ -75,7 +76,7 @@ namespace vtil::symbolic::rules
 
 		// NEG conversion
 		//
-		{ ~(bmask(A)+A), -A },
+		{ ~(A+bmask(A)), -A },
 		{ (_0-A), -A },
 
 		// Simplify AND OR
@@ -107,6 +108,7 @@ namespace vtil::symbolic::rules
 	};
 
 	// All alternate forms:
+	// - Note: Both sides should contain the same amount of unknowns.
 	//
 	static const std::map<expression, expression> alternate_forms = 
 	{
@@ -259,6 +261,8 @@ namespace vtil::symbolic::rules
 				// - Referencing unknown variable in simplification condition if assert fail raises.
 				//
 				auto it = sym_map.find( *target[ 0 ].value );
+				if ( it == sym_map.end() )
+					return { false, {} };	// TODO????
 				fassert( it != sym_map.end() );
 
 				// Calculate number of bits in the variable.
@@ -279,6 +283,8 @@ namespace vtil::symbolic::rules
 				// - Referencing unknown variable in simplification condition if assert fail raises.
 				//
 				auto it = sym_map.find( *target[ 0 ].value );
+				if ( it == sym_map.end() )
+					return { false, {} };	// TODO????
 				fassert( it != sym_map.end() );
 
 				// Calculate number of bits in the variable.
@@ -330,9 +336,18 @@ namespace vtil::symbolic::rules
 				}
 				return { true, sym_map_new };
 			}
-
-			// Else just fail.
+			
+			// If constant maps to expression, try remapping 
+			// and checking if it evaluates to the same value.
 			//
+			else if ( input.is_constant() )
+			{
+				expression copy = target;
+				copy.remap_symbols( sym_map );
+				if( copy.evaluate() == input.value )
+					return { true, sym_map };
+			}
+			
 			return { false, {} };
 		}
 		// If both are expressions.
@@ -414,10 +429,9 @@ namespace vtil::symbolic::rules
 		};
 		remap_bmask( new_expression );
 
-		// Remap symbol and simplify children
+		// Remap symbol.
 		//
-		for ( auto& sym : sym_map )
-			new_expression.remap_symbol( sym.first.uid, sym.second );
+		new_expression.remap_symbols( sym_map );
 		return new_expression;
 	}
 }
