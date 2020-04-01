@@ -1,8 +1,10 @@
 #pragma once
 #define STRICT_STACK_TRACKING 0
-
-#include <vector>
+#include <set>
 #include <list>
+#include <vector>
+#include <algorithm>
+#include <iterator>
 #include <keystone.hpp>
 #include "routine.hpp"
 #include "instruction.hpp"
@@ -37,6 +39,11 @@ namespace vtil
 			//
 			container_type* container = nullptr;
 
+			// Path restriction state.
+			//
+			bool is_path_restricted = false;
+			std::set<container_type*> paths_allowed;
+
 			// Default constructor and the block-bound constructor.
 			//
 			riterator_base() {}
@@ -54,17 +61,94 @@ namespace vtil
 			bool is_begin() const { return !container || iterator_type::operator==( ( iterator_type ) container->stream.begin() ); }
 			bool is_valid() const { return !is_begin() || !is_end(); }
 
+			// Simple helper used to trace paths towards a container.
+			//
+			static std::set<container_type*> path_to( container_type* src, container_type* dst,
+													  bool forward, std::set<container_type*> path = {} )
+			{
+				// If we've already tried this path, fail.
+				//
+				if ( path.find( src ) != path.end() )
+					return {};
+
+				// Insert <src> into path.
+				//
+				path.insert( src );
+
+				// If we reached our destination, report success.
+				//
+				if ( src == dst )
+					return path;
+
+				// Otherwise, recurse.
+				//
+				std::set<container_type*> paths_allowed;
+				for ( container_type* blk : ( forward ? src->next : src->prev ) )
+				{
+					// If path ended up at destination, mark all paths "allowed".
+					//
+					std::set<container_type*> path_taken = path_to( blk, dst, forward, path );
+					if ( !path_taken.empty() )
+						paths_allowed.insert( path_taken.begin(), path_taken.end() );
+				}
+				return paths_allowed;
+			}
+
+			// Restricts the way current iterator can recurse in, making sure
+			// every path leads up-to the container specified.
+			//
+			void restrict_path( container_type* dst, bool forward )
+			{
+				// Trace the path.
+				//
+				std::set<container_type*> trace = path_to( container, dst, forward );
+				
+				// If path is already restricted:
+				//
+				if ( is_path_restricted )
+				{
+					// Any allowed path should be allowed in both now. 
+					//
+					std::set<container_type*> path_intersection;
+					std::set_intersection( trace.begin(), trace.end(), 
+										   paths_allowed.begin(), paths_allowed.end(), 
+										   std::inserter( path_intersection, path_intersection.begin() ) );
+					paths_allowed = path_intersection;
+				}
+				else
+				{
+					// Set as the current allowed paths list.
+					//
+					paths_allowed = trace;
+				}
+
+				// Declare the current iterator path restricted.
+				//
+				is_path_restricted = true;
+			}
+
 			// Returns the possible paths the iterator can follow if it reaches it's end.
 			//
 			std::vector<riterator_base> recurse( bool forward ) const
 			{
+				// Generate a list of possible iterators to continue from:
+				//
 				std::vector<riterator_base> output;
-				if ( forward )
-					for ( container_type* next : container->next )
-						output.push_back( { next, next->begin() } );
-				else
-					for ( container_type* prev : container->prev )
-						output.push_back( { prev, prev->end() } );
+				for ( container_type* dst : ( forward ? container->next : container->prev ) )
+				{
+					// Skip if path is restricted and this path is not allowed.
+					//
+					if ( is_path_restricted && paths_allowed.find( dst ) == paths_allowed.end() )
+						continue;
+
+					// Otherwise create the new iterator, inheriting the path restrictions 
+					// of current iterator, and save it.
+					// 
+					riterator_base new_it = { dst,  forward ? dst->begin() : dst->end() };
+					new_it.paths_allowed = paths_allowed;
+					new_it.is_path_restricted = is_path_restricted;
+					output.push_back( new_it );
+				}
 				return output;
 			}
 		};
