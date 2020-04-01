@@ -80,7 +80,7 @@ namespace vtil
 					return false;
 				if ( base->access_types[ i ] == arch::read_imm && !operands[ i ].is_immediate() )
 					return false;
-				if ( base->access_types[ i ] != arch::read_any && !operands[ i ].is_register() )
+				if ( base->access_types[ i ] == arch::read_reg && !operands[ i ].is_register() )
 					return false;
 			}
 

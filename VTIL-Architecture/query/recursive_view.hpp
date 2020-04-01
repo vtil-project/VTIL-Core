@@ -88,18 +88,12 @@ namespace vtil::query
 		using fn_container_filter = std::function<bool( const container_type* src, const container_type * dst, bool first_time )>;
 		fn_container_filter filter = {};
 
-		// Pointer to the main recursive view object.
-		//
-		recursive_view* root = nullptr;
-
-		// [Root-only]
 		// Special iterator saved by the root to mark the 
 		// beginning of it's iteration so loops can properly
 		// lead to it.
 		//
 		iterator_type it0 = {};
 
-		// [Root-only]
 		// List of containers that we've recursively visited.
 		// The second argument of the container filter, first_time,
 		// is determined by whether the container we're trying to
@@ -158,18 +152,18 @@ namespace vtil::query
 		void skip( int n = 1 ) { unreachable(); }
 		void last() { unreachable(); }
 		
-		auto& reverse() { fassert( !root ); view.reverse(); return *this; }
-		template<typename T> auto& run( T next ) { fassert( !root ); view.run( next ); return *this; }
-		template<typename T> auto& with( T next ) { fassert( !root ); view.with( next ); return *this; }
-		template<typename T> auto& where( T next ) { fassert( !root ); view.where( next ); return *this; }
-		template<typename T> auto& until( T next ) { fassert( !root ); view.until( next ); return *this; }
-		template<typename T> auto& whilst( T next ) { fassert( !root ); view.whilst( next ); return *this; }
+		auto& reverse() { view.reverse(); return *this; }
+		template<typename T> auto& run( T next ) { view.run( next ); return *this; }
+		template<typename T> auto& with( T next ) { view.with( next ); return *this; }
+		template<typename T> auto& where( T next ) { view.where( next ); return *this; }
+		template<typename T> auto& until( T next ) { view.until( next ); return *this; }
+		template<typename T> auto& whilst( T next ) { view.whilst( next ); return *this; }
 		
 		template<typename projector_type>
-		auto project( projector_type next ) { fassert( !root ); return recursive_view<decltype( view.project( next ) )>{ view.project( next ), it0.container != nullptr, filter }; }
+		auto project( projector_type next ) { return recursive_view<decltype( view.project( next ) )>{ view.project( next ), it0.container != nullptr, filter }; }
 		template<typename projector_type>
-		auto reproject( projector_type next ) { fassert( !root ); return recursive_view<decltype( view.reproject( next ) )>{ view.reproject( next ), it0.container != nullptr, filter }; }
-		auto unproject() { fassert( !root ); return recursive_view<decltype( view.unproject() )>{ view.unproject(), it0.container != nullptr, filter }; }
+		auto reproject( projector_type next ) { return recursive_view<decltype( view.reproject( next ) )>{ view.reproject( next ), it0.container != nullptr, filter }; }
+		auto unproject() { return recursive_view<decltype( view.unproject() )>{ view.unproject(), it0.container != nullptr, filter }; }
 
 		// [Collection method]
 		// Invokes the enumerator for each entry, if enumerator returns void/bool
@@ -184,10 +178,6 @@ namespace vtil::query
 		>
 		recursive_result<result_type, container_type> for_each( const enumerator_type& enumerator )
 		{
-			// Set the root for the duration of iteration.
-			//
-			root = root ? root : this;
-
 			// Begin the iteration loop.
 			//
 			recursive_result<result_type, container_type> output = { false, view.query.iterator.container, {}, {} };
@@ -221,28 +211,31 @@ namespace vtil::query
 					std::vector desc_list = view.query.recurse();
 					for ( auto& desc : desc_list )
 					{
+						auto visited_copy = visited;
+
 						// If we did not already visit it:
 						//
-						bool first_visit = root->visited.find( desc.iterator.container ) == root->visited.end();
+						bool first_visit = visited_copy.find( desc.iterator.container ) == visited_copy.end();
 						if ( filter( view.query.iterator.container, desc.iterator.container, first_visit ) )
 						{
 							// Mark the container visited.
 							//
-							root->visited.insert( desc.iterator.container );
+							visited_copy.insert( desc.iterator.container );
 
 							// Create another recursive view with the new query.
 							//
 							recursive_view view_new = clone();
 							view_new.view.query = desc;
+							view_new.visited = visited_copy;
 
 							// If iterator belongs to the same container as the root:
 							//
-							bool partial_loop = desc.iterator.container == root->it0.container;
+							bool partial_loop = desc.iterator.container == it0.container;
 							if ( partial_loop )
 							{
 								// Append an additional rule to the iteration.
 								//
-								view_new.view = view_new.view.until( root->it0 );
+								view_new.view = view_new.view.until( it0 );
 							}
 
 							// Invoke the same enumerator and append as a path.
@@ -266,11 +259,6 @@ namespace vtil::query
 					break;
 				}
 			}
-
-			// Clear iteration variables.
-			//
-			it0 = {};
-			root = nullptr;
 
 			// Return the final result.
 			//

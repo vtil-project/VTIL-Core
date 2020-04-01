@@ -50,7 +50,7 @@ namespace vtil
 
 			// Simple position/validity checks.
 			//
-			bool is_end() const { return !container || iterator_type::operator!=( ( iterator_type ) container->stream.end() ); }
+			bool is_end() const { return !container || iterator_type::operator==( ( iterator_type ) container->stream.end() ); }
 			bool is_begin() const { return !container || iterator_type::operator==( ( iterator_type ) container->stream.begin() ); }
 			bool is_valid() const { return !is_begin() || !is_end(); }
 

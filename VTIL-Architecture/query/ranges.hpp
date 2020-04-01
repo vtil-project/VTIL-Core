@@ -24,10 +24,15 @@ namespace vtil::query
 		range_iterator( container_type* container, iterator_type i ) : iterator_type( i ), container( container ) {}
 		template<typename X, typename Y> range_iterator( const range_iterator<X, Y>& o ) : container( o.container ), iterator_type( Y( o ) ) {}
 
+		// Override equality operators to check container first.
+		//
+		bool operator!=( const range_iterator& o ) const { return container != o.container || iterator_type::operator!=( o ); }
+		bool operator==( const range_iterator& o ) const { return container == o.container && iterator_type::operator==( o ); }
+
 		// Simple position/validity checks.
 		//
-		bool is_begin() const { return !container || container->begin() == *this; }
-		bool is_end() const { return !container || container->end() == *this; }
+		bool is_end() const { return !container || iterator_type::operator==( ( iterator_type ) container->end() ); }
+		bool is_begin() const { return !container || iterator_type::operator==( ( iterator_type ) container->begin() ); }
 		bool is_valid() const { return !is_begin() || !is_end(); }
 
 		// No default implementation for recursion since STL has no default tree-based container.
