@@ -71,12 +71,20 @@ namespace vtil::symbolic
 			if ( register_id.has_value() )
 			{
 				name = register_id->to_string();
+
+				name += '#';
+				name += format::hex( origin->vip );
 			}
 			else if( stack_id.has_value() )
 			{
 				name = stack_id.value() >= 0 ? "arg" : "var";
 				name += format::suffix_map[ origin->access_size() ];
 				name += format::hex( abs( stack_id.value() ) );
+
+
+				name += '#';
+				name += format::hex( origin->vip );
+
 			}
 			return *this;
 		}
@@ -222,28 +230,25 @@ namespace vtil::symbolic
 		template<bool sign_extend = false>
 		auto get( uint8_t new_size ) const
 		{
-			// If size does not match, new size:
-			//
 			uint64_t value_out = u64;
-			if ( new_size != size )
+			if ( size ) value_out &= ~0ull >> ( 64 - size * 8 );
+
+			// Sign extend to 64-bit first
+			//
+			if ( sign_extend )
 			{
-				// Sign extend to 64-bit first
-				//
-				if ( sign_extend )
-				{
-					uint64_t sign_mask = 1ull << ( ( size ? size : 8 ) * 8 - 1 );
-					uint64_t value_mask = sign_mask - 1;
+				uint64_t sign_mask = 1ull << ( ( size ? size : 8 ) * 8 - 1 );
+				uint64_t value_mask = sign_mask - 1;
 
-					uint64_t extended_bits = ( u64 & sign_mask ) ? ~0ull : 0ull;
-					extended_bits &= ~value_mask;
-					value_out = extended_bits | ( u64 & value_mask );
-				}
-
-				// Mask the value if size is specified.
-				//
-				if ( new_size )
-					value_out &= ~0ull >> ( 64 - new_size * 8 );
+				uint64_t extended_bits = ( value_out & sign_mask ) ? ~0ull : 0ull;
+				extended_bits &= ~value_mask;
+				value_out = extended_bits | ( value_out & value_mask );
 			}
+
+			// Mask the value if size is specified.
+			//
+			if ( new_size )
+				value_out &= ~0ull >> ( 64 - new_size * 8 );
 			
 			// Return the value either sign extended or zero extended.
 			//

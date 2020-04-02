@@ -101,7 +101,6 @@ namespace vtil::symbolic::rules
 		{ (~A)&(~B), ~(A|B) },
 		{ (~A)|(~B), ~(A&B) },
 		{ (A|B)&(~(A&B)), A^B },
-		{ (A|(~B))&((~A)|B), A^B },
 		{ (A&(~B))|((~A)&B), A^B },
 		{ ~((~(A|B))|(A&B)), A^B },
 		
@@ -132,12 +131,13 @@ namespace vtil::symbolic::rules
 		//
 		{ ~(A&B), (~A)|(~B) },
 		{ ~(A|B), (~A)&(~B) },
-		{ ~(A^B), (~A)^(~B) },
+		{ ~(A^B), (~A)^B },
+		{ ~(A^B),  A^(~B) },
 		{ A&(B|C), (A&B)|(A&C) },
+		{ A&(B^C), (A&B)^(A&C) },
 		{ A&(B&C), (A&B)&C },
 		{ A|(B&C), (A|B)&(A|C) },
 		{ A|(B|C), (A|B)|C },
-		{ A^(B&C), (A^B)&(A^C) },
 		{ A+(B+C), (A+B)+C },
 		{ A+(B+C), (A+C)+B },
 		{ A-(B+C), (A-B)-C },

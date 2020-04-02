@@ -234,12 +234,20 @@ namespace vtil::symbolic
 
 			// If expression contains any non-constant operands, report failure.
 			//
-			for ( auto& op : operands )
+			auto operands_n = operands;
+			for ( auto& op : operands_n )
+			{
 				if ( !op.is_constant() )
-					return {};
+				{
+					if( auto r = op.evaluate() )
+						op = r.value();
+					else
+						return {};
+				}
+			}
 
 			// ------- Unary operators ------- //
-			variable o1 = *operands[ 0 ].value;
+			variable o1 = *operands_n[ 0 ].value;
 			if ( fn->function == "neg" )
 				return variable{ -o1.get<true>( 0 ), o1.size };
 			else if ( fn->function == "not" )
@@ -248,7 +256,7 @@ namespace vtil::symbolic
 				return variable{ ~0ull >> ( 64 - o1.size * 8 ), o1.size };
 
 			// ------- Binary operators ------- //
-			variable o2 = *operands[ 1 ].value;
+			variable o2 = *operands_n[ 1 ].value;
 			size_t ns = size();
 			if ( fn->function == "or" )
 				return variable{ o1.get<false>( 0 ) | o2.get<false>( 0 ), ns };
