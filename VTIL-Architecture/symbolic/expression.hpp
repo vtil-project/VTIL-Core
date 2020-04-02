@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 #define SYMEX_IMPLICIT_RESIZE		1
 
 #include <vector>
@@ -223,7 +223,6 @@ namespace vtil::symbolic
 			return out;
 		}
 
-
 		// Tries to evaluate the numeric value of a symbolic expression.
 		//
 		std::optional<variable> evaluate() const
@@ -266,9 +265,9 @@ namespace vtil::symbolic
 			else if ( fn->function == "xor" )
 				return variable{ o1.get<false>( 0 ) ^ o2.get<false>( 0 ), ns };
 			else if ( fn->function == "shr" )
-				return variable{ o1.get<false>( 0 ) >> o2.get<false>( 0 ), ns };
+				return o2.get<false>( 0 ) >= ( ns * 8 ) ? variable{ 0, ns } : variable{ o1.get<false>( 0 ) >> o2.get<false>( 0 ), ns };
 			else if ( fn->function == "shl" )
-				return variable{ o1.get<false>( 0 ) << o2.get<false>( 0 ), ns };
+				return o2.get<false>( 0 ) >= ( ns * 8 ) ? variable{ 0, ns } : variable{ o1.get<false>( 0 ) << o2.get<false>( 0 ), ns };
 			else if ( fn->function == "ror" )
 				return variable{ ( o1.get<false>( 0 ) >> o2.get<false>( 0 ) ) | ( o1.get<false>( 0 ) << ( o1.size * 8 - o2.get<false>( 0 ) ) ), ns };
 			else if ( fn->function == "rol" )

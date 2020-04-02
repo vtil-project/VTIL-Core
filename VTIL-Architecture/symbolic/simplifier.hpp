@@ -10,33 +10,31 @@ namespace vtil::symbolic
 {
 	// Tries to simplify the given symbolic expression as much as possible.
 	//
-	static std::pair<expression, bool> simplify( const expression& input )
+	static expression simplify( const expression& input, bool* simplified = nullptr )
 	{
 		// Assert we received a valid expression.
 		//
 		fassert( input.is_valid() );
 
+		// If exprssion is a variable, return as is.
+		//
+		if ( input.is_variable() )
+			return input;
+
 		// Try evaluating current expression, if we could
 		// return it as is.
 		//
 		if ( auto eval = input.evaluate() )
-			return { eval.value(), true };
+		{
+			if ( simplified ) *simplified = true;
+			return eval.value();
+		}
 
 		// Simplify children.
 		//
-		bool simplifed = false;
 		expression exp = input;
 		for ( auto& op : exp.operands )
-		{
-			auto r = simplify( op );
-			op = r.first;
-			simplifed |= r.second;
-		}
-
-		// If result is a variable, return it.
-		//
-		if ( exp.is_variable() )
-			return { exp, simplifed };
+			op = simplify( op, simplified );
 
 		// For each simplified form:
 		//
@@ -51,8 +49,8 @@ namespace vtil::symbolic
 				//
 				exp = new_exp;
 				for ( auto& op : exp.operands )
-					op = simplify( op ).first;
-				simplifed = true;
+					op = simplify( op );
+				if( simplified ) *simplified = true;
 			}
 		}
 
@@ -75,11 +73,7 @@ namespace vtil::symbolic
 				//
 				bool sub_simplified = false;
 				for ( auto& op : new_exp.operands )
-				{
-					auto [op_new, ssimplified] = simplify( op );
-					op = op_new;
-					sub_simplified |= ssimplified;
-				}
+					op = simplify( op, &sub_simplified );
 				
 				// If complexity did not change but we've
 				// simplified any operands at all, return the
@@ -89,7 +83,7 @@ namespace vtil::symbolic
 				if ( complexity_1 == complexity_0 && sub_simplified )
 				{
 					exp = new_exp;
-					simplifed = true;
+					if ( simplified ) *simplified = true;
 					break;
 				}
 				// If complexity reduced, recurse:
@@ -105,8 +99,11 @@ namespace vtil::symbolic
 		// return it as is.
 		//
 		if ( auto eval = exp.evaluate() )
-			return { eval.value(), true };
+		{
+			if ( simplified ) *simplified = true;
+			return eval.value();
+		}
 
-		return { exp, simplifed };
+		return exp;
 	}
 };
