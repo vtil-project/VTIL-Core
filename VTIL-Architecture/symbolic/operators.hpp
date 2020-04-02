@@ -68,17 +68,22 @@ namespace vtil::symbolic
 		// Variable resize:
 		// - Hints the output that variable was resized.
 		//
-		{ "new",   "",      false,    true,      0,           -1,     },
+		{ "__new",   "",    false,    true,      0,           -1,     },
 
 		// Bit-Count Normalize:
 		// - Evaluates to op#1 % bcnt(op#2) [Note: Will only match if op#1 >= bcnt(op#2) || op#1 < 0]
 		//
-		{ "bcntN", "",      false,    true,      0,            0,     },
+		{ "__bcntN", "",    false,    true,      0,            0,     },
 
 		// Bit-Mask:
-		// - Evaluates to ~{0 of size op#1}
+		// - Evaluates to ~0{ of size op#1}
 		//
-		{ "bmask", "",      true,    true,       0,            0,     },
+		{ "__bmask", "",     true,    true,       0,           0,     },
+
+		// Bit-Mask:
+		// - Evaluates to size op#1
+		//
+		{ "__bcnt",  "",     true,    true,       0,           0,     },
 	};
 
 	// Searcher for an operator within the string provided.

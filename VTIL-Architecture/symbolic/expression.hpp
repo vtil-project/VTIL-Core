@@ -132,6 +132,12 @@ namespace vtil::symbolic
 			if ( is_variable() )
 				return value->size;
 
+			// If special operator __bcntN or __bcnt
+			//
+			if ( fn->function == "__bcnt" ||
+				 fn->function == "__bcntN" )
+				return 1;
+
 			// If unary operator or result size is first operand,
 			// redirect to the first operand.
 			//
@@ -245,51 +251,51 @@ namespace vtil::symbolic
 			if ( is_variable() )
 				return is_constant() ? value : std::nullopt;
 
-			// If expression contains any non-constant operands, report failure.
-			//
 			auto operands_n = operands;
-			for ( auto& op : operands_n )
-			{
-				if ( !op.is_constant() )
-				{
-					if( auto r = op.evaluate() )
-						op = r.value();
-					else
-						return {};
-				}
-			}
+			size_t ns = size();
 
 			// ------- Unary operators ------- //
-			variable o1 = *operands_n[ 0 ].value;
+			if ( fn->function == "__bcnt" )
+				return variable{ operands_n[ 0 ].size() * 8, ns };
+			else if ( fn->function == "__bmask" )
+				return variable{ ~0ull >> ( 64 - operands_n[ 0 ].size() * 8 ), operands_n[ 0 ].size() };
+
+			variable o1;
+			if ( auto r = operands_n[0].evaluate() ) o1 = r.value();
+			else return {};
+
 			if ( fn->function == "neg" )
-				return variable{ -o1.get<true>( 0 ), o1.size };
+				return variable{ -o1.get<true>(), ns };
 			else if ( fn->function == "not" )
-				return variable{ ~o1.get<false>( 0 ), o1.size };
-			else if ( fn->function == "bmask" )
-				return variable{ ~0ull >> ( 64 - o1.size * 8 ), o1.size };
+				return variable{ ~o1.get(), ns };
 
 			// ------- Binary operators ------- //
-			variable o2 = *operands_n[ 1 ].value;
-			size_t ns = size();
-			if ( fn->function == "or" )
-				return variable{ o1.get<false>( 0 ) | o2.get<false>( 0 ), ns };
-			else if ( fn->function == "and" )
-				return variable{ o1.get<false>( 0 ) & o2.get<false>( 0 ), ns };
-			else if ( fn->function == "xor" )
-				return variable{ o1.get<false>( 0 ) ^ o2.get<false>( 0 ), ns };
-			else if ( fn->function == "shr" )
-				return o2.get<false>( 0 ) >= ( ns * 8 ) ? variable{ 0, ns } : variable{ o1.get<false>( 0 ) >> o2.get<false>( 0 ), ns };
-			else if ( fn->function == "shl" )
-				return o2.get<false>( 0 ) >= ( ns * 8 ) ? variable{ 0, ns } : variable{ o1.get<false>( 0 ) << o2.get<false>( 0 ), ns };
-			else if ( fn->function == "ror" )
-				return variable{ ( o1.get<false>( 0 ) >> o2.get<false>( 0 ) ) | ( o1.get<false>( 0 ) << ( o1.size * 8 - o2.get<false>( 0 ) ) ), ns };
-			else if ( fn->function == "rol" )
-				return variable{ ( o1.get<false>( 0 ) << o2.get<false>( 0 ) ) | ( o1.get<false>( 0 ) >> ( o1.size * 8 - o2.get<false>( 0 ) ) ), ns };
-			else if ( fn->function == "add" )
-				return variable{ o1.get<true>( 0 ) + o2.get<true>( 0 ), ns };
-			else if ( fn->function == "sub" )
-				return variable{ o1.get<true>( 0 ) - o2.get<true>( 0 ), ns };
+			if ( fn->function == "__bcntN" )
+				return variable{ uint8_t( ( o1.get() ) % ( operands_n[ 1 ].size() * 8 ) ), ns };
 
+			variable o2;
+			if ( auto r = operands_n[ 1 ].evaluate() ) o2 = r.value();
+			else return {};
+
+			if ( fn->function == "or" )
+				return variable{ o1.get() | o2.get(), ns };
+			else if ( fn->function == "and" )
+				return variable{ o1.get() & o2.get(), ns };
+			else if ( fn->function == "xor" )
+				return variable{ o1.get() ^ o2.get(), ns };
+			else if ( fn->function == "shr" )
+				return ( ns && o2.get() >= ( ns * 8 ) ) ? variable{ 0, ns } : variable{ o1.get( ns ) >> o2.get(), ns };
+			else if ( fn->function == "shl" )
+				return ( ns && o2.get() >= ( ns * 8 ) ) ? variable{ 0, ns } : variable{ o1.get( ns ) << o2.get(), ns };
+			else if ( fn->function == "ror" )
+				return variable{ ( o1.get( ns ) >> o2.get() ) | ( o1.get( ns ) << ( o1.size * 8 - o2.get() ) ), ns };
+			else if ( fn->function == "rol" )
+				return variable{ ( o1.get( ns ) << o2.get() ) | ( o1.get( ns ) >> ( o1.size * 8 - o2.get() ) ), ns };
+			else if ( fn->function == "add" )
+				return variable{ o1.get<true>() + o2.get<true>(), ns };
+			else if ( fn->function == "sub" )
+				return variable{ o1.get<true>() - o2.get<true>(), ns };
+			
 			// Other operators should not reach here.
 			return {};
 		}

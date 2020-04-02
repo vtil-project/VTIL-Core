@@ -129,7 +129,7 @@ namespace vtil::symbolic
 	
 		// Simple comparison operators.
 		//
-		bool operator==( const unique_identifier& o ) const { return name.size() == o.name.size() && name == o.name; }
+		bool operator==( const unique_identifier& o ) const { return name == o.name; }
 		bool operator<( const unique_identifier& o ) const { return name < o.name; }
 		bool operator!=( const unique_identifier& o ) const { return name != o.name; }
 	};
@@ -145,16 +145,16 @@ namespace vtil::symbolic
 		unique_identifier uid;
 
 		// If constant, the value that is being represented
-		// by this variable.
+		// by this variable. Do not ever access directly (not via .get).
 		//
 		union
 		{
-			uint64_t u64;
-			int64_t i64;
+			uint64_t _u64;
+			int64_t _i64;
 		};
 
 		// Size of the variable, used for both constants and UID-bound variables.
-		// - If zero implies any size.
+		// - If zero, implies any size.
 		//
 		uint8_t size;
 
@@ -166,6 +166,7 @@ namespace vtil::symbolic
 		//
 		variable( const std::string& uid, uint8_t size ) : uid( uid ), size( size ) { fassert( is_valid() ); }
 		variable( const std::wstring& uid, uint8_t size ) : uid( uid ), size( size ) { fassert( is_valid() ); }
+		variable( const unique_identifier& uid, uint8_t size ) : uid( uid ), size( size ) { fassert( is_valid() ); }
 		variable( ilstream_const_iterator origin, int operand_index )
 		{ 
 			// If operand is an immediate or a register:
@@ -175,7 +176,7 @@ namespace vtil::symbolic
 				// If immediate, assign constant:
 				//
 				if ( origin->operands[ operand_index ].is_immediate() )
-					u64 = origin->operands[ operand_index ].u64;
+					_u64 = origin->operands[ operand_index ].u64;
 				// If register, generate unique identifier:
 				//
 				else
@@ -208,9 +209,9 @@ namespace vtil::symbolic
 			// If a signed type was passed, sign extend, otherwise zero extend before storing.
 			//
 			if constexpr ( std::is_signed_v<T> )
-				i64 = imm;
+				_i64 = imm;
 			else
-				u64 = imm;
+				_u64 = imm;
 		}
 
 		// Simple helpers to determine the type of the variable.
@@ -229,47 +230,47 @@ namespace vtil::symbolic
 
 		// Getter for value:
 		//
-		template<bool sign_extend = false>
-		auto get( uint8_t new_size ) const
+		template<bool ret_signed = false>
+		auto get( uint8_t new_size = 0 ) const
 		{
-			uint64_t value_out = u64;
-			if ( size ) value_out &= ~0ull >> ( 64 - size * 8 );
+			uint8_t out_size = size;
+			if ( out_size == 0 || ( new_size != 0 && new_size < out_size ) )
+				out_size = new_size;
 
-			// Sign extend to 64-bit first
-			//
-			if ( sign_extend )
+			if constexpr ( ret_signed )
 			{
-				uint64_t sign_mask = 1ull << ( ( size ? size : 8 ) * 8 - 1 );
-				uint64_t value_mask = sign_mask - 1;
-
-				uint64_t extended_bits = ( value_out & sign_mask ) ? ~0ull : 0ull;
-				extended_bits &= ~value_mask;
-				value_out = extended_bits | ( value_out & value_mask );
+				switch ( out_size )
+				{
+					case 0: case 8: return _i64; break;
+					case 1: return ( int64_t ) *( int8_t* ) &_i64; break;
+					case 2: return ( int64_t ) *( int16_t* ) &_i64; break;
+					case 4: return ( int64_t ) *( int32_t* ) &_i64; break;
+					default: unreachable();
+				}
 			}
-
-			// Mask the value if size is specified.
-			//
-			if ( new_size )
-				value_out &= ~0ull >> ( 64 - new_size * 8 );
-			
-			// Return the value either sign extended or zero extended.
-			//
-			if constexpr ( sign_extend )
-				return int64_t( value_out );
 			else
-				return uint64_t( value_out );
+			{
+				switch ( out_size )
+				{
+					case 0: case 8: return _u64; break;
+					case 1: return ( uint64_t ) *( uint8_t* ) &_u64; break;
+					case 2: return ( uint64_t ) *( uint16_t* ) &_u64; break;
+					case 4: return ( uint64_t ) *( uint32_t* ) &_u64; break;
+					default: unreachable();
+				}
+			}
 		}
 
 		// Converts the variable into human-readable format.
 		//
 		std::string to_string() const
 		{
-			return is_symbolic() ? uid.to_string() : format::hex( i64 );
+			return is_symbolic() ? uid.to_string() : format::hex( get<true>(size) );
 		}
 
 		// Basic comparison operators.
 		//
-		bool operator==( const variable& o ) const { return uid == o.uid && ( is_symbolic() || ( size && o.size ? size == o.size && u64 == o.u64 : i64 == o.i64 ) ); }
+		bool operator==( const variable& o ) const { return uid == o.uid && ( is_symbolic() || ( (size && o.size) ? size == o.size && get() == o.get() : get<true>() == o.get<true>() ) ); }
 		bool operator!=( const variable& o ) const { return !operator==( o ); }
 		bool operator<( const variable& o ) const 
 		{ 
@@ -279,7 +280,7 @@ namespace vtil::symbolic
 			if ( is_symbolic() )
 				return uid < o.uid;
 			else
-				return u64 < o.u64;
+				return get() < o.get();
 		}
 	};
 };

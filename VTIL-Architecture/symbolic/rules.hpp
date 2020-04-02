@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 #include <map>
 #include <tuple>
 #include "expression.hpp"
@@ -14,13 +14,17 @@ namespace vtil::symbolic::rules
 
 	// Special variables:
 	//
-	static const expression Q = { { L"Σ", 0 } };
+	static const expression X = { { L"Σ", 0 } };
+	static const expression Q = { { L"Ω", 0 } };
+
+	static const expression S = { { L"π", 0 } }; // Does not accept constants.
 
 	// Special functions used in rule creation:
 	//
-	static const auto bmask = [ ] ( const expression& b ) { return expression( find_opr( "bmask" ), b ); };
-	static const auto bcntN = [ ] ( const expression& a, const expression& b ) { return expression( a, find_opr( "bcntN" ), b ); };
-	static const auto resize = [ ] ( const expression& a, const expression& b ) { return expression( a, find_opr( "new" ), b ); };
+	static const auto bmask = [ ] ( const expression& b ) { return expression( find_opr( "__bmask" ), b ); };
+	static const auto bcnt = [ ] ( const expression& a ) { return expression( find_opr( "__bcnt" ), a ); };
+	static const auto bcntN = [ ] ( const expression& a, const expression& b ) { return expression( a, find_opr( "__bcntN" ), b ); };
+	static const auto resize = [ ] ( const expression& a, const expression& b ) { return expression( a, find_opr( "__new" ), b ); };
 
 	// All simpilfications:
 	// - Note! Must not contain ( simplified[simplified[x]] == y ).
@@ -31,6 +35,8 @@ namespace vtil::symbolic::rules
 		//
 		{ -(-A), A },
 		{ ~(~A), A },
+		{ -(~A), A+1 },
+		{ ~(-A), A-1 },
 
 		// Identity constant
 		//
@@ -48,14 +54,16 @@ namespace vtil::symbolic::rules
 
 		// Shift normalization
 		//
-		{ A.rol(bcntN(Q,A)), A.rol(Q) },
-		{ A.ror(bcntN(Q,A)), A.ror(Q) },
-		{ A>>bcntN(Q,A), {0} },
-		{ A<<bcntN(Q,A), {0} },
-		{ A>>0, A },
-		{ A<<0, A },
-		{ A.rol(0), A },
-		{ A.ror(0), A },
+		{ (A>>bcntN(B,A))|(A<<(bcntN(-B,A))), A.ror(B) },	// [imm shift -> imm rotation]
+		{ (A<<bcntN(B,A))|(A>>(bcntN(-B,A))), A.rol(B) },	//
+		{ (A>>bcntN(Q,A))>>bcntN(X,A), A>>(X+Q) },			// merge {imm shift x2}
+		{ (A<<bcntN(Q,A))<<bcntN(X,A), A<<(X+Q) },			//
+		{ (A>>S)|(A<<(bcnt(A)-S)), A.ror(S) },				// [var shift -> var rotation]
+		{ (A<<S)|(A>>(bcnt(A)-S)), A.rol(S) },				//
+		{ A.rol(bcntN(Q,A)), A.rol(Q) },					// normalize {imm rotation}
+		{ A.ror(bcntN(Q,A)), A.ror(Q) },					//
+		{ A>>bcntN(Q,A), A>>Q },							// noramlize {imm shift}
+		{ A<<bcntN(Q,A), A<<Q },							//
 
 		// Constant result
 		//
@@ -67,6 +75,10 @@ namespace vtil::symbolic::rules
 		{ A|bmask(A), bmask(A) },
 		{ A^(~A), bmask(A) },
 		{ A|(~A), bmask(A) },
+		{ A.rol(0), A },
+		{ A.ror(0), A },
+		{ A>>0, A },
+		{ A<<0, A },
 
 		// SUB conversion
 		//
@@ -82,18 +94,9 @@ namespace vtil::symbolic::rules
 		{ A&(A|B),	A },
 		{ A|(A&B),	A },
 
-		// Shift merging
-		//
-		{ (A>>B)>>C, A>>(B+C) },
-		{ (A<<B)<<C, A<<(B+C) },
-
 		// XOR|NAND|NOR -> NOT conversion
 		//
 		{ A^bmask(A), ~A },
-
-		// ROR / ROL conversion
-		{ (A>>B)|(A<<(bcntN(-B,A))), A.ror(B) },
-		{ (A<<B)|(A>>(bcntN(-B,A))), A.rol(B) },
 
 		// XOR / OR / AND conversion
 		//
@@ -153,6 +156,7 @@ namespace vtil::symbolic::rules
 	// tree simplification/alternate form and returns the table to map it 
 	// so that they are equivalent.
 	//
+	template<bool bcnt_strict = true>
 	static std::pair<bool, symbol_map> match( const expression& input, const expression& target, const symbol_map& sym_map = {}, uint8_t op_size = 0 )
 	{
 		// If target is a variable.
@@ -184,6 +188,12 @@ namespace vtil::symbolic::rules
 			if ( it == sym_map.end() )
 			{
 				symbol_map sym_map_new = sym_map;
+
+				// Check special conditions:
+				//
+				if ( target.value->uid == S.value->uid && input.is_constant() )
+					return { false, {} };
+
 				sym_map_new[ *target.value ] = input;
 				return { true, sym_map_new };
 			}
@@ -201,7 +211,7 @@ namespace vtil::symbolic::rules
 		{
 			// If special functor:
 			//
-			if ( target.fn->function == "bcntN" &&
+			if ( target.fn->function == "__bcntN" &&
 				 input.is_constant() )
 			{
 				// Find which variable we're calculating this for.
@@ -242,8 +252,8 @@ namespace vtil::symbolic::rules
 					if ( !exp_out->is_constant() )
 						return { false , {} };
 
-					int64_t value_a = ( ( bit_count + exp_out->value->i64 ) % bit_count );
-					int64_t value_b = ( ( bit_count + sign * input.value->i64 ) % bit_count );
+					int64_t value_a = ( ( bit_count + exp_out->value->get() ) % bit_count );
+					int64_t value_b = ( ( bit_count + sign * input.value->get() ) % bit_count );
 					if ( value_a == value_b )
 						return { true, sym_map };
 					else
@@ -255,8 +265,8 @@ namespace vtil::symbolic::rules
 				{
 					// Skip if already normalized
 					//
-					int64_t value = sign * input.value->i64;
-					if ( 0 <= value && value < bit_count )
+					int64_t value = sign * input.value->get();
+					if ( 0 <= value && value < bit_count && !bcnt_strict )
 						return { false, {} };
 
 					// Write normalized value and indicate success.
@@ -265,7 +275,7 @@ namespace vtil::symbolic::rules
 					return { true, sym_map_new };
 				}
 			}
-			else if ( target.fn->function == "bmask" &&
+			else if ( target.fn->function == "__new" &&
 					  input.is_constant() )
 			{
 				// Find which variable we're calculating this for.
@@ -273,40 +283,18 @@ namespace vtil::symbolic::rules
 				//
 				auto it = sym_map.find( *target[ 0 ].value );
 				if ( it == sym_map.end() )
-					return { false, {} };	// TODO????
+					return { false, {} };
 				fassert( it != sym_map.end() );
 
 				// Calculate number of bits in the variable.
 				//
 				int8_t bit_count = it->second.size() * 8;
-				fassert( bit_count != 0 );
-
-				// Check if it matches.
-				//
-				uint64_t bit_mask = ~0ull >> ( 64 - bit_count );
-				if ( ( input.value->u64 & bit_mask ) == bit_mask )
-					return { true, sym_map };
-			}
-			else if ( target.fn->function == "new" &&
-					  input.is_constant() )
-			{
-				// Find which variable we're calculating this for.
-				// - Referencing unknown variable in simplification condition if assert fail raises.
-				//
-				auto it = sym_map.find( *target[ 0 ].value );
-				if ( it == sym_map.end() )
-					return { false, {} };	// TODO????
-				fassert( it != sym_map.end() );
-
-				// Calculate number of bits in the variable.
-				//
-				int8_t bit_count = it->second.size() * 8;
-				fassert( bit_count != 0 );
+				if ( !bit_count ) bit_count = 8;
 
 				// Check if it is indeed a valid mask.
 				//
 				int8_t new_bit_count = 0;
-				switch ( input.value->u64 )
+				switch ( input.value->get() )
 				{
 					case 0xFF:					new_bit_count = 8;  break;
 					case 0xFFFF:				new_bit_count = 16; break;
@@ -321,7 +309,7 @@ namespace vtil::symbolic::rules
 				expression& exp_out = sym_map_new[ *target[ 1 ].value ];
 				fassert( !exp_out.is_valid() );
 
-				// No-operation, if resizing to larger value.
+				// No-operation, if resizing to larger value, we'd only lose data.
 				//
 				if ( new_bit_count >= bit_count )
 				{
@@ -332,9 +320,9 @@ namespace vtil::symbolic::rules
 				else if( it->second.is_constant() )
 				{
 					uint64_t bit_mask = ~0ull >> ( 64 - new_bit_count );
-					exp_out = variable( it->second.value->u64 & bit_mask, new_bit_count / 8 );
+					exp_out = variable( it->second.value->get() & bit_mask, new_bit_count / 8 );
 				}
-				// Else, insert new.
+				// Else, insert a new expression.
 				//
 				else
 				{
@@ -416,33 +404,36 @@ namespace vtil::symbolic::rules
 
 	// Transforms between equivalent expression trees.
 	//
+	template<bool bcnt_strict = true>
 	static expression remap_equivalent( const expression& input, const expression& from, const expression& to )
 	{
 		// Check if equivalent, if not return invalid expression.
 		//
-		auto [is_equiv, sym_map] = match( input, from );
+		auto [is_equiv, sym_map] = match<bcnt_strict>( input, from );
 		if ( !is_equiv )
 			return {};
 
-		// Remove any remaining bmask's.
-		//
-		expression new_expression = to;
-		std::function<void( expression& )> remap_bmask = [ & ] ( expression& r )
-		{
-			if ( r.fn && r.fn->function == "bmask" )
-			{
-				auto it = sym_map.find( *r.operands[ 0 ].value );
-				fassert( it != sym_map.end() );
-				r = variable( ~0ull >> ( 64 - ( it->second.size() * 8 ) ), it->second.size() );
-			}
-			for ( auto& op : r.operands )
-				remap_bmask( op );
-		};
-		remap_bmask( new_expression );
-
 		// Remap symbol.
 		//
+		expression new_expression = to;
 		new_expression.remap_symbols( sym_map );
+
+		// Remove any remaining special instructions
+		//
+		std::function<void( expression& )> remove_special = [ & ] ( expression& r )
+		{
+			if ( r.fn && r.fn->function[ 0 ] == '_' )
+			{
+				if ( auto val = r.evaluate() )
+				{
+					r = *val;
+					return;
+				}
+			}
+			for ( auto& op : r.operands )
+				remove_special( op );
+		};
+		remove_special( new_expression );
 		return new_expression;
 	}
 }
