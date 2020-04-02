@@ -202,7 +202,7 @@ namespace vtil::symbolic
 				return operands[ 0 ].complexity() << 1;
 			}
 			else
-				return ( operands[ 0 ].complexity() + operands[ 1 ].complexity() ) << 2;
+				return ( operands[ 0 ].complexity() + operands[ 1 ].complexity() ) << 1;
 		}
 
 		// Depth of the operation tree.

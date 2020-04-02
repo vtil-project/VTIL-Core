@@ -105,6 +105,10 @@ namespace vtil::symbolic::rules
 		{ (A|(~B))&((~A)|B), A^B },
 		{ (A&(~B))|((~A)&B), A^B },
 		{ ~((~(A|B))|(A&B)), A^B },
+		
+		// Prefer NEG over SUB
+		//
+		{ A-B,	A+(-B) },
 	};
 
 	// All alternate forms:
@@ -136,6 +140,11 @@ namespace vtil::symbolic::rules
 		{ A-(B+C), (A-B)-C },
 		{ A-(B+C), (A-C)-B },
 		{ A-(B-C), (A-B)+C },
+		{ A-(B-C), (A+B)-C },
+		
+		// Switch between NEG and SUB
+		//
+		{ A-B,	A+(-B) },
 	};
 
 	// Checks if the provided expression tree matches that of a symbolic 
