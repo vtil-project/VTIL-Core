@@ -42,7 +42,6 @@ namespace vtil::symbolic::rules
 		{ A&A, A },
 		{ A^_0, A },
 		{ A&bmask(A), A },
-		{ (B&A)+((~B)&A), A },
 
 		// Variable resizing
 		//
@@ -108,7 +107,11 @@ namespace vtil::symbolic::rules
 		
 		// Prefer NEG over SUB
 		//
-		{ A-B,	A+(-B) },
+		//{ A-B,	A+(-B) },
+
+		// ADD to OR
+		//
+		{ ((~A)&B)+(A&C), ((~A)&B)|(A&C) }
 	};
 
 	// All alternate forms:
@@ -133,14 +136,14 @@ namespace vtil::symbolic::rules
 		{ A&(B|C), (A&B)|(A&C) },
 		{ A&(B&C), (A&B)&C },
 		{ A|(B&C), (A|B)&(A|C) },
-		{ A|(B|C), (A|B)&C },
+		{ A|(B|C), (A|B)|C },
 		{ A^(B&C), (A^B)&(A^C) },
 		{ A+(B+C), (A+B)+C },
 		{ A+(B+C), (A+C)+B },
 		{ A-(B+C), (A-B)-C },
 		{ A-(B+C), (A-C)-B },
 		{ A-(B-C), (A-B)+C },
-		{ A-(B-C), (A+B)-C },
+		{ A-(B-C), (A+C)-B },
 		
 		// Switch between NEG and SUB
 		//

@@ -69,7 +69,7 @@ namespace vtil::symbolic
 				return;
 			}
 			for ( auto& op : operands )
-				enum_symbols( cb );
+				op.enum_symbols( cb );
 		}
 
 		// Creates a set containing every unique symbol used in

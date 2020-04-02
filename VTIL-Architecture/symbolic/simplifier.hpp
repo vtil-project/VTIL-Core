@@ -92,11 +92,12 @@ namespace vtil::symbolic
 					simplifed = true;
 					break;
 				}
-
 				// If complexity reduced, recurse:
 				//
 				else if ( complexity_1 < complexity_0 )
+				{
 					return simplify( new_exp );
+				}
 			}
 		}
 
