@@ -16,9 +16,10 @@ namespace vtil::symbolic
 		//
 		fassert( input.is_valid() );
 
-		// If exprssion is a variable, return as is.
+		// If exprssion is a variable/is already in
+		// the simplest form possible, return as is.
 		//
-		if ( input.is_variable() )
+		if ( input.is_simplest_form )
 			return input;
 
 		// Try evaluating current expression, if we could
@@ -103,7 +104,6 @@ namespace vtil::symbolic
 			if ( simplified ) *simplified = true;
 			return eval.value();
 		}
-
-		return exp;
+		return exp.declare_simple();
 	}
 };

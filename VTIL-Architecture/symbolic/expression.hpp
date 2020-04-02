@@ -29,10 +29,19 @@ namespace vtil::symbolic
 		const operator_desc* fn;
 		std::vector<expression> operands;
 
+		// Set to true if the expression was already simplified by the simplifier.
+		// This allows us to indicate that this expression cannot be simplified
+		// any further and thus makes recursive simplification much more time
+		// efficient when it's called from multiple points of the application.
+		//
+		bool is_simplest_form = false;
+		auto& declare_simple() { is_simplest_form = true; return *this; }
+		auto& declare_changed() { is_simplest_form = false; return *this; }
+
 		// Default constructors.
 		//
 		expression() : fn( nullptr ) {}
-		expression( const variable& a ) : value( a ), fn( nullptr ) {}
+		expression( const variable& a ) : value( a ), fn( nullptr ), is_simplest_form( true ) {}
 		expression( const operator_desc* fn, const expression& a ) : operands( { a } ), fn( fn ) {}
 		expression( const expression& a, const operator_desc* fn, const expression& b ) : operands( { a, b } ), fn( fn ) {}
 
@@ -157,7 +166,7 @@ namespace vtil::symbolic
 				if( value->is_symbolic() )
 					fassert( SYMEX_IMPLICIT_RESIZE );
 				else
-					value->u64 = value->get( size );
+					value = { value->get( size ), size };
 			}
 			// If result of an operator:
 			//
@@ -178,6 +187,10 @@ namespace vtil::symbolic
 					operands[ 1 ].resize( size );
 				}
 			}
+
+			// Declare that the expression was changed.
+			//
+			declare_changed();
 		}
 
 		// Returns an arbitrary value that represents the "complexity"
@@ -321,9 +334,10 @@ namespace vtil::symbolic
 		bool operator<( const expression& o ) const { return !operator==( o ) && to_string() < o.to_string(); }
 
 		// Convinience wrapper for operand access.
+		// - Use the .operands container manually when changing
+		//   any operands and clear the simplest form hint.
 		//
-		auto& operator[]( size_t i ) const { return operands[ i ]; }
-		auto& operator[]( size_t i ) { return operands[ i ]; }
+		const expression& operator[]( size_t i ) const { return operands[ i ]; }
 
 		// Convinience wrappers around common operations.
 		//
