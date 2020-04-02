@@ -15,7 +15,6 @@ namespace vtil::symbolic::rules
 	// Special variables:
 	//
 	static const expression Q = { { L"Σ", 0 } };
-	static const expression _0 = { { 0, 0 } };
 
 	// Special functions used in rule creation:
 	//
@@ -35,12 +34,12 @@ namespace vtil::symbolic::rules
 
 		// Identity constant
 		//
-		{ A+_0, A },
-		{ A-_0, A },
+		{ A+0, A },
+		{ A-0, A },
 		{ A|A, A },
-		{ A|_0, A },
+		{ A|0, A },
 		{ A&A, A },
-		{ A^_0, A },
+		{ A^0, A },
 		{ A&bmask(A), A },
 
 		// Variable resizing
@@ -51,20 +50,20 @@ namespace vtil::symbolic::rules
 		//
 		{ A.rol(bcntN(Q,A)), A.rol(Q) },
 		{ A.ror(bcntN(Q,A)), A.ror(Q) },
-		{ A>>bcntN(Q,A), _0 },
-		{ A<<bcntN(Q,A), _0 },
-		{ A>>_0, A },
-		{ A<<_0, A },
-		{ A.rol(_0), A },
-		{ A.ror(_0), A },
+		{ A>>bcntN(Q,A), {0} },
+		{ A<<bcntN(Q,A), {0} },
+		{ A>>0, A },
+		{ A<<0, A },
+		{ A.rol(0), A },
+		{ A.ror(0), A },
 
 		// Constant result
 		//
-		{ A-A, _0 },
-		{ A+(-A), _0 },
-		{ A&_0, _0 },
-		{ A^A, _0 },
-		{ A&(~A), _0 },
+		{ A-A, {0} },
+		{ A+(-A), {0} },
+		{ A&0, {0} },
+		{ A^A, {0} },
+		{ A&(~A), {0} },
 		{ A|bmask(A), bmask(A) },
 		{ A^(~A), bmask(A) },
 		{ A|(~A), bmask(A) },
@@ -76,7 +75,7 @@ namespace vtil::symbolic::rules
 		// NEG conversion
 		//
 		{ ~(A+bmask(A)), -A },
-		{ (_0-A), -A },
+		{ (0-A), -A },
 
 		// Simplify AND OR
 		//
@@ -154,7 +153,7 @@ namespace vtil::symbolic::rules
 	// tree simplification/alternate form and returns the table to map it 
 	// so that they are equivalent.
 	//
-	static std::pair<bool, symbol_map> is_equivalent( const expression& input, const expression& target, const symbol_map& sym_map = {}, uint8_t op_size = 0 )
+	static std::pair<bool, symbol_map> match( const expression& input, const expression& target, const symbol_map& sym_map = {}, uint8_t op_size = 0 )
 	{
 		// If target is a variable.
 		//
@@ -385,7 +384,7 @@ namespace vtil::symbolic::rules
 				std::pair<bool, symbol_map> result;
 				if ( input.fn->is_unary )
 				{
-					result = is_equivalent( input[ 0 ], target[ 0 ], sym_map, op_size );
+					result = match( input[ 0 ], target[ 0 ], sym_map, op_size );
 				}
 				// If binary operator:
 				//
@@ -393,15 +392,15 @@ namespace vtil::symbolic::rules
 				{
 					// Check if operands match, in order:
 					//
-					result = is_equivalent( input[ 0 ], target[ 0 ], sym_map, op_size );
-					if ( result.first ) result = is_equivalent( input[ 1 ], target[ 1 ], result.second, op_size );
+					result = match( input[ 0 ], target[ 0 ], sym_map, op_size );
+					if ( result.first ) result = match( input[ 1 ], target[ 1 ], result.second, op_size );
 
 					// Otherwise check if operator is commutative and operands match in reverse:
 					//
 					if ( !result.first && input.fn->commutative == +1 )
 					{
-						result = is_equivalent( input[ 0 ], target[ 1 ], sym_map, input[ 1 ].size() );
-						if ( result.first ) result = is_equivalent( input[ 1 ], target[ 0 ], result.second, op_size );
+						result = match( input[ 0 ], target[ 1 ], sym_map, input[ 1 ].size() );
+						if ( result.first ) result = match( input[ 1 ], target[ 0 ], result.second, op_size );
 					}
 				}
 
@@ -421,7 +420,7 @@ namespace vtil::symbolic::rules
 	{
 		// Check if equivalent, if not return invalid expression.
 		//
-		auto [is_equiv, sym_map] = is_equivalent( input, from );
+		auto [is_equiv, sym_map] = match( input, from );
 		if ( !is_equiv )
 			return {};
 

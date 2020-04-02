@@ -1,9 +1,10 @@
 ﻿#pragma once
-#define SYMEX_IMPLICIT_RESIZE 1
+#define SYMEX_IMPLICIT_RESIZE		1
 
 #include <vector>
 #include <optional>
 #include <functional>
+#include <type_traits>
 #include "variable.hpp"
 #include "operators.hpp"
 
@@ -330,14 +331,30 @@ namespace vtil::symbolic
 		expression operator+() const { return expression( *this ); }
 		expression operator~() const { return expression( find_opr( "not" ), *this ); }
 		expression operator-() const { return expression( find_opr( "neg" ), *this ); }
-		expression operator+( const expression& b ) const { return expression( *this, find_opr( "add" ), b ); }
-		expression operator-( const expression& b ) const { return expression( *this, find_opr( "sub" ), b ); }
-		expression operator|( const expression& b ) const { return expression( *this, find_opr( "or" ), b ); }
-		expression operator&( const expression& b ) const { return expression( *this, find_opr( "and" ), b ); }
-		expression operator^( const expression& b ) const { return expression( *this, find_opr( "xor" ), b ); }
-		expression operator>>( const expression& b ) const { return expression( *this, find_opr( "shr" ), b ); }
-		expression operator<<( const expression& b ) const { return expression( *this, find_opr( "shl" ), b ); }
-		expression ror( const expression& b ) const { return expression( *this, find_opr( "ror" ), b ); }
-		expression rol( const expression& b ) const { return expression( *this, find_opr( "ror" ), b ); }
+		template<typename T> expression ror( T y ) const { return expression( *this, find_opr( "ror" ), expression{ y } ); }
+		template<typename T> expression rol( T y ) const { return expression( *this, find_opr( "rol" ), expression{ y } ); }
 	};
+
+	template<typename T> static expression operator+( const expression& x, T y ) { return { x, find_opr( "add" ), expression{ y } }; }
+	template<typename T> static expression operator-( const expression& x, T y ) { return { x, find_opr( "sub" ), expression{ y } }; }
+	template<typename T> static expression operator|( const expression& x, T y ) { return { x, find_opr( "or" ), expression{ y } }; }
+	template<typename T> static expression operator&( const expression& x, T y ) { return { x, find_opr( "and" ), expression{ y } }; }
+	template<typename T> static expression operator^( const expression& x, T y ) { return { x, find_opr( "xor" ), expression{ y } }; }
+	template<typename T> static expression operator>>( const expression& x, T y ) { return { x, find_opr( "shr" ), expression{ y } }; }
+	template<typename T> static expression operator<<( const expression& x, T y ) { return { x, find_opr( "shl" ), expression{ y } }; }
+
+	template<typename T, std::enable_if_t<!std::is_same_v<std::remove_cvref_t<T>, expression>, int> = 0> 
+	static expression operator+( T x, const expression& y ) { return expression{ x } + y; }
+	template<typename T, std::enable_if_t<!std::is_same_v<std::remove_cvref_t<T>, expression>, int> = 0> 
+	static expression operator-( T x, const expression& y ) { return expression{ x } - y; }
+	template<typename T, std::enable_if_t<!std::is_same_v<std::remove_cvref_t<T>, expression>, int> = 0> 
+	static expression operator|( T x, const expression& y ) { return expression{ x } | y; }
+	template<typename T, std::enable_if_t<!std::is_same_v<std::remove_cvref_t<T>, expression>, int> = 0> 
+	static expression operator&( T x, const expression& y ) { return expression{ x } & y; }
+	template<typename T, std::enable_if_t<!std::is_same_v<std::remove_cvref_t<T>, expression>, int> = 0> 
+	static expression operator^( T x, const expression& y ) { return expression{ x } ^ y; }
+	template<typename T, std::enable_if_t<!std::is_same_v<std::remove_cvref_t<T>, expression>, int> = 0> 
+	static expression operator>>( T x, const expression& y ) { return expression{ x } >> y; }
+	template<typename T, std::enable_if_t<!std::is_same_v<std::remove_cvref_t<T>, expression>, int> = 0> 
+	static expression operator<<( T x, const expression& y ) { return expression{ x } << y; }
 };

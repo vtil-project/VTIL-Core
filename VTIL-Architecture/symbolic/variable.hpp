@@ -1,4 +1,6 @@
 ﻿#pragma once
+#define SYMEX_CONST_SIZE_DEFAULT(x)		0
+
 #include <string>
 #include <codecvt>
 #include <type_traits>
@@ -198,8 +200,8 @@ namespace vtil::symbolic
 
 		// Constructor for variables that represent constant values.
 		//
-		template<typename T, typename = std::enable_if_t<std::is_arithmetic_v<T>>>
-		variable( T imm, uint8_t size = sizeof( T ) ) : size( size )
+		template<typename T, std::enable_if_t<std::is_arithmetic_v<T>, int> = 0>
+		variable( T imm, uint8_t size = SYMEX_CONST_SIZE_DEFAULT( T ) ) : size( size )
 		{
 			fassert( is_valid() ); 
 
