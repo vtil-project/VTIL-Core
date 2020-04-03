@@ -1,7 +1,8 @@
 #pragma once
-#include <type_traits>
 #include <vector>
 #include <optional>
+#include <functional>
+#include <type_traits>
 #include "query_desc.hpp"
 
 namespace vtil::query

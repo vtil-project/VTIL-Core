@@ -16,12 +16,11 @@ namespace vtil::symbolic::rules
 	//
 	static const expression X = { { L"Σ", 0 } };
 	static const expression Q = { { L"Ω", 0 } };
-
 	static const expression S = { { L"π", 0 } }; // Does not accept constants.
 
 	// Special functions used in rule creation:
 	//
-	static const auto bmask = [ ] ( const expression& b ) { return expression( find_opr( "__bmask" ), b ); };
+	static const auto bmask = [ ] ( const expression& a ) { return expression( find_opr( "__bmask" ), a ); };
 	static const auto bcnt = [ ] ( const expression& a ) { return expression( find_opr( "__bcnt" ), a ); };
 	static const auto bcntN = [ ] ( const expression& a, const expression& b ) { return expression( a, find_opr( "__bcntN" ), b ); };
 	static const auto resize = [ ] ( const expression& a, const expression& b ) { return expression( a, find_opr( "__new" ), b ); };

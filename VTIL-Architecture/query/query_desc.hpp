@@ -1,7 +1,8 @@
 #pragma once
+#include <set>
 #include <vector>
 #include <iterator>
-#include <set>
+#include <functional>
 #include "ranges.hpp"
 
 namespace vtil::query

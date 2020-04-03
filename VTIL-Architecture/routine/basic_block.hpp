@@ -404,6 +404,10 @@ namespace vtil
 		WRAP_LAZY( idiv );
 		WRAP_LAZY( mul );
 		WRAP_LAZY( imul );
+		WRAP_LAZY( mulhi );
+		WRAP_LAZY( imulhi );
+		WRAP_LAZY( rem );
+		WRAP_LAZY( irem );
 		WRAP_LAZY( bnot );
 		WRAP_LAZY( bshr );
 		WRAP_LAZY( bshl );

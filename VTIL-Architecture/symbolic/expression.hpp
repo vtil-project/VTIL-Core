@@ -132,11 +132,11 @@ namespace vtil::symbolic
 			if ( is_variable() )
 				return value->size;
 
-			// If special operator __bcntN or __bcnt
+			// Exceptional operators:
 			//
 			if ( fn->function == "__bcnt" ||
 				 fn->function == "__bcntN" )
-				return 1;
+				return 0;
 
 			// If unary operator or result size is first operand,
 			// redirect to the first operand.
@@ -209,18 +209,20 @@ namespace vtil::symbolic
 			if ( is_variable() )
 				return value->is_constant() ? 0 : 1;
 
-			// Exceptional case for new:
+			// Exceptional operators:
 			//
-			if ( fn->function == "new" )
+			if ( fn->function == "__new" )
 				return operands[ 0 ].complexity();
+			if ( fn->function == "__bcnt" ||
+				 fn->function == "__bcntN" ||
+				 fn->function == "__bmask" )
+				return 0;
 
 			// Ideally we want less operations on symbolic variables, 
 			// so create an exponentially increasing cost.
 			//
 			if ( fn->is_unary )
-			{
 				return operands[ 0 ].complexity() << 1;
-			}
 			else
 				return ( operands[ 0 ].complexity() + operands[ 1 ].complexity() ) << 1;
 		}
