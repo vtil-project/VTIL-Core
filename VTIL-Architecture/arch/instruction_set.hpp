@@ -241,8 +241,8 @@ namespace vtil::arch
         //    VEMIT      Imm                                                | Emits the x86 opcode
         //    VPINR      Reg                                                | Pins the register for read
         //    VPINW      Reg                                                | Pins the register for write
-        //    VHMEMV                                                        | Hints the optimzier that all memory including stack is volatile after this instruction
-        //    VHSPSH     Imm                                                | Hints the stack normalizer that at this point stack will be shifted by N
+        //    VPINRM     Reg,    Imm                                        | Pins the qword @ memory location for read
+        //    VPINWM     Reg,    Imm                                        | Pins the qword @ memory location for write
         //
         /*-----------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
         /*                                          [Name]        [Operands...]                                     [ASizeOp]   [Volatile]  [Operator]  [BranchOps] [MemOps]     */
@@ -252,8 +252,8 @@ namespace vtil::arch
         static const instruction_desc vemit =      { "vemit",     { read_imm                                    },  1,          true,       {},         {},         {}           };
         static const instruction_desc vpinr =      { "vpinr",     { read_reg                                    },  1,          true,       {},         {},         {}           };
         static const instruction_desc vpinw =      { "vpinw",     { write                                       },  1,          true,       {},         {},         {}           };
-        static const instruction_desc vhmemv =     { "vhmemv",    {                                             },  0,          true,       {},         {},         {}           };
-        static const instruction_desc vhspsh =     { "vhspsh",    { read_imm                                    },  1,          true,       {},         {},         {}           };
+        static const instruction_desc vpinrm =     { "vpinrm",    { read_reg,      read_imm,                    },  1,          true,       {},         {},         { 1, false } };
+        static const instruction_desc vpinwm =     { "vpinwm",    { read_reg,      read_imm                     },  1,          true,       {},         {},         { 1, true }  };
         /*-----------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
     };
 };

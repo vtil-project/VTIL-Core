@@ -40,6 +40,13 @@ namespace vtil
 		//
 		vip_t vip = invalid_vip;
 
+		// The offset of current stack pointer from the last 
+		// [MOV RSP, <>] if applicable, or the beginning of 
+		// the basic block and whether it was reset or not.
+		//
+		int64_t sp_offset = 0;
+		bool sp_reset = false;
+
 		// Whether the instruction was explicitly declared volatile.
 		//
 		bool explicit_volatile = false;

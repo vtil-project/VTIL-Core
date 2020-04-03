@@ -1,5 +1,4 @@
 #pragma once
-#define STRICT_STACK_TRACKING 0
 #include <set>
 #include <list>
 #include <vector>
@@ -171,16 +170,25 @@ namespace vtil
 		//
 		std::vector<basic_block*> prev = {};
 
-		// The offset of current stack pointer from the
-		// last [MOV RSP, <>] if applicable, or the entry point.
+		// The offset of current stack pointer from the last 
+		// [MOV RSP, <>] if applicable, or the beginning of 
+		// the basic block.
 		//
-		int64_t stack_offset = 0;
-		int64_t stack_offset_hinted = 0;
+		int64_t sp_offset = 0;
 
-		// Types of variables inherited from the previous block.
+		// Helpers to calculate the stack offset at any position.
 		//
-		bool inherits_stack = false;
-		bool inherits_registers = false;
+		int64_t get_sp_offset( const const_iterator& i = {} ) const
+		{ 
+			// If iterator is invalid (since is_end will return true)
+			// or pointing at the end of the stream, return sp_offset as is.
+			//
+			if ( i.is_end() ) return sp_offset;
+			
+			// Otherwise return the saved sp_offset from the instruction instance.
+			//
+			return i->sp_offset;
+		}
 
 		// List of all basic blocks that this basic
 		// block may possibly jump to.
@@ -223,8 +231,6 @@ namespace vtil
 			//
 			basic_block* blk = new basic_block;
 			blk->entry_vip = entry_vip;
-			blk->inherits_stack = false;
-			blk->inherits_registers = false;
 
 			// Create the routine and assign this block as the entry-point
 			//
@@ -236,9 +242,7 @@ namespace vtil
 			//
 			return blk;
 		}
-		basic_block* fork( vip_t entry_vip,
-						   bool inherits_stack,
-						   bool inherits_registers )
+		basic_block* fork( vip_t entry_vip )
 		{
 
 			// Block cannot be forked before a branching instruction is hit.
@@ -261,25 +265,8 @@ namespace vtil
 				result = new basic_block;
 				result->owner = owner;
 				result->entry_vip = entry_vip;
-				result->inherits_stack = inherits_stack;
-				result->inherits_registers = inherits_registers;
-				result->stack_offset = stack_offset - stack_offset_hinted;
-				result->stack_offset_hinted = 0;
-
-				// Assign the new block as the cached entry.
-				//
+				result->sp_offset = 0;
 				entry = result;
-			}
-			else
-			{
-				// If it did, assert generic properties do not change.
-				//
-#if STRICT_STACK_TRACKING
-				fassert( ( entry->stack_offset - entry->stack_offset_hinted ) ==
-						 ( stack_offset - stack_offset_hinted ) );
-#endif
-				fassert( entry->inherits_stack == inherits_stack );
-				fassert( entry->inherits_registers == inherits_registers );
 			}
 
 			// Fix the links and quit the scope holding the lock.
@@ -308,50 +295,35 @@ namespace vtil
 
 		// Instruction pre-processor
 		//
+		template<bool internal_call = false>
 		void append_instruction( instruction ins )
 		{
-			// Use ::set_sp(...) or ::shift_sp_queued(...) instead when writing into RSP
-			//
-			fassert( !ins.writes_to( X86_REG_RSP ) );
-
-			// Use ::read_sp(...) instead when reading from RSP
-			//
-			fassert( ins.base == &arch::ins::str ||
-					 ins.base == &arch::ins::ldd ||
-					 !ins.reads_from( X86_REG_RSP ) );
+			if constexpr ( !internal_call )
+			{
+				// Use ::read_sp(...) instead when reading from RSP
+				//
+				fassert( ins.base->accesses_memory() || !ins.reads_from( X86_REG_RSP ) );
+			}
 
 			// Instructions cannot be appended after a branching instruction was hit.
 			//
 			fassert( !is_complete() );
 
-			// If instruction is str and we're reading from either non-stack
-			// memory or an external memory, mark volatile.
+			// Write the stack pointer offset.
 			//
-			if ( ins.base == &ins::str )
+			ins.sp_offset = sp_offset;
+
+			// If instruction writes to RSP, reset the queued stack pointer.
+			//
+			if ( ins.writes_to( X86_REG_RSP ) )
 			{
-				if ( ins.operands[ 0 ].reg != X86_REG_RSP ||
-					 ins.operands[ 1 ].i64 > stack_offset )
-				{
-					ins.make_volatile();
-				}
+				sp_offset = 0;
+				ins.sp_reset = true;
 			}
 
 			// Append the instruction to the stream.
 			//
 			stream.push_back( ins );
-
-			// If instruction is writing to an unknown pointer all memory and symbolic 
-			// stack values will be volatile afterwards. Ideally the instruction stream 
-			// translator should generate an expression for this operand and try to rewrite 
-			// it in the form of [RSP + C] where possible.
-			//
-			if ( ins.base == &ins::str && 
-				 ins.operands[ 0 ].reg != X86_REG_RSP )
-			{
-				// Hint that all memory is volatile afterwards.
-				//
-				vhmemv();
-			}
 		}
 
 		// Lazy wrappers for every instruction
@@ -425,8 +397,8 @@ namespace vtil
 		WRAP_LAZY( vcmp0 );
 		WRAP_LAZY( vpinr );
 		WRAP_LAZY( vpinw );
-		WRAP_LAZY( vhmemv );
-		WRAP_LAZY( vhspsh );
+		WRAP_LAZY( vpinrm );
+		WRAP_LAZY( vpinwm );
 #undef WRAP_LAZY
 
 		// Queues a stack shift.
@@ -438,75 +410,7 @@ namespace vtil
 			// Queued stack pointer changes will be processed
 			// in bulk at the end of the routine.
 			//
-			stack_offset += offset;
-			return this;
-		}
-
-		// Shifts the stack pointer immediately.
-		//
-		auto* shift_sp( int64_t offset )
-		{
-			// Skip if no-op.
-			//
-			if ( !offset ) 
-				return this;
-
-			// Append a VHINTSPSH Imm64.
-			//
-			vhspsh( offset );
-
-			// Queue stack shift.
-			//
-			shift_sp_queued( offset );
-
-			// Let the stream know that we added a hint for this
-			// shift already.
-			//
-			stack_offset_hinted += offset;
-			return this;
-		}
-
-		// Changes the stack pointer. Ideally the instruction stream 
-		// translator should generate an expression for this operand and try to rewrite 
-		// it in the form of [RSP + C] where possible, and call ::shift_sp(...) instead.
-		//
-		template<typename T>
-		auto* set_sp( const T& _op )
-		{
-			operand op = prepare_operand( _op );
-
-			// Skip if no-op.
-			//
-			if ( op.reg == X86_REG_RSP )
-				return this;
-
-			// Append a explicitly volatile [MOV RSP, Reg/Imm64]
-			//
-			stream.push_back( instruction{ &ins::mov, { register_view{ X86_REG_RSP }, op } }.make_volatile() );
-
-			// Append a VHMEMV
-			//
-			vhmemv();
-
-#if STRICT_STACK_TRACKING
-			// Assert that stack was balanced prior to the execution
-			// of this instruction.
-			//
-			fassert( stack_offset == stack_offset_hinted );
-			stack_offset = 0;
-			stack_offset_hinted = 0;
-#else
-			// Reset stack offset whilist keeping the alignment property
-			// intact. If stack pointer was not aligned, we'll set
-			// +8 as the new stack pointer and hint the actual value 
-			// to the compiler instead.
-			//
-			stack_offset = stack_offset & 8;
-			stack_offset_hinted = 0;
-			if ( stack_offset )
-				vhspsh( -stack_offset );
-#endif
-
+			sp_offset += offset;
 			return this;
 		}
 
@@ -518,7 +422,7 @@ namespace vtil
 		{
 			operand op = prepare_operand( _op );
 			shift_sp_queued( op.size() < stack_alignment ? -stack_alignment : -op.size() );
-			str( X86_REG_RSP, stack_offset, op );
+			str( X86_REG_RSP, sp_offset, op );
 			return this;
 		}
 
@@ -529,8 +433,9 @@ namespace vtil
 		auto* pop( const T& _op )
 		{
 			operand op = prepare_operand( _op );
-			ldd( op, X86_REG_RSP, stack_offset );
+			int64_t offset = sp_offset;
 			shift_sp_queued( op.size() < stack_alignment ? stack_alignment : op.size() );
+			ldd( op, X86_REG_RSP, offset );
 			return this;
 		}
 
@@ -542,8 +447,8 @@ namespace vtil
 		{
 			operand op = prepare_operand( _op );
 			fassert( op.size() == 8 );
-			stream.push_back( { &ins::mov, { op, register_view{ X86_REG_RSP } } } );
-			stream.push_back( { &ins::add, { op, make_imm( stack_offset )} } );
+			append_instruction<true>( { &ins::mov, { op, register_view{ X86_REG_RSP } } } );
+			append_instruction<true>( { &ins::add, { op, make_imm( sp_offset )} } );
 			return this;
 		}
 

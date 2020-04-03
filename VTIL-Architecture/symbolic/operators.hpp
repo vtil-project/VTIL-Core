@@ -64,11 +64,6 @@ namespace vtil::symbolic
 
 		// Special operands for simplification instructions:
 		//
-		
-		// Variable resize:
-		// - Hints the output that variable was resized.
-		//
-		{ "__new",   "",    false,    true,      0,           -1,     },
 
 		// Bit-Count Normalize:
 		// - Evaluates to op#1 % bcnt(op#2) [Note: Will only match if op#1 >= bcnt(op#2) || op#1 < 0]

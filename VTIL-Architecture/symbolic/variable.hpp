@@ -134,7 +134,6 @@ namespace vtil::symbolic
 		bool operator!=( const unique_identifier& o ) const { return name != o.name; }
 	};
 
-
 	// Describes a variable that will be used in a symbolic expression.
 	//
 	struct variable
@@ -228,49 +227,73 @@ namespace vtil::symbolic
 		int32_t get_sp() const { return uid.get_sp(); }
 		register_view get_reg() const { register_view reg = uid.get_reg(); fassert( size == reg.size ); return reg; }
 
+		// Instead of using the size variable as is, this function 
+		// calculates minimum equivalent size if the constant is an
+		// any-size special.
+		//
+		uint8_t calc_size( bool sign ) const
+		{
+			if ( size ) return size;
+			
+			if ( sign )
+			{
+				if ( get<true>( 1 ) == _i64 )		return 1;
+				else if ( get<true>( 2 ) == _i64 )	return 2;
+				else if ( get<true>( 4 ) == _i64 )	return 4;
+				else if ( get<true>( 8 ) == _i64 )	return 8;
+			}
+			else
+			{
+				if ( get( 1 ) == _u64 )				return 1;
+				else if ( get( 2 ) == _u64 )		return 2;
+				else if ( get( 4 ) == _u64 )		return 4;
+				else if ( get( 8 ) == _u64 )		return 8;
+			} 
+			unreachable();
+		}
+
 		// Getter for value:
 		//
-		template<bool ret_signed = false>
+		template<bool sign = false>
 		auto get( uint8_t new_size = 0 ) const
 		{
 			uint8_t out_size = size;
 			if ( out_size == 0 || ( new_size != 0 && new_size < out_size ) )
 				out_size = new_size;
 
-			if constexpr ( ret_signed )
+			if constexpr ( sign )
 			{
 				switch ( out_size )
 				{
-					case 0: case 8: return _i64; break;
-					case 1: return ( int64_t ) *( int8_t* ) &_i64; break;
-					case 2: return ( int64_t ) *( int16_t* ) &_i64; break;
-					case 4: return ( int64_t ) *( int32_t* ) &_i64; break;
-					default: unreachable();
+					case 0: case 8: return _i64;						break;
+					case 1: return ( int64_t ) *( int8_t* ) &_i64;		break;
+					case 2: return ( int64_t ) *( int16_t* ) &_i64;		break;
+					case 4: return ( int64_t ) *( int32_t* ) &_i64;		break;
 				}
 			}
 			else
 			{
 				switch ( out_size )
 				{
-					case 0: case 8: return _u64; break;
-					case 1: return ( uint64_t ) *( uint8_t* ) &_u64; break;
-					case 2: return ( uint64_t ) *( uint16_t* ) &_u64; break;
-					case 4: return ( uint64_t ) *( uint32_t* ) &_u64; break;
-					default: unreachable();
+					case 0: case 8: return _u64;						break;
+					case 1: return ( uint64_t ) *( uint8_t* ) &_u64;	break;
+					case 2: return ( uint64_t ) *( uint16_t* ) &_u64;	break;
+					case 4: return ( uint64_t ) *( uint32_t* ) &_u64;	break;
 				}
 			}
+			unreachable();
 		}
 
 		// Converts the variable into human-readable format.
 		//
 		std::string to_string() const
 		{
-			return is_symbolic() ? uid.to_string() : format::hex( get<true>(size) );
+			return is_symbolic() ? uid.to_string() : format::hex( get<false>() );
 		}
 
 		// Basic comparison operators.
 		//
-		bool operator==( const variable& o ) const { return uid == o.uid && ( is_symbolic() || ( (size && o.size) ? size == o.size && get() == o.get() : get<true>() == o.get<true>() ) ); }
+		bool operator==( const variable& o ) const { return( uid == o.uid && size == o.size ) && ( is_symbolic() ? size == o.size : get() == o.get() ); }
 		bool operator!=( const variable& o ) const { return !operator==( o ); }
 		bool operator<( const variable& o ) const 
 		{ 

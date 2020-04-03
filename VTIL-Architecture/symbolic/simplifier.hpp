@@ -22,6 +22,12 @@ namespace vtil::symbolic
 		if ( input.is_simplest_form )
 			return input;
 
+		// Simplify children.
+		//
+		expression exp = input;
+		for ( auto& op : exp.operands )
+			op = simplify( op, simplified );
+
 		// Try evaluating current expression, if we could
 		// return it as is.
 		//
@@ -31,32 +37,9 @@ namespace vtil::symbolic
 			return eval.value();
 		}
 
-		// Simplify children.
-		//
-		expression exp = input;
-		for ( auto& op : exp.operands )
-			op = simplify( op, simplified );
-
-		// For each simplified form:
-		//
-		for ( auto& pair : rules::simplified_form )
-		{
-			// Check if our tree matches the input format:
-			//
-			auto new_exp = rules::remap_equivalent( exp, pair.first, pair.second );
-			if ( new_exp.is_valid() )
-			{
-				// Simplify children again and assign the equivalent.
-				//
-				exp = new_exp;
-				for ( auto& op : exp.operands )
-					op = simplify( op );
-				if( simplified ) *simplified = true;
-			}
-		}
-
 		// For each alternate form:
 		//
+		std::vector<std::pair<size_t, expression>> forms;
 		size_t complexity_0 = exp.complexity();
 		for ( auto& pair : rules::alternate_forms )
 		{
@@ -75,7 +58,7 @@ namespace vtil::symbolic
 				bool sub_simplified = false;
 				for ( auto& op : new_exp.operands )
 					op = simplify( op, &sub_simplified );
-				
+
 				// If complexity did not change but we've
 				// simplified any operands at all, return the
 				// new expression as is.
@@ -93,6 +76,22 @@ namespace vtil::symbolic
 				{
 					return simplify( new_exp );
 				}
+			}
+		}
+
+		// For each simplified form:
+		//
+		for ( auto& pair : rules::simplified_form )
+		{
+			// Check if our tree matches the input format:
+			//
+			auto new_exp = rules::remap_equivalent( exp, pair.first, pair.second );
+			if ( new_exp.is_valid() )
+			{
+				// Recurse.
+				//
+				if ( simplified ) *simplified = true;
+				return simplify( new_exp );
 			}
 		}
 

@@ -9,8 +9,19 @@
 
 namespace vtil::debug
 {
-	void dump( const instruction& ins, int32_t sp = 0 )
+	void dump( const instruction& ins, const instruction* prev = nullptr )
 	{
+		// Print stack pointer offset
+		//
+		if ( ins.sp_reset )
+			io::log<CON_PRP>( ">%c0x%-4x ", ins.sp_offset >= 0 ? '+' : '-', abs( ins.sp_offset ) );
+		else if ( ( prev ? prev->sp_offset : 0 ) == ins.sp_offset )
+			io::log<CON_DEF>( "%c0x%-4x  ", ins.sp_offset >= 0 ? '+' : '-', abs( ins.sp_offset ) );
+		else if ( ( prev ? prev->sp_offset : 0 ) > ins.sp_offset )
+			io::log<CON_RED>( "%c0x%-4x  ", ins.sp_offset >= 0 ? '+' : '-', abs( ins.sp_offset ) );
+		else
+			io::log<CON_BLU>( "%c0x%-4x  ", ins.sp_offset >= 0 ? '+' : '-', abs( ins.sp_offset ) );
+
 		// Print name
 		//
 		if ( ins.is_volatile() )
@@ -34,10 +45,12 @@ namespace vtil::debug
 			else
 			{
 				fassert( op.is_immediate() );
-				if ( ( ins.base == &arch::ins::ldd && &op == &ins.operands[ 2 ] ) ||
-					( ins.base == &arch::ins::str && &op == &ins.operands[ 1 ] ) )
+
+				if ( ins.base->memory_operand_index  != -1 &&
+					 &ins.operands[ ins.base->memory_operand_index + 1 ] == &op &&
+					 ins.operands[ ins.base->memory_operand_index ].reg == X86_REG_RSP )
 				{
-					if ( op.i64 >= sp )
+					if ( op.i64 >= 0 )
 						io::log<CON_YLW>( FMT_INS_OPR " ", format::hex( op.i64 ) );			 // External stack
 					else
 						io::log<CON_BRG>( FMT_INS_OPR " ", format::hex( op.i64 ) );			 // VM stack
@@ -70,16 +83,10 @@ namespace vtil::debug
 		io::log<CON_DEF>( "Entry point VIP:       " );
 		io::log<CON_CYN>( "0x%llx\n", blk->entry_vip );
 		io::log<CON_DEF>( "Stack pointer:         " );
-
-		if ( blk->stack_offset < 0 )
-			io::log<CON_RED>( "%s (%s handled)\n", format::hex( blk->stack_offset ), format::hex( blk->stack_offset_hinted ) );
+		if ( blk->sp_offset < 0 )
+			io::log<CON_RED>( "%s\n", format::hex( blk->sp_offset ) );
 		else
-			io::log<CON_GRN>( "%s (%s handled)\n", format::hex( blk->stack_offset ), format::hex( blk->stack_offset_hinted ) );
-
-		io::log<CON_DEF>( "Inherited stack?:      " ); 
-		end_with_bool( blk->inherits_stack );
-		io::log<CON_DEF>( "Inherited registers?:  " ); 
-		end_with_bool( blk->inherits_registers );
+			io::log<CON_GRN>( "%s\n", format::hex( blk->sp_offset ) );
 		io::log<CON_DEF>( "Already visited?:      " ); 
 		end_with_bool( blk_visited );
 		io::log<CON_DEF>( "------------------------\n" );
@@ -90,14 +97,14 @@ namespace vtil::debug
 		// Print each instruction
 		//
 		int ins_idx = 0;
-		for ( auto& ins : blk->stream )
+		for ( auto it = blk->begin(); it != blk->end(); it++, ins_idx++ )
 		{
-			io::log<CON_BLU>( "%04d: ", ins_idx++ );
-			if ( ins.vip == invalid_vip )
+			io::log<CON_BLU>( "%04d: ", ins_idx );
+			if ( it->vip == invalid_vip )
 				io::log<CON_DEF>( "[PSEUDO] " );
 			else
-				io::log<CON_DEF>( "[%06x] ", ins.vip );
-			dump( ins, blk->stack_offset );
+				io::log<CON_DEF>( "[%06x] ", it->vip );
+			dump( *it, it.is_begin() ? nullptr : &*std::prev( it ) );
 		}
 
 		// Dump each branch as well

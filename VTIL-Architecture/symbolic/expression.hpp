@@ -123,6 +123,23 @@ namespace vtil::symbolic
 			} );
 		}
 
+		// Checks if the expression is normalized.
+		//
+		bool is_normalized( bool sym_only = false, uint8_t size = 0 ) const
+		{
+			if ( !size ) size = this->size();
+
+			if ( is_variable() )
+				return ( sym_only && !value->is_symbolic() ) || value->size == size;
+			else if ( !operands[ 0 ].is_normalized( sym_only, size ) )
+				return false;
+			else if ( fn->result_size == 0 || fn->is_unary )
+				return true;
+			else
+				return operands[ 1 ].is_normalized( sym_only, size );
+		}
+
+
 		// Returns the size of the output value.
 		//
 		uint8_t size() const
@@ -149,8 +166,11 @@ namespace vtil::symbolic
 			//
 			uint8_t s0 = operands[ 0 ].size();
 			uint8_t s1 = operands[ 1 ].size();
-			if ( !s0 ) return s1;
-			if ( !s1 ) return s0;
+			
+			if ( !s0 ) 
+				s0 = operands[ 1 ].value->calc_size( fn->is_bitwise );
+			if ( !s1 )
+				s1 = operands[ 1 ].value->calc_size( !fn->is_bitwise );
 
 			// Process according to the operator definition.
 			//
@@ -162,7 +182,7 @@ namespace vtil::symbolic
 
 		// Changes the size of the output value.
 		//
-		void resize( uint8_t size )
+		expression& resize( uint8_t size )
 		{
 			// If variable, resize it:
 			//
@@ -197,6 +217,7 @@ namespace vtil::symbolic
 			// Declare that the expression was changed.
 			//
 			declare_changed();
+			return *this;
 		}
 
 		// Returns an arbitrary value that represents the "complexity"
@@ -211,8 +232,6 @@ namespace vtil::symbolic
 
 			// Exceptional operators:
 			//
-			if ( fn->function == "__new" )
-				return operands[ 0 ].complexity();
 			if ( fn->function == "__bcnt" ||
 				 fn->function == "__bcntN" ||
 				 fn->function == "__bmask" )
