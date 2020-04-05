@@ -7,15 +7,6 @@
 #include "platform.hpp"
 #pragma comment(lib, "capstone_i.lib")
 
-constexpr x86_reg	VMP_PSEUDO_RET_ADR =		x86_reg( X86_REG_ENDING + 1 );
-constexpr x86_reg	VMP_PSEUDO_STUB_RET_ADR =	x86_reg( X86_REG_ENDING + 2 );
-constexpr x86_reg	VMP_PSEUDO_EP_VIP_CRYPT =	x86_reg( X86_REG_ENDING + 3 );
-constexpr x86_reg	VMP_PSEUDO_RELOC_DELTA =	x86_reg( X86_REG_ENDING + 4 );
-constexpr x86_reg	VMP_PSEUDO_REG_ENDING =		x86_reg( X86_REG_ENDING + 5 );
-
-constexpr x86_insn	VMP_PSEUDO_LOADC =			x86_insn( X86_INS_ENDING + 1 );
-constexpr x86_insn	VMP_PSEUDO_INS_ENDING =		x86_insn( X86_REG_ENDING + 2 );
-
 namespace capstone
 {
 	struct instruction
