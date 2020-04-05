@@ -339,7 +339,7 @@ namespace vtil
 
 #define WRAP_LAZY(x)																											\
 		template<typename ...Ts>																								\
-		auto* x ( Ts... operands )																								\
+		basic_block* x ( Ts... operands )																								\
 		{																														\
 			append_instruction( instruction{ &ins:: x, std::vector<operand>( { prepare_operand(operands)... } ) } );			\
 			return this;																										\
@@ -381,7 +381,7 @@ namespace vtil
 
 		// Queues a stack shift.
 		//
-		auto* shift_sp( int64_t offset, iterator it = {} )
+		basic_block* shift_sp( int64_t offset, iterator it = {} )
 		{
 			// If an iterator is provided, shift the stack pointer
 			// for every instruction that precedes it as well.
@@ -406,10 +406,6 @@ namespace vtil
 						fassert( it->operands[ it->base->memory_operand_index + 1 ].is_immediate() );
 						it->operands[ it->base->memory_operand_index + 1 ].i64 += offset;
 					}
-					else
-					{
-						unreachable();
-					}
 				}
 
 				// If stack changed changed, return, else forward the iterator.
@@ -433,9 +429,19 @@ namespace vtil
 		// shift in stack pointer.
 		//
 		template<typename T, uint8_t stack_alignment = 2>
-		auto* push( const T& _op )
+		basic_block* push( const T& _op )
 		{
 			operand op = prepare_operand( _op );
+
+			// Handle RSP specially since we change the stack pointer
+			// before the instruction begins.
+			//
+			if ( op.is_register() && op.reg.base == X86_REG_RSP )
+			{
+				auto t0 = tmp( 8 );
+				return mov( t0, op )->push( t0 );
+			}
+			
 			shift_sp( op.size() < stack_alignment ? -stack_alignment : -op.size() );
 			str( X86_REG_RSP, sp_offset, op );
 			return this;
@@ -445,9 +451,19 @@ namespace vtil
 		// shift in stack pointer.
 		//
 		template<typename T, uint8_t stack_alignment = 2>
-		auto* pop( const T& _op )
+		basic_block* pop( const T& _op )
 		{
 			operand op = prepare_operand( _op );
+
+			// Handle RSP specially since we change the stack pointer
+			// before the instruction begins.
+			//
+			if ( op.is_register() && op.reg.base == X86_REG_RSP )
+			{
+				auto t0 = tmp( 8 );
+				return pop( t0 )->mov( op, t0 );
+			}
+
 			int64_t offset = sp_offset;
 			shift_sp( op.size() < stack_alignment ? stack_alignment : op.size() );
 			ldd( op, X86_REG_RSP, offset );
@@ -457,14 +473,14 @@ namespace vtil
 		// Pushes current flags value up the stack queueing the
 		// shift in stack pointer.
 		//
-		auto* pushf()
+		basic_block* pushf()
 		{
 			return push( X86_REG_EFLAGS );
 		}
 
 		// Emits an entire instruction using series of VEMITs.
 		//
-		auto* vemits( const std::string& assembly )
+		basic_block* vemits( const std::string& assembly )
 		{
 			auto res = assemble( assembly );
 			fassert( !res.empty() );
