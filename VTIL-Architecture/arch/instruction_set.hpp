@@ -162,8 +162,8 @@ namespace vtil::arch
         /*                                          [Name]        [Operands...]                                     [ASizeOp]   [Volatile]  [Operator]  [BranchOps] [MemOps]     */
         static const instruction_desc mov =        { "mov",        { write,        read_any                   },    2,          false,      {},         {},         {}           };
         static const instruction_desc movr =       { "movr",       { write,        read_imm                   },    2,          false,      {},         {},         {}           };
-        static const instruction_desc str =        { "str",        { read_reg,     read_imm,        read_any  },    1,          false,      {},         {},         { 1, true }  };
-        static const instruction_desc ldd =        { "ldd",        { write,        read_reg,        read_imm  },    2,          false,      {},         {},         { 2, false } };
+        static const instruction_desc str =        { "str",        { read_reg,     read_imm,        read_any  },    3,          false,      {},         {},         { 1, true }  };
+        static const instruction_desc ldd =        { "ldd",        { write,        read_reg,        read_imm  },    1,          false,      {},         {},         { 2, false } };
         /*-----------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
 
         //    -- Arithmetic instructions
