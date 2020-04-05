@@ -42,9 +42,10 @@ namespace vtil
 
 		// The offset of current stack pointer from the last 
 		// [MOV RSP, <>] if applicable, or the beginning of 
-		// the basic block and whether it was reset or not.
+		// the basic block and the index of the stack instance.
 		//
 		int64_t sp_offset = 0;
+		uint32_t sp_index = 0;
 		bool sp_reset = false;
 
 		// Whether the instruction was explicitly declared volatile.
@@ -132,7 +133,7 @@ namespace vtil
 
 		// Returns the access size of the instruction.
 		//
-		size_t access_size() const { return operands.empty() ? 0 : operands[ base->access_size_index ].size(); }
+		uint8_t access_size() const { return operands.empty() ? 0 : operands[ base->access_size_index ].size(); }
 
 		// Returns all memory accesses matching the criteria.
 		//

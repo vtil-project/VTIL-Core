@@ -172,9 +172,10 @@ namespace vtil
 
 		// The offset of current stack pointer from the last 
 		// [MOV RSP, <>] if applicable, or the beginning of 
-		// the basic block.
+		// the basic block and the index of the stack instance.
 		//
 		int64_t sp_offset = 0;
+		uint32_t sp_index = 0;
 
 		// List of all basic blocks that this basic
 		// block may possibly jump to.
@@ -287,15 +288,17 @@ namespace vtil
 			//
 			fassert( !is_complete() );
 
-			// Write the stack pointer offset.
+			// Write the stack pointer details.
 			//
 			ins.sp_offset = sp_offset;
+			ins.sp_index = sp_index;
 
 			// If instruction writes to RSP, reset the queued stack pointer.
 			//
 			if ( ins.writes_to( X86_REG_RSP ) )
 			{
 				sp_offset = 0;
+				sp_index++;
 				ins.sp_reset = true;
 			}
 
@@ -381,14 +384,36 @@ namespace vtil
 
 		// Queues a stack shift.
 		//
-		basic_block* shift_sp( int64_t offset, iterator it = {} )
+		basic_block* shift_sp( int64_t offset, bool merge_instance = false, iterator it = {} )
 		{
+			// If requested, shift the stack index first.
+			//
+			if ( merge_instance )
+			{
+				// Assert instruction at iterator indeed resets stack pointer.
+				//
+				fassert( !it.is_end() && it->sp_reset );
+				
+				// Decrement stack index for each instruction afterwards.
+				//
+				for ( auto i = std::next( it ); !i.is_end(); i++ )
+					i->sp_index--;
+				sp_index--;
+				
+				// Remove the reset flag and merge the offsets.
+				//
+				it->sp_reset = false;
+				offset += it->sp_offset;
+				it->sp_offset = 0;
+			}
+
 			// If an iterator is provided, shift the stack pointer
 			// for every instruction that precedes it as well.
 			//
+			std::optional<uint32_t> sp_index_prev;
 			while ( !it.is_end() )
 			{
-				// Shift the sp_offset field.
+				// Shift the stack offset accordingly.
 				//
 				it->sp_offset += offset;
 
@@ -410,10 +435,10 @@ namespace vtil
 
 				// If stack changed changed, return, else forward the iterator.
 				//
-				if ( it->sp_reset )
+				if ( sp_index_prev.value_or( it->sp_index ) != it->sp_index )
 					return this;
-				else 
-					it++;
+				sp_index_prev = it->sp_index;
+				++it;
 			}
 
 			// Shift the stack pointer and continue as usual
