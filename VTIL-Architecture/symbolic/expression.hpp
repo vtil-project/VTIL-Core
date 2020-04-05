@@ -1,6 +1,4 @@
 #pragma once
-#define SYMEX_IMPLICIT_RESIZE		1
-
 #include <vector>
 #include <optional>
 #include <functional>
@@ -125,55 +123,43 @@ namespace vtil::symbolic
 
 		// Checks if the expression is normalized.
 		//
-		bool is_normalized( bool sym_only = false, uint8_t size = 0 ) const
+		bool is_normalized() const
 		{
-			if ( !size ) size = this->size();
-
-			if ( is_variable() )
-				return ( sym_only && !value->is_symbolic() ) || value->size == size;
-			else if ( !operands[ 0 ].is_normalized( sym_only, size ) )
-				return false;
-			else if ( fn->result_size == 0 || fn->is_unary )
+			if ( is_variable() || fn->is_unary || fn->result_size == 0 )
 				return true;
-			else
-				return operands[ 1 ].is_normalized( sym_only, size );
+			uint8_t s0 = operands[ 0 ].size();
+			uint8_t s1 = operands[ 1 ].size();
+			return s0 == 0 || s1 == 0 || s0 == s1;
 		}
-
 
 		// Returns the size of the output value.
 		//
-		uint8_t size() const
+		uint8_t size( bool real_size = false ) const
 		{
 			// If variable, return size as is.
 			//
 			if ( is_variable() )
-				return value->size;
+				return value->calc_size( false );
+
+			if ( fn->function == "__ext" && !real_size )
+				return operands[ 1 ].value->get();
 
 			// Exceptional operators:
 			//
 			if ( fn->function == "__bcnt" ||
 				 fn->function == "__bcntN" )
-				return 0;
+				return 1;
 
 			// If unary operator or result size is first operand,
 			// redirect to the first operand.
 			//
 			if ( fn->is_unary || fn->result_size == 0 )
-				return operands[ 0 ].size();
-
-			// If any of the operands contain a <any_size> variable,
-			// return the other alternative.
-			//
-			uint8_t s0 = operands[ 0 ].size();
-			uint8_t s1 = operands[ 1 ].size();
-			
-			if ( !s0 ) 
-				s0 = operands[ 1 ].value->calc_size( fn->is_bitwise );
-			if ( !s1 )
-				s1 = operands[ 1 ].value->calc_size( !fn->is_bitwise );
+				return operands[ 0 ].size( real_size );
 
 			// Process according to the operator definition.
 			//
+			uint8_t s0 = operands[ 0 ].size( real_size );
+			uint8_t s1 = operands[ 1 ].size( real_size );
 			if ( fn->result_size == 1 )
 				return std::max( s0, s1 );
 			else
@@ -182,35 +168,59 @@ namespace vtil::symbolic
 
 		// Changes the size of the output value.
 		//
-		expression& resize( uint8_t size )
+		expression& resize( uint8_t size, bool implicit )
 		{
+			// Can't resize to <any size>
+			//
+			if ( size == 0 )
+				return *this;
+
 			// If variable, resize it:
 			//
 			if ( is_variable() )
 			{
-				value->size = size;
-				if( value->is_symbolic() )
-					fassert( SYMEX_IMPLICIT_RESIZE );
+				if ( value->is_symbolic() )
+				{
+					if ( value->size == size ) 
+						return *this;
+
+					if ( implicit )
+						value->resize( size );
+					else
+						*this = expression( *this, find_opr( "__ext" ), variable( size ) );
+				}
 				else
-					value = { value->get( size ), size };
+				{
+					value->resize( size );
+				}
+				return *this;
 			}
 			// If result of an operator:
 			//
 			else
 			{
+				// If function is ext, change the size.
+				//
+				if ( fn->function == "__ext" )
+				{
+					if ( implicit )
+						*this = operands[ 0 ].resize( size, implicit );
+					else
+						operands[ 1 ] = { size };
+				}
 				// If unary operator or result size is first operand,
 				// redirect to the first operand.
 				//
-				if ( fn->is_unary || fn->result_size == 0 )
+				else if ( fn->is_unary || fn->result_size == 0 )
 				{
-					operands[ 0 ].resize( size );
+					operands[ 0 ].resize( size, implicit );
 				}
 				// Otherwise, resize both.
 				//
 				else
 				{
-					operands[ 0 ].resize( size );
-					operands[ 1 ].resize( size );
+					operands[ 0 ].resize( size, implicit );
+					operands[ 1 ].resize( size, implicit );
 				}
 			}
 
@@ -232,6 +242,9 @@ namespace vtil::symbolic
 
 			// Exceptional operators:
 			//
+			if ( fn->function == "__bcntN" ||
+				 fn->function == "__ext" )
+				return operands[ 0 ].complexity();
 			if ( fn->function == "__bcnt" ||
 				 fn->function == "__bcntN" ||
 				 fn->function == "__bmask" )
@@ -272,6 +285,9 @@ namespace vtil::symbolic
 			if ( is_variable() )
 				return is_constant() ? value : std::nullopt;
 
+			if ( fn->function == "__ext" )
+				return operands[ 0 ].evaluate();
+
 			auto operands_n = operands;
 			size_t ns = size();
 
@@ -279,10 +295,10 @@ namespace vtil::symbolic
 			if ( fn->function == "__bcnt" )
 				return variable{ operands_n[ 0 ].size() * 8, ns };
 			else if ( fn->function == "__bmask" )
-				return variable{ ~0ull >> ( 64 - operands_n[ 0 ].size() * 8 ), operands_n[ 0 ].size() };
+				return variable{ ~0ull >> ( 64 - operands_n[ 0 ].size() * 8 ), ns };
 
 			variable o1;
-			if ( auto r = operands_n[0].evaluate() ) o1 = r.value();
+			if ( auto r = operands_n[ 0 ].evaluate() ) o1 = r.value();
 			else return {};
 
 			if ( fn->function == "neg" )
@@ -292,7 +308,7 @@ namespace vtil::symbolic
 
 			// ------- Binary operators ------- //
 			if ( fn->function == "__bcntN" )
-				return variable{ uint8_t( ( o1.get() ) % ( operands_n[ 1 ].size() * 8 ) ), ns };
+				return variable{ uint8_t( ( o1.get() ) % ( operands_n[ 1 ].size() * 8 ) ), operands_n[ 0 ].size() };
 
 			variable o2;
 			if ( auto r = operands_n[ 1 ].evaluate() ) o2 = r.value();
@@ -352,6 +368,11 @@ namespace vtil::symbolic
 		//
 		bool operator==( const expression& o ) const 
 		{
+			if ( o.is_expression() && o.fn->function == "__ext" )
+				return o.operands[ 0 ] == *this;
+			if ( is_expression() && fn->function == "__ext" )
+				return o == operands[ 0 ];
+
 			if ( o.is_variable() )
 				return is_variable() && value == o.value;
 			else

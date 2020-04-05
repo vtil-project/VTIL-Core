@@ -79,6 +79,11 @@ namespace vtil::symbolic
 		// - Evaluates to size op#1
 		//
 		{ "__bcnt",  "",     true,    true,       0,           0,     },
+
+		// Extension:
+		// - Hints that op#1 was extended.
+		//
+		{ "__ext",  "",     false,    true,       0,           0,     },
 	};
 
 	// Searcher for an operator within the string provided.

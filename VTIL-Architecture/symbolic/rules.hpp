@@ -8,19 +8,20 @@ namespace vtil::symbolic::rules
 {
 	// Symbolic variables used in rule creation:
 	//
-	static const expression A = { { L"α", 0 } };
-	static const expression B = { { L"β", 0 } };
-	static const expression C = { { L"λ", 0 } };
+	static const expression A = { { "α", 0 } };
+	static const expression B = { { "β", 0 } };
+	static const expression C = { { "λ", 0 } };
 
 	// Special variables:
 	//
-	static const expression X = { { L"Σ", 0 } };
-	static const expression Q = { { L"Ω", 0 } };
-	static const expression S = { { L"π", 0 } }; // Does not accept constants.
-	static const expression U = { { L"μ", 0 } }; // Only accepts constants.
+	static const expression X = { { "Σ", 0 } };
+	static const expression Q = { { "Ω", 0 } };
+	static const expression V = { { "π", 0 } }; // Does not accept constants.
+	static const expression U = { { "μ", 0 } }; // Only accepts constants.
 
 	// Special functions used in rule creation:
 	//
+	static const auto ext = [ ] ( const expression& a, const expression& b ) { return expression( a, find_opr( "__ext" ), b ); };
 	static const auto bmask = [ ] ( const expression& a ) { return expression( find_opr( "__bmask" ), a ); };
 	static const auto bcnt = [ ] ( const expression& a ) { return expression( find_opr( "__bcnt" ), a ); };
 	static const auto bcntN = [ ] ( const expression& a, const expression& b ) { return expression( a, find_opr( "__bcntN" ), b ); };
@@ -53,16 +54,18 @@ namespace vtil::symbolic::rules
 		{ (A<<bcntN(B,A))|(A>>(bcntN(-B,A))), A.rol(B) },	//
 		{ (A>>bcntN(Q,A))>>bcntN(X,A), A>>(X+Q) },			// merge {imm shift x2}
 		{ (A<<bcntN(Q,A))<<bcntN(X,A), A<<(X+Q) },			//
-		{ (A>>S)|(A<<(bcnt(A)-S)), A.ror(S) },				// [var shift -> var rotation]
-		{ (A<<S)|(A>>(bcnt(A)-S)), A.rol(S) },				//
+		{ (A>>V)|(A<<(bcnt(A)-V)), A.ror(V) },				// [var shift -> var rotation]
+		{ (A<<V)|(A>>(bcnt(A)-V)), A.rol(V) },				//
 		{ A.rol(bcntN(Q,A)), A.rol(Q) },					// normalize {imm rotation}
 		{ A.ror(bcntN(Q,A)), A.ror(Q) },					//
-		//{ A>>bcntN(Q,A), A>>Q },							// noramlize {imm shift}
-		//{ A<<bcntN(Q,A), A<<Q },							//
 		{ A>>bcntN(Q,A), {0} },								// noramlize {imm shift}
 		{ A<<bcntN(Q,A), {0} },								//
 		{ (A<<B)>>B, A&(bmask(A)>>B)},
 		{ (A>>B)<<B, A&(bmask(A)<<B)},
+		
+		// Special extended rules
+		//
+		{ ext(A, B)>>bcntN(Q,A), {0} },						// take in the real size into account when shifting
 
 		// Constant result
 		//
@@ -93,10 +96,6 @@ namespace vtil::symbolic::rules
 		{ A&(A|B),	A },
 		{ A|(A&B),	A },
 		
-		{ ((A&X)|(B&Q))&(A|B),	(A&X)|(B&Q) },
-		{ ((A&X)|(B&Q))&(A|B),	(A&X)|(B&Q) },
-		{ ((A|X)&(B|Q))|(A&B),	(A|X)&(B|Q) },
-		{ ((A|X)&(B|Q))|(A&B),	(A|X)&(B|Q) },
 		// XOR|NAND|NOR -> NOT conversion
 		//
 		{ A^bmask(A), ~A },
@@ -109,9 +108,9 @@ namespace vtil::symbolic::rules
 		{ (A&(~B))|((~A)&B), A^B },
 		{ ~((~(A|B))|(A&B)), A^B },
 		
-		// Prefer NEG over SUB
+		// Prefer SUB over NEG
 		//
-		//{ A-B,	A+(-B) },
+		{ A+(-B), A-B },
 
 		// ADD to OR
 		//
@@ -121,46 +120,39 @@ namespace vtil::symbolic::rules
 	// All alternate forms:
 	// - Note: Both sides should contain the same amount of unknowns.
 	//
-	static const std::map<expression, expression> alternate_forms = 
+	static const std::map<expression, std::vector<expression>> alternate_forms = 
 	{
-		// Distribute shift over bitwise operators
+		// Distribute bitwise operators
 		//
-		{ (A&B)>>C,	(A>>C)&(B>>C) },
-		{ (A&B)<<C,	(A<<C)&(B<<C) },
-		{ (A|B)>>C,	(A>>C)|(B>>C) },
-		{ (A|B)<<C,	(A<<C)|(B<<C) },
-		{ (A^B)>>C,	(A>>C)^(B>>C) },
-		{ (A^B)<<C,	(A<<C)^(B<<C) },
-
-		// Generic distribution
-		//
-		{ ~(A&B), (~A)|(~B) },
-		{ ~(A|B), (~A)&(~B) },
-		{ ~(A^B), (~A)^B },
-		{ ~(A^B),  A^(~B) },
-
-		{ A&(B|C), (A&B)|(A&C) },
-		{ A|(B&C), (A|B)&(A|C) },
+		{ (A&B)>>C,	{ (A>>C)&(B>>C) } },
+		{ (A&B)<<C,	{ (A<<C)&(B<<C) } },
+		{ (A|B)>>C,	{ (A>>C)|(B>>C) } },
+		{ (A|B)<<C,	{ (A<<C)|(B<<C) } },
+		{ (A^B)>>C,	{ (A>>C)^(B>>C) } },
+		{ (A^B)<<C,	{ (A<<C)^(B<<C) } },
+		{ ~(A&B), { (~A)|(~B) } },
+		{ ~(A|B), { (~A)&(~B) } },
+		{ ~(A^B), { (~A)^B } },
+		{ ~(A^B), { A^(~B) } },
+		{ A&(B|C),{ (A&B)|(A&C) } },
+		{ A|(B&C),{ (A|B)&(A|C) } },
+		{ A&(B^C),{ (A&B)^(A&C) } },
+		{ A-B, { A+(-B) }},
 		
-		{ A&(B&C), (A&B)&C },
-		{ A|(B|C), (A|B)|C },
-		
-		{ A&(B&C), (A&B)&(A&C) },
-		{ A|(B|C), (A|B)|(A|C) },
-		{ A&(B^C), (A&B)^(A&C) },
-		
-
-
-		{ A+(B+C), (A+B)+C },
-		{ A+(B+C), (A+C)+B },
-		{ A-(B+C), (A-B)-C },
-		{ A-(B+C), (A-C)-B },
-		{ A-(B-C), (A-B)+C },
-		{ A-(B-C), (A+C)-B },
-		
-		// Switch between NEG and SUB
-		//
-		{ A-B,	A+(-B) },
+		{ A+(B+C), { (A+B)+C, (A+C)+B } },
+		//{ (A+B)+C, { A+(B+C), B+(A+C) } },
+		{ A+(B-C), { (A+B)-C, (A-C)+B } },
+		//{ (A-B)+C, { (A-C)-B, A+(C-B) } },
+		{ A-(B+C), { (A-B)-C, (A-C)-B } },
+		{ (A+B)-C, { (A-C)+B, A+(B-C) } },
+		{ A-(B-C), { (A-B)+C, (A+C)-B } },
+		{ (A-B)-C, { (A-C)-B, A-(B+C) } },
+		{ A|(B|C), { (A|B)|C, (A|C)|B } },
+		{ (A|B)|C, { A|(B|C), B|(A|C) } },
+		{ A&(B&C), { (A&B)&C, (A&C)&B } },
+		{ (A&B)&C, { A&(B&C), B&(A&C) } },
+		{ A^(B^C), { (A^B)^C, (A^C)^B } },
+		{ (A^B)^C, { A^(B^C), B^(A^C) } },
 	};
 
 	// Checks if the provided expression tree matches that of a symbolic 
@@ -198,15 +190,14 @@ namespace vtil::symbolic::rules
 			auto it = sym_map.find( *target.value );
 			if ( it == sym_map.end() )
 			{
-				symbol_map sym_map_new = sym_map;
-
 				// Check special conditions:
 				//
-				if ( target.value->uid == S.value->uid && input.is_constant() )
+				if ( target.value->uid == V.value->uid && input.is_constant() )
 					return {};
 				if ( target.value->uid == U.value->uid && !input.is_constant() )
 					return {};
-
+				
+				symbol_map sym_map_new = sym_map;
 				sym_map_new[ *target.value ] = input;
 				return { sym_map_new };
 			}
@@ -353,23 +344,12 @@ namespace vtil::symbolic::rules
 
 	// Transforms between equivalent expression trees.
 	//
-	template<bool bcnt_strict = true>
-	static expression remap_equivalent( const expression& input, const expression& from, const expression& to )
+	static expression remap_ruleset( const expression& input, const symbol_map& sym_map, const expression& to )
 	{
-		// All variables should be of the same size.
-		//
-		fassert( input.is_normalized() );
-
-		// Check if equivalent, if not return invalid expression.
-		//
-		auto sym_map = match<bcnt_strict>( input, from );
-		if ( !sym_map )
-			return {};
-
 		// Remap symbol.
 		//
 		expression new_expression = to;
-		new_expression.remap_symbols( *sym_map );
+		new_expression.remap_symbols( sym_map );
 
 		// Remove any remaining special instructions
 		//
@@ -387,6 +367,24 @@ namespace vtil::symbolic::rules
 				remove_special( op );
 		};
 		remove_special( new_expression );
-		return new_expression.resize( input.size() );
+		return new_expression.resize( input.size(), false );
+	}
+
+	template<bool bcnt_strict = true>
+	static expression remap_equivalent( const expression& input, const expression& from, const expression& to )
+	{
+		// All variables should be of the same size.
+		//
+		fassert( input.is_normalized() );
+
+		// Check if equivalent, if not return invalid expression.
+		//
+		auto sym_map = match<bcnt_strict>( input, from );
+		if ( !sym_map )
+			return {};
+
+		// Remap.
+		//
+		return remap_ruleset( input, *sym_map, to );
 	}
 }

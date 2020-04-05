@@ -40,7 +40,6 @@ namespace vtil::symbolic
 		//
 		unique_identifier() {}
 		unique_identifier( const std::string& name ) : name( name ) { fassert( is_valid() ); }
-		unique_identifier( const std::wstring& name ) : name( utf_cvt_t{}.to_bytes( name ) ) { fassert( is_valid() ); }
 		
 		// Constructor for unique identifier created from stream iterator.
 		//
@@ -143,7 +142,7 @@ namespace vtil::symbolic
 			return register_id.value();
 		}
 
-		// Conversion to UTF-8.
+		// Conversion to human readable format.
 		//
 		std::string to_string() const { return name; }
 	
@@ -187,7 +186,6 @@ namespace vtil::symbolic
 		// Constructor for uniquely variables.
 		//
 		variable( const std::string& uid, uint8_t size ) : uid( uid ), size( size ) { fassert( is_valid() ); }
-		variable( const std::wstring& uid, uint8_t size ) : uid( uid ), size( size ) { fassert( is_valid() ); }
 		variable( const unique_identifier& uid, uint8_t size ) : uid( uid ), size( size ) { fassert( is_valid() ); }
 		variable( ilstream_const_iterator origin, int operand_index )
 		{ 
@@ -271,7 +269,8 @@ namespace vtil::symbolic
 		//
 		uint8_t calc_size( bool sign ) const
 		{
-			if ( size ) return size;
+			if ( size || !is_constant() ) 
+				return size;
 			
 			if ( sign )
 			{
@@ -295,6 +294,8 @@ namespace vtil::symbolic
 		template<bool sign = false>
 		auto get( uint8_t new_size = 0 ) const
 		{
+			fassert( is_constant() );
+
 			uint8_t out_size = size;
 			if ( out_size == 0 || ( new_size != 0 && new_size < out_size ) )
 				out_size = new_size;

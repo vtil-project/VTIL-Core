@@ -10,72 +10,66 @@ namespace vtil::symbolic
 {
 	// Tries to simplify the given symbolic expression as much as possible.
 	//
-	static expression simplify( const expression& input, bool* simplified = nullptr )
+	static std::optional<expression> try_simplify( const expression& input, bool skip_top_level = false )
 	{
 		// Assert we received a valid expression.
 		//
 		fassert( input.is_valid() );
 
-		// If exprssion is a variable/is already in
-		// the simplest form possible, return as is.
+		// If expression is already in the simplest form possible, return as is.
 		//
 		if ( input.is_simplest_form )
-			return input;
+			return {};
 
 		// Simplify children.
 		//
 		expression exp = input;
+		bool simplified_child = false;
 		for ( auto& op : exp.operands )
-			op = simplify( op, simplified );
+		{
+			if ( op.is_simplest_form )
+				continue;
+			if ( auto r = try_simplify( op ) )
+				simplified_child = true, op = r.value();
+			op.declare_simple();
+		}
 
 		// Try evaluating current expression, if we could
 		// return it as is.
 		//
 		if ( auto eval = input.evaluate() )
-		{
-			if ( simplified ) *simplified = true;
 			return eval.value();
-		}
 
-		// For each alternate form:
+		// If top level is to be simplified:
 		//
-		std::vector<std::pair<size_t, expression>> forms;
-		size_t complexity_0 = exp.complexity();
-		for ( auto& pair : rules::alternate_forms )
+		if ( !skip_top_level )
 		{
-			// Try replacing x => y and y => x
+			// For each alternate form:
 			//
-			auto new_exp = rules::remap_equivalent( exp, pair.first, pair.second );
-			if( !new_exp.is_valid() )
-				new_exp = rules::remap_equivalent( exp, pair.second, pair.first );
-
-			// If we found a match:
-			//
-			if ( new_exp.is_valid() )
+			size_t complexity_0 = exp.complexity();
+			for ( auto& pair : rules::alternate_forms )
 			{
-				// Simplify children.
-				//
-				bool sub_simplified = false;
-				for ( auto& op : new_exp.operands )
-					op = simplify( op, &sub_simplified );
+				auto sym_map = rules::match( input, pair.first );
+				if ( !sym_map )
+					continue;
 
-				// If complexity did not change but we've
-				// simplified any operands at all, return the
-				// new expression as is.
-				//
-				size_t complexity_1 = new_exp.complexity();
-				if ( complexity_1 == complexity_0 && sub_simplified )
+				for ( auto& form : pair.second )
 				{
-					exp = new_exp;
-					if ( simplified ) *simplified = true;
-					break;
+					// Try replacing x => y and y => x
+					//
+					auto new_exp = rules::remap_ruleset( exp, *sym_map, form );
+
+					// If we found a match:
+					//
+					if ( new_exp.is_valid() )
+					{
+						new_exp = try_simplify( new_exp, true ).value_or( new_exp );
+						size_t complexity_1 = new_exp.complexity();
+						if ( complexity_1 < complexity_0 )
+							return try_simplify( new_exp ).value_or( new_exp ).declare_simple();
+					}
 				}
-				// If complexity reduced, recurse:
-				//
-				else if ( complexity_1 < complexity_0 )
-				{
-					return simplify( new_exp );
-				}
+				break;
 			}
 		}
 
@@ -90,8 +84,7 @@ namespace vtil::symbolic
 			{
 				// Recurse.
 				//
-				if ( simplified ) *simplified = true;
-				return simplify( new_exp );
+				return try_simplify( new_exp, skip_top_level ).value_or( new_exp ).declare_simple();
 			}
 		}
 
@@ -99,10 +92,30 @@ namespace vtil::symbolic
 		// return it as is.
 		//
 		if ( auto eval = exp.evaluate() )
-		{
-			if ( simplified ) *simplified = true;
 			return eval.value();
-		}
-		return exp.declare_simple();
+
+		// If we simplified a child, still declare simple and return. 
+		//
+		if ( simplified_child )
+			return exp.declare_simple();
+		return {};
+	}
+
+	static expression simplify( expression input )
+	{
+		// Fail if input is invalid.
+		//
+		if ( !input.is_valid() )
+			return {};
+
+		// Explicitly resize the expression to output size.
+		//
+		input.resize( input.size(), false );
+
+		// Try simplifying the expression, and declare simple.
+		//
+		if ( auto r = try_simplify( input, false ) )
+			input = r.value();
+		return input.resize( input.size(), true ).declare_simple();
 	}
 };
