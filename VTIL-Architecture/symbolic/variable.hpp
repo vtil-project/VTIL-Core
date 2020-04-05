@@ -33,8 +33,8 @@ namespace vtil::symbolic
 		//
 		int operand_index;
 		ilstream_const_iterator origin = {};
-		std::optional<int32_t> stack_id;
 		std::optional<register_view> register_id = {};
+		std::optional<std::pair<register_view, int64_t>> memory_id = {};
 
 		// Default constructors.
 		//
@@ -50,11 +50,8 @@ namespace vtil::symbolic
 			//
 			if ( operand_index == -1 )
 			{
-				// TODO: Handle external memory?
-				auto [mem_base, mem_off] = origin->get_mem_loc();
 				fassert( origin->base->accesses_memory() );
-				fassert( mem_base.base == X86_REG_RSP );
-				stack_id = { mem_off };
+				memory_id = origin->get_mem_loc();
 			}
 			// Identifier for register/temporary:
 			//
@@ -74,45 +71,68 @@ namespace vtil::symbolic
 			{
 				name = register_id->to_string();
 
-				name += '#';
-				name += format::hex( origin->vip );
+				if ( origin.is_valid() )
+				{
+					name += '@';
+					if ( origin->vip != invalid_vip )
+						name += format::str( "%llx", origin->vip );
+					else
+						name += format::str( "%llx", origin.container->entry_vip ) + "#" + std::to_string( std::distance( origin.container->begin(), origin ) );
+				}
+				else
+				{
+					name += "?";
+				}
 			}
-			else if( stack_id.has_value() )
+			else if( memory_id.has_value() )
 			{
-				name = stack_id.value() >= 0 ? "arg" : "var";
-				name += format::suffix_map[ origin->access_size() ];
-				name += format::hex( abs( stack_id.value() ) );
+				if ( memory_id->first.base == X86_REG_RSP )
+				{
+					name = memory_id->second >= 0 ? "arg" : "var";
+					name += format::hex( abs( memory_id->second ) );
+				}
+				else
+				{
+					name = "[";
+					name += memory_id->first.base.to_string();
+					name +=  "+" + format::hex( memory_id->second ) + "]";
+				}
 
-
-				name += '#';
-				name += format::hex( origin->vip );
-
+				if ( origin.is_valid() )
+				{
+					name += '@';
+					if ( origin->vip != invalid_vip )
+						name += format::str( "%llx", origin->vip );
+					else
+						name += format::str( "%llx", origin.container->entry_vip ) + "#" + std::to_string( std::distance( origin.container->begin(), origin ) );
+				}
+				else
+				{
+					name += "?";
+				}
 			}
 			return *this;
 		}
+
+		// Unbinds the identifier from the origin.
+		//
+		auto& unbind() { origin = {}; refresh(); return *this; }
+		auto& rebind( ilstream_const_iterator it ) { origin = it; refresh(); return *this; }
 	
-		// Returns whether the unique identifier is valid or not.
+		// Helpers used to resolve the actual operand being traced.
 		//
 		bool is_valid() const { return name.size() && !iswdigit( name[ 0 ] ); }
-
-		// Returns whether this is a reserved identifier or not.
-		//
 		bool is_reserved() const { return name.size() == 1 && uid_reserved_dictionary.find( name[ 0 ] ) != std::wstring::npos; }
-
-		// Returns whether this is a value off of stack that is acting as a symbolic variable.
-		//
-		bool is_stack() const { return is_valid() && stack_id.has_value(); }
-		
-		// Returns whether this is a value of a register that is acting as a symbolic variable.
-		//
+		bool is_memory() const { return is_valid() && memory_id.has_value(); }
 		bool is_register() const { return is_valid() && register_id.has_value(); }
+		bool is_arbitrary() const { return is_valid() && ( memory_id.has_value() || register_id.has_value() ); }
 		
 		// Returns the stack pointer associated with the variable.
 		//
-		int32_t get_sp() const
+		auto get_mem() const
 		{
-			fassert( is_stack() );
-			return stack_id.value();
+			fassert( is_memory() );
+			return memory_id.value();
 		}
 
 		// Returns the register that is associated with the variable.
@@ -129,7 +149,10 @@ namespace vtil::symbolic
 	
 		// Simple comparison operators.
 		//
-		bool operator==( const unique_identifier& o ) const { return name == o.name; }
+		bool operator==( const unique_identifier& o ) const 
+		{ 
+			return name == o.name && origin == o.origin; 
+		}
 		bool operator<( const unique_identifier& o ) const { return name < o.name; }
 		bool operator!=( const unique_identifier& o ) const { return name != o.name; }
 	};
@@ -221,11 +244,26 @@ namespace vtil::symbolic
 
 		// Wrappers around unique_identifer:: helpers used to resolve the actual operand being traced.
 		//
-		bool is_stack() const { return uid.is_stack(); }
+		bool is_memory() const { return uid.is_memory(); }
 		bool is_register() const { return uid.is_register(); }
-		bool is_arbitrary() const { return uid.is_valid() && !uid.origin.is_valid(); }
-		int32_t get_sp() const { return uid.get_sp(); }
+		bool is_arbitrary() const { return uid.is_arbitrary(); }
+		auto get_mem() const { return uid.get_mem(); }
 		register_view get_reg() const { register_view reg = uid.get_reg(); fassert( size == reg.size ); return reg; }
+		auto& unbind() { uid.unbind(); return *this; }
+		auto& rebind( ilstream_const_iterator it ) { uid.rebind( it ); return *this; }
+		
+		// Resizes the variable.
+		//
+		variable& resize( uint8_t size )
+		{
+			if ( is_constant() )
+				_u64 = get( size );
+			else if ( is_register() )
+				uid.register_id->size = size;
+			this->size = size;
+			fassert( is_valid() );
+			return *this;
+		}
 
 		// Instead of using the size variable as is, this function 
 		// calculates minimum equivalent size if the constant is an
@@ -288,12 +326,12 @@ namespace vtil::symbolic
 		//
 		std::string to_string() const
 		{
-			return is_symbolic() ? uid.to_string() : format::hex( get<false>() );
+			return is_symbolic() ? uid.to_string() : format::hex( get<true>() );
 		}
 
 		// Basic comparison operators.
 		//
-		bool operator==( const variable& o ) const { return( uid == o.uid && size == o.size ) && ( is_symbolic() ? size == o.size : get() == o.get() ); }
+		bool operator==( const variable& o ) const { return( uid == o.uid && size == o.size ) && ( is_symbolic() || get() == o.get() ); }
 		bool operator!=( const variable& o ) const { return !operator==( o ); }
 		bool operator<( const variable& o ) const 
 		{ 
