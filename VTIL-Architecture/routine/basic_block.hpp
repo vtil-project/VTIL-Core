@@ -176,20 +176,6 @@ namespace vtil
 		//
 		int64_t sp_offset = 0;
 
-		// Helpers to calculate the stack offset at any position.
-		//
-		int64_t get_sp_offset( const const_iterator& i = {} ) const
-		{ 
-			// If iterator is invalid (since is_end will return true)
-			// or pointing at the end of the stream, return sp_offset as is.
-			//
-			if ( i.is_end() ) return sp_offset;
-			
-			// Otherwise return the saved sp_offset from the instruction instance.
-			//
-			return i->sp_offset;
-		}
-
 		// List of all basic blocks that this basic
 		// block may possibly jump to.
 		//
@@ -295,16 +281,8 @@ namespace vtil
 
 		// Instruction pre-processor
 		//
-		template<bool internal_call = false>
 		void append_instruction( instruction ins )
 		{
-			if constexpr ( !internal_call )
-			{
-				// Use ::read_sp(...) instead when reading from RSP
-				//
-				fassert( ins.base->accesses_memory() || !ins.reads_from( X86_REG_RSP ) );
-			}
-
 			// Instructions cannot be appended after a branching instruction was hit.
 			//
 			fassert( !is_complete() );
@@ -403,8 +381,45 @@ namespace vtil
 
 		// Queues a stack shift.
 		//
-		auto* shift_sp_queued( int64_t offset )
+		auto* shift_sp( int64_t offset, iterator it = {} )
 		{
+			// If an iterator is provided, shift the stack pointer
+			// for every instruction that precedes it as well.
+			//
+			while ( !it.is_end() )
+			{
+				// Shift the sp_offset field.
+				//
+				it->sp_offset += offset;
+
+				// If instruction reads from RSP:
+				//
+				if ( it->reads_from( X86_REG_RSP ) )
+				{
+					// If LDR|STR with memory operand RSP:
+					//
+					if ( it->base->accesses_memory() && it->operands[ it->base->memory_operand_index ].reg == X86_REG_RSP )
+					{
+						// Assert the offset operand is an immediate and 
+						// shift the offset as well.
+						//
+						fassert( it->operands[ it->base->memory_operand_index + 1 ].is_immediate() );
+						it->operands[ it->base->memory_operand_index + 1 ].i64 += offset;
+					}
+					else
+					{
+						unreachable();
+					}
+				}
+
+				// If stack changed changed, return, else forward the iterator.
+				//
+				if ( it->sp_reset )
+					return this;
+				else 
+					it++;
+			}
+
 			// Shift the stack pointer and continue as usual
 			// without emitting any sub or add instructions.
 			// Queued stack pointer changes will be processed
@@ -421,7 +436,7 @@ namespace vtil
 		auto* push( const T& _op )
 		{
 			operand op = prepare_operand( _op );
-			shift_sp_queued( op.size() < stack_alignment ? -stack_alignment : -op.size() );
+			shift_sp( op.size() < stack_alignment ? -stack_alignment : -op.size() );
 			str( X86_REG_RSP, sp_offset, op );
 			return this;
 		}
@@ -434,21 +449,8 @@ namespace vtil
 		{
 			operand op = prepare_operand( _op );
 			int64_t offset = sp_offset;
-			shift_sp_queued( op.size() < stack_alignment ? stack_alignment : op.size() );
+			shift_sp( op.size() < stack_alignment ? stack_alignment : op.size() );
 			ldd( op, X86_REG_RSP, offset );
-			return this;
-		}
-
-		// Reads the stack pointer into the operand
-		// specified.
-		//
-		template<typename T>
-		auto* read_sp( const T& _op )
-		{
-			operand op = prepare_operand( _op );
-			fassert( op.size() == 8 );
-			append_instruction<true>( { &ins::mov, { op, register_view{ X86_REG_RSP } } } );
-			append_instruction<true>( { &ins::add, { op, make_imm( sp_offset )} } );
 			return this;
 		}
 

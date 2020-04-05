@@ -95,8 +95,8 @@ namespace vtil
 			//
 			if ( base->accesses_memory() )
 			{
-				const operand& mem_base = operands[ base->access_size_index ];
-				const operand& mem_offset = operands[ base->access_size_index + 1 ];
+				const operand& mem_base = operands[ base->memory_operand_index ];
+				const operand& mem_offset = operands[ base->memory_operand_index + 1 ];
 				if ( !mem_base.is_register() || mem_base.size() != 8 )
 					return false;
 				if ( !mem_offset.is_immediate() )
@@ -148,8 +148,8 @@ namespace vtil
 			{
 				// Fetch and validate memory operands pair.
 				//
-				const register_view& mem_base = operands[ base->access_size_index ].reg;
-				const operand& mem_offset = operands[ base->access_size_index + 1 ];
+				const register_view& mem_base = operands[ base->memory_operand_index ].reg;
+				const operand& mem_offset = operands[ base->memory_operand_index + 1 ];
 
 				if ( !base->memory_write && ( access == arch::read || access == arch::invalid ) )
 					return { mem_base, mem_offset.i64 };
