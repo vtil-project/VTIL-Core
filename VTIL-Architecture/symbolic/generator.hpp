@@ -382,10 +382,9 @@ namespace vtil::symbolic
 		if ( lookup.is_register() && lookup.get_reg() == X86_REG_RSP && adjust_rsp )
 		{
 			// Update the default result offset.
-			// - [TODO] Not too sure about this.
 			//
 			if ( !lookup.uid.origin.is_begin() )
-				default_result_offset = lookup.uid.origin->sp_offset;
+				default_result_offset = std::prev( lookup.uid.origin )->sp_offset;
 		}
 		
 		// If we could find a local result within the current block assign it as is.
