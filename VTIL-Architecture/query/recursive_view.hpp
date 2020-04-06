@@ -93,6 +93,7 @@ namespace vtil::query
 		// lead to it.
 		//
 		iterator_type it0 = {};
+		bool it0_oob = false;
 
 		// List of containers that we've recursively visited.
 		// The second argument of the container filter, first_time,
@@ -124,7 +125,10 @@ namespace vtil::query
 				//
 				it0 = view.query.next();
 				if ( !it0.is_valid() )
+				{
 					it0.container = view.query.iterator.container;
+					it0_oob = true;
+				}
 			}
 			else
 			{
@@ -235,7 +239,8 @@ namespace vtil::query
 							{
 								// Append an additional rule to the iteration.
 								//
-								view_new.view = view_new.view.until( it0 );
+								if( !it0_oob )
+									view_new.view = view_new.view.until( it0 );
 							}
 
 							// Invoke the same enumerator and append as a path.
