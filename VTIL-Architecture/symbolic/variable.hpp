@@ -31,38 +31,47 @@ namespace vtil::symbolic
 
 		// Origin of the variable if relevant.
 		//
-		int operand_index;
 		ilstream_const_iterator origin = {};
 		std::optional<register_view> register_id = {};
 		std::optional<std::pair<register_view, int64_t>> memory_id = {};
+		uint32_t memory_base_idx = 0;
+		bool branch_dependant = false;
 
-		// Default constructors.
+		// Default constructors for simple identifiers.
 		//
 		unique_identifier() {}
 		unique_identifier( const std::string& name ) : name( name ) { fassert( is_valid() ); }
-		
-		// Constructor for unique identifier created from stream iterator.
+
+		// Constructors for unique identifiers created from stream iterators.
 		//
-		unique_identifier( ilstream_const_iterator origin, int operand_index ) : operand_index( operand_index ), origin( origin )
+		unique_identifier( const register_view& base, int64_t offset, ilstream_const_iterator at )
+		{
+			assign( base, offset ).bind( at );
+		}
+		unique_identifier( const register_view& reg, ilstream_const_iterator at )
+		{
+			assign( reg ).bind( at );
+		}
+		unique_identifier( ilstream_const_iterator origin, int operand_index )
 		{
 			// Identifier for memory:
 			//
 			if ( operand_index == -1 )
 			{
 				fassert( origin->base->accesses_memory() );
-				memory_id = origin->get_mem_loc();
+				auto [mem_base, mem_loc] = origin->get_mem_loc();
+				assign( mem_base, mem_loc ).bind( origin );
 			}
 			// Identifier for register/temporary:
 			//
 			else
 			{
 				fassert( origin->operands[ operand_index ].is_register() );
-				register_id = { origin->operands[ operand_index ].reg };
+				assign( origin->operands[ operand_index ].reg ).bind( origin );
 			}
-			refresh();
 		}
 
-		// Refreshes the unique identifier if it's bound to a register value or a stack variable.
+		// Refreshes the unique identifier if it's bound to a register value or a pointer.
 		//
 		unique_identifier& refresh()
 		{
@@ -70,7 +79,7 @@ namespace vtil::symbolic
 			{
 				name = register_id->to_string();
 
-				if ( origin.is_valid() )
+				if ( !origin.is_end() )
 				{
 					name += '@';
 					if ( origin->vip != invalid_vip )
@@ -80,7 +89,7 @@ namespace vtil::symbolic
 				}
 				else
 				{
-					name += "?";
+					name += origin.is_begin() ? "?" : "*";
 				}
 			}
 			else if( memory_id.has_value() )
@@ -89,6 +98,8 @@ namespace vtil::symbolic
 				{
 					name = memory_id->second >= 0 ? "arg" : "var";
 					name += format::hex( abs( memory_id->second ) );
+					if( memory_base_idx != 0 )
+						name += format::str( "#%d", memory_base_idx );
 				}
 				else
 				{
@@ -97,7 +108,7 @@ namespace vtil::symbolic
 					name +=  "+" + format::hex( memory_id->second ) + "]";
 				}
 
-				if ( origin.is_valid() )
+				if ( !origin.is_end() )
 				{
 					name += '@';
 					if ( origin->vip != invalid_vip )
@@ -107,17 +118,52 @@ namespace vtil::symbolic
 				}
 				else
 				{
-					name += "?";
+					name += origin.is_begin() ? "?" : "*";
 				}
+			}
+			if(  branch_dependant )
+				name += "...";
+			return *this;
+		}
+
+		// Assigns unique identifier the value of a register or a pointer.
+		//
+		unique_identifier& assign( const register_view& reg )
+		{
+			register_id = { reg };
+			memory_id = {};
+			return refresh();
+		}
+		unique_identifier& assign( const register_view& base, int64_t offset )
+		{
+			register_id = {};
+			memory_id = { base, offset };
+			return refresh();
+		}
+
+		// Binds/unbinds the identifier from/to the origin.
+		//
+		unique_identifier& unbind() { origin = {}; return refresh(); }
+		unique_identifier& bind( ilstream_const_iterator it )
+		{ 
+			origin = it;
+			if ( memory_id && *memory_id == origin->get_mem_loc() )
+				memory_base_idx = origin->sp_index;
+			return refresh(); 
+		}
+
+		// Declares value branch dependant/not.
+		//
+		unique_identifier& set_branch_dependency( bool v = true )
+		{
+			if ( branch_dependant != v )
+			{
+				branch_dependant = v;
+				return refresh();
 			}
 			return *this;
 		}
 
-		// Unbinds the identifier from the origin.
-		//
-		auto& unbind() { origin = {}; refresh(); return *this; }
-		auto& rebind( ilstream_const_iterator it ) { origin = it; refresh(); return *this; }
-	
 		// Helpers used to resolve the actual operand being traced.
 		//
 		bool is_valid() const { return name.size() && !iswdigit( name[ 0 ] ); }
@@ -126,7 +172,7 @@ namespace vtil::symbolic
 		bool is_register() const { return is_valid() && register_id.has_value(); }
 		bool is_arbitrary() const { return is_valid() && ( memory_id.has_value() || register_id.has_value() ); }
 		
-		// Returns the stack pointer associated with the variable.
+		// Returns the pointer associated with the variable.
 		//
 		auto get_mem() const
 		{
@@ -150,7 +196,7 @@ namespace vtil::symbolic
 		//
 		bool operator==( const unique_identifier& o ) const 
 		{ 
-			return name == o.name && origin == o.origin; 
+			return name == o.name && origin == o.origin;
 		}
 		bool operator<( const unique_identifier& o ) const { return name < o.name; }
 		bool operator!=( const unique_identifier& o ) const { return name != o.name; }
@@ -248,7 +294,7 @@ namespace vtil::symbolic
 		auto get_mem() const { return uid.get_mem(); }
 		register_view get_reg() const { register_view reg = uid.get_reg(); fassert( size == reg.size ); return reg; }
 		auto& unbind() { uid.unbind(); return *this; }
-		auto& rebind( ilstream_const_iterator it ) { uid.rebind( it ); return *this; }
+		auto& bind( ilstream_const_iterator it ) { uid.bind( it ); return *this; }
 		
 		// Resizes the variable.
 		//

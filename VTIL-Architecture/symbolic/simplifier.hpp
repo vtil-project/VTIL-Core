@@ -100,7 +100,6 @@ namespace vtil::symbolic
 			return exp.declare_simple();
 		return {};
 	}
-
 	static expression simplify( expression input )
 	{
 		// Fail if input is invalid.
@@ -117,5 +116,37 @@ namespace vtil::symbolic
 		if ( auto r = try_simplify( input, false ) )
 			input = r.value();
 		return input.resize( input.size(), true ).declare_simple();
+	}
+
+	// Checks whether the two given expressions are equivalent in a more reliable
+	// fashion when compared to simply invoking expression::operator==(...)
+	//
+	static bool is_equivalent( const expression& a, const expression& b )
+	{
+		// If naive-comparison returns equivalent, return so.
+		//
+		if ( a == b )
+			return true;
+
+		// Try naive-comparison again, in simplified forms.
+		//
+		expression sa = simplify( a );
+		expression sb = simplify( b );
+		if ( sa == sb )
+			return true;
+
+		// For arithmetic trees, check if A-B evaluates to 0.
+		//
+		if ( auto r = simplify( sa - sb ).evaluate() )
+			return r->get() == 0;
+
+		// For bitwise trees, check if A^B evaluates to 0.
+		//
+		if ( auto r = simplify( sa ^ sb ).evaluate() )
+			return r->get() == 0;
+
+		// Else, report mismatch.
+		//
+		return false;
 	}
 };
