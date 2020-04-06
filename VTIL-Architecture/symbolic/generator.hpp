@@ -111,7 +111,7 @@ namespace vtil::symbolic
 						//
 						if ( !pointer_exp.is_valid() )
 						{
-							pointer_exp = generate<false>( { { lookup.uid.get_mem().first, lookup.uid.origin }, 8 }, false, recurse, visited ) + lookup.uid.get_mem().second;
+							pointer_exp = generate<false>( { { lookup.uid.get_mem().first, lookup.uid.origin }, 8 }, true, false, {} ) + lookup.uid.get_mem().second;
 							
 							// Log pointer resolved if verbose.
 							//
@@ -121,7 +121,7 @@ namespace vtil::symbolic
 
 						// Try to simplify the expression for [dst-lookup].
 						//
-						auto offset_exp = simplify( generate<false>( { { it, it->base->memory_operand_index }, 8 }, false, recurse, visited ) + mem_off - pointer_exp );
+						auto offset_exp = simplify( generate<false>( { { it, it->base->memory_operand_index }, 8 }, false, false, {} ) + mem_off - pointer_exp );
 
 						// Log write resolved if verbose.
 						//
