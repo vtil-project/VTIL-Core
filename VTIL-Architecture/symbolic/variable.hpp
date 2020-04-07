@@ -147,8 +147,8 @@ namespace vtil::symbolic
 		unique_identifier& bind( ilstream_const_iterator it )
 		{ 
 			origin = it;
-			if ( memory_id && *memory_id == origin->get_mem_loc() )
-				memory_base_idx = origin->sp_index;
+			if ( origin.is_valid() && memory_id )
+				memory_base_idx = origin.is_end() ? origin.container->sp_index : origin->sp_index;
 			return refresh(); 
 		}
 
@@ -298,13 +298,15 @@ namespace vtil::symbolic
 		
 		// Resizes the variable.
 		//
-		variable& resize( uint8_t size )
+		variable& resize( uint8_t new_size, bool sign_extend )
 		{
 			if ( is_constant() )
-				_u64 = get( size );
-			else if ( is_register() )
-				uid.register_id->size = size;
-			this->size = size;
+				_u64 = sign_extend ? get<true>( new_size ) : get<false>( new_size );
+			else
+				fassert( size >= new_size && new_size != 0 );
+
+			size = new_size;
+			if ( is_register() ) uid.register_id->size = new_size;
 			fassert( is_valid() );
 			return *this;
 		}
@@ -373,12 +375,23 @@ namespace vtil::symbolic
 		//
 		std::string to_string() const
 		{
-			return is_symbolic() ? uid.to_string() : format::hex( get<true>() );
+			if ( !is_symbolic() )
+				return format::hex( get<true>() );
+			else if ( size == 0 )
+				return uid.to_string();
+			else
+				return uid.to_string() + format::suffix_map[ size ];
 		}
 
 		// Basic comparison operators.
 		//
-		bool operator==( const variable& o ) const { return( uid == o.uid && size == o.size ) && ( is_symbolic() || get() == o.get() ); }
+		bool operator==( const variable& o ) const 
+		{
+			if ( is_constant() )
+				return o.is_constant() && get( o.size ) == o.get( size );
+			else
+				return o.is_symbolic() && uid == o.uid && size == o.size;
+		}
 		bool operator!=( const variable& o ) const { return !operator==( o ); }
 		bool operator<( const variable& o ) const 
 		{ 

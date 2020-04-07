@@ -83,7 +83,8 @@ namespace vtil::symbolic
 		// Extension:
 		// - Hints that op#1 was extended.
 		//
-		{ "__ext",  "",     false,    true,       0,           0,     },
+		{ "__sx",  "",     false,    true,       0,           0,     },
+		{ "__zx",  "",     false,    true,       0,           0,     },
 	};
 
 	// Searcher for an operator within the string provided.

@@ -55,21 +55,15 @@ namespace vtil::symbolic
 
 				for ( auto& form : pair.second )
 				{
-					// Try replacing x => y and y => x
-					//
-					auto new_exp = rules::remap_ruleset( exp, *sym_map, form );
+					auto new_exp = try_simplify( rules::remap( exp, *sym_map, form ), true );
+					if ( !new_exp ) continue;
 
-					// If we found a match:
-					//
-					if ( new_exp.is_valid() )
+					size_t complexity_1 = new_exp->complexity();
+					if ( complexity_1 < complexity_0 )
 					{
-						new_exp = try_simplify( new_exp, true ).value_or( new_exp );
-						size_t complexity_1 = new_exp.complexity();
-						if ( complexity_1 < complexity_0 )
-							return try_simplify( new_exp ).value_or( new_exp ).declare_simple();
+						return try_simplify( *new_exp ).value_or( *new_exp ).declare_simple();
 					}
 				}
-				break;
 			}
 		}
 
@@ -79,7 +73,7 @@ namespace vtil::symbolic
 		{
 			// Check if our tree matches the input format:
 			//
-			auto new_exp = rules::remap_equivalent( exp, pair.first, pair.second );
+			auto new_exp = rules::apply( exp, pair.first, pair.second );
 			if ( new_exp.is_valid() )
 			{
 				// Recurse.
@@ -102,6 +96,8 @@ namespace vtil::symbolic
 	}
 	static expression simplify( expression input )
 	{
+		// TODO: Fix equivalent registers of different size being in the variable
+
 		// Fail if input is invalid.
 		//
 		if ( !input.is_valid() )
@@ -109,13 +105,13 @@ namespace vtil::symbolic
 
 		// Explicitly resize the expression to output size.
 		//
-		input.resize( input.size(), false );
+		input.resize( input.size() );
 
 		// Try simplifying the expression, and declare simple.
 		//
-		if ( auto r = try_simplify( input, false ) )
+		if ( auto r = try_simplify( input ) )
 			input = r.value();
-		return input.resize( input.size(), true ).declare_simple();
+		return input.resize( input.size() ).declare_simple();
 	}
 
 	// Checks whether the two given expressions are equivalent in a more reliable
@@ -128,25 +124,10 @@ namespace vtil::symbolic
 		if ( a == b )
 			return true;
 
-		// Try naive-comparison again, in simplified forms.
+		// Try matching the simplification of an expression that 
+		// would be zero if a and be were equivalent instead 
+		// otherwise to cause a much more complex evaluation.
 		//
-		expression sa = simplify( a );
-		expression sb = simplify( b );
-		if ( sa == sb )
-			return true;
-
-		// For arithmetic trees, check if A-B evaluates to 0.
-		//
-		if ( auto r = simplify( sa - sb ).evaluate() )
-			return r->get() == 0;
-
-		// For bitwise trees, check if A^B evaluates to 0.
-		//
-		if ( auto r = simplify( sa ^ sb ).evaluate() )
-			return r->get() == 0;
-
-		// Else, report mismatch.
-		//
-		return false;
+		return simplify( a - b ) == variable{ 0 };
 	}
 };

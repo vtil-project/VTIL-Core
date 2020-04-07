@@ -1,11 +1,36 @@
 #pragma once
-#include <map>
 #include <tuple>
+#include <algorithm>
+#include <unordered_map>
 #include "expression.hpp"
 #include "variable.hpp"
 
 namespace vtil::symbolic::rules
 {
+	// Describes an entry in the rule tables.
+	//
+	struct rule_entry
+	{
+		// Base expression containing symbolic expression tree to match against.
+		//
+		const expression base_expression;
+
+		// Function that performs any additional checks/processing after initial matching.
+		//
+		std::function<bool( symbol_map& )> extension = {};
+
+		// Constructors for simple and complex logic.
+		//
+		rule_entry( expression exp ) : base_expression( exp ) {}
+		template<typename T>
+		rule_entry( expression exp, T extension ) : base_expression( exp ), extension( extension ) {}
+		
+		// Basic hash function implementation so we can place it in an unordered map.
+		//
+		struct hash { size_t operator()( const rule_entry& self ) const { return std::hash<std::string>()( self.base_expression.to_string() ); } };
+		bool operator==( const rule_entry& o ) const { return base_expression == o.base_expression; }
+	};
+
 	// Symbolic variables used in rule creation:
 	//
 	static const expression A = { { "α", 0 } };
@@ -21,7 +46,8 @@ namespace vtil::symbolic::rules
 
 	// Special functions used in rule creation:
 	//
-	static const auto ext = [ ] ( const expression& a, const expression& b ) { return expression( a, find_opr( "__ext" ), b ); };
+	static const auto sx = [ ] ( const expression& a, const expression& b ) { return expression( a, find_opr( "__sx" ), b ); };
+	static const auto zx = [ ] ( const expression& a, const expression& b ) { return expression( a, find_opr( "__zx" ), b ); };
 	static const auto bmask = [ ] ( const expression& a ) { return expression( find_opr( "__bmask" ), a ); };
 	static const auto bcnt = [ ] ( const expression& a ) { return expression( find_opr( "__bcnt" ), a ); };
 	static const auto bcntN = [ ] ( const expression& a, const expression& b ) { return expression( a, find_opr( "__bcntN" ), b ); };
@@ -29,7 +55,7 @@ namespace vtil::symbolic::rules
 	// All simpilfications:
 	// - Note! Must not contain ( simplified[simplified[x]] == y ).
 	//
-	static const std::map<expression, expression> simplified_form =
+	static const std::unordered_map<rule_entry, expression, rule_entry::hash> simplified_form =
 	{
 		// Inverse operations
 		//
@@ -65,7 +91,25 @@ namespace vtil::symbolic::rules
 		
 		// Special extended rules
 		//
-		{ ext(A, B)>>bcntN(Q,A), {0} },						// take in the real size into account when shifting
+		{ zx(A,B)>>bcntN(Q,A), {0} },						// take in the real size into account when shifting
+		{ sx(A,B)>>bcntN(Q,A), {-1>>Q} },					// take in the real size into account when shifting
+		
+		{ { { A & U }, [ ] ( symbol_map& sym )
+		{
+			uint64_t mask = sym[ *U.value ].evaluate()->get();
+			auto& in = sym[ *A.value ];
+			auto& out = sym[ *Q.value ];
+			switch ( mask )
+			{
+				case 0:						out = { 0 }; break;
+				case 0xFF:					out = { expression( in ).resize( 1 ) }; break;
+				case 0xFFFF:				out = { expression( in ).resize( 2 ) }; break;
+				case 0xFFFFFFFF:			out = { expression( in ).resize( 4 ) }; break;
+				case 0xFFFFFFFFFFFFFFFF:	out = { expression( in ).resize( 8 ) }; break;
+				default: return false;
+			}
+			return true;
+		} }, { Q } },						// take in the real size into account when shifting
 
 		// Constant result
 		//
@@ -89,7 +133,7 @@ namespace vtil::symbolic::rules
 		// NEG conversion
 		//
 		{ ~(A+bmask(A)), -A },
-		{ (0-A), -A },
+		{ 0-A, -A },
 
 		// Simplify AND OR
 		//
@@ -120,8 +164,13 @@ namespace vtil::symbolic::rules
 	// All alternate forms:
 	// - Note: Both sides should contain the same amount of unknowns.
 	//
-	static const std::map<expression, std::vector<expression>> alternate_forms = 
+	static const std::unordered_map<rule_entry, std::vector<expression>, rule_entry::hash> alternate_forms =
 	{
+		// Convert between bitwise and arithmetic negation
+		//
+		{ ~A, { -(A+1) } },
+		{ -A, { ~(A-1) } },
+
 		// Distribute bitwise operators
 		//
 		{ (A&B)>>C,	{ (A>>C)&(B>>C) } },
@@ -341,10 +390,26 @@ namespace vtil::symbolic::rules
 			}
 		}
 	}
+	template<bool bcnt_strict = true>
+	static std::optional<symbol_map> match( const expression& input, const rule_entry& rule )
+	{
+		// All variables should be of the same size.
+		//
+		fassert( input.is_normalized() );
+
+		// Check if equivalent, if not return invalid expression.
+		//
+		auto sym_map = match<bcnt_strict>( input, rule.base_expression );
+		if ( !sym_map )
+			return {};
+		if ( rule.extension && !rule.extension( *sym_map ) )
+			return {};
+		return sym_map;
+	}
 
 	// Transforms between equivalent expression trees.
 	//
-	static expression remap_ruleset( const expression& input, const symbol_map& sym_map, const expression& to )
+	static expression remap( const expression& input, const symbol_map& sym_map, const expression& to )
 	{
 		// Remap symbol.
 		//
@@ -367,24 +432,15 @@ namespace vtil::symbolic::rules
 				remove_special( op );
 		};
 		remove_special( new_expression );
-		return new_expression.resize( input.size(), false );
+		return new_expression.resize( input.size() );
 	}
 
 	template<bool bcnt_strict = true>
-	static expression remap_equivalent( const expression& input, const expression& from, const expression& to )
+	static expression apply( const expression& input, const rule_entry& rule, const expression& target )
 	{
-		// All variables should be of the same size.
-		//
-		fassert( input.is_normalized() );
-
-		// Check if equivalent, if not return invalid expression.
-		//
-		auto sym_map = match<bcnt_strict>( input, from );
+		auto sym_map = match<bcnt_strict>( input, rule );
 		if ( !sym_map )
 			return {};
-
-		// Remap.
-		//
-		return remap_ruleset( input, *sym_map, to );
+		return remap( input, sym_map.value(), target );
 	}
 }

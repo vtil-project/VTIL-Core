@@ -22,17 +22,18 @@ namespace vtil::symbolic
 	// according to the instruction stream in the basic block, and any block that
 	// jumps to it if recurse flag is set.
 	//
-	// - Adjust-RSP should be set if the caller wishes to receive
-	//   real stack pointers as opposed to normalized ones such
-	//   as the operands of STR and LDR where the memory offset 
-	//   behaves indepdentent to the the stack pointer itself.
+	// - Virtual-SP should be set if the caller wishes to receive
+	//   virtual stack pointers such as the operands of STR and 
+	//   LDR where the memory offset behaves indepdentent to the 
+	//   the stack pointer itself.
 	//
 	// - Handles branching and loops internally.
 	//
 	template<bool verbose = false>
 	static expression generate( const variable& lookup,
-								bool adjust_rsp = true,
+								bool virtual_sp = false,
 								bool recurse = false,
+								int32_t max_op_depth = INT32_MAX,
 								std::map<std::pair<const basic_block*, const basic_block*>, uint32_t> visited = {} )
 	{
 		// If we're not tracing a register or a memory value, return as is.
@@ -48,6 +49,11 @@ namespace vtil::symbolic
 			if ( rw.base.maps_to >= X86_REG_VCR0 )
 				return { lookup };
 		}
+
+		// Fail if max operation depth was reached.
+		//
+		if ( max_op_depth < 0 )
+			return {};
 
 		// Resolve query offset, size and iterator.
 		//
@@ -111,7 +117,7 @@ namespace vtil::symbolic
 						//
 						if ( !pointer_exp.is_valid() )
 						{
-							pointer_exp = generate<false>( { { lookup.uid.get_mem().first, lookup.uid.origin }, 8 }, true, false, {} ) + lookup.uid.get_mem().second;
+							pointer_exp = generate( { { lookup.uid.get_mem().first, lookup.uid.origin }, 8 }, true ) + lookup.uid.get_mem().second;
 							
 							// Log pointer resolved if verbose.
 							//
@@ -121,7 +127,7 @@ namespace vtil::symbolic
 
 						// Try to simplify the expression for [dst-lookup].
 						//
-						auto offset_exp = simplify( generate<false>( { { it, it->base->memory_operand_index }, 8 }, false, false, {} ) + mem_off - pointer_exp );
+						auto offset_exp = simplify( generate( { { it, it->base->memory_operand_index }, 8 }, true ) + mem_off - pointer_exp );
 
 						// Log write resolved if verbose.
 						//
@@ -150,7 +156,7 @@ namespace vtil::symbolic
 		//
 		const auto to_result = [ & ] ( ilstream_const_iterator it ) -> expression
 		{
-			auto gen = [ & ] ( const variable& var ) { return generate<verbose>( var, adjust_rsp, recurse, visited ); };
+			auto gen = [ & ] ( const variable& var, bool is_op = false ) { return generate<verbose>( var, false, recurse, max_op_depth - is_op, visited ); };
 
 			// If we are looking up a stack value:
 			//
@@ -222,7 +228,7 @@ namespace vtil::symbolic
 							// Resolve the value of OP1 prior to this instruction,
 							// fail if recursive call fails.
 							//
-							expression op1e = gen( { it, 0 } );
+							expression op1e = gen( { it, 0 }, true );
 							if ( !op1e.is_valid() )
 								return variable( lookup ).bind( it );
 
@@ -243,10 +249,10 @@ namespace vtil::symbolic
 							// Resolve the value of OP1 and OP2 prior to this 
 							// instruction, fail if recursive call fails.
 							//
-							expression op1e = gen( { it, 0 } );
+							expression op1e = gen( { it, 0 }, true );
 							if ( !op1e.is_valid() )
 								return variable( lookup ).bind( it );
-							expression op2e = gen( { it, 1 } );
+							expression op2e = gen( { it, 1 }, true );
 							if ( !op2e.is_valid() )
 								return variable( lookup ).bind( it );
 
@@ -375,18 +381,13 @@ namespace vtil::symbolic
 		// Declare the output expression and the default expression.
 		//
 		expression result = {};
-		variable default_result = variable( lookup ).unbind();
-		int64_t default_result_offset = 0;
+		expression default_result = variable( lookup ).unbind();
 
-		// If looking up stack pointer and adjust flag is set:
+		// If looking up stack pointer and flag to adjust is set:
 		//
-		if ( lookup.is_register() && lookup.get_reg() == X86_REG_RSP && adjust_rsp )
-		{
-			// Update the default result offset.
-			//
-			if ( !lookup.uid.origin.is_begin() )
-				default_result_offset = std::prev( lookup.uid.origin )->sp_offset;
-		}
+		int64_t adjustment_offset = 0;
+		if ( lookup.is_register() && lookup.get_reg() == X86_REG_RSP && !virtual_sp )
+			adjustment_offset = lookup.uid.origin.is_end() ? lookup.uid.origin.container->sp_offset : lookup.uid.origin->sp_offset;
 		
 		// If we could find a local result within the current block assign it as is.
 		//
@@ -416,13 +417,43 @@ namespace vtil::symbolic
 				//
 				if ( visit_counter++ <= 1 )
 				{
-					// Generate a expression for the variable in the destination block.
+					// Transform the variable over to the destination block.
 					//
-					expression exp = generate( variable( lookup ).bind( it ), adjust_rsp, recurse, visited_local );
+					variable var_inherited = variable( lookup ).bind( it );
+					if ( lookup.is_memory() )
+					{
+						unreachable();
 
-					// Skip if we traced back to the lookup variable.
+						// If pointer expression generation was deferred, generate it now.
+						//
+						if ( !pointer_exp.is_valid() )
+							pointer_exp = generate( { { lookup.uid.get_mem().first, lookup.uid.origin }, 8 }, true ) + lookup.uid.get_mem().second;
+
+						// If the pointer can be rewritten in the form of [RSP + C]:
+						//
+						if ( auto off = simplify( pointer_exp - variable{ { X86_REG_RSP, lookup.uid.origin.container->begin() }, 8 } ).evaluate() )
+						{
+							// Assign the new adjusted offset.
+							//
+							var_inherited.uid.assign( X86_REG_RSP, off->get<true>() + it.container->sp_offset );
+						}
+						// If the delta does not simplify to a constant stop recursing and fail.
+						//
+						else
+						{
+							result = {};
+							break;
+						}
+					}
+
+					// Generate a expression for the variable in the destination block.
+					// - Read note below to understand why virtual sp == true.
 					//
-					if ( is_equivalent( exp, default_result + default_result_offset ) )
+					expression exp = generate( var_inherited, true, recurse, max_op_depth, visited_local );
+
+					// Skip if we traced back to the lookup variable
+					//
+					if( is_equivalent( exp, default_result + adjustment_offset ) )
 					{
 						// Log decision if verbose.
 						//
@@ -430,6 +461,13 @@ namespace vtil::symbolic
 							io::log<CON_YLW>( "Candidate [%s] was rejected as it's self-referencing.\n", exp.to_string() );
 						continue;
 					}
+
+					// If we are tracing the value of RSP, add the stack pointer delta between blocks since
+					// that will be the adjustment offset of the next block and we will request a virtual
+					// stack pointer to keep things in balance.
+					//
+					if ( lookup.is_register() && lookup.get_reg() == X86_REG_RSP )
+						exp = exp + it.container->sp_offset;
 
 					// If no result is set yet, assign the current expression:
 					//
@@ -451,8 +489,12 @@ namespace vtil::symbolic
 						if constexpr ( verbose )
 							io::log<CON_RED>( "Cancelling query as candidate [%s] differs from previously set candidate.\n", exp.to_string() );
 						result = {};
-						default_result.uid.set_branch_dependency( true );
-						default_result.uid.bind( lookup.uid.origin.container->begin() );
+
+						default_result.enum_symbols( [ & ] ( expression& v )
+						{
+							v.value->uid.set_branch_dependency( true );
+							v.value->uid.bind( lookup.uid.origin.container->begin() );
+						} );
 						break;
 					}
 				}
@@ -469,7 +511,12 @@ namespace vtil::symbolic
 		// If resolved result is not valid, assign the default result.
 		//
 		if ( !result.is_valid() )
-			result = default_result + default_result_offset;
+			result = default_result;
+
+		// Propagate the stack adjustment.
+		//
+		if ( adjustment_offset != 0 )
+			result = simplify( result + variable( adjustment_offset, 8 ) );
 
 		// Log the final result if verbose.
 		//
