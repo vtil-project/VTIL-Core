@@ -47,40 +47,54 @@ namespace vtil::symbolic
 			// For each alternate form:
 			//
 			size_t complexity_0 = exp.complexity();
-			for ( auto& pair : rules::alternate_forms )
+			bool success = rules::for_each( rules::alternate_forms, [ & ] ( const rules::rule_entry& rule, const std::vector<expression>& forms )
 			{
-				auto sym_map = rules::match( input, pair.first );
-				if ( !sym_map )
-					continue;
-
-				for ( auto& form : pair.second )
+				// If we match the rules:
+				//
+				if ( auto sym_map = rules::match( exp, rule ) )
 				{
-					auto new_exp = try_simplify( rules::remap( exp, *sym_map, form ), true );
-					if ( !new_exp ) continue;
-
-					size_t complexity_1 = new_exp->complexity();
-					if ( complexity_1 < complexity_0 )
+					// For each form:
+					//
+					for ( auto& form : forms )
 					{
-						return try_simplify( *new_exp ).value_or( *new_exp ).declare_simple();
+						// Try simplifying, if we could not, continue onto next one.
+						//
+						auto new_exp = try_simplify( rules::remap( exp, *sym_map, form ), true );
+						if ( !new_exp ) continue;
+
+						// If complexity was reduced:
+						//
+						size_t complexity_1 = new_exp->complexity();
+						if ( complexity_1 < complexity_0 )
+						{
+							// Recurse, write the result at exp, indicate success.
+							//
+							exp = try_simplify( *new_exp ).value_or( *new_exp ).declare_simple();
+							return true;
+						}
 					}
 				}
-			}
+				return false;
+			} );
+			if ( success ) return exp;
 		}
 
 		// For each simplified form:
 		//
-		for ( auto& pair : rules::simplified_form )
+		bool success = rules::for_each( rules::simplified_form, [ & ] ( const rules::rule_entry& rule, const expression& form )
 		{
-			// Check if our tree matches the input format:
+			// If we could apply the simplification rule:
 			//
-			auto new_exp = rules::apply( exp, pair.first, pair.second );
-			if ( new_exp.is_valid() )
+			if ( auto new_exp = rules::apply( exp, rule, form ) )
 			{
-				// Recurse.
+				// Recurse, write the result at exp, indicate success.
 				//
-				return try_simplify( new_exp, skip_top_level ).value_or( new_exp ).declare_simple();
+				exp = try_simplify( *new_exp, skip_top_level ).value_or( *new_exp ).declare_simple();
+				return true;
 			}
-		}
+			return false;
+		} );
+		if ( success ) return exp;
 
 		// Try evaluating new expression, if we could
 		// return it as is.

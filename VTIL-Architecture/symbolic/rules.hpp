@@ -2,6 +2,7 @@
 #include <tuple>
 #include <algorithm>
 #include <unordered_map>
+#include <numeric>
 #include "expression.hpp"
 #include "variable.hpp"
 
@@ -11,6 +12,10 @@ namespace vtil::symbolic::rules
 	//
 	struct rule_entry
 	{
+		// Number of times this rule entry was used to produce optimal result.
+		//
+		volatile uint32_t points = 0;
+
 		// Base expression containing symbolic expression tree to match against.
 		//
 		const expression base_expression;
@@ -55,7 +60,7 @@ namespace vtil::symbolic::rules
 	// All simpilfications:
 	// - Note! Must not contain ( simplified[simplified[x]] == y ).
 	//
-	static const std::unordered_map<rule_entry, expression, rule_entry::hash> simplified_form =
+	static std::unordered_map<rule_entry, expression, rule_entry::hash> simplified_form =
 	{
 		// Inverse operations
 		//
@@ -94,7 +99,7 @@ namespace vtil::symbolic::rules
 		{ zx(A,B)>>bcntN(Q,A), {0} },						// take in the real size into account when shifting
 		{ sx(A,B)>>bcntN(Q,A), {-1>>Q} },					// take in the real size into account when shifting
 		
-		{ { { A & U }, [ ] ( symbol_map& sym )
+		{ { { A & U }, [ ] ( symbol_map& sym )				// convert mask to __zx
 		{
 			uint64_t mask = sym[ *U.value ].evaluate()->get();
 			auto& in = sym[ *A.value ];
@@ -109,7 +114,7 @@ namespace vtil::symbolic::rules
 				default: return false;
 			}
 			return true;
-		} }, { Q } },						// take in the real size into account when shifting
+		} }, { Q } },
 
 		// Constant result
 		//
@@ -164,8 +169,12 @@ namespace vtil::symbolic::rules
 	// All alternate forms:
 	// - Note: Both sides should contain the same amount of unknowns.
 	//
-	static const std::unordered_map<rule_entry, std::vector<expression>, rule_entry::hash> alternate_forms =
+	static std::unordered_map<rule_entry, std::vector<expression>, rule_entry::hash> alternate_forms =
 	{
+		// Convert between SUB and ADD
+		//
+		{ A-B, { A+(-B) }},
+
 		// Convert between bitwise and arithmetic negation
 		//
 		{ ~A, { -(A+1) } },
@@ -173,21 +182,26 @@ namespace vtil::symbolic::rules
 
 		// Distribute bitwise operators
 		//
+		{ ~(A^B), { (~A)^B } },
+		{ ~(A^B), { A^(~B) } },
+		{ ~(A&B), { (~A)|(~B) } },
+		{ ~(A|B), { (~A)&(~B) } },
+		{ A&(B|C),{ (A&B)|(A&C) } },
+		{ A|(B&C),{ (A|B)&(A|C) } },
+		{ A&(B^C),{ (A&B)^(A&C) } },
 		{ (A&B)>>C,	{ (A>>C)&(B>>C) } },
 		{ (A&B)<<C,	{ (A<<C)&(B<<C) } },
 		{ (A|B)>>C,	{ (A>>C)|(B>>C) } },
 		{ (A|B)<<C,	{ (A<<C)|(B<<C) } },
 		{ (A^B)>>C,	{ (A>>C)^(B>>C) } },
 		{ (A^B)<<C,	{ (A<<C)^(B<<C) } },
-		{ ~(A&B), { (~A)|(~B) } },
-		{ ~(A|B), { (~A)&(~B) } },
-		{ ~(A^B), { (~A)^B } },
-		{ ~(A^B), { A^(~B) } },
-		{ A&(B|C),{ (A&B)|(A&C) } },
-		{ A|(B&C),{ (A|B)&(A|C) } },
-		{ A&(B^C),{ (A&B)^(A&C) } },
-		{ A-B, { A+(-B) }},
+		{ A^(B|C), {(A&(~(B|C)))|((~A)&(B|C)), (A&(~(C|B)))|((~A)&(C|B))} },
 		
+		// All commutative laws. 
+		// - Certain instances are commented out since only node #0 and node #1 are reversed,
+		//   and since they are not of the same type, matcher will apply the commutative law
+		//   automatically anyways to match the other.
+		//
 		{ A+(B+C), { (A+B)+C, (A+C)+B } },
 		//{ (A+B)+C, { A+(B+C), B+(A+C) } },
 		{ A+(B-C), { (A+B)-C, (A-C)+B } },
@@ -197,12 +211,47 @@ namespace vtil::symbolic::rules
 		{ A-(B-C), { (A-B)+C, (A+C)-B } },
 		{ (A-B)-C, { (A-C)-B, A-(B+C) } },
 		{ A|(B|C), { (A|B)|C, (A|C)|B } },
-		{ (A|B)|C, { A|(B|C), B|(A|C) } },
+		//{ (A|B)|C, { A|(B|C), B|(A|C) } },
 		{ A&(B&C), { (A&B)&C, (A&C)&B } },
-		{ (A&B)&C, { A&(B&C), B&(A&C) } },
+		//{ (A&B)&C, { A&(B&C), B&(A&C) } },
 		{ A^(B^C), { (A^B)^C, (A^C)^B } },
-		{ (A^B)^C, { A^(B^C), B^(A^C) } },
+		//{ (A^B)^C, { A^(B^C), B^(A^C) } },
 	};
+
+	// A handy helper that invokes enumerator for each entry in the 
+	// given map in the order of points and increments the points
+	// and breaks out of the loop if callback returns true.
+	//
+	template<typename T, typename Z>
+	static auto for_each( std::unordered_map<rule_entry, T, rule_entry::hash>& map,
+						  const Z& enumerator )
+	{
+		using iterator_type = typename std::unordered_map<rule_entry, T, rule_entry::hash>::iterator;
+
+		std::vector<iterator_type> ref_vec( map.size() );
+		std::iota( ref_vec.begin(), ref_vec.end(), map.begin() );
+		std::sort( ref_vec.begin(), ref_vec.end(), [ ] ( const iterator_type& a, const iterator_type& b ) { return a->first.points > b->first.points; } );
+
+		using ret_type = decltype( enumerator( ref_vec[ 0 ]->first, ref_vec[ 0 ]->second ) );
+
+		if constexpr ( std::is_same_v<ret_type, void> )
+		{
+			for ( auto& it : ref_vec )
+				enumerator( it->first, it->second );
+		}
+		else
+		{
+			for ( auto& it : ref_vec )
+			{
+				if ( enumerator( it->first, it->second ) )
+				{
+					++( *( volatile uint32_t* ) &it->first.points );
+					return true;
+				}
+			}
+			return false;
+		}
+	}
 
 	// Checks if the provided expression tree matches that of a symbolic 
 	// tree simplification/alternate form and returns the table to map it 
@@ -436,7 +485,7 @@ namespace vtil::symbolic::rules
 	}
 
 	template<bool bcnt_strict = true>
-	static expression apply( const expression& input, const rule_entry& rule, const expression& target )
+	static std::optional<expression> apply( const expression& input, const rule_entry& rule, const expression& target )
 	{
 		auto sym_map = match<bcnt_strict>( input, rule );
 		if ( !sym_map )
