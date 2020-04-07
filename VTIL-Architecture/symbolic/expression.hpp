@@ -157,7 +157,7 @@ namespace vtil::symbolic
 			// Exceptional operators:
 			//
 			if ( fn->function == "__zx" ||
-				 fn->function == "__xx" )
+				 fn->function == "__sx" )
 				return real_size ? operands[ 0 ].value->get() : operands[ 1 ].value->get();
 			if ( fn->function == "__bcnt" ||
 				 fn->function == "__bcntN" )
