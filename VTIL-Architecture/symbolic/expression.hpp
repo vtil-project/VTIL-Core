@@ -90,6 +90,19 @@ namespace vtil::symbolic
 			return tmp;
 		}
 
+		// Returns whether the expression contains the given
+		// symbolic variable in any size or not.
+		//
+		bool contains_symbol( const unique_identifier& uid ) const
+		{
+			if ( is_variable() )
+				return value->uid == uid;
+			for ( auto& operand : operands )
+				if ( operand.contains_symbol( uid ) )
+					return true;
+			return false;
+		}
+
 		// Counts the number of unique symbols used in this
 		// expression tree.
 		//
@@ -141,11 +154,11 @@ namespace vtil::symbolic
 			if ( is_variable() )
 				return value->calc_size( false );
 
-			if ( fn->function == "__ext" && !real_size )
-				return operands[ 1 ].value->get();
-
 			// Exceptional operators:
 			//
+			if ( fn->function == "__zx" ||
+				 fn->function == "__xx" )
+				return real_size ? operands[ 0 ].value->get() : operands[ 1 ].value->get();
 			if ( fn->function == "__bcnt" ||
 				 fn->function == "__bcntN" )
 				return 1;
@@ -168,7 +181,7 @@ namespace vtil::symbolic
 
 		// Changes the size of the output value.
 		//
-		expression& resize( uint8_t size, bool implicit )
+		expression& resize( uint8_t size, bool sign_extend = false )
 		{
 			// Can't resize to <any size>
 			//
@@ -184,49 +197,53 @@ namespace vtil::symbolic
 					if ( value->size == size ) 
 						return *this;
 
-					if ( implicit )
-						value->resize( size );
+					if ( value->size < size )
+						*this = expression( *this, sign_extend ? find_opr( "__sx" ) : find_opr( "__zx" ), variable( size ) );
 					else
-						*this = expression( *this, find_opr( "__ext" ), variable( size ) );
+						value->resize( size, sign_extend );
 				}
 				else
 				{
-					value->resize( size );
+					value->resize( size, sign_extend );
 				}
 				return *this;
 			}
 			// If result of an operator:
 			//
-			else
+			else if( is_expression() )
 			{
-				// If function is ext, change the size.
+				// If function is an extender, apply to the argument.
 				//
-				if ( fn->function == "__ext" )
+				if ( fn->function == "__zx" ||
+					 fn->function == "__sx" )
 				{
-					if ( implicit )
-						*this = operands[ 0 ].resize( size, implicit );
-					else
-						operands[ 1 ] = { size };
+					*this = operands[ 0 ];
+					resize( size, sign_extend );
 				}
 				// If unary operator or result size is first operand,
 				// redirect to the first operand.
 				//
 				else if ( fn->is_unary || fn->result_size == 0 )
 				{
-					operands[ 0 ].resize( size, implicit );
+					operands[ 0 ].resize( size, !fn->is_bitwise );
 				}
 				// Otherwise, resize both.
 				//
 				else
 				{
-					operands[ 0 ].resize( size, implicit );
-					operands[ 1 ].resize( size, implicit );
-				}
-			}
+					// Cannot shrink in a simple way if rotate or shift right
+					//
+					if( fn->function == "rol" || fn->function == "ror" || fn->function == "shr" )
+						fassert( size >= operands[ 0 ].size() );
 
-			// Declare that the expression was changed.
-			//
-			declare_changed();
+					operands[ 0 ].resize( size, !fn->is_bitwise );
+					operands[ 1 ].resize( size, !fn->is_bitwise );
+				}
+
+				// Declare that the expression was changed.
+				//
+				declare_changed();
+			}
 			return *this;
 		}
 
@@ -243,7 +260,8 @@ namespace vtil::symbolic
 			// Exceptional operators:
 			//
 			if ( fn->function == "__bcntN" ||
-				 fn->function == "__ext" )
+				 fn->function == "__zx" ||
+				 fn->function == "__sx" )
 				return operands[ 0 ].complexity();
 			if ( fn->function == "__bcnt" ||
 				 fn->function == "__bcntN" ||
@@ -266,11 +284,22 @@ namespace vtil::symbolic
 			// If variable, return 1.
 			//
 			if ( is_variable() )
-				return 1;
+				return 0;
+
+			// Exceptional operators:
+			//
+			if ( fn->function == "__bcntN" ||
+				 fn->function == "__zx" ||
+				 fn->function == "__sx" )
+				return operands[ 0 ].depth();
+			if ( fn->function == "__bcnt" ||
+				 fn->function == "__bcntN" ||
+				 fn->function == "__bmask" )
+				return 0;
 
 			// For each operand, recurse and sum.
 			//
-			size_t out = 0;
+			size_t out = 1;
 			for ( auto& subexp : operands )
 				out += subexp.depth();
 			return out;
@@ -285,8 +314,22 @@ namespace vtil::symbolic
 			if ( is_variable() )
 				return is_constant() ? value : std::nullopt;
 
-			if ( fn->function == "__ext" )
-				return operands[ 0 ].evaluate();
+			// Handle resizing.
+			//
+			if ( fn->function == "__zx" )
+			{
+				auto res = operands[ 0 ].evaluate();
+				if ( res )
+					res->resize( operands[ 1 ].value->get(), false );
+				return res;
+			}
+			else if ( fn->function == "__sx" )
+			{
+				auto res = operands[ 0 ].evaluate();
+				if ( res )
+					res->resize( operands[ 1 ].value->get(), true );
+				return res;
+			}
 
 			auto operands_n = operands;
 			size_t ns = size();
@@ -368,10 +411,8 @@ namespace vtil::symbolic
 		//
 		bool operator==( const expression& o ) const 
 		{
-			if ( o.is_expression() && o.fn->function == "__ext" )
+			if ( is_expression() && ( fn->function == "__zx" || fn->function == "__sx" ) )
 				return o.operands[ 0 ] == *this;
-			if ( is_expression() && fn->function == "__ext" )
-				return o == operands[ 0 ];
 
 			if ( o.is_variable() )
 				return is_variable() && value == o.value;

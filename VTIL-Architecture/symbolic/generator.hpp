@@ -290,7 +290,7 @@ namespace vtil::symbolic
 				//
 				if ( !exp.is_valid() )
 					return exp;
-				exp.resize( query_size, false );
+				exp.resize( query_size );
 
 				// Mask the result (and resize, abusing size == max(x.size, y.size))
 				//
@@ -320,11 +320,12 @@ namespace vtil::symbolic
 			// If we have enough information to return as is do not query any other segments
 			//
 			if ( ( query_size + query_offset ) <= ( current_offset + current_size ) && query_offset >= current_offset )
-				return result;
-
+			{
+				// <No operation>
+			}
 			// If the offsets match, we need to merge a high segment to the current result.
 			//
-			if ( current_offset == query_offset )
+			else if ( current_offset == query_offset )
 			{
 				fassert( current_size < query_size );
 
@@ -362,7 +363,7 @@ namespace vtil::symbolic
 				}
 			}
 
-			// Simplify the result and return.
+			// Return the result.
 			//
 #if SYMEX_EVALTIME_SIMPLIFY
 			return simplify( result );
@@ -477,6 +478,6 @@ namespace vtil::symbolic
 			io::log_padding--;
 			io::log( "= %s\n", result.to_string() );
 		}
-		return result;
+		return result.resize( lookup.size );
 	}
 };
