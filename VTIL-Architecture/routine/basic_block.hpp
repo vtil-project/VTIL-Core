@@ -479,16 +479,6 @@ namespace vtil
 		basic_block* pop( const T& _op )
 		{
 			operand op = prepare_operand( _op );
-
-			// Handle RSP specially since we change the stack pointer
-			// before the instruction begins.
-			//
-			if ( op.is_register() && op.reg.base == X86_REG_RSP )
-			{
-				auto t0 = tmp( 8 );
-				return pop( t0 )->mov( op, t0 );
-			}
-
 			int64_t offset = sp_offset;
 			shift_sp( op.size() < stack_alignment ? stack_alignment : op.size() );
 			ldd( op, X86_REG_RSP, offset );
