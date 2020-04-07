@@ -44,11 +44,11 @@ namespace vtil::symbolic
 
 		// Constructors for unique identifiers created from stream iterators.
 		//
-		unique_identifier( const register_view& base, int64_t offset, ilstream_const_iterator at )
+		unique_identifier( const register_view& base, int64_t offset, ilstream_const_iterator at = {} )
 		{
 			assign( base, offset ).bind( at );
 		}
-		unique_identifier( const register_view& reg, ilstream_const_iterator at )
+		unique_identifier( const register_view& reg, ilstream_const_iterator at = {} )
 		{
 			assign( reg ).bind( at );
 		}
@@ -147,8 +147,8 @@ namespace vtil::symbolic
 		unique_identifier& bind( ilstream_const_iterator it )
 		{ 
 			origin = it;
-			if ( origin.is_valid() && memory_id )
-				memory_base_idx = origin.is_end() ? origin.container->sp_index : origin->sp_index;
+			if ( it.is_valid() && memory_id )
+				memory_base_idx = it.is_end() ? it.container->sp_index : it->sp_index;
 			return refresh(); 
 		}
 

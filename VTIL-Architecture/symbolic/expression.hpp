@@ -412,9 +412,8 @@ namespace vtil::symbolic
 		bool operator==( const expression& o ) const 
 		{
 			if ( is_expression() && ( fn->function == "__zx" || fn->function == "__sx" ) )
-				return o.operands[ 0 ] == *this;
-
-			if ( o.is_variable() )
+				return o == operands[ 0 ];
+			else if ( o.is_variable() )
 				return is_variable() && value == o.value;
 			else
 				return is_expression() && fn == o.fn && operands == o.operands;

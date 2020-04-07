@@ -39,7 +39,7 @@ namespace vtil::symbolic
 		// If we're not tracing a register or a memory value, return as is.
 		//
 		if ( !lookup.is_register() && !lookup.is_memory() )
-			return { lookup };
+			return lookup;
 
 		// If we are tracing a control register return the symbol as is.
 		//
@@ -47,7 +47,7 @@ namespace vtil::symbolic
 		{
 			register_view rw = lookup.get_reg();
 			if ( rw.base.maps_to >= X86_REG_VCR0 )
-				return { lookup };
+				return lookup;
 		}
 
 		// Fail if max operation depth was reached.
@@ -403,6 +403,15 @@ namespace vtil::symbolic
 			//
 			std::vector it_list = query_base.query.iterator.recurse( false );
 
+			// If only valid previous block is self, one self-referencing result is valid.
+			//
+			bool expect_self_ref = false;
+			if ( it_list.size() == 1 && it_list[ 0 ].container == lookup.uid.origin.container )
+			{
+				expect_self_ref = lookup.uid.origin.is_begin();
+				it_list.push_back( { lookup.uid.origin.container->begin() } );
+			}
+
 			// For each possible route:
 			//
 			for ( auto it : it_list )
@@ -412,6 +421,7 @@ namespace vtil::symbolic
 				//
 				std::map visited_local = visited;
 				uint32_t& visit_counter = visited_local[ { lookup.uid.origin.container, it.container } ];
+				int32_t blk_sp_offset = it.is_begin() ? 0 : it.container->sp_offset;
 
 				// If we've taken this route no more than once:
 				//
@@ -422,20 +432,23 @@ namespace vtil::symbolic
 					variable var_inherited = variable( lookup ).bind( it );
 					if ( lookup.is_memory() )
 					{
-						unreachable();
-
 						// If pointer expression generation was deferred, generate it now.
 						//
 						if ( !pointer_exp.is_valid() )
 							pointer_exp = generate( { { lookup.uid.get_mem().first, lookup.uid.origin }, 8 }, true ) + lookup.uid.get_mem().second;
 
+						// Log pointer resolved if verbose.
+						//
+						if constexpr ( verbose )
+							io::log<CON_CYN>( "Pointer adjusted to [=%s]\n", pointer_exp.to_string() );
+
 						// If the pointer can be rewritten in the form of [RSP + C]:
 						//
-						if ( auto off = simplify( pointer_exp - variable{ { X86_REG_RSP, lookup.uid.origin.container->begin() }, 8 } ).evaluate() )
+						if ( auto off = simplify( pointer_exp - variable{ { register_view{ X86_REG_RSP } }, 8 } ).evaluate() )
 						{
 							// Assign the new adjusted offset.
 							//
-							var_inherited.uid.assign( X86_REG_RSP, off->get<true>() + it.container->sp_offset );
+							var_inherited.uid.assign( X86_REG_RSP, blk_sp_offset - off->get<true>() );
 						}
 						// If the delta does not simplify to a constant stop recursing and fail.
 						//
@@ -449,11 +462,11 @@ namespace vtil::symbolic
 					// Generate a expression for the variable in the destination block.
 					// - Read note below to understand why virtual sp == true.
 					//
-					expression exp = generate( var_inherited, true, recurse, max_op_depth, visited_local );
+					expression exp = generate<verbose>( var_inherited, true, recurse, max_op_depth, visited_local );
 
 					// Skip if we traced back to the lookup variable
 					//
-					if( is_equivalent( exp, default_result + adjustment_offset ) )
+					if( !expect_self_ref && is_equivalent( exp, default_result + adjustment_offset ) )
 					{
 						// Log decision if verbose.
 						//
@@ -467,7 +480,7 @@ namespace vtil::symbolic
 					// stack pointer to keep things in balance.
 					//
 					if ( lookup.is_register() && lookup.get_reg() == X86_REG_RSP )
-						exp = exp + it.container->sp_offset;
+						exp = exp + blk_sp_offset;
 
 					// If no result is set yet, assign the current expression:
 					//
@@ -496,6 +509,13 @@ namespace vtil::symbolic
 							v.value->uid.bind( lookup.uid.origin.container->begin() );
 						} );
 						break;
+					}
+					else
+					{
+						// Log decision if verbose.
+						//
+						if constexpr ( verbose )
+							io::log<CON_YLW>( "Continuing query since [%s] matched primary candidate.\n", exp.to_string() );
 					}
 				}
 				else
