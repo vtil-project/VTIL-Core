@@ -1,0 +1,65 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Memory">
+      <UniqueIdentifier>{424c679d-7468-453f-8b9d-7d282aaf9470}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="x86">
+      <UniqueIdentifier>{cb6f5bfd-fdca-47fe-bbb7-e91d8e5ba642}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Emulation">
+      <UniqueIdentifier>{673822af-de5d-4c16-9306-ac6c1441f341}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="I/O">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;hm;inl;inc;ipp;xsd</Extensions>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="formatting.hpp">
+      <Filter>I/O</Filter>
+    </ClInclude>
+    <ClInclude Include="logger.hpp">
+      <Filter>I/O</Filter>
+    </ClInclude>
+    <ClInclude Include="asserts.hpp">
+      <Filter>I/O</Filter>
+    </ClInclude>
+    <ClInclude Include="rwx_allocator.hpp">
+      <Filter>Memory</Filter>
+    </ClInclude>
+    <ClInclude Include="register_details.hpp">
+      <Filter>x86</Filter>
+    </ClInclude>
+    <ClInclude Include="emulator.hpp">
+      <Filter>Emulation</Filter>
+    </ClInclude>
+    <ClInclude Include="includes\vtil\common.hpp" />
+    <ClInclude Include="disassembly.hpp">
+      <Filter>x86</Filter>
+    </ClInclude>
+    <ClInclude Include="assembler.hpp">
+      <Filter>x86</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="register_details.cpp">
+      <Filter>x86</Filter>
+    </ClCompile>
+    <ClCompile Include="rwx_allocator.cpp">
+      <Filter>Memory</Filter>
+    </ClCompile>
+    <ClCompile Include="emulator.cpp">
+      <Filter>Emulation</Filter>
+    </ClCompile>
+    <ClCompile Include="disassembly.cpp">
+      <Filter>x86</Filter>
+    </ClCompile>
+    <ClCompile Include="assembler.cpp">
+      <Filter>x86</Filter>
+    </ClCompile>
+    <ClCompile Include="logger.cpp">
+      <Filter>I/O</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>
