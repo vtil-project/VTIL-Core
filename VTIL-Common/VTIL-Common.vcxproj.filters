@@ -1,8 +1,8 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <Filter Include="Memory">
-      <UniqueIdentifier>{424c679d-7468-453f-8b9d-7d282aaf9470}</UniqueIdentifier>
+    <Filter Include="Includes">
+      <UniqueIdentifier>{14333603-a637-4356-854a-db631a744d42}</UniqueIdentifier>
     </Filter>
     <Filter Include="I/O">
       <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
@@ -14,11 +14,17 @@
     <Filter Include="amd64\Emulation">
       <UniqueIdentifier>{673822af-de5d-4c16-9306-ac6c1441f341}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Includes">
-      <UniqueIdentifier>{14333603-a637-4356-854a-db631a744d42}</UniqueIdentifier>
-    </Filter>
     <Filter Include="amd64\Core">
       <UniqueIdentifier>{dbf4733d-3814-4218-9474-cf4b4e3c5719}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Math">
+      <UniqueIdentifier>{e5d9bf65-c2c0-4dcf-aa87-65a7059e4e90}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Memory">
+      <UniqueIdentifier>{424c679d-7468-453f-8b9d-7d282aaf9470}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Utility">
+      <UniqueIdentifier>{226c5e44-6592-44d0-adb0-31369963cb86}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -58,7 +64,25 @@
     <ClInclude Include="includes\vtil\io">
       <Filter>Includes</Filter>
     </ClInclude>
+    <ClInclude Include="math\operable.hpp">
+      <Filter>Math</Filter>
+    </ClInclude>
+    <ClInclude Include="math\operators.hpp">
+      <Filter>Math</Filter>
+    </ClInclude>
+    <ClInclude Include="math\bitwise.hpp">
+      <Filter>Math</Filter>
+    </ClInclude>
+    <ClInclude Include="includes\vtil\math">
+      <Filter>Includes</Filter>
+    </ClInclude>
     <ClInclude Include="includes\vtil\memory">
+      <Filter>Includes</Filter>
+    </ClInclude>
+    <ClInclude Include="util\priority_list.hpp">
+      <Filter>Utility</Filter>
+    </ClInclude>
+    <ClInclude Include="includes\vtil\utility">
       <Filter>Includes</Filter>
     </ClInclude>
   </ItemGroup>

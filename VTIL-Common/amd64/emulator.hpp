@@ -16,8 +16,8 @@ namespace vtil
         // Virtual stack, must not be moved from the beginning of this structure 
         // since this pointer is used as a stack pointer.
         //
-        uint8_t v_reserved_stack[ reserved_stack_size ] = { default_register_value };
-        uint8_t v_stack[ user_stack_size ] =              { default_register_value };
+        uint64_t v_reserved_stack[ reserved_stack_size / 8 ] = { default_register_value };
+        uint64_t v_stack[ user_stack_size / 8 ] =              { default_register_value };
 
         // Each individual register.
         //

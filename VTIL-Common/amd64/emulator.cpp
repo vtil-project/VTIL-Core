@@ -23,7 +23,7 @@ namespace vtil
             mov     rax,	rsp
             mov     rsp,	this
             add     rsp,	sd
-            mov		[ rsp - sd ] emulator.__rsp, rax
+            mov     [ rsp - sd ] emulator.__rsp, rax
 
             // Exchange general-purpose registers.
             //
@@ -110,7 +110,7 @@ namespace vtil
             case X86_REG_R13:	base = &v_r13;					break;
             case X86_REG_R14:	base = &v_r14;					break;
             case X86_REG_R15:	base = &v_r15;					break;
-            default:			unreachable();
+            default:            unreachable();
         }
 
         return { ( ( uint8_t* ) base - ( uint8_t* ) this ) + offset, size };

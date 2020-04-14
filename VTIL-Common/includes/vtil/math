@@ -1,0 +1,4 @@
+#pragma once
+#include "..\..\math\bitwise.hpp"
+#include "..\..\math\operators.hpp"
+#include "..\..\math\operables.hpp"

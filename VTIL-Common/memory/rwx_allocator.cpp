@@ -16,7 +16,9 @@ namespace vtil
 	static HANDLE rwx_heap = HeapCreate( HEAP_CREATE_ENABLE_EXECUTE, 0, 0 );
 #endif
 
-	//
+	// A RWX memory descriptor prefixes any allocations made by us,
+	// most to support freeing without an explicit size argument
+	// on non-Windows platforms.
 	//
 	static constexpr uint32_t rwx_mem_magic = 0x1337DEAD;
 	struct rwx_mem_desc

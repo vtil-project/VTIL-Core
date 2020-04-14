@@ -99,13 +99,19 @@
     <ClInclude Include="amd64\register_details.hpp" />
     <ClInclude Include="includes\vtil\common" />
     <ClInclude Include="includes\vtil\io" />
+    <ClInclude Include="includes\vtil\math" />
     <ClInclude Include="includes\vtil\memory" />
     <ClInclude Include="includes\vtil\amd64" />
+    <ClInclude Include="includes\vtil\utility" />
     <ClInclude Include="io\asserts.hpp" />
     <ClInclude Include="io\formatting.hpp" />
     <ClInclude Include="io\logger.hpp" />
+    <ClInclude Include="math\bitwise.hpp" />
+    <ClInclude Include="math\operable.hpp" />
+    <ClInclude Include="math\operators.hpp" />
     <ClInclude Include="memory\copy_on_write.hpp" />
     <ClInclude Include="memory\rwx_allocator.hpp" />
+    <ClInclude Include="util\priority_list.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="amd64\assembler.cpp" />
