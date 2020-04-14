@@ -15,6 +15,15 @@
 //
 namespace vtil
 {
+	namespace impl
+	{
+		template<typename... params> struct param_pack_first { using type = std::tuple_element_t<0, std::tuple<params...>>; };
+		template<> struct param_pack_first<> { using type = void; };
+
+		template<typename T, typename... params>
+		using enable_if_non_equ_valid_t = typename std::enable_if_t<!std::is_same_v<std::remove_cvref_t<typename param_pack_first<params...>::type>, T>>;
+	};
+
 	// This structure is used to describe copy-on-write references.
 	//
 	template<typename T>
@@ -33,8 +42,9 @@ namespace vtil
 
 		// Owning reference constructor.
 		//
-		shared_reference( T&& obj ) : reference( std::make_shared<T>( std::forward<T>( obj ) ) ), is_owning( true ) {}
-		template<typename... params, typename = std::enable_if_t<std::is_same_v<std::remove_cvref_t<params...>, shared_reference<T>>>>
+		shared_reference( T&& obj ) : reference( std::make_shared<T>( std::move( obj ) ) ), is_owning( true ) {}
+		shared_reference( const T& obj ) : reference( std::make_shared<T>( obj ) ), is_owning( true ) {}
+		template<typename... params, typename = impl::enable_if_non_equ_valid_t<shared_reference<T>, params..., shared_reference<T>>>
 		shared_reference( params&&... p ) : reference( std::make_shared<T>( std::forward<params>( p )... ) ), is_owning( true ) {}
 
 		// Copy-on-write reference construction and assignment.
