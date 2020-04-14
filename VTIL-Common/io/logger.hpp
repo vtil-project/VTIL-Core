@@ -80,6 +80,10 @@ namespace vtil::logger
 		// Internally used to initialize the logger.
 		//
 		void initialize();
+	
+		// Used to mark functions noreturn.
+		//
+		__declspec( noreturn ) static void noreturn_helper(){((void(*)())0)();}
 	};
 
 	// Main function used when logging.
@@ -143,7 +147,7 @@ namespace vtil::logger
 	// Prints an error message and breaks the execution.
 	//
 	template<typename... params>
-	static void error( const char* fmt, params&&... ps )
+	__declspec( noreturn ) static void error( const char* fmt, params&&... ps )
 	{
 		log<CON_RED>( fmt, std::forward<params>( ps )... );
 
@@ -152,5 +156,6 @@ namespace vtil::logger
 #else
 		exit( 1 );
 #endif
+		impl::noreturn_helper();
 	}
 };

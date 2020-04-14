@@ -2,12 +2,12 @@
 #include <stdint.h>
 #include "logger.hpp"
 
-namespace vtil::logger
+namespace vtil::assert
 {
-	static void assert_helper( bool condition, const char* file_name, const char* condition_str, uint32_t line_number )
+	static void or_die( bool condition, const char* file_name, const char* condition_str, uint32_t line_number )
 	{
 		if ( condition ) return;
-		error
+		logger::error
 		(
 			"Assertion failure at %s:%d (%s)",
 			file_name,
@@ -18,5 +18,5 @@ namespace vtil::logger
 };
 
 #define fassert__stringify(x) #x
-#define fassert(x) vtil::logger::assert_helper( (x), __FILE__, fassert__stringify(x), __LINE__ )
-#define unreachable() fassert( false )
+#define fassert(x) vtil::assert::or_die( (x), __FILE__, fassert__stringify(x), __LINE__ )
+#define unreachable() vtil::logger::error("")
