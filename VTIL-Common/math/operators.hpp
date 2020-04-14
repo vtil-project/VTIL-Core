@@ -81,11 +81,34 @@ namespace vtil::math
     //
     struct operator_desc
     {
+        // >0 if bitwise operations are preferred as operands, <0 if arithmetic, ==0 if neutral.
+        //
+        int8_t hint_bitwise;
+
+        // Whether it expects signed operands or not.
+        //
         int8_t is_signed;
+
+        // Number of operands it takes. Either 1 or 2.
+        //
         size_t operand_count;
+
+        // Whether the operation is commutative or not.
+        //
         bool is_commutative;
+
+        // Symbol of the operation.
+        //
         const char* symbol;
+
+        // Name of the function associated with the operation.
+        //
         const char* function_name;
+
+        // Operator used to self-join by. 
+        // - For instance ::add for ::add since (A+B)+C would 
+        //   join RHS of (A+B) with RHS of (...)+C by ::add.
+        //
         operator_id join_by = operator_id::invalid;
     };
     static constexpr operator_desc descriptors[] = 
@@ -93,47 +116,47 @@ namespace vtil::math
         // Skipping ::invalid.
         {},
 
-        /*  [Signed]  [#Op] [Commutative]   [Symbol]    [Name]         [Join by]                */
-        {   false,    1,    false,          "~",        "not"                                   },
-        {   false,    2,    true,           "&",        "and",         operator_id::bitwise_and },
-        {   false,    2,    true,           "|",        "or",          operator_id::bitwise_or  },
-        {   false,    2,    true,           "^",        "xor",         operator_id::bitwise_xor },
-        {   false,    2,    false,          ">>",       "shr",         operator_id::add         },
-        {   false,    2,    false,          "<<",       "shl",         operator_id::add         },
-        {   false,    2,    false,          ">]",       "rotr",        operator_id::add         },
-        {   false,    2,    false,          "[<",       "rotl",        operator_id::add         },
-        {   true,     2,    false,          "-",        "neg"                                   },
-        {   true,     2,    true,           "+",        "add",         operator_id::add         },
-        {   true,     2,    false,          "-",        "sub",         operator_id::add         },
-        {   true,     2,    true,           "h*",       "mulhi"                                 },
-        {   true,     2,    true,           "*",        "mul",         operator_id::multiply    },
-        {   true,     2,    false,          "/",        "div",         operator_id::multiply    },
-        {   true,     2,    false,          "%",        "rem"                                   },
-        {   false,    2,    true,           "uh*",      "umulhi"                                },
-        {   false,    2,    true,           "u*",       "umul",        operator_id::umultiply   },
-        {   false,    2,    false,          "u/",       "udiv",        operator_id::umultiply   },
-        {   false,    2,    false,          "u%",       "urem"                                  },
-        {   false,    2,    false,          nullptr,    "zx"                                    },
-        {   false,    2,    false,          nullptr,    "sx"                                    },
-        {   false,    1,    false,          nullptr,    "popcnt"                                },
-        {   false,    1,    false,          nullptr,    "msb"                                   },
-        {   false,    1,    false,          nullptr,    "lsb"                                   },
-        {   false,    2,    false,          nullptr,    "bt"                                    },
-        {   false,    1,    false,          nullptr,    "mask"                                  },
-        {   false,    1,    false,          nullptr,    "bitcnt"                                },
-        {   false,    2,    false,          "?",        "if"                                    },
-        {   false,    2,    false,          ">",        "greater"                               },
-        {   false,    2,    false,          ">=",       "greater_eq"                            },
-        {   false,    2,    false,          "==",       "equal"                                 },
-        {   false,    2,    false,          "!=",       "not_equal"                             },
-        {   false,    2,    false,          "<=",       "less_eq"                               },
-        {   false,    2,    false,          "<",        "less"                                  },
-        {   false,    2,    false,          "u>",       "ugreater"                              },
-        {   false,    2,    false,          "u>=",      "ugreater_eq"                           },
-        {   false,    2,    false,          "u<=",      "uless_eq"                              },
-        {   false,    2,    false,          "u<",       "uless"                                 },
+        /*  [Bitwise]   [Signed]  [#Op] [Commutative]   [Symbol]    [Name]         [Join by]              */
+        {   +1,       false,    1,    false,          "~",        "not"                                   },
+        {   +1,       false,    2,    true,           "&",        "and",         operator_id::bitwise_and },
+        {   +1,       false,    2,    true,           "|",        "or",          operator_id::bitwise_or  },
+        {   +1,       false,    2,    true,           "^",        "xor",         operator_id::bitwise_xor },
+        {   +1,       false,    2,    false,          ">>",       "shr",         operator_id::add         },
+        {   +1,       false,    2,    false,          "<<",       "shl",         operator_id::add         },
+        {   +1,       false,    2,    false,          ">]",       "rotr",        operator_id::add         },
+        {   +1,       false,    2,    false,          "[<",       "rotl",        operator_id::add         },
+        {   -1,       true,     2,    false,          "-",        "neg"                                   },
+        {   -1,       true,     2,    true,           "+",        "add",         operator_id::add         },
+        {   -1,       true,     2,    false,          "-",        "sub",         operator_id::add         },
+        {   -1,       true,     2,    true,           "h*",       "mulhi"                                 },
+        {   -1,       true,     2,    true,           "*",        "mul",         operator_id::multiply    },
+        {   -1,       true,     2,    false,          "/",        "div",         operator_id::multiply    },
+        {   -1,       true,     2,    false,          "%",        "rem"                                   },
+        {   -1,       false,    2,    true,           "uh*",      "umulhi"                                },
+        {   -1,       false,    2,    true,           "u*",       "umul",        operator_id::umultiply   },
+        {   -1,       false,    2,    false,          "u/",       "udiv",        operator_id::umultiply   },
+        {   -1,       false,    2,    false,          "u%",       "urem"                                  },
+        {    0,       false,    2,    false,          nullptr,    "zx"                                    },
+        {   -1,       false,    2,    false,          nullptr,    "sx"                                    },
+        {   +1,       false,    1,    false,          nullptr,    "popcnt"                                },
+        {   +1,       false,    1,    false,          nullptr,    "msb"                                   },
+        {   +1,       false,    1,    false,          nullptr,    "lsb"                                   },
+        {   +1,       false,    2,    false,          nullptr,    "bt"                                    },
+        {   +1,       false,    1,    false,          nullptr,    "mask"                                  },
+        {   +1,       false,    1,    false,          nullptr,    "bitcnt"                                },
+        {    0,       false,    2,    false,          "?",        "if"                                    },
+        {   -1,       false,    2,    false,          ">",        "greater"                               },
+        {   -1,       false,    2,    false,          ">=",       "greater_eq"                            },
+        {    0,       false,    2,    false,          "==",       "equal"                                 },
+        {    0,       false,    2,    false,          "!=",       "not_equal"                             },
+        {   -1,       false,    2,    false,          "<=",       "less_eq"                               },
+        {   -1,       false,    2,    false,          "<",        "less"                                  },
+        {    0,       false,    2,    false,          "u>",       "ugreater"                              },
+        {    0,       false,    2,    false,          "u>=",      "ugreater_eq"                           },
+        {    0,       false,    2,    false,          "u<=",      "uless_eq"                              },
+        {    0,       false,    2,    false,          "u<",       "uless"                                 },
     };
-    inline static const operator_desc& descriptor( operator_id id ) { return descriptors[ ( size_t ) id ]; }
+    inline static const operator_desc& descriptor_of( operator_id id ) { return descriptors[ ( size_t ) id ]; }
 
     // Evaluates the operator, on LHS and RHS. 
     // - If unary LHS is ignored.
@@ -145,7 +168,7 @@ namespace vtil::math
         uint8_t bcnt = size * 8;
         if ( bcnt != 64 )
         {
-            if ( descriptor( id ).is_signed )
+            if ( descriptor_of( id ).is_signed )
                 lhs = math::sign_extend( lhs, bcnt ), rhs = math::sign_extend( rhs, bcnt );
             else
                 lhs = math::zero_extend( lhs, bcnt ), rhs = math::zero_extend( rhs, bcnt );

@@ -32,9 +32,9 @@ namespace vtil::math
 			int64_t i64;
 		};
 
-		// Whether value is a constant or not.
+		// Whether value is a known constant or not.
 		//
-		bool is_constant = false;
+		bool is_known = false;
 
 		// Number of bits the value holds.
 		//
@@ -44,13 +44,13 @@ namespace vtil::math
 		//
 		operable() = default;
 		template<typename T = uint64_t, std::enable_if_t<std::is_integral_v<T>, int> = 0>
-		operable( T value, uint8_t bit_count = sizeof( T ) * 8 ) : i64( value ), bit_count( bit_count ), is_constant( is_constant ) {}
+		operable( T value, uint8_t bit_count = sizeof( T ) * 8 ) : i64( value ), bit_count( bit_count ), is_known( true ) {}
 
 		// Helper to get (possibly!) the constant value.
 		//
 		inline std::optional<int64_t> get( bool as_signed = false ) const 
 		{ 
-			if ( is_constant ) 
+			if ( is_known )
 				return as_signed ? sign_extend( u64, bit_count ) : zero_extend( u64, bit_count );
 			return {}; 
 		}
@@ -60,7 +60,7 @@ namespace vtil::math
 		//
 		inline void resize( uint8_t new_bit_count, bool sx = false )
 		{
-			fassert( is_constant );
+			fassert( is_known );
 			u64 = sx ? sign_extend( u64, bit_count ) : zero_extend( u64, bit_count );
 			u64 &= mask( new_bit_count );
 			bit_count = new_bit_count;
