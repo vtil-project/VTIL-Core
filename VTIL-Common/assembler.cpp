@@ -1,10 +1,10 @@
-#include <keystone/keystone.h>
 #include "assembler.hpp"
+#include <keystone/keystone.h>
 #pragma comment(lib, "keystone.lib")
 
 namespace keystone
 {
-	ks_engine* get_handle()
+	ks_struct* get_handle()
 	{
 		// Keystone engine is not created until the first call.
 		//
