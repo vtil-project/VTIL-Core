@@ -58,7 +58,7 @@ namespace vtil::x86
 
 		// Returns human readable disassembly.
 		//
-		inline std::string dump() const
+		inline std::string to_string() const
 		{
 			return format::str( "%p: %s\t%s", address, mnemonic, operand_string );
 		}
