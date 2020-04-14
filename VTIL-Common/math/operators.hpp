@@ -136,14 +136,14 @@ namespace vtil::math
         {   -1,       false,    2,    true,           "u*",       "umul",        operator_id::umultiply   },
         {   -1,       false,    2,    false,          "u/",       "udiv",        operator_id::umultiply   },
         {   -1,       false,    2,    false,          "u%",       "urem"                                  },
-        {    0,       false,    2,    false,          nullptr,    "zx"                                    },
-        {   -1,       false,    2,    false,          nullptr,    "sx"                                    },
-        {   +1,       false,    1,    false,          nullptr,    "popcnt"                                },
-        {   +1,       false,    1,    false,          nullptr,    "msb"                                   },
-        {   +1,       false,    1,    false,          nullptr,    "lsb"                                   },
-        {   +1,       false,    2,    false,          nullptr,    "bt"                                    },
-        {   +1,       false,    1,    false,          nullptr,    "mask"                                  },
-        {   +1,       false,    1,    false,          nullptr,    "bitcnt"                                },
+        {    0,       false,    2,    false,          nullptr,    "__zx"                                  },
+        {   -1,       false,    2,    false,          nullptr,    "__sx"                                  },
+        {   +1,       false,    1,    false,          nullptr,    "__popcnt"                              },
+        {   +1,       false,    1,    false,          nullptr,    "__msb"                                 },
+        {   +1,       false,    1,    false,          nullptr,    "__lsb"                                 },
+        {   +1,       false,    2,    false,          nullptr,    "__bt"                                  },
+        {   +1,       false,    1,    false,          nullptr,    "__mask"                                },
+        {   +1,       false,    1,    false,          nullptr,    "__bitcnt"                              },
         {    0,       false,    2,    false,          "?",        "if"                                    },
         {   -1,       false,    2,    false,          ">",        "greater"                               },
         {   -1,       false,    2,    false,          ">=",       "greater_eq"                            },
@@ -156,7 +156,7 @@ namespace vtil::math
         {    0,       false,    2,    false,          "u<=",      "uless_eq"                              },
         {    0,       false,    2,    false,          "u<",       "uless"                                 },
     };
-    inline static const operator_desc& descriptor_of( operator_id id ) { return descriptors[ ( size_t ) id ]; }
+    inline static const operator_desc* descriptor_of( operator_id id ) { return ( operator_id::invalid < id && id < operator_id::max ) ? &descriptors[ ( size_t ) id ] : nullptr; }
 
     // Evaluates the operator, on LHS and RHS. 
     // - If unary LHS is ignored.
@@ -168,7 +168,7 @@ namespace vtil::math
         uint8_t bcnt = size * 8;
         if ( bcnt != 64 )
         {
-            if ( descriptor_of( id ).is_signed )
+            if ( descriptor_of( id )->is_signed )
                 lhs = math::sign_extend( lhs, bcnt ), rhs = math::sign_extend( rhs, bcnt );
             else
                 lhs = math::zero_extend( lhs, bcnt ), rhs = math::zero_extend( rhs, bcnt );

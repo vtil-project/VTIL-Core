@@ -21,7 +21,29 @@ namespace vtil
 		template<> struct param_pack_first<> { using type = void; };
 
 		template<typename T, typename... params>
-		using enable_if_non_equ_valid_t = typename std::enable_if_t<!std::is_same_v<std::remove_cvref_t<typename param_pack_first<params...>::type>, T>>;
+		static constexpr bool should_invoke_constructor()
+		{
+			// Constructor should be always invoked if we have more than one parameter and 
+			// never if we have zero parameters.
+			//
+			if constexpr ( sizeof...( params ) != 1 )
+			{
+				return sizeof...( params ) != 0;
+			}
+			else
+			{
+				// Extract first parameter.
+				//
+				using first_param_t = typename param_pack_first<params...>::type;
+
+				// Invoke if not equal to the reference type.
+				//
+				return !std::is_same_v<std::remove_cvref_t<first_param_t>, T>;
+			}
+		}
+
+		template<typename T, typename... params>
+		using enable_if_constructor = typename std::enable_if_t<should_invoke_constructor<T, params...>()>;
 	};
 
 	// This structure is used to describe copy-on-write references.
@@ -37,19 +59,17 @@ namespace vtil
 
 		// Null reference construction.
 		//
-		shared_reference() {}
-		shared_reference( std::nullptr_t ) {}
+		shared_reference() : reference( nullptr ) {}
+		shared_reference( std::nullptr_t ) : reference( nullptr ) {}
 
 		// Owning reference constructor.
 		//
-		shared_reference( T&& obj ) : reference( std::make_shared<T>( std::move( obj ) ) ), is_owning( true ) {}
-		shared_reference( const T& obj ) : reference( std::make_shared<T>( obj ) ), is_owning( true ) {}
-		template<typename... params, typename = impl::enable_if_non_equ_valid_t<shared_reference<T>, params..., shared_reference<T>>>
-		shared_reference( params&&... p ) : reference( std::make_shared<T>( std::forward<params>( p )... ) ), is_owning( true ) {}
+		template<typename... params, typename = impl::enable_if_constructor<shared_reference<T>, params...>>
+		shared_reference( params&&... p ) : reference( std::make_shared<T>( std::forward<params>( p )... ) ), is_owning( true ) { }
 
 		// Copy-on-write reference construction and assignment.
 		//
-		shared_reference( const shared_reference& ref ) : reference( ref.reference ), is_locked( ref.is_locked ) {}
+		shared_reference( const shared_reference& ref ) : reference( ref.reference ), is_locked( ref.is_locked ) { }
 		shared_reference& operator=( const shared_reference& o ) { reference = o.reference; is_locked = o.is_locked; is_owning = false; return *this; }
 
 		// Construction and assignment operator for rvalue references.
@@ -58,7 +78,7 @@ namespace vtil
 		shared_reference& operator=( shared_reference&& o ) { reference = std::move( o.reference ); is_owning = std::move( o.is_owning ); is_locked = std::move( o.is_locked ); return *this; }
 
 		// Simple validity checks.
-
+		//
 		bool is_valid() const { return ( bool ) reference; }
 		operator bool() const { return is_valid(); }
 

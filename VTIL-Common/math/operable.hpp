@@ -70,7 +70,7 @@ namespace vtil::math
 	// Whether the type is a operable<?> instance or not.
 	//
 	template<typename T>
-	static constexpr bool is_custom_operable_v = std::is_base_of_v<operable<std::remove_cvref_t<T>>, std::remove_cvref_t<T>>;
+	static constexpr bool is_custom_operable_v = std::is_base_of_v<operable<T>, T>;
 	
 	// Whether the type is operable in combination with an operable<?> instance or not.
 	//
@@ -85,7 +85,7 @@ namespace vtil::math
 		// If T1 is a custom operable, T2 needs to be either an integral type or same type as T1.
 		//
 		if ( is_custom_operable_v<T1> )
-			return std::is_integral_v<T2> || std::is_same_v<std::remove_cvref_t<T1>, std::remove_cvref_t<T2>>;
+			return std::is_integral_v<T2> || std::is_same_v<T1, T2>;
 
 		// If only T2 is a custom operable, T1 needs to be an integral type.
 		//
@@ -94,16 +94,39 @@ namespace vtil::math
 		return false;
 	}
 
+	// Can be overriden externally to allow aliases.
+	//
+	template<typename T1>
+	struct resolve_alias { using type = typename T1; };
+
+	// Removes all qualifiers and resolves the base if aliased.
+	//
+	template<typename T1>
+	using strip_operable_t = typename resolve_alias<std::remove_cvref_t<T1>>::type;
+
 	// Returns the result of the cross-operation between two types, void if not cross-operable.
 	//
 	template<typename T1, typename T2>
-	using xop_result_type = typename std::conditional_t<is_xoperable<T1, T2>(), std::conditional_t<is_custom_operable_v<T1>, T1, T2>, void>;
+	struct xop_result
+	{
+		using base_type_1 = typename strip_operable_t<T1>;
+		using base_type_2 = typename strip_operable_t<T2>;
 
+		using type = typename std::conditional_t<
+			is_xoperable<base_type_1, base_type_2>(), 
+			std::conditional_t<
+				is_custom_operable_v<base_type_1>, 
+				base_type_1, 
+				base_type_2
+			>, 
+			void
+		>;
+	};
 
 	// Operations with operable types
 	//
-#define DEFINE_OPERATION(...)																\
-	template<typename T1, typename T2 = T1, typename result_t = xop_result_type<T1, T2>>	\
+#define DEFINE_OPERATION(...)																		\
+	template<typename T1, typename T2 = T1, typename result_t = typename xop_result<T1, T2>::type>	\
 	static result_t __VA_ARGS__
 
 	DEFINE_OPERATION( operator~( T1&& a )				{ return { operator_id::bitwise_not, std::forward<T1>( a ) }; }								);
