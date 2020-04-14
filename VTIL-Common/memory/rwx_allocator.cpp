@@ -5,7 +5,7 @@
 #else
     #include <sys/mman.h>
 #endif
-#include "asserts.hpp"
+#include "..\io\asserts.hpp"
 #include "rwx_allocator.hpp"
 
 namespace vtil

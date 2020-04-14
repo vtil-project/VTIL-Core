@@ -4,61 +4,81 @@
     <Filter Include="Memory">
       <UniqueIdentifier>{424c679d-7468-453f-8b9d-7d282aaf9470}</UniqueIdentifier>
     </Filter>
-    <Filter Include="x86">
-      <UniqueIdentifier>{cb6f5bfd-fdca-47fe-bbb7-e91d8e5ba642}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Emulation">
-      <UniqueIdentifier>{673822af-de5d-4c16-9306-ac6c1441f341}</UniqueIdentifier>
-    </Filter>
     <Filter Include="I/O">
       <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
       <Extensions>h;hh;hpp;hxx;hm;inl;inc;ipp;xsd</Extensions>
     </Filter>
+    <Filter Include="amd64">
+      <UniqueIdentifier>{cb6f5bfd-fdca-47fe-bbb7-e91d8e5ba642}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="amd64\Emulation">
+      <UniqueIdentifier>{673822af-de5d-4c16-9306-ac6c1441f341}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Includes">
+      <UniqueIdentifier>{14333603-a637-4356-854a-db631a744d42}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="amd64\Core">
+      <UniqueIdentifier>{dbf4733d-3814-4218-9474-cf4b4e3c5719}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="formatting.hpp">
-      <Filter>I/O</Filter>
+    <ClInclude Include="amd64\register_details.hpp">
+      <Filter>amd64</Filter>
     </ClInclude>
-    <ClInclude Include="logger.hpp">
-      <Filter>I/O</Filter>
+    <ClInclude Include="amd64\assembler.hpp">
+      <Filter>amd64\Core</Filter>
     </ClInclude>
-    <ClInclude Include="asserts.hpp">
-      <Filter>I/O</Filter>
+    <ClInclude Include="amd64\disassembly.hpp">
+      <Filter>amd64\Core</Filter>
     </ClInclude>
-    <ClInclude Include="rwx_allocator.hpp">
+    <ClInclude Include="amd64\emulator.hpp">
+      <Filter>amd64\Emulation</Filter>
+    </ClInclude>
+    <ClInclude Include="memory\copy_on_write.hpp">
       <Filter>Memory</Filter>
     </ClInclude>
-    <ClInclude Include="register_details.hpp">
-      <Filter>x86</Filter>
+    <ClInclude Include="memory\rwx_allocator.hpp">
+      <Filter>Memory</Filter>
     </ClInclude>
-    <ClInclude Include="emulator.hpp">
-      <Filter>Emulation</Filter>
+    <ClInclude Include="io\asserts.hpp">
+      <Filter>I/O</Filter>
     </ClInclude>
-    <ClInclude Include="includes\vtil\common.hpp" />
-    <ClInclude Include="disassembly.hpp">
-      <Filter>x86</Filter>
+    <ClInclude Include="io\formatting.hpp">
+      <Filter>I/O</Filter>
     </ClInclude>
-    <ClInclude Include="assembler.hpp">
-      <Filter>x86</Filter>
+    <ClInclude Include="io\logger.hpp">
+      <Filter>I/O</Filter>
+    </ClInclude>
+    <ClInclude Include="includes\vtil\amd64">
+      <Filter>Includes</Filter>
+    </ClInclude>
+    <ClInclude Include="includes\vtil\common">
+      <Filter>Includes</Filter>
+    </ClInclude>
+    <ClInclude Include="includes\vtil\io">
+      <Filter>Includes</Filter>
+    </ClInclude>
+    <ClInclude Include="includes\vtil\memory">
+      <Filter>Includes</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="register_details.cpp">
-      <Filter>x86</Filter>
+    <ClCompile Include="amd64\register_details.cpp">
+      <Filter>amd64</Filter>
     </ClCompile>
-    <ClCompile Include="rwx_allocator.cpp">
+    <ClCompile Include="amd64\assembler.cpp">
+      <Filter>amd64\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="amd64\disassembly.cpp">
+      <Filter>amd64\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="amd64\emulator.cpp">
+      <Filter>amd64\Emulation</Filter>
+    </ClCompile>
+    <ClCompile Include="memory\rwx_allocator.cpp">
       <Filter>Memory</Filter>
     </ClCompile>
-    <ClCompile Include="emulator.cpp">
-      <Filter>Emulation</Filter>
-    </ClCompile>
-    <ClCompile Include="disassembly.cpp">
-      <Filter>x86</Filter>
-    </ClCompile>
-    <ClCompile Include="assembler.cpp">
-      <Filter>x86</Filter>
-    </ClCompile>
-    <ClCompile Include="logger.cpp">
+    <ClCompile Include="io\logger.cpp">
       <Filter>I/O</Filter>
     </ClCompile>
   </ItemGroup>

@@ -7,6 +7,12 @@
 #define FMT_INS_OPR		"%-12s"
 #define FMT_INS			FMT_INS_MNM " " FMT_INS_OPR " " FMT_INS_OPR " " FMT_INS_OPR " " FMT_INS_OPR
 
+// Billion dollar company yes? (::fix_parameter throws a warning otherwise.)
+//
+#ifdef __INTEL_COMPILER
+	#pragma warning (disable:1011)
+#endif
+
 namespace vtil::format
 {
 	// Suffixes used to indicate registers of N bytes.

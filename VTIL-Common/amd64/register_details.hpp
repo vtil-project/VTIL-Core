@@ -3,7 +3,7 @@
 #include <tuple>
 #include <string>
 #include "disassembly.hpp"
-#include "asserts.hpp"
+#include "..\io\asserts.hpp"
 
 namespace vtil::x86
 {

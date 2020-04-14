@@ -5,7 +5,7 @@
 #include <cstring>
 #include <set>
 #include <capstone/capstone.h>
-#include "formatting.hpp"
+#include "..\io\formatting.hpp"
 
 namespace vtil::x86
 {

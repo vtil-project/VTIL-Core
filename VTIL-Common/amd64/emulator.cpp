@@ -1,4 +1,5 @@
 #include "emulator.hpp"
+#include "..\io\asserts.hpp"
 
 namespace vtil
 {
@@ -87,7 +88,6 @@ namespace vtil
     // Resolves the offset<0> where the value is saved at for the given register
     // and the number of bytes<1> it takes.
     //
-
     inline std::pair<int32_t, uint8_t> emulator::resolve( x86_reg reg ) const
     {
         auto [base_reg, offset, size] = x86::resolve_mapping( reg );
@@ -118,7 +118,6 @@ namespace vtil
 
     // Sets the value of a register.
     //
-
     inline emulator& emulator::set( x86_reg reg, uint64_t value )
     {
         auto [off, sz] = resolve( reg );
@@ -128,7 +127,6 @@ namespace vtil
 
     // Gets the value of a register.
     //
-
     inline uint64_t emulator::get( x86_reg reg ) const
     {
         uint64_t value = 0;

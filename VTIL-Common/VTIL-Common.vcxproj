@@ -93,23 +93,27 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="asserts.hpp" />
-    <ClInclude Include="disassembly.hpp" />
-    <ClInclude Include="emulator.hpp" />
-    <ClInclude Include="formatting.hpp" />
-    <ClInclude Include="includes\vtil\common.hpp" />
-    <ClInclude Include="assembler.hpp" />
-    <ClInclude Include="logger.hpp" />
-    <ClInclude Include="register_details.hpp" />
-    <ClInclude Include="rwx_allocator.hpp" />
+    <ClInclude Include="amd64\assembler.hpp" />
+    <ClInclude Include="amd64\disassembly.hpp" />
+    <ClInclude Include="amd64\emulator.hpp" />
+    <ClInclude Include="amd64\register_details.hpp" />
+    <ClInclude Include="includes\vtil\common" />
+    <ClInclude Include="includes\vtil\io" />
+    <ClInclude Include="includes\vtil\memory" />
+    <ClInclude Include="includes\vtil\amd64" />
+    <ClInclude Include="io\asserts.hpp" />
+    <ClInclude Include="io\formatting.hpp" />
+    <ClInclude Include="io\logger.hpp" />
+    <ClInclude Include="memory\copy_on_write.hpp" />
+    <ClInclude Include="memory\rwx_allocator.hpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="disassembly.cpp" />
-    <ClCompile Include="emulator.cpp" />
-    <ClCompile Include="assembler.cpp" />
-    <ClCompile Include="logger.cpp" />
-    <ClCompile Include="register_details.cpp" />
-    <ClCompile Include="rwx_allocator.cpp" />
+    <ClCompile Include="amd64\assembler.cpp" />
+    <ClCompile Include="amd64\disassembly.cpp" />
+    <ClCompile Include="amd64\emulator.cpp" />
+    <ClCompile Include="amd64\register_details.cpp" />
+    <ClCompile Include="io\logger.cpp" />
+    <ClCompile Include="memory\rwx_allocator.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
