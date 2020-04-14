@@ -10,3 +10,5 @@
 *.pdb
 *.lib
 *.suo
+
+*.ilk
