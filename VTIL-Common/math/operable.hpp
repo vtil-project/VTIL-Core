@@ -24,59 +24,125 @@ namespace vtil::math
 	template<typename base_type>
 	struct operable
 	{
-		int64_t value = 0;
+		// Value of the constant if relevant.
+		//
+		union
+		{
+			uint64_t u64 = 0;
+			int64_t i64;
+		};
+
+		// Whether value is a constant or not.
+		//
+		bool is_constant = false;
+
+		// Number of bits the value holds.
+		//
 		uint8_t bit_count = 0;
-		bool known = false;
 
+		// Default constructor and the constructor for constant values.
+		//
 		operable() = default;
-
 		template<typename T = uint64_t, std::enable_if_t<std::is_integral_v<T>, int> = 0>
-		operable( T value ) : value( value ), bit_count( sizeof( T ) * 8 ), known( true ) {}
+		operable( T value, uint8_t bit_count = sizeof( T ) * 8 ) : i64( value ), bit_count( bit_count ), is_constant( is_constant ) {}
+
+		// Helper to get (possibly!) the constant value.
+		//
+		inline std::optional<int64_t> get( bool as_signed = false ) const 
+		{ 
+			if ( is_constant ) 
+				return as_signed ? sign_extend( u64, bit_count ) : zero_extend( u64, bit_count );
+			return {}; 
+		}
+
+		// Helper to resize the constant, must be overriden by the base type
+		// in case we're not resizing a constant.
+		//
+		inline void resize( uint8_t new_bit_count, bool sx = false )
+		{
+			fassert( is_constant );
+			u64 = sx ? sign_extend( u64, bit_count ) : zero_extend( u64, bit_count );
+			u64 &= mask( new_bit_count );
+			bit_count = new_bit_count;
+		}
 	};
+
+	// Whether the type is a operable<?> instance or not.
+	//
+	template<typename T>
+	static constexpr bool is_custom_operable_v = std::is_base_of_v<operable<std::remove_cvref_t<T>>, std::remove_cvref_t<T>>;
+	
+	// Whether the type is operable in combination with an operable<?> instance or not.
+	//
+	template<typename T>
+	static constexpr bool is_operable_v = std::is_integral_v<T> || is_custom_operable_v<T>;
+	
+	// Whether given types are cross-operable or not.
+	//
+	template<typename T1, typename T2 = int>
+	static constexpr bool is_xoperable()
+	{
+		// If T1 is a custom operable, T2 needs to be either an integral type or same type as T1.
+		//
+		if ( is_custom_operable_v<T1> )
+			return std::is_integral_v<T2> || std::is_same_v<std::remove_cvref_t<T1>, std::remove_cvref_t<T2>>;
+
+		// If only T2 is a custom operable, T1 needs to be an integral type.
+		//
+		else if ( is_custom_operable_v<T2> )
+			return std::is_integral_v<T1>;
+		return false;
+	}
+
+	// Returns the result of the cross-operation between two types, void if not cross-operable.
+	//
+	template<typename T1, typename T2>
+	using xop_result_type = typename std::conditional_t<is_xoperable<T1, T2>(), std::conditional_t<is_custom_operable_v<T1>, T1, T2>, void>;
+
 
 	// Operations with operable types
 	//
-#define IF_OPERABLE(...)																				\
-	template<typename T1, typename T2 = T1, std::enable_if_t<std::is_base_of_v<operable<std::remove_cvref_t<T1>>, std::remove_cvref_t<T1>>, int> = 0>	\
-	__VA_ARGS__
+#define DEFINE_OPERATION(...)																\
+	template<typename T1, typename T2 = T1, typename result_t = xop_result_type<T1, T2>>	\
+	static result_t __VA_ARGS__
 
-	IF_OPERABLE( static auto operator~( T1&& a ) { return T1{ operator_id::bitwise_not, std::forward<T1>( a ) }; } );
-	IF_OPERABLE( static auto operator&( T1&& a, T2&& b ) { return T1{ std::forward<T1>( a ), operator_id::bitwise_and, std::forward<T2>( b ) }; } );
-	IF_OPERABLE( static auto operator|( T1&& a, T2&& b ) { return T1{ std::forward<T1>( a ), operator_id::bitwise_or, std::forward<T2>( b ) }; } );
-	IF_OPERABLE( static auto operator^( T1&& a, T2&& b ) { return T1{ std::forward<T1>( a ), operator_id::bitwise_xor, std::forward<T2>( b ) }; } );
-	IF_OPERABLE( static auto operator>>( T1&& a, T2&& b ) { return T1{ std::forward<T1>( a ), operator_id::shift_right, std::forward<T2>( b ) }; } );
-	IF_OPERABLE( static auto operator<<( T1&& a, T2&& b ) { return T1{ std::forward<T1>( a ), operator_id::shift_left, std::forward<T2>( b ) }; } );
-	IF_OPERABLE( static auto __rotr( T1&& a, T2&& b ) { return T1{ std::forward<T1>( a ), operator_id::rotate_right, std::forward<T2>( b ) }; } );
-	IF_OPERABLE( static auto __rotl( T1&& a, T2&& b ) { return T1{ std::forward<T1>( a ), operator_id::rotate_left, std::forward<T2>( b ) }; } );
-	IF_OPERABLE( static auto operator-( T1&& a ) { return T1{ operator_id::negate, std::forward<T1>( a ) }; } );
-	IF_OPERABLE( static auto operator+( T1&& a, T2&& b ) { return T1{ std::forward<T1>( a ), operator_id::add, std::forward<T2>( b ) }; } );
-	IF_OPERABLE( static auto operator-( T1&& a, T2&& b ) { return T1{ std::forward<T1>( a ), operator_id::substract, std::forward<T2>( b ) }; } );
-	IF_OPERABLE( static auto imulhi( T1&& a, T2&& b ) { return T1{ std::forward<T1>( a ), operator_id::multiply_high, std::forward<T2>( b ) }; } );
-	IF_OPERABLE( static auto operator*( T1&& a, T2&& b ) { return T1{ std::forward<T1>( a ), operator_id::multiply, std::forward<T2>( b ) }; } );
-	IF_OPERABLE( static auto operator/( T1&& a, T2&& b ) { return T1{ std::forward<T1>( a ), operator_id::divide, std::forward<T2>( b ) }; } );
-	IF_OPERABLE( static auto operator%( T1&& a, T2&& b ) { return T1{ std::forward<T1>( a ), operator_id::remainder, std::forward<T2>( b ) }; } );
-	IF_OPERABLE( static auto umulhi( T1&& a, T2&& b ) { return T1{ std::forward<T1>( a ), operator_id::umultiply_high, std::forward<T2>( b ) }; } );
-	IF_OPERABLE( static auto umul( T1&& a, T2&& b ) { return T1{ std::forward<T1>( a ), operator_id::umultiply, std::forward<T2>( b ) }; } );
-	IF_OPERABLE( static auto udiv( T1&& a, T2&& b ) { return T1{ std::forward<T1>( a ), operator_id::udivide, std::forward<T2>( b ) }; } );
-	IF_OPERABLE( static auto urem( T1&& a, T2&& b ) { return T1{ std::forward<T1>( a ), operator_id::uremainder, std::forward<T2>( b ) }; } );
-	IF_OPERABLE( static auto __zx( T1&& a, T2&& b ) { return T1{ std::forward<T1>( a ), operator_id::zero_extend, std::forward<T2>( b ) }; } );
-	IF_OPERABLE( static auto __sx( T1&& a, T2&& b ) { return T1{ std::forward<T1>( a ), operator_id::sign_extend, std::forward<T2>( b ) }; } );
-	IF_OPERABLE( static auto __popcnt( T1&& a, T2&& b ) { return T1{ std::forward<T1>( a ), operator_id::popcnt, std::forward<T2>( b ) }; } );
-	IF_OPERABLE( static auto __msb( T1&& a, T2&& b ) { return T1{ std::forward<T1>( a ), operator_id::most_sig_bit, std::forward<T2>( b ) }; } );
-	IF_OPERABLE( static auto __lsb( T1&& a, T2&& b ) { return T1{ std::forward<T1>( a ), operator_id::least_sig_bit, std::forward<T2>( b ) }; } );
-	IF_OPERABLE( static auto __bt( T1&& a, T2&& b ) { return T1{ std::forward<T1>( a ), operator_id::bit_test, std::forward<T2>( b ) }; } );
-	IF_OPERABLE( static auto __mask( T1&& a, T2&& b ) { return T1{ std::forward<T1>( a ), operator_id::mask, std::forward<T2>( b ) }; } );
-	IF_OPERABLE( static auto __bitcnt( T1&& a, T2&& b ) { return T1{ std::forward<T1>( a ), operator_id::bitcnt, std::forward<T2>( b ) }; } );
-	IF_OPERABLE( static auto __if( T1&& a, T2&& b ) { return T1{ std::forward<T1>( a ), operator_id::value_if, std::forward<T2>( b ) }; } );
-	IF_OPERABLE( static auto operator>( T1&& a, T2&& b ) { return T1{ std::forward<T1>( a ), operator_id::greater, std::forward<T2>( b ) }; } );
-	IF_OPERABLE( static auto operator>=( T1&& a, T2&& b ) { return T1{ std::forward<T1>( a ), operator_id::greater_eq, std::forward<T2>( b ) }; } );
-	IF_OPERABLE( static auto operator==( T1&& a, T2&& b ) { return T1{ std::forward<T1>( a ), operator_id::equal, std::forward<T2>( b ) }; } );
-	IF_OPERABLE( static auto operator!=( T1&& a, T2&& b ) { return T1{ std::forward<T1>( a ), operator_id::not_equal, std::forward<T2>( b ) }; } );
-	IF_OPERABLE( static auto operator<=( T1&& a, T2&& b ) { return T1{ std::forward<T1>( a ), operator_id::less_eq, std::forward<T2>( b ) }; } );
-	IF_OPERABLE( static auto operator<( T1&& a, T2&& b ) { return T1{ std::forward<T1>( a ), operator_id::less, std::forward<T2>( b ) }; } );
-	IF_OPERABLE( static auto __ugreat( T1&& a, T2&& b ) { return T1{ std::forward<T1>( a ), operator_id::ugreater, std::forward<T2>( b ) }; } );
-	IF_OPERABLE( static auto __ugreat_eq( T1&& a, T2&& b ) { return T1{ std::forward<T1>( a ), operator_id::ugreater_eq, std::forward<T2>( b ) }; } );
-	IF_OPERABLE( static auto __uless_eq( T1&& a, T2&& b ) { return T1{ std::forward<T1>( a ), operator_id::uless_eq, std::forward<T2>( b ) }; } );
-	IF_OPERABLE( static auto __uless( T1&& a, T2&& b ) { return T1{ std::forward<T1>( a ), operator_id::uless, std::forward<T2>( b ) }; } );
-#undef IF_OPERABLE
+	DEFINE_OPERATION( operator~( T1&& a )				{ return { operator_id::bitwise_not, std::forward<T1>( a ) }; }								);
+	DEFINE_OPERATION( operator&( T1&& a, T2&& b )		{ return { std::forward<T1>( a ), operator_id::bitwise_and, std::forward<T2>( b ) }; }		);
+	DEFINE_OPERATION( operator|( T1&& a, T2&& b )		{ return { std::forward<T1>( a ), operator_id::bitwise_or, std::forward<T2>( b ) }; }		);
+	DEFINE_OPERATION( operator^( T1&& a, T2&& b )		{ return { std::forward<T1>( a ), operator_id::bitwise_xor, std::forward<T2>( b ) }; }		);
+	DEFINE_OPERATION( operator>>( T1&& a, T2&& b )		{ return { std::forward<T1>( a ), operator_id::shift_right, std::forward<T2>( b ) }; }		);
+	DEFINE_OPERATION( operator<<( T1&& a, T2&& b )		{ return { std::forward<T1>( a ), operator_id::shift_left, std::forward<T2>( b ) }; }		);
+	DEFINE_OPERATION( __rotr( T1&& a, T2&& b )			{ return { std::forward<T1>( a ), operator_id::rotate_right, std::forward<T2>( b ) }; }		);
+	DEFINE_OPERATION( __rotl( T1&& a, T2&& b )			{ return { std::forward<T1>( a ), operator_id::rotate_left, std::forward<T2>( b ) }; }		);
+	DEFINE_OPERATION( operator-( T1&& a )				{ return { operator_id::negate, std::forward<T1>( a ) }; }									);
+	DEFINE_OPERATION( operator+( T1&& a, T2&& b )		{ return { std::forward<T1>( a ), operator_id::add, std::forward<T2>( b ) }; } 				);
+	DEFINE_OPERATION( operator-( T1&& a, T2&& b )		{ return { std::forward<T1>( a ), operator_id::substract, std::forward<T2>( b ) }; } 		);
+	DEFINE_OPERATION( imulhi( T1&& a, T2&& b )			{ return { std::forward<T1>( a ), operator_id::multiply_high, std::forward<T2>( b ) }; }	);
+	DEFINE_OPERATION( operator*( T1&& a, T2&& b )		{ return { std::forward<T1>( a ), operator_id::multiply, std::forward<T2>( b ) }; } 		);
+	DEFINE_OPERATION( operator/( T1&& a, T2&& b )		{ return { std::forward<T1>( a ), operator_id::divide, std::forward<T2>( b ) }; } 			);
+	DEFINE_OPERATION( operator%( T1&& a, T2&& b )		{ return { std::forward<T1>( a ), operator_id::remainder, std::forward<T2>( b ) }; } 		);
+	DEFINE_OPERATION( umulhi( T1&& a, T2&& b )			{ return { std::forward<T1>( a ), operator_id::umultiply_high, std::forward<T2>( b ) }; } 	);
+	DEFINE_OPERATION( umul( T1&& a, T2&& b )			{ return { std::forward<T1>( a ), operator_id::umultiply, std::forward<T2>( b ) }; } 		);
+	DEFINE_OPERATION( udiv( T1&& a, T2&& b )			{ return { std::forward<T1>( a ), operator_id::udivide, std::forward<T2>( b ) }; } 			);
+	DEFINE_OPERATION( urem( T1&& a, T2&& b )			{ return { std::forward<T1>( a ), operator_id::uremainder, std::forward<T2>( b ) }; } 		);
+	DEFINE_OPERATION( __zx( T1&& a, T2&& b )			{ return { std::forward<T1>( a ), operator_id::zero_extend, std::forward<T2>( b ) }; } 		);
+	DEFINE_OPERATION( __sx( T1&& a, T2&& b )			{ return { std::forward<T1>( a ), operator_id::sign_extend, std::forward<T2>( b ) }; } 		);
+	DEFINE_OPERATION( __popcnt( T1&& a, T2&& b )		{ return { std::forward<T1>( a ), operator_id::popcnt, std::forward<T2>( b ) }; } 			);
+	DEFINE_OPERATION( __msb( T1&& a, T2&& b )			{ return { std::forward<T1>( a ), operator_id::most_sig_bit, std::forward<T2>( b ) }; } 	);
+	DEFINE_OPERATION( __lsb( T1&& a, T2&& b )			{ return { std::forward<T1>( a ), operator_id::least_sig_bit, std::forward<T2>( b ) }; } 	);
+	DEFINE_OPERATION( __bt( T1&& a, T2&& b )			{ return { std::forward<T1>( a ), operator_id::bit_test, std::forward<T2>( b ) }; } 		);
+	DEFINE_OPERATION( __mask( T1&& a, T2&& b )			{ return { std::forward<T1>( a ), operator_id::mask, std::forward<T2>( b ) }; } 			);
+	DEFINE_OPERATION( __bitcnt( T1&& a, T2&& b )		{ return { std::forward<T1>( a ), operator_id::bitcnt, std::forward<T2>( b ) }; } 			);
+	DEFINE_OPERATION( __if( T1&& a, T2&& b )			{ return { std::forward<T1>( a ), operator_id::value_if, std::forward<T2>( b ) }; } 		);
+	DEFINE_OPERATION( operator>( T1&& a, T2&& b )		{ return { std::forward<T1>( a ), operator_id::greater, std::forward<T2>( b ) }; } 			);
+	DEFINE_OPERATION( operator>=( T1&& a, T2&& b )		{ return { std::forward<T1>( a ), operator_id::greater_eq, std::forward<T2>( b ) }; } 		);
+	DEFINE_OPERATION( operator==( T1&& a, T2&& b )		{ return { std::forward<T1>( a ), operator_id::equal, std::forward<T2>( b ) }; } 			);
+	DEFINE_OPERATION( operator!=( T1&& a, T2&& b )		{ return { std::forward<T1>( a ), operator_id::not_equal, std::forward<T2>( b ) }; } 		);
+	DEFINE_OPERATION( operator<=( T1&& a, T2&& b )		{ return { std::forward<T1>( a ), operator_id::less_eq, std::forward<T2>( b ) }; } 			);
+	DEFINE_OPERATION( operator<( T1&& a, T2&& b )		{ return { std::forward<T1>( a ), operator_id::less, std::forward<T2>( b ) }; } 			);
+	DEFINE_OPERATION( __ugreat( T1&& a, T2&& b )		{ return { std::forward<T1>( a ), operator_id::ugreater, std::forward<T2>( b ) }; } 		);
+	DEFINE_OPERATION( __ugreat_eq( T1&& a, T2&& b )		{ return { std::forward<T1>( a ), operator_id::ugreater_eq, std::forward<T2>( b ) }; } 		);
+	DEFINE_OPERATION( __uless_eq( T1&& a, T2&& b )		{ return { std::forward<T1>( a ), operator_id::uless_eq, std::forward<T2>( b ) }; } 		);
+	DEFINE_OPERATION( __uless( T1&& a, T2&& b )			{ return { std::forward<T1>( a ), operator_id::uless, std::forward<T2>( b ) }; } 			);
+#undef DEFINE_OPERATION
 };
