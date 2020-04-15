@@ -59,33 +59,33 @@ namespace vtil
 
 		// Null reference construction.
 		//
-		inline shared_reference() : reference( nullptr ) {}
-		inline shared_reference( std::nullptr_t ) : reference( nullptr ) {}
+		shared_reference() : reference( nullptr ) {}
+		shared_reference( std::nullptr_t ) : reference( nullptr ) {}
 
 		// Owning reference constructor.
 		//
 		template<typename... params, typename = impl::enable_if_constructor<shared_reference<T>, params...>>
-		inline shared_reference( params&&... p ) : reference( std::make_shared<T>( std::forward<params>( p )... ) ), is_owning( true ) {}
+		shared_reference( params&&... p ) : reference( std::make_shared<T>( std::forward<params>( p )... ) ), is_owning( true ) {}
 
 		// Copy-on-write reference construction and assignment.
 		//
-		inline shared_reference( const shared_reference& ref ) : reference( ref.reference ), is_locked( ref.is_locked ) {}
-		inline shared_reference& operator=( const shared_reference& o ) { reference = o.reference; is_locked = o.is_locked; is_owning = false; return *this; }
+		shared_reference( const shared_reference& ref ) : reference( ref.reference ), is_locked( ref.is_locked ) {}
+		shared_reference& operator=( const shared_reference& o ) { reference = o.reference; is_locked = o.is_locked; is_owning = false; return *this; }
 
 		// Construction and assignment operator for rvalue references.
 		//
-		inline shared_reference( shared_reference&& ref ) = default;
-		inline shared_reference& operator=( shared_reference&& o ) = default;
+		shared_reference( shared_reference&& ref ) = default;
+		shared_reference& operator=( shared_reference&& o ) = default;
 
 		// Simple validity checks.
 		//
-		inline bool is_valid() const { return ( bool ) reference; }
-		inline operator bool() const { return is_valid(); }
+		bool is_valid() const { return ( bool ) reference; }
+		operator bool() const { return is_valid(); }
 
 		// Locks the current reference, a locked reference cannot be upgraded
 		// to a copy-on-write reference as is.
 		//
-		inline shared_reference& lock() { is_locked = true; is_owning = false; return *this; }
+		shared_reference& lock() { is_locked = true; is_owning = false; return *this; }
 
 		// Unlocks the current reference, should be called before storing the reference.
 		//
@@ -137,17 +137,17 @@ namespace vtil
 
 		// Basic comparison operators are redirected to the pointer type.
 		//
-		inline bool operator==( const shared_reference& o ) const { return reference == o.reference; }
-		inline bool operator<( const shared_reference& o ) const { return reference < o.reference; }
+		bool operator==( const shared_reference& o ) const { return reference == o.reference; }
+		bool operator<( const shared_reference& o ) const { return reference < o.reference; }
 
 		// Redirect pointer and dereferencing operator to the reference and cast to const-qualified equivalent.
 		//
-		inline const T* operator->() const { fassert( is_valid() ); return reference.operator->(); }
-		inline const T& operator*() const { fassert( is_valid() ); return *reference; }
+		const T* operator->() const { fassert( is_valid() ); return reference.operator->(); }
+		const T& operator*() const { fassert( is_valid() ); return *reference; }
 
 		// Syntax sugar for ::own() using add operator.
 		//
-		inline T* operator+() { return own(); }
+		T* operator+() { return own(); }
 	};
 
 	// Local references are used to create copy-on-write references to values on stack, 

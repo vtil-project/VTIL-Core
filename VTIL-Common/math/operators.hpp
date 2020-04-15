@@ -110,6 +110,31 @@ namespace vtil::math
         //   join RHS of (A+B) with RHS of (...)+C by ::add.
         //
         operator_id join_by = operator_id::invalid;
+
+        // Creates a string representation based on the operands passed.
+        //
+        inline std::string to_string( const std::string& lhs, const std::string& rhs ) const
+        {
+            // If unary function:
+            //
+            if ( operand_count == 1 )
+            {
+                // If it has a symbol, use it, else return in function format.
+                //
+                if ( symbol ) return symbol + rhs;
+                else          return format::str( "%s(%s)", function_name, lhs, rhs );
+            }
+            // If binary function:
+            //
+            else if ( operand_count == 2 )
+            {
+                // If it has a symbol, use it, else return in function format.
+                //
+                if ( symbol ) return format::str( "(%s%s%s)", lhs, symbol, rhs );
+                else          return format::str( "%s(%s, %s)", function_name, lhs, rhs );
+            }
+            unreachable();
+        }
     };
     static constexpr operator_desc descriptors[] = 
     {
@@ -161,7 +186,7 @@ namespace vtil::math
     // Evaluates the operator, on LHS and RHS. 
     // - If unary LHS is ignored.
     //
-    inline static uint64_t evaluate( operator_id id, uint8_t size, uint64_t lhs, uint64_t rhs )
+    static uint64_t evaluate( operator_id id, uint8_t size, uint64_t lhs, uint64_t rhs )
     {
         // Normalize the input.
         //

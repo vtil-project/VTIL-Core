@@ -7,14 +7,14 @@ namespace vtil::math
 {
     // Generate a mask for the given variable size and offset.
     //
-    inline static constexpr uint64_t mask( uint8_t bit_count = 64, uint8_t bit_offset = 0 )
+    static constexpr uint64_t mask( uint8_t bit_count = 64, uint8_t bit_offset = 0 )
     {
         return ( ( ~0ull ) >> ( 64 - bit_count ) ) << bit_offset;
     }
 
     // Zero extends the given integer.
     //
-    inline static uint64_t zero_extend( uint64_t value, uint8_t bcnt_src )
+    static uint64_t zero_extend( uint64_t value, uint8_t bcnt_src )
     {
         // Use simple casts where possible.
         //
@@ -38,7 +38,7 @@ namespace vtil::math
 
     // Sign extends the given integer.
     //
-    inline static int64_t sign_extend( uint64_t value, uint8_t bcnt_src )
+    static int64_t sign_extend( uint64_t value, uint8_t bcnt_src )
     {
         // Use simple casts where possible.
         //

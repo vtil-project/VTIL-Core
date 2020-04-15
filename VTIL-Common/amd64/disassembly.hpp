@@ -58,14 +58,14 @@ namespace vtil::x86
 
 		// Returns human readable disassembly.
 		//
-		inline std::string to_string() const
+		std::string to_string() const
 		{
 			return format::str( "%p: %s\t%s", address, mnemonic, operand_string );
 		}
 
 		// Helper to check if instruction is of type <x86_INS_*, {X86_OP_*...}>.
 		//
-		inline bool is( uint32_t idx, const std::vector<x86_op_type>& operands_t ) const
+		bool is( uint32_t idx, const std::vector<x86_op_type>& operands_t ) const
 		{
 			if ( id != idx ) return false;
 			if ( operands.size() != operands_t.size() ) return false;
@@ -77,7 +77,7 @@ namespace vtil::x86
 
 		// Helper to check if instruction belongs to the given group.
 		//
-		inline bool in_group( uint8_t group_searched ) const
+		bool in_group( uint8_t group_searched ) const
 		{
 			return std::find( groups.begin(), groups.end(), group_searched ) != groups.end();
 		}
