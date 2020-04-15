@@ -186,11 +186,10 @@ namespace vtil::math
     // Evaluates the operator, on LHS and RHS. 
     // - If unary LHS is ignored.
     //
-    static uint64_t evaluate( operator_id id, uint8_t size, uint64_t lhs, uint64_t rhs )
+    static uint64_t evaluate( operator_id id, uint8_t bcnt, uint64_t lhs, uint64_t rhs )
     {
         // Normalize the input.
         //
-        uint8_t bcnt = size * 8;
         if ( bcnt != 64 )
         {
             if ( descriptor_of( id )->is_signed )
