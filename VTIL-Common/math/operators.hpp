@@ -150,7 +150,7 @@ namespace vtil::math
         {   +1,       false,    2,    false,          "<<",       "shl",         operator_id::add         },
         {   +1,       false,    2,    false,          ">]",       "rotr",        operator_id::add         },
         {   +1,       false,    2,    false,          "[<",       "rotl",        operator_id::add         },
-        {   -1,       true,     2,    false,          "-",        "neg"                                   },
+        {   -1,       true,     1,    false,          "-",        "neg"                                   },
         {   -1,       true,     2,    true,           "+",        "add",         operator_id::add         },
         {   -1,       true,     2,    false,          "-",        "sub",         operator_id::add         },
         {   -1,       true,     2,    true,           "h*",       "mulhi"                                 },
