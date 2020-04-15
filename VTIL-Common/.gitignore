@@ -12,3 +12,5 @@
 *.suo
 
 *.ilk
+
+x64/Debug/

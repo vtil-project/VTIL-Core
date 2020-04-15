@@ -6,6 +6,7 @@
 #include <atomic>
 #include <algorithm>
 #include <functional>
+#include <optional>
 
 namespace vtil
 {
@@ -37,7 +38,7 @@ namespace vtil
 
 			remapped_iterator() = default;
 			remapped_iterator( const T & v ) : T( v ) {}
-			remapped_iterator( T && v ) : T( std::move( v ) ) {}
+			remapped_iterator( T&& v ) : T( std::move( v ) ) {}
 
 			auto* operator->() const { return &T::operator->()->value; }
 			auto& operator*() const { return T::operator->()->value; }
@@ -100,7 +101,8 @@ namespace vtil
 
 		// Priority based iteration is done using these wrappers.
 		//
-		void for_each( const std::function<void( iterator )>& enumerator )
+		template<typename T>
+		std::optional<T> for_each( const std::function<std::optional<T>( iterator )>& enumerator )
 		{
 			if ( auto m = get_mutex() ) m->lock_shared();
 
@@ -117,12 +119,22 @@ namespace vtil
 
 			// Iterate according to the guide and invoke enumerator.
 			//
+			std::optional<T> result;
 			for ( auto& guide : snapshot )
-				enumerator( guide.second );
+			{
+				if ( auto r = enumerator( guide.second ) )
+				{
+					result = r;
+					break;
+				}
+			}
 
 			if ( auto m = get_mutex() ) m->unlock_shared();
+			return result;
 		}
-		void for_each( const std::function<void( const_iterator )>& enumerator ) const
+
+		template<typename T>
+		std::optional<T> for_each( const std::function<std::optional<T>( const_iterator )>& enumerator ) const
 		{
 			if ( auto m = get_mutex() ) m->lock_shared();
 
@@ -139,10 +151,18 @@ namespace vtil
 
 			// Iterate according to the guide and invoke enumerator.
 			//
+			std::optional<T> result;
 			for ( auto& guide : snapshot )
-				enumerator( guide.second );
+			{
+				if ( auto r = enumerator( guide.second ) )
+				{
+					result = r;
+					break;
+				}
+			}
 
 			if ( auto m = get_mutex() ) m->unlock_shared();
+			return result;
 		}
 
 		// Redirect size related std::list functions.
