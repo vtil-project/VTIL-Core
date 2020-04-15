@@ -33,18 +33,20 @@ namespace vtil
 		template<typename T, bool is_const = false>
 		struct remapped_iterator : T
 		{
+			using base_type = T;
+
 			remapped_iterator() = default;
 			remapped_iterator( const T & v ) : T( v ) {}
 			remapped_iterator( T && v ) : T( std::move( v ) ) {}
 
-			using base_type = T;
-			auto& operator->() const { return &T::operator->()->value; }
-			auto& operator->() { return &T::operator->()->value; }
+			auto* operator->() const { return &T::operator->()->value; }
 			auto& operator*() const { return T::operator->()->value; }
-			auto& operator*() { return T::operator->()->value; }
 			
 			template<bool c = is_const, std::enable_if_t<!c, int> =0> auto& inc_priority( int64_t n ) { T::operator->()->points += n; return *this; }
 			template<bool c = is_const, std::enable_if_t<!c, int> =0> auto& dec_priority( int64_t n ) { T::operator->()->points -= n; return *this; }
+
+			auto operator==( remapped_iterator& o ) const { return T::operator==( o ); }
+			auto operator!=( remapped_iterator& o ) const { return T::operator!=( o ); }
 		};
 
 		// Use std::list for atomic priority lists, and std::vector otherwise.
@@ -68,16 +70,39 @@ namespace vtil
 		std::shared_mutex mutex;
 		container_type container;
 
-		// const-qualifiers are ignored for mutex.
+		// Mutex ignores const-qualifiers.
 		//
-		template<typename T = std::conditional_t<atomic, std::shared_mutex&, std::shared_mutex>>
-		T get_mutex() const { return (T)mutex; }
+		std::shared_mutex* get_mutex() const
+		{
+			return ( std::shared_mutex* ) &mutex;
+		}
+
+		// Default constructors and copy/move.
+		//
+		priority_list() = default;
+		priority_list( const priority_list& ) = delete;
+		priority_list& operator=( const priority_list& ) = delete;
+		priority_list( priority_list&& ) = default;
+		priority_list& operator=( priority_list&& ) = default;
+
+		// Construct from a list of initial values.
+		//
+		priority_list( const std::initializer_list<T>& init_list )
+		{
+			for ( T& entry : init_list )
+				push_back( entry );
+		}
+		priority_list( std::initializer_list<T>&& init_list )
+		{
+			for ( T& entry : init_list )
+				push_back( std::move( entry ) );
+		}
 
 		// Priority based iteration is done using these wrappers.
 		//
 		void for_each( const std::function<void( iterator )>& enumerator )
 		{
-			std::unique_lock _gd( get_mutex() );
+			if ( auto m = get_mutex() ) m->lock_shared();
 
 			// Take a snapshot of current points.
 			//
@@ -94,10 +119,12 @@ namespace vtil
 			//
 			for ( auto& guide : snapshot )
 				enumerator( guide.second );
+
+			if ( auto m = get_mutex() ) m->unlock_shared();
 		}
 		void for_each( const std::function<void( const_iterator )>& enumerator ) const
 		{
-			std::shared_lock _gd( get_mutex() );
+			if ( auto m = get_mutex() ) m->lock_shared();
 
 			// Take a snapshot of current points.
 			//
@@ -114,12 +141,14 @@ namespace vtil
 			//
 			for ( auto& guide : snapshot )
 				enumerator( guide.second );
+
+			if ( auto m = get_mutex() ) m->unlock_shared();
 		}
 
 		// Redirect size related std::list functions.
 		//
-		size_t size() const { std::shared_lock _g( get_mutex() ); return container.size(); }
-		bool empty() const { std::shared_lock _g( get_mutex() ); return container.empty(); }
+		size_t size() const { if ( auto m = get_mutex() ) m->lock_shared(); auto r = container.size(); if ( auto m = get_mutex() ) m->unlock_shared(); return r; }
+		bool empty() const { if ( auto m = get_mutex() ) m->lock_shared(); auto r = container.empty(); if ( auto m = get_mutex() ) m->unlock_shared(); return r; }
 
 		// Redirect iteration related std::list functions.
 		// - Note: Unsafe, if lock not aquired.
@@ -135,12 +164,12 @@ namespace vtil
 
 		// Redirect data related std::list functions.
 		//
-		iterator at( size_t n ) { std::shared_lock _g( get_mutex() ); return std::next( container.begin(), n ); }
+		iterator at( size_t n ) { if ( auto m = get_mutex() ) m->lock_shared(); auto r = std::next( container.begin(), n ); if ( auto m = get_mutex() ) m->unlock_shared(); return r; }
 		iterator operator[]( size_t n ) { return at( n ); }
-		const_iterator at( size_t n ) const { std::shared_lock _g( get_mutex() ); return std::next( container.begin(), n ); }
+		const_iterator at( size_t n ) const { if ( auto m = get_mutex() ) m->lock_shared(); auto r = std::next( container.begin(), n ); if ( auto m = get_mutex() ) m->unlock_shared(); return r; }
 		const_iterator operator[]( size_t n ) const { return at( n ); }
-		void push_back( T&& v ) { std::unique_lock _g( get_mutex() ); container.push_back( std::move( v ) ); }
-		void push_back( const T& v ) { std::unique_lock _g( get_mutex() ); container.push_back( v ); }
-		void resize( size_t v ) { std::unique_lock _g( get_mutex() ); container.resize( v ); }
+		void push_back( T&& v ) { if ( auto m = get_mutex() ) m->lock(); container.push_back( std::move( v ) ); if ( auto m = get_mutex() ) m->unlock(); }
+		void push_back( const T& v ) { if ( auto m = get_mutex() ) m->lock(); container.push_back( v ); if ( auto m = get_mutex() ) m->unlock(); }
+		void resize( size_t v ) { if ( auto m = get_mutex() ) m->lock(); container.resize( v ); if ( auto m = get_mutex() ) m->unlock(); }
 	};
 };
