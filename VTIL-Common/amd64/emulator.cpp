@@ -1,16 +1,18 @@
 #include "emulator.hpp"
 #include "..\io\asserts.hpp"
 
+// Stack delta if this were to be used as stack.
+// - (Thanks ICC)
+//
+#define sd 0x20
+static_assert( sd == vtil::emulator::reserved_stack_size );
+
 namespace vtil
 {
-    // Stack delta if this were to be used as stack.
-    //
-    static constexpr uint32_t sd = emulator::reserved_stack_size;
-
     // Invokes routine at the pointer given with the current context and updates the context.
     // - Template argument is a small trick to make it work with ICC, declaring a constexpr within the scope does not work.
     //
-    inline void emulator::invoke( const void* routine_pointer )
+    void emulator::invoke( const void* routine_pointer )
     {
         // Set the runtime RIP.
         //
@@ -88,7 +90,7 @@ namespace vtil
     // Resolves the offset<0> where the value is saved at for the given register
     // and the number of bytes<1> it takes.
     //
-    inline std::pair<int32_t, uint8_t> emulator::resolve( x86_reg reg ) const
+    std::pair<int32_t, uint8_t> emulator::resolve( x86_reg reg ) const
     {
         auto [base_reg, offset, size] = x86::resolve_mapping( reg );
 
@@ -118,7 +120,7 @@ namespace vtil
 
     // Sets the value of a register.
     //
-    inline emulator& emulator::set( x86_reg reg, uint64_t value )
+    emulator& emulator::set( x86_reg reg, uint64_t value )
     {
         auto [off, sz] = resolve( reg );
         memcpy( ( uint8_t* ) this + off, &value, sz );
@@ -127,7 +129,7 @@ namespace vtil
 
     // Gets the value of a register.
     //
-    inline uint64_t emulator::get( x86_reg reg ) const
+    uint64_t emulator::get( x86_reg reg ) const
     {
         uint64_t value = 0;
         auto [off, sz] = resolve( reg );
@@ -135,3 +137,4 @@ namespace vtil
         return value;
     }
 };
+#undef sd
