@@ -44,6 +44,23 @@ namespace vtil
 
 		template<typename T, typename... params>
 		using enable_if_constructor = typename std::enable_if_t<should_invoke_constructor<T, params...>()>;
+
+
+		template <typename T, typename... params>
+		inline static std::shared_ptr<T> make_shared( params&&... args )
+		{ 
+			std::shared_ptr<T> out = std::make_shared<T>( std::forward<params>( args )... );
+
+			// Billion dollar company yes?
+			//
+#ifdef __INTEL_COMPILER
+			{
+				std::weak_ptr<T> __tmp = out;
+				new ( &__tmp ) std::weak_ptr<T>{};
+			}
+#endif
+			return out;
+		}
 	};
 
 	// This structure is used to describe copy-on-write references.
@@ -65,7 +82,7 @@ namespace vtil
 		// Owning reference constructor.
 		//
 		template<typename... params, typename = impl::enable_if_constructor<shared_reference<T>, params...>>
-		shared_reference( params&&... p ) : reference( std::make_shared<T>( std::forward<params>( p )... ) ), is_owning( true ) {}
+		shared_reference( params&&... p ) : reference( impl::make_shared<T>( std::forward<params>( p )... ) ), is_owning( true ) {}
 
 		// Copy-on-write reference construction and assignment.
 		//
@@ -97,7 +114,7 @@ namespace vtil
 			{
 				// Create a copy and change reference to point at it.
 				//
-				reference = std::make_shared<T>( *reference );
+				reference = impl::make_shared<T>( *reference );
 				
 				// Mark as unlocked and owning.
 				//
@@ -122,7 +139,7 @@ namespace vtil
 				// to make a copy before modifying the reference.
 				//
 				if ( reference.use_count() > 1 || is_locked )
-					reference = std::make_shared<T>( *reference );
+					reference = impl::make_shared<T>( *reference );
 
 				// Mark as unlocked and owning.
 				//
