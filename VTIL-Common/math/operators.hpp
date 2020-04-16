@@ -1,4 +1,4 @@
-// Copyright (c) 2020 Can Bölük and contributors of the VTIL Project		   
+// Copyright (c) 2020 Can Bï¿½lï¿½k and contributors of the VTIL Project		   
 // All rights reserved.														   
 // 																			   
 // Redistribution and use in source and binary forms, with or without		   
@@ -40,6 +40,7 @@
 #include <string>
 #include <intrin.h>
 #include <functional>
+#include <algorithm>
 #include "bitwise.hpp"
 
 namespace vtil::math
@@ -84,6 +85,7 @@ namespace vtil::math
         multiply,       // LHS*(RHS*...)
         divide,         // LHS/(RHS*...)
         remainder,      // LHS%RHS
+
         umultiply_high, // < Unsigned variants of above >
         umultiply,      // 
         udivide,        // 
@@ -99,6 +101,12 @@ namespace vtil::math
         mask,	        // RHS.mask()
         bitcnt,	        // RHS.bitcount()
         value_if,	    // LHS&1 ? RHS : 0
+
+        max_value,	    // LHS>=RHS ? LHS : RHS
+        min_value,	    // LHS<=RHS ? LHS : RHS
+
+        smax_value,	    // < Signed(!) variants of above >
+        smin_value,	    //
 
         greater,	    // LHS > RHS
         greater_eq,	    // LHS >= RHS
@@ -207,6 +215,10 @@ namespace vtil::math
         {   +1,       false,    1,    false,          nullptr,    "__mask"                                },
         {   +1,       false,    1,    false,          nullptr,    "__bitcnt"                              },
         {    0,       false,    2,    false,          "?",        "if"                                    },
+        {    0,       false,    2,    false,          nullptr,    "max",        operator_id::max_value    },
+        {    0,       false,    2,    false,          nullptr,    "min",        operator_id::min_value    },
+        {    0,       false,    2,    false,          nullptr,    "max_sgn",    operator_id::smax_value   },
+        {    0,       false,    2,    false,          nullptr,    "min_sgn",    operator_id::smin_value   },
         {   -1,       false,    2,    false,          ">",        "greater"                               },
         {   -1,       false,    2,    false,          ">=",       "greater_eq"                            },
         {    0,       false,    2,    false,          "==",       "equal"                                 },
