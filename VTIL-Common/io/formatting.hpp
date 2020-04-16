@@ -35,8 +35,9 @@ namespace vtil::format
 	template<typename... params>
 	static std::string str( const char* fmt, params&&... ps )
 	{
-		char buffer[ 512 ];
-		sprintf_s( buffer, fmt, fix_parameter<params>( std::forward<params>( ps ) )... );
+		std::string buffer;
+		buffer.resize( snprintf( nullptr, 0, fmt, fix_parameter<params>( std::forward<params>( ps ) )... ) );
+		sprintf_s( buffer.data(), buffer.size() + 1, fmt, fix_parameter<params>( std::forward<params>( ps ) )... );
 		return buffer;
 	}
 
