@@ -9,6 +9,7 @@ namespace vtil::math
     //
     static constexpr uint64_t mask( uint8_t bit_count = 64, uint8_t bit_offset = 0 )
     {
+        if ( bit_offset >= 64 ) return 0;
         return ( ( ~0ull ) >> ( 64 - bit_count ) ) << bit_offset;
     }
 

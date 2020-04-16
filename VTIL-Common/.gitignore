@@ -10,7 +10,8 @@
 *.pdb
 *.lib
 *.suo
-
 *.ilk
-
+*.db-shm
+*.db-wal
+.vs/
 x64/Debug/
