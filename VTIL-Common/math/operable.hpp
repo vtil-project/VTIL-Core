@@ -164,6 +164,9 @@ namespace vtil::math
 template<typename T1, typename T2 = T1, typename result_t = typename vtil::math::xop_result<T1, T2>::type>	\
 inline static result_t __VA_ARGS__
 
+#undef __max // Seriously stdlib?
+#undef __min
+
 DEFINE_OPERATION( operator~( T1&& a )				{ return { vtil::math::operator_id::bitwise_not, std::forward<T1>( a ) }; }								);
 DEFINE_OPERATION( operator&( T1&& a, T2&& b )		{ return { std::forward<T1>( a ), vtil::math::operator_id::bitwise_and, std::forward<T2>( b ) }; }		);
 DEFINE_OPERATION( operator|( T1&& a, T2&& b )		{ return { std::forward<T1>( a ), vtil::math::operator_id::bitwise_or, std::forward<T2>( b ) }; }		);
@@ -192,6 +195,10 @@ DEFINE_OPERATION( __bt( T1&& a, T2&& b )			{ return { std::forward<T1>( a ), vti
 DEFINE_OPERATION( __mask( T1&& a )			        { return { vtil::math::operator_id::mask, std::forward<T2>( a ) }; } 			                        );
 DEFINE_OPERATION( __bitcnt( T1&& a )		        { return { vtil::math::operator_id::bitcnt, std::forward<T2>( a ) }; } 			                        );
 DEFINE_OPERATION( __if( T1&& a, T2&& b )			{ return { std::forward<T1>( a ), vtil::math::operator_id::value_if, std::forward<T2>( b ) }; } 		);
+DEFINE_OPERATION( __max( T1&& a, T2&& b )           { return { std::forward<T1>( a ), vtil::math::operator_id::max_value, std::forward<T2>( b ) }; }        );
+DEFINE_OPERATION( __min( T1&& a, T2&& b )           { return { std::forward<T1>( a ), vtil::math::operator_id::min_value, std::forward<T2>( b ) }; }        );
+DEFINE_OPERATION( __max_sgn( T1&& a, T2&& b )       { return { std::forward<T1>( a ), vtil::math::operator_id::smax_value, std::forward<T2>( b ) }; }       );
+DEFINE_OPERATION( __min_sgn( T1&& a, T2&& b )       { return { std::forward<T1>( a ), vtil::math::operator_id::smin_value, std::forward<T2>( b ) }; }       );
 DEFINE_OPERATION( operator>( T1&& a, T2&& b )		{ return { std::forward<T1>( a ), vtil::math::operator_id::greater, std::forward<T2>( b ) }; } 			);
 DEFINE_OPERATION( operator>=( T1&& a, T2&& b )		{ return { std::forward<T1>( a ), vtil::math::operator_id::greater_eq, std::forward<T2>( b ) }; } 		);
 DEFINE_OPERATION( operator==( T1&& a, T2&& b )		{ return { std::forward<T1>( a ), vtil::math::operator_id::equal, std::forward<T2>( b ) }; } 			);
