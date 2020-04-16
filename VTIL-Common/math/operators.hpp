@@ -162,10 +162,10 @@ namespace vtil::math
         {   -1,       false,    2,    false,          "u/",       "udiv",        operator_id::umultiply   },
         {   -1,       false,    2,    false,          "u%",       "urem"                                  },
         {    0,       false,    2,    false,          nullptr,    "__zx"                                  },
-        {   -1,       false,    2,    false,          nullptr,    "__sx"                                  },
+        {   -1,       true,     2,    false,          nullptr,    "__sx"                                  },
         {   +1,       false,    1,    false,          nullptr,    "__popcnt"                              },
-        {   +1,       false,    1,    false,          nullptr,    "__msb"                                 },
-        {   +1,       false,    1,    false,          nullptr,    "__lsb"                                 },
+        {   +1,       false,    2,    false,          nullptr,    "__msb"                                 },
+        {   +1,       false,    2,    false,          nullptr,    "__lsb"                                 },
         {   +1,       false,    2,    false,          nullptr,    "__bt"                                  },
         {   +1,       false,    1,    false,          nullptr,    "__mask"                                },
         {   +1,       false,    1,    false,          nullptr,    "__bitcnt"                              },
@@ -216,13 +216,13 @@ namespace vtil::math
             case operator_id::bitwise_xor:      result = lhs ^ rhs;                                                 break;
             case operator_id::shift_right:      result = rhs >= bcnt ? 0 : lhs >> rhs;                              break;
             case operator_id::shift_left:       result = rhs >= bcnt ? 0 : lhs << rhs;                              break;
-            case operator_id::rotate_right:     result = ( lhs >> rhs )
-                                                        | ( lhs << ( bcnt - rhs ) );                                break;
-            case operator_id::rotate_left:      result = ( lhs << rhs )
-                                                        | ( lhs >> ( bcnt - rhs ) );                                break;
+            case operator_id::rotate_right:     result = ( lhs >> ( rhs % bcnt ) )
+                                                        | ( lhs << ( bcnt - ( rhs % bcnt ) ) );                     break;
+            case operator_id::rotate_left:      result = ( lhs << ( rhs % bcnt ) )
+                                                        | ( lhs >> ( bcnt - ( rhs % bcnt ) ) );                     break;
             // - Arithmetic operators.										                  
             //																                  
-            case operator_id::negate:           result = -ilhs;                                                     break;
+            case operator_id::negate:           result = -irhs;                                                     break;
             case operator_id::add:              result = ilhs + irhs;                                               break;
             case operator_id::substract:        result = ilhs - irhs;                                               break;
             case operator_id::multiply_high:    result = bcnt == 64
@@ -240,8 +240,8 @@ namespace vtil::math
 
             // - Special operators.										                  
             //																                  
-            case operator_id::sign_extend:      result = math::sign_extend( lhs, rhs );                             break;
-            case operator_id::zero_extend:      result = math::zero_extend( lhs, rhs );                             break;
+            case operator_id::sign_extend:      result = ilhs, bcnt = rhs;                                          break;
+            case operator_id::zero_extend:      result = lhs,  bcnt = rhs;                                          break;
             case operator_id::popcnt:           result = __popcnt64( rhs );                                         break;
             case operator_id::most_sig_bit:	    result = _BitScanReverse64( ( unsigned long* ) &result, lhs )
                                                         ? result

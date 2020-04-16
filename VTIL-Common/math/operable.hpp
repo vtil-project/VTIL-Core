@@ -149,8 +149,8 @@ DEFINE_OPERATION( urem( T1&& a, T2&& b )			{ return { std::forward<T1>( a ), vti
 DEFINE_OPERATION( __zx( T1&& a, T2&& b )			{ return { std::forward<T1>( a ), vtil::math::operator_id::zero_extend, std::forward<T2>( b ) }; } 		);
 DEFINE_OPERATION( __sx( T1&& a, T2&& b )			{ return { std::forward<T1>( a ), vtil::math::operator_id::sign_extend, std::forward<T2>( b ) }; } 		);
 DEFINE_OPERATION( __popcnt( T1&& a )		        { return { vtil::math::operator_id::popcnt, std::forward<T2>( a ) }; } 			                        );
-DEFINE_OPERATION( __msb( T1&& a )			        { return { vtil::math::operator_id::most_sig_bit, std::forward<T2>( a ) }; } 	                        );
-DEFINE_OPERATION( __lsb( T1&& a )			        { return { vtil::math::operator_id::least_sig_bit, std::forward<T2>( a ) }; } 	                        );
+DEFINE_OPERATION( __msb( T1&& a, T2&& b )			{ return { std::forward<T1>( a ), vtil::math::operator_id::most_sig_bit, std::forward<T2>( b ) }; } 	);
+DEFINE_OPERATION( __lsb( T1&& a, T2&& b )			{ return { std::forward<T1>( a ), vtil::math::operator_id::least_sig_bit, std::forward<T2>( b ) }; } 	);
 DEFINE_OPERATION( __bt( T1&& a, T2&& b )			{ return { std::forward<T1>( a ), vtil::math::operator_id::bit_test, std::forward<T2>( b ) }; } 		);
 DEFINE_OPERATION( __mask( T1&& a )			        { return { vtil::math::operator_id::mask, std::forward<T2>( a ) }; } 			                        );
 DEFINE_OPERATION( __bitcnt( T1&& a )		        { return { vtil::math::operator_id::bitcnt, std::forward<T2>( a ) }; } 			                        );
