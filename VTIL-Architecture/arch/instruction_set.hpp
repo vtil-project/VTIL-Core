@@ -1,154 +1,36 @@
+// Copyright (c) 2020 Can Boluk and contributors of the VTIL Project   
+// All rights reserved.   
+//    
+// Redistribution and use in source and binary forms, with or without   
+// modification, are permitted provided that the following conditions are met: 
+//    
+// 1. Redistributions of source code must retain the above copyright notice,   
+//    this list of conditions and the following disclaimer.   
+// 2. Redistributions in binary form must reproduce the above copyright   
+//    notice, this list of conditions and the following disclaimer in the   
+//    documentation and/or other materials provided with the distribution.   
+// 3. Neither the name of mosquitto nor the names of its   
+//    contributors may be used to endorse or promote products derived from   
+//    this software without specific prior written permission.   
+//    
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" 
+// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE   
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE  
+// ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE   
+// LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR   
+// CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF   
+// SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS   
+// INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN   
+// CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)   
+// ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE  
+// POSSIBILITY OF SUCH DAMAGE.        
+//
 #pragma once
-#include <string>
 #include <vector>
-#include <platform.hpp>
-#include "operands.hpp"
-#include "..\misc\format.hpp"
-#include "..\symbolic\operators.hpp"
+#include "instruction_desc.hpp"
 
 namespace vtil::arch
 {
-    // Maximum operand count.
-    //
-    static constexpr size_t max_operand_count = 4;
-
-    // Describes the way an instruction acceses it's operands and the
-    // constraints built around that, such as "immediate only" implied 
-    // by the "_imm" suffix.
-    //
-    enum operand_access : uint8_t
-    {
-        // Note: 
-        // It still is valid to do != write for read and >= write for writes.
-        // this operand access type is illegal to use outside of function arguments.
-        //
-        invalid = 0, 
-
-        // Read group:
-        //
-        read_imm,
-        read_reg,
-        read_any,
-        read = read_any,
-
-        // Write group: 
-        // - Implicit "_reg" as we cannot write into an immediate
-        //
-        write,
-        readwrite
-    };
-    
-    // Instruction descriptors are used to describe each unique instruction 
-    // in the VTIL instruction set. This type should be only constructed 
-    // as a global constant. For the sake of consistency all operand indices
-    // passed to the constructor start from 1. [Ref: branch_operands desc.]
-    //
-    struct instruction_desc
-    {
-        // List of all instances, to be filled by the constructor.
-        //
-        static std::vector<const instruction_desc*> list;
-
-        // Name of the instruction.
-        //
-        std::string name;
-
-        // List of the access types for each operand.
-        //
-        std::vector<operand_access> access_types;
-
-        // Index of the operand that determines the instruction's 
-        // access size property.
-        //
-        int access_size_index = 0;
-
-        // Whether the instruction is volatile or not meaning it
-        // should not be discarded even if it is no-op or dead.
-        //
-        bool is_volatile = false;
-
-        // A pointer to the expression operator that describes the
-        // operation of this instruction if applicable.
-        //
-        std::string symbolic_operator = "";
-
-        // List of operands that are thread as branching destinations.
-        // - In the constructor version negative indices are used to 
-        //   indicate "real" destinations and thus for the sake of 
-        //   simplicity indices start from 1.
-        //
-        std::vector<int> branch_operands_rip = {};
-        std::vector<int> branch_operands_vip = {};
-
-        // Operand that marks the beginning of a memory reference and whether
-        // it writes to the pointer or not. [Idx] must be a register and [Idx+1]
-        // must be an immediate.
-        //
-        int memory_operand_index = -1;
-        bool memory_write = false;
-
-        // Constructor of this structure will push a reference to
-        // itself up the global ::list, which implies any construction
-        // should take place in a global context.
-        //
-        instruction_desc( const std::string& name,
-                          const std::vector<operand_access>& access_types,
-                          int access_size_index,
-                          bool is_volatile,
-                          const std::string& symbolic_operator,
-                          std::vector<int> branch_operands,
-                          const std::pair<int, bool>& memory_operands ) :
-            name( name ), access_types( access_types ), access_size_index( access_size_index - 1 ),
-            is_volatile( is_volatile ), symbolic_operator( symbolic_operator ),
-            memory_operand_index( memory_operands.first - 1 ), memory_write( memory_operands.second )
-        {
-            list.push_back( this );
-            fassert( operand_count() <= max_operand_count );
-
-            // Validate all operand indices.
-            //
-            fassert( access_size_index == 0 || abs( access_size_index ) <= operand_count() );
-            fassert( memory_operands.first == 0 || abs( memory_operands.first ) <= operand_count() );
-            for ( int op : branch_operands )
-                fassert( op != 0 && abs( op ) <= operand_count() );
-
-            // Process branch operands.
-            //
-            for ( int op : branch_operands )
-            {
-                if ( op > 0 )
-                    branch_operands_vip.push_back( op - 1 );
-                else
-                    branch_operands_rip.push_back( -op - 1 );
-            }
-        }
-
-        // Number of operands this instruction has.
-        //
-        int operand_count() const { return access_types.size(); }
-
-        // Whether the instruction branches for not.
-        //
-        bool is_branching_virt() const { return !branch_operands_vip.empty(); }
-        bool is_branching_real() const { return !branch_operands_rip.empty(); }
-        bool is_branching() const { return is_branching_virt() || is_branching_real(); }
-
-        // Whether the instruction acceses/reads/writes memory or not.
-        //
-        bool reads_memory() const { return accesses_memory() && !memory_write; }
-        bool writes_memory() const { return accesses_memory() && memory_write; }
-        bool accesses_memory() const { return memory_operand_index != -1; }
-
-        // Conversion to human-readable format.
-        //
-        std::string to_string( uint8_t access_size ) const
-        {
-            if ( !access_size ) return name;
-            return name + ( char ) format::suffix_map[ access_size ];
-        }
-    };
-    std::vector<const instruction_desc*> instruction_desc::list = {};
-    
     namespace ins
     {
         //  -- Data/Memory instructions
@@ -217,6 +99,24 @@ namespace vtil::arch
         static const instruction_desc bror =        { "ror",      { readwrite,     read_any                   },    1,          false,      "ror",      {},          {}          };
         static const instruction_desc brol =        { "rol",      { readwrite,     read_any                   },    1,          false,      "rol",      {},          {}          };
         /*-----------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
+    
+        //  -- Flag-creation instructions
+        //
+        //    SETS       Reg                                                 | OP1 = EFLAGS(OP2)[SF]
+        //    SETZ       Reg                                                 | OP1 = EFLAGS(OP2)[ZF]
+        //    SETP       Reg                                                 | OP1 = EFLAGS(OP2)[PF]
+        //    SETC       Reg                                                 | OP1 = EFLAGS(OP2)[CF]
+        //    SETO       Reg                                                 | OP1 = EFLAGS(OP2)[OF]
+                                                                             
+        //
+        /*-----------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
+        /*                                          [Name]        [Operands...]                                     [ASizeOp]   [Volatile]  [Operator]  [BranchOps] [MemOps]     */
+        static const instruction_desc sets =        { "sets",     { write,         read_any                   },    1,          false,      "sets",     {},          {}          };
+        static const instruction_desc setz =        { "setz",     { write,         read_any                   },    1,          false,      "setz",     {},          {}          };
+        static const instruction_desc setp =        { "setp",     { write,         read_any                   },    1,          false,      "setp",     {},          {}          };
+        static const instruction_desc setc =        { "setc",     { write,         read_any                   },    1,          false,      "setc",     {},          {}          };
+        static const instruction_desc seto =        { "seto",     { write,         read_any                   },    1,          false,      "seto",     {},          {}          };
+        /*-----------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
 
         //  -- Control flow instructions
         //                                                            
@@ -227,10 +127,10 @@ namespace vtil::arch
         //
         /*-----------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
         /*                                          [Name]        [Operands...]                                     [ASizeOp]   [Volatile]  [Operator]  [BranchOps] [MemOps]     */
-        static const instruction_desc js =         { "js",        { read_reg,      read_any,        read_any    },  2,          true,            {},    { 1, 2 },    {}          };
-        static const instruction_desc jmp =        { "jmp",       { read_any                                    },  1,          true,            {},    { 1 },       {}          };
-        static const instruction_desc vexit =      { "vexit",     { read_any                                    },  1,          true,            {},    { -1 },      {}          };
-        static const instruction_desc vxcall =     { "vxcall",    { read_any                                    },  1,          true,            {},    {},          {}          };
+        static const instruction_desc js =         { "js",        { read_reg,      read_any,        read_any    },  2,          true,        {},        { 1, 2 },    {}          };
+        static const instruction_desc jmp =        { "jmp",       { read_any                                    },  1,          true,        {},        { 1 },       {}          };
+        static const instruction_desc vexit =      { "vexit",     { read_any                                    },  1,          true,        {},        { -1 },      {}          };
+        static const instruction_desc vxcall =     { "vxcall",    { read_any                                    },  1,          true,        {},        {},          {}          };
         /*-----------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
 
         //    -- Special instructions
@@ -255,5 +155,16 @@ namespace vtil::arch
         static const instruction_desc vpinrm =     { "vpinrm",    { read_reg,      read_imm,                    },  1,          true,       {},         {},         { 1, false } };
         static const instruction_desc vpinwm =     { "vpinwm",    { read_reg,      read_imm                     },  1,          true,       {},         {},         { 1, true }  };
         /*-----------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
+    };
+
+    // List of all instructions.
+    //
+    static const instruction_desc* instruction_list[] = 
+    {
+        &ins::mov, &ins::movr, &ins::str, &ins::ldd, &ins::neg, &ins::add, &ins::sub, &ins::mul,
+        &ins::imul, &ins::mulhi, &ins::imulhi, &ins::div, &ins::idiv, &ins::rem, &ins::irem, &ins::bnot,
+        &ins::bshr, &ins::bshl, &ins::bxor, &ins::bor, &ins::band, &ins::bror, &ins::brol, &ins::sets,
+        &ins::setz, &ins::setp, &ins::setc, &ins::seto, &ins::js, &ins::jmp, &ins::vexit, &ins::vxcall,
+        &ins::nop, &ins::vcmp0, &ins::vsetcc, &ins::vemit, &ins::vpinr, &ins::vpinw, &ins::vpinrm, &ins::vpinwm
     };
 };

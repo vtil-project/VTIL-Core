@@ -1,10 +1,37 @@
+// Copyright (c) 2020 Can Boluk and contributors of the VTIL Project   
+// All rights reserved.   
+//    
+// Redistribution and use in source and binary forms, with or without   
+// modification, are permitted provided that the following conditions are met: 
+//    
+// 1. Redistributions of source code must retain the above copyright notice,   
+//    this list of conditions and the following disclaimer.   
+// 2. Redistributions in binary form must reproduce the above copyright   
+//    notice, this list of conditions and the following disclaimer in the   
+//    documentation and/or other materials provided with the distribution.   
+// 3. Neither the name of mosquitto nor the names of its   
+//    contributors may be used to endorse or promote products derived from   
+//    this software without specific prior written permission.   
+//    
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" 
+// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE   
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE  
+// ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE   
+// LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR   
+// CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF   
+// SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS   
+// INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN   
+// CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)   
+// ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE  
+// POSSIBILITY OF SUCH DAMAGE.        
+//
 #pragma once
 #include <set>
 #include <list>
 #include <vector>
 #include <algorithm>
 #include <iterator>
-#include <keystone.hpp>
+#include <vtil/amd64>
 #include "routine.hpp"
 #include "instruction.hpp"
 
@@ -20,9 +47,8 @@ namespace vtil
 	//   expression simplification in order to resolve branch destinations
 	//   or stack pointer value when required.
 	//
-	// - No block should under any 
-	//   circumstance modify any of the properties of any other block, 
-	//   with the only exception being .prev.
+	// - No block should under any circumstance modify any of the properties 
+	//   of any other block, with the only exception being .prev.
 	//
 	struct basic_block
 	{
@@ -45,7 +71,7 @@ namespace vtil
 
 			// Default constructor and the block-bound constructor.
 			//
-			riterator_base() {}
+			riterator_base() = default;
 			riterator_base( container_type* ref, const iterator_type& i ): container( ref ), iterator_type( i ) {}
 			template<typename X, typename Y> riterator_base( const riterator_base<X, Y>& o ) : container( o.container ), iterator_type( Y( o ) ) {}
 
@@ -190,90 +216,26 @@ namespace vtil
 
 		// Wrap the std::list fundamentals.
 		//
-		auto size() const { return stream.size(); }
-		iterator end() { return { this, stream.end() }; }
-		iterator begin() { return { this, stream.begin() }; }
-		const_iterator end() const { return { this, stream.end() }; }
-		const_iterator begin() const { return { this, stream.begin() }; }
+		inline auto size() const { return stream.size(); }
+		inline iterator end() { return { this, stream.end() }; }
+		inline iterator begin() { return { this, stream.begin() }; }
+		inline const_iterator end() const { return { this, stream.end() }; }
+		inline const_iterator begin() const { return { this, stream.begin() }; }
 
-		// Returns whether or not stream is complete.
+		// Returns whether or not block is complete, a complete
+		// block ends with a branching instruction.
 		//
-		bool is_complete() const
-		{
-			// Instructions cannot be appended after a branching instruction was hit.
-			//
-			return !stream.empty() && stream.back().base->is_branching();
-		}
+		inline bool is_complete() const { return !stream.empty() && stream.back().base->is_branching(); }
 		
 		// Constructor does not exist. Should be created either using
 		// ::begin(...) or ->fork(...).
 		//
-		static basic_block* begin( vip_t entry_vip )
-		{
-			// Caller must provide a valid virtual instruction pointer.
-			//
-			fassert( entry_vip != invalid_vip );
-
-			// Create the basic block with depth = 0, identifier = "0"
-			//
-			basic_block* blk = new basic_block;
-			blk->entry_vip = entry_vip;
-
-			// Create the routine and assign this block as the entry-point
-			//
-			blk->owner = new routine;
-			blk->owner->entry_point = blk;
-			blk->owner->explored_blocks[ entry_vip ] = blk;
-
-			// Return the block
-			//
-			return blk;
-		}
-		basic_block* fork( vip_t entry_vip )
-		{
-
-			// Block cannot be forked before a branching instruction is hit.
-			//
-			fassert( is_complete() );
-
-			// Caller must provide a valid virtual instruction pointer.
-			//
-			fassert( entry_vip != invalid_vip );
-
-			// Check if the routine has already explored this block.
-			//
-			std::lock_guard g( owner->mutex );
-			basic_block* result = nullptr;
-			basic_block*& entry = owner->explored_blocks[ entry_vip ];
-			if ( !entry )
-			{
-				// If it did not, create a block and assign it.
-				//
-				result = new basic_block;
-				result->owner = owner;
-				result->entry_vip = entry_vip;
-				result->sp_offset = 0;
-				entry = result;
-			}
-
-			// Fix the links and quit the scope holding the lock.
-			//
-			next.push_back( entry );
-			entry->prev.push_back( this );
-			return result;
-		}
+		static basic_block* begin( vip_t entry_vip );
+		basic_block* fork( vip_t entry_vip );
 
 		// Helpers for the allocation of unique temporary registers
 		//
-		auto tmp( uint8_t size )
-		{
-			return arch::register_view
-			{
-				"t" + std::to_string( ++owner->temporary_index_counter ),
-				0,
-				size
-			};
-		}
+		arch::register_view tmp( uint8_t size );
 		template<typename... params>
 		auto tmp( uint8_t size_0, params... size_n )
 		{
@@ -282,30 +244,7 @@ namespace vtil
 
 		// Instruction pre-processor
 		//
-		void append_instruction( instruction ins )
-		{
-			// Instructions cannot be appended after a branching instruction was hit.
-			//
-			fassert( !is_complete() );
-
-			// Write the stack pointer details.
-			//
-			ins.sp_offset = sp_offset;
-			ins.sp_index = sp_index;
-
-			// If instruction writes to RSP, reset the queued stack pointer.
-			//
-			if ( ins.writes_to( X86_REG_RSP ) )
-			{
-				sp_offset = 0;
-				sp_index++;
-				ins.sp_reset = true;
-			}
-
-			// Append the instruction to the stream.
-			//
-			stream.push_back( ins );
-		}
+		void append_instruction( instruction ins );
 
 		// Lazy wrappers for every instruction
 		//
@@ -317,18 +256,21 @@ namespace vtil
 			if constexpr ( std::is_same_v<T, register_view> ||
 						   std::is_same_v<T, operand> )
 				return operand( value );
+
 			// If x86_reg, map to register_view
 			//
 			else if constexpr ( std::is_same_v<T, x86_reg> )
 			{
-				auto [offset, size] = arch::get_register_mapping( value );
+				auto [base, offset, size] = amd64::resolve_mapping( value );
 				return operand( register_view( value, offset, size ) );
 			}
+
 			// If std::string/register_desc, cast to register_view
 			//
 			else if constexpr ( std::is_same_v<T, std::string> ||
 								std::is_same_v<T, arch::register_desc> )
 				return operand( register_view( value ) );
+
 			// Else, treat as immediate
 			//
 			else if constexpr ( std::is_integral_v<T> )
@@ -369,6 +311,11 @@ namespace vtil
 		WRAP_LAZY( band );
 		WRAP_LAZY( bror );
 		WRAP_LAZY( brol );
+		WRAP_LAZY( sets );
+		WRAP_LAZY( setz );
+		WRAP_LAZY( setp );
+		WRAP_LAZY( setc );
+		WRAP_LAZY( seto );
 		WRAP_LAZY( js );
 		WRAP_LAZY( jmp );
 		WRAP_LAZY( vexit );
@@ -382,73 +329,23 @@ namespace vtil
 		WRAP_LAZY( vpinwm );
 #undef WRAP_LAZY
 
+		// Updates EFLAGS register based on the previous instruction executed and writes it
+		// into the operand given.
+		//
+		basic_block* uflags_result( operand op, bool carry );
+
 		// Queues a stack shift.
 		//
-		basic_block* shift_sp( int64_t offset, bool merge_instance = false, iterator it = {} )
-		{
-			// If requested, shift the stack index first.
-			//
-			if ( merge_instance )
-			{
-				// Assert instruction at iterator indeed resets stack pointer.
-				//
-				fassert( !it.is_end() && it->sp_reset );
-				
-				// Decrement stack index for each instruction afterwards.
-				//
-				for ( auto i = std::next( it ); !i.is_end(); i++ )
-					i->sp_index--;
-				sp_index--;
-				
-				// Remove the reset flag and merge the offsets.
-				//
-				it->sp_reset = false;
-				offset += it->sp_offset;
-				it->sp_offset = 0;
-			}
+		basic_block* shift_sp( int64_t offset, bool merge_instance = false, iterator it = {} );
 
-			// If an iterator is provided, shift the stack pointer
-			// for every instruction that precedes it as well.
-			//
-			std::optional<uint32_t> sp_index_prev;
-			while ( !it.is_end() )
-			{
-				// Shift the stack offset accordingly.
-				//
-				it->sp_offset += offset;
+		// Pushes current flags value up the stack queueing the
+		// shift in stack pointer.
+		//
+		basic_block* pushf();
 
-				// If instruction reads from RSP:
-				//
-				if ( it->reads_from( X86_REG_RSP ) )
-				{
-					// If LDR|STR with memory operand RSP:
-					//
-					if ( it->base->accesses_memory() && it->operands[ it->base->memory_operand_index ].reg == X86_REG_RSP )
-					{
-						// Assert the offset operand is an immediate and 
-						// shift the offset as well.
-						//
-						fassert( it->operands[ it->base->memory_operand_index + 1 ].is_immediate() );
-						it->operands[ it->base->memory_operand_index + 1 ].i64 += offset;
-					}
-				}
-
-				// If stack changed changed, return, else forward the iterator.
-				//
-				if ( sp_index_prev.value_or( it->sp_index ) != it->sp_index )
-					return this;
-				sp_index_prev = it->sp_index;
-				++it;
-			}
-
-			// Shift the stack pointer and continue as usual
-			// without emitting any sub or add instructions.
-			// Queued stack pointer changes will be processed
-			// in bulk at the end of the routine.
-			//
-			sp_offset += offset;
-			return this;
-		}
+		// Emits an entire instruction using series of VEMITs.
+		//
+		basic_block* vemits( const std::string& assembly );
 
 		// Pushes an operand up the stack queueing the
 		// shift in stack pointer.
@@ -466,7 +363,7 @@ namespace vtil
 				auto t0 = tmp( 8 );
 				return mov( t0, op )->push( t0 );
 			}
-			
+
 			shift_sp( op.size() < stack_alignment ? -stack_alignment : -op.size() );
 			str( X86_REG_RSP, sp_offset, op );
 			return this;
@@ -482,25 +379,6 @@ namespace vtil
 			int64_t offset = sp_offset;
 			shift_sp( op.size() < stack_alignment ? stack_alignment : op.size() );
 			ldd( op, X86_REG_RSP, offset );
-			return this;
-		}
-
-		// Pushes current flags value up the stack queueing the
-		// shift in stack pointer.
-		//
-		basic_block* pushf()
-		{
-			return push( X86_REG_EFLAGS );
-		}
-
-		// Emits an entire instruction using series of VEMITs.
-		//
-		basic_block* vemits( const std::string& assembly )
-		{
-			auto res = assemble( assembly );
-			fassert( !res.empty() );
-			for ( uint8_t byte : res )
-				vemit( byte );
 			return this;
 		}
 	};

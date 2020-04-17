@@ -26,37 +26,52 @@
 // POSSIBILITY OF SUCH DAMAGE.        
 //
 #pragma once
-#include <mutex>
-#include <optional>
+#include <string>
 #include <vtil/amd64>
-
-// The x86_reg value that equates to the first user-defined control register
-// and a handy macro to get the value for Nth instance.
-//
-#define X86_REG_VCR(n) x86_reg( unsigned( X86_REG_ENDING ) + (n + 1) )
-static constexpr x86_reg X86_REG_VCR0 = X86_REG_VCR( 0 );
+#include "control_registers.hpp"
 
 namespace vtil::arch
 {
-	// Describes the properites of a user-defined control register.
+	// Register descriptors are used to describe each unique "full" register such as RAX. 
+	// Any physical register such as EAX will be extended to its full form (RAX in this case).
+	// - Note: Size of a register is always assumed to be 64-bits.
 	//
-	struct control_register_desc
+	struct register_desc
 	{
-		// Name of the register.
+		// Descriptor's identifier will be used for comparison if the register 
+		// instance is not mapped to any physical register.
 		//
-		std::string identifier;
+		std::string identifier = "";
 
-		// Whether this control register is read only or not.
+		// If this field is not X86_REG_INVALID, it's an indicator that this
+		// register and the alias essentially maps to a physical register.
 		//
-		bool read_only = false;
+		x86_reg maps_to = X86_REG_INVALID;
+
+		// Either a x86 register identifier or an arbitrary string must be passed
+		// to construct a register descriptor.
+		//
+		register_desc() = default;
+		register_desc( x86_reg reg ) 
+		{ 
+			maps_to = reg >= X86_REG_VCR0 ? reg : amd64::extend( reg );
+			identifier = reg >= X86_REG_VCR0 ? lookup_control_register( reg )->identifier : amd64::name( maps_to );
+		}
+		register_desc( const std::string& id ) : identifier( id ) {}
+
+		// Conversion to human-readable format.
+		//
+		std::string to_string() const { return identifier; }
+
+		// Simple helpers to determine the type of register.
+		//
+		bool is_physical() const { return maps_to != X86_REG_INVALID; }
+		bool is_valid() const { return !identifier.empty(); }
+
+		// Basic comparison operators.
+		//
+		bool operator!=( const register_desc& o ) const { return !operator==( o ); }
+		bool operator==( const register_desc& o ) const { return identifier == o.identifier; }
+		bool operator<( const register_desc& o ) const { return identifier < o.identifier; }
 	};
-
-	// Looks up the descriptor for the given control register.
-	//
-	std::optional<control_register_desc> lookup_control_register( x86_reg reg );
-
-	// Creates a new control register based on the descriptor and returns the
-	// x86_reg value that it is mapped to.
-	//
-	x86_reg create_control_register( const control_register_desc& descriptor );
 };

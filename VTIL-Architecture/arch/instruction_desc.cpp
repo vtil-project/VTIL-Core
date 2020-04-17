@@ -25,38 +25,40 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE  
 // POSSIBILITY OF SUCH DAMAGE.        
 //
-#pragma once
-#include <mutex>
-#include <optional>
-#include <vtil/amd64>
-
-// The x86_reg value that equates to the first user-defined control register
-// and a handy macro to get the value for Nth instance.
-//
-#define X86_REG_VCR(n) x86_reg( unsigned( X86_REG_ENDING ) + (n + 1) )
-static constexpr x86_reg X86_REG_VCR0 = X86_REG_VCR( 0 );
+#include "instruction_desc.hpp"
 
 namespace vtil::arch
 {
-	// Describes the properites of a user-defined control register.
+	// Generic data-assignment constructor with certain validity checks.
 	//
-	struct control_register_desc
+	instruction_desc::instruction_desc( const std::string& name, 
+										const std::vector<operand_access>& access_types, 
+										int access_size_index, 
+										bool is_volatile, 
+										const std::string& symbolic_operator, 
+										std::vector<int> branch_operands, 
+										const std::pair<int, bool>& memory_operands ) :
+		name( name ), access_types( access_types ), access_size_index( access_size_index - 1 ),
+		is_volatile( is_volatile ), symbolic_operator( symbolic_operator ),
+		memory_operand_index( memory_operands.first - 1 ), memory_write( memory_operands.second )
 	{
-		// Name of the register.
+		fassert( operand_count() <= max_operand_count );
+
+		// Validate all operand indices.
 		//
-		std::string identifier;
+		fassert( access_size_index == 0 || abs( access_size_index ) <= operand_count() );
+		fassert( memory_operands.first == 0 || abs( memory_operands.first ) <= operand_count() );
+		for ( int op : branch_operands )
+			fassert( op != 0 && abs( op ) <= operand_count() );
 
-		// Whether this control register is read only or not.
+		// Process branch operands.
 		//
-		bool read_only = false;
-	};
-
-	// Looks up the descriptor for the given control register.
-	//
-	std::optional<control_register_desc> lookup_control_register( x86_reg reg );
-
-	// Creates a new control register based on the descriptor and returns the
-	// x86_reg value that it is mapped to.
-	//
-	x86_reg create_control_register( const control_register_desc& descriptor );
+		for ( int op : branch_operands )
+		{
+			if ( op > 0 )
+				branch_operands_vip.push_back( op - 1 );
+			else
+				branch_operands_rip.push_back( -op - 1 );
+		}
+	}
 };
