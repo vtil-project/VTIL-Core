@@ -37,15 +37,7 @@
 //
 #include "register_details.hpp"
 
-#define X86_EFLAGS_CF_BIT		0ull
-#define X86_EFLAGS_PF_BIT		2ull
-#define X86_EFLAGS_AF_BIT		4ull
-#define X86_EFLAGS_ZF_BIT		6ull
-#define X86_EFLAGS_SF_BIT		7ull
-#define X86_EFLAGS_IF_BIT		9ull
-#define X86_EFLAGS_OF_BIT		11ull
-
-namespace vtil::x86
+namespace vtil::amd64
 {
     // List of all physical registers and the base registers they map to <0> at offset <1> of size <2>.
     //

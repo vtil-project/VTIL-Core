@@ -55,7 +55,7 @@ namespace capstone
 		return handle;
 	}
 
-	std::vector<vtil::x86::instruction> disasm( const void* bytes, uint64_t address, size_t size, size_t count )
+	std::vector<vtil::amd64::instruction> disasm( const void* bytes, uint64_t address, size_t size, size_t count )
 	{
 		// Disasemble the instruction.
 		//
@@ -70,12 +70,12 @@ namespace capstone
 			&ins
 		);
 
-		// Convert each output into vtil::x86 format and push it to a vector.
+		// Convert each output into vtil::amd64 format and push it to a vector.
 		//
-		std::vector<vtil::x86::instruction> vec;
+		std::vector<vtil::amd64::instruction> vec;
 		for ( int i = 0; i < count; i++ )
 		{
-			vtil::x86::instruction out;
+			vtil::amd64::instruction out;
 			cs_insn& in = ins[ i ];
 
 			// Copy cs_insn base.
