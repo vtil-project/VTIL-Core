@@ -76,7 +76,7 @@ namespace vtil::symbolic
 
         // Simple equivalence check.
         //
-        bool equals( const directive& unpack ) const;
+        bool equals( const directive& o ) const;
     };
 
     // Implement custom operators.

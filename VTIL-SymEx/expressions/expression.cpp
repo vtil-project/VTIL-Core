@@ -193,6 +193,49 @@ namespace vtil::symbolic
 		return *this;
 	}
 
+	// Returns whether the given expression is equivalent to the current instance.
+	//
+	bool expression::equals( const expression& other ) const
+	{
+		// If hash mismatch, return false without checking anything.
+		//
+		if ( state.hash != other.state.hash )
+			return false;
+
+		// If operator or the sizes are not the same, return false.
+		//
+		if ( op != other.op || bit_count != other.bit_count )
+			return false;
+
+		// If variable, check if the identifiers match.
+		//
+		if ( is_variable() )
+			return other.is_variable() && uid == other.uid;
+
+		// If constant, check if the constants match.
+		//
+		if ( is_constant() )
+			return other.is_constant() && u64 == other.u64;
+
+		// Resolve operator descriptor, if unary, just compare right hand side.
+		//
+		const math::operator_desc* desc = get_op_desc();
+		if ( desc->operand_count == 1 )
+			return rhs == other.rhs || rhs->equals( *other.rhs );
+
+		// If both sides match, return true.
+		//
+		if ( ( lhs == other.lhs || lhs->equals( *other.lhs ) ) &&
+			 ( rhs == other.rhs || rhs->equals( *other.rhs ) ))
+			return true;
+
+		// If not, check in reverse as well if commutative and return the final result.
+		//
+		return	desc->is_commutative && 
+				( lhs == other.rhs || lhs->equals( *other.rhs ) ) &&
+				( rhs == other.lhs || rhs->equals( *other.lhs ) );
+	}
+
 	// Converts to human-readable format.
 	//
 	std::string expression::to_string() const

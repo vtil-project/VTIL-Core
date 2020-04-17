@@ -102,34 +102,38 @@ namespace vtil::symbolic
 
 	// Simple equivalence check.
 	//
-	bool directive::equals( const directive& unpack ) const
+	bool directive::equals( const directive& o ) const
 	{
 		// Operators must match.
 		//
-		if ( op != unpack.op )
+		if ( op != o.op )
 			return false;
 
 		// If variable, check the identifier and constant.
 		//
 		if ( op == math::operator_id::invalid )
-			return unpack.op == math::operator_id::invalid && id == unpack.id && u64 == unpack.u64;
+			return o.op == math::operator_id::invalid && id == o.id && u64 == o.u64;
 
 		// Handle custom operators.
 		//
 		if ( op == simplify_dir )
-			return rhs->equals( *unpack.rhs );
+			return rhs->equals( *o.rhs );
 		if ( op == unpack_dir || op == iff_dir || op == or_dir )
-			return lhs->equals( *unpack.lhs ) && rhs->equals( *unpack.rhs );
+			return lhs->equals( *o.lhs ) && rhs->equals( *o.rhs );
 
 		// Resolve operator descriptor, if unary, just compare right hand side.
 		//
 		const math::operator_desc* desc = math::descriptor_of( op );
 		if ( desc->operand_count == 1 )
-			return rhs->equals( *unpack.rhs );
+			return rhs->equals( *o.rhs );
 
-		// Compare each side and in reverse if commutative and did not initially match.
+		// If both sides match, return true.
 		//
-		return ( lhs->equals( *unpack.lhs ) && rhs->equals( *unpack.rhs ) ) ||
-			( desc->is_commutative && rhs->equals( *unpack.lhs ) && lhs->equals( *unpack.rhs ) );
+		if ( lhs->equals( *o.lhs ) && rhs->equals( *o.rhs ) )
+			return true;
+
+		// If not, check in reverse as well if commutative and return the final result.
+		//
+		return desc->is_commutative && rhs->equals( *o.lhs ) && lhs->equals( *o.rhs );
 	}
 };

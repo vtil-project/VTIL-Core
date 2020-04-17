@@ -149,8 +149,44 @@ namespace vtil::symbolic
 		//
 		expression& simplify( bool deep = false, bool discard = false );
 
-		// TODO:
+		// Returns whether the given expression is equivalent to the current instance.
+		// - Note: basic comparison opeators should not be overloaded since expression is of type
+		//         math::operable and that would create multiple meanings.
 		//
 		bool equals( const expression& other ) const;
 	};
+
+	// Boxed expression solves the aforementioned problem by creating a type that can be 
+	// used for the storage of an expression in a way that it is meant to be comparable.
+	//
+	struct boxed_expression : expression 
+	{
+		using reference = shared_reference<boxed_expression>;
+
+		// Gently wrap around expression.
+		//
+		boxed_expression() = default;
+		boxed_expression( expression&& o ) : expression( std::move( o ) ) {};
+		boxed_expression( const expression& o ) : expression( o ) {};
+		boxed_expression( boxed_expression&& o ) = default;
+		boxed_expression( const boxed_expression& o ) = default;
+		boxed_expression& operator=( boxed_expression&& o ) = default;
+		boxed_expression& operator=( const boxed_expression& o ) = default;
+
+		// Implement comparison operators.
+		//
+		bool operator==( const boxed_expression& o ) const { return equals( o ); }
+		bool operator!=( const boxed_expression& o ) const { return !equals( o ); }
+		bool operator<( const boxed_expression& o ) const { return state.hash < o.state.hash; }
+	};
+};
+
+// Make boxed expression and it's references std::hashable.
+//
+namespace std
+{
+	template <> struct hash<vtil::symbolic::boxed_expression>
+	{ inline size_t operator()( const vtil::symbolic::boxed_expression& exp ) const { return exp.state.hash; } };
+	template <> struct hash<vtil::symbolic::boxed_expression::reference>
+	{ inline size_t operator()( const vtil::symbolic::boxed_expression::reference& ref ) const { return ref->state.hash; } };
 };
