@@ -37,7 +37,6 @@
 //
 #include "assembler.hpp"
 #include <keystone/keystone.h>
-#pragma comment(lib, "keystone.lib")
 
 namespace keystone
 {
@@ -48,8 +47,8 @@ namespace keystone
 		static ks_engine* handle = [ ] ()
 		{
 			ks_engine* handle;
-			if ( !ks_open( KS_ARCH_X86, KS_MODE_64, &handle ) )
-				throw std::exception( "Failed to create the Capstone engine!" );
+			if ( ks_open( KS_ARCH_X86, KS_MODE_64, &handle ) != KS_ERR_OK )
+				throw std::exception( "Failed to create the Keystone engine!" );
 			return handle;
 		}( );
 		return handle;

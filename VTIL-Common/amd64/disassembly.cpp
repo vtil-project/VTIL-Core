@@ -36,7 +36,6 @@
 // |--------------------------------------------------------------------------|
 //
 #include "disassembly.hpp"
-#pragma comment(lib, "capstone.lib")
 
 namespace capstone
 {
@@ -47,8 +46,8 @@ namespace capstone
 		static csh handle = [ ] ()
 		{
 			csh handle;
-			if ( !cs_open( CS_ARCH_X86, CS_MODE_64, &handle ) ||
-				 !cs_option( handle, CS_OPT_DETAIL, CS_OPT_ON ) )
+			if ( cs_open( CS_ARCH_X86, CS_MODE_64, &handle ) != CS_ERR_OK 
+				 || cs_option( handle, CS_OPT_DETAIL, CS_OPT_ON ) != CS_ERR_OK )
 				throw std::exception( "Failed to create the Capstone engine!" );
 			return handle;
 		}( );
