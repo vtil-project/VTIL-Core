@@ -114,7 +114,7 @@ namespace vtil::query
 		//   whether we should visit it or not.
 		//
 		//
-		recursive_view() {};
+		recursive_view() = default;
 		recursive_view( const view_type& view, bool partial_visits, fn_container_filter filter ) : view( view ), filter( filter )
 		{
 			// If partial visits are allowed:

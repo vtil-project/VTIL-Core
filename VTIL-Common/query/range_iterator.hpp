@@ -24,7 +24,7 @@ namespace vtil::query
 
 		// Default constructor and the container-bound constructor.
 		//
-		basic_range_iterator() {}
+		basic_range_iterator() = default;
 		basic_range_iterator( container_type* container, iterator_type i ) : iterator_type( i ), container( container ) {}
 		template<typename X, typename Y> basic_range_iterator( const basic_range_iterator<X, Y>& o ) : container( o.container ), iterator_type( Y( o ) ) {}
 

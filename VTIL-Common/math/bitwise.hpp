@@ -140,7 +140,7 @@ namespace vtil::math
     public:
         // Default constructor, will result in invalid bit-vector.
         //
-        bit_vector() {}
+        bit_vector() = default;
 
         // Constructs a bit-vector where all bits are set according to the state.
         // - Declared explicit to avoid construction from integers.
