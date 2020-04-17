@@ -25,16 +25,6 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE  
 // POSSIBILITY OF SUCH DAMAGE.        
 //
-// Furthermore, the following pieces of software have additional copyrights
-// licenses, and/or restrictions:
-//
-// |--------------------------------------------------------------------------|
-// | File name               | Link for further information                   |
-// |-------------------------|------------------------------------------------|
-// | amd64/*                 | https://github.com/aquynh/capstone/            |
-// |                         | https://github.com/keystone-engine/keystone/   |
-// |--------------------------------------------------------------------------|
-//
 #include "logger.hpp"
 
 #if _WIN64
