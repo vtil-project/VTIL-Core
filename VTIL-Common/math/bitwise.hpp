@@ -38,6 +38,7 @@
 #pragma once
 #include <stdint.h>
 #include <math.h>
+#include <optional>
 #include "..\io\asserts.hpp"
 
 namespace vtil::math
@@ -52,12 +53,13 @@ namespace vtil::math
 
     // Zero extends the given integer.
     //
-    static uint64_t zero_extend( uint64_t value, uint8_t bcnt_src )
+    static uint64_t __zx64( uint64_t value, uint8_t bcnt_src )
     {
         // Use simple casts where possible.
         //
         switch ( bcnt_src )
         {
+            case 1: return value & 1;
             case 8: return  *( uint8_t* ) &value;
             case 16: return *( uint16_t* ) &value;
             case 32: return *( uint32_t* ) &value;
@@ -76,12 +78,13 @@ namespace vtil::math
 
     // Sign extends the given integer.
     //
-    static int64_t sign_extend( uint64_t value, uint8_t bcnt_src )
+    static int64_t __sx64( uint64_t value, uint8_t bcnt_src )
     {
         // Use simple casts where possible.
         //
         switch ( bcnt_src )
         {
+            case 1: return value & 1;             // Booleans cannot have sign bits by definition.
             case 8: return  *( int8_t* ) &value;
             case 16: return *( int16_t* ) &value;
             case 32: return *( int32_t* ) &value;
@@ -106,4 +109,141 @@ namespace vtil::math
         sign = ( ( sign ^ 1 ) - 1 ) << bcnt_src;
         return value | sign;
     }
+
+    // Return value from bit-vector lookup where the result can be either unknown or constant 0/1.
+    //
+    enum class bit_state : int8_t
+    {
+        zero = -1,
+        unknown = 0,
+        one = +1,
+    };
+
+    // Bit-vector holding 0 to 64 bits of value with optional unknowns.
+    //
+    class bit_vector
+    {
+        // Value of the known bits, mask of it can be found by [::known_mask()]
+        // - Guaranteed to hold 0 for unknown bits.
+        //
+        uint64_t known_bits = 0;
+
+        // Mask for the bit that we do not know.
+        // - Guaranteed to hold 0 for known bits and for all bits above bit_count.
+        //
+        uint64_t unknown_bits = 0;
+
+        // Number of bits this vector contains.
+        //
+        uint8_t bit_count = 0;
+
+    public:
+        // Default constructor, will result in invalid bit-vector.
+        //
+        bit_vector() {}
+
+        // Constructs a bit-vector where all bits are set according to the state.
+        // - Declared explicit to avoid construction from integers.
+        //
+        explicit bit_vector( uint8_t bit_count ) :                                      bit_count( bit_count ),     unknown_bits( mask( bit_count ) ),                  known_bits( 0 ) {}
+                                                                                                                                          
+        // Constructs a bit-vector where all bits are known.												                              
+        //																									                              
+        bit_vector( uint64_t value, uint8_t bit_count ) :                               bit_count( bit_count ),     unknown_bits( 0 ),                                  known_bits( value & mask( bit_count ) ) {}
+                                                                                                                                            
+        // Constructs a bit-vector where bits are partially known.											                                
+        //																									                                
+        bit_vector( uint64_t known_bits, uint64_t unknown_bits, uint8_t bit_count ) :   bit_count( bit_count ),     unknown_bits( unknown_bits & mask( bit_count ) ),   known_bits( known_bits & ~( unknown_bits & mask( bit_count ) ) ) {}
+
+        // Gets the mask of the whole vector.
+        //
+        inline uint64_t value_mask() const { return mask( bit_count ); }
+
+        // Gets the mask for unknown bits.
+        //
+        inline uint64_t unknown_mask() const { return unknown_bits; }
+        
+        // Gets the mask for known bits.
+        //
+        inline uint64_t known_mask() const { return mask( bit_count ) & ~unknown_bits; }
+
+        // Gets the mask of every known one.
+        //
+        inline uint64_t known_one() const { return known_bits; }
+        
+        // Gets the mask of every known zero.
+        //
+        inline uint64_t known_zero() const { return ~( unknown_bits | known_bits ); }
+
+        // Checks if the vector consists of only zeros.
+        //
+        inline bool all_zero() const { return unknown_bits == 0 && !known_bits; }
+        
+        // Checks if the vector consists of only ones.
+        //
+        inline bool all_one() const { return unknown_bits == 0 && ( known_bits == mask( bit_count ) ); }
+
+        // Checks if the vector is valid.
+        //
+        inline bool is_valid() const { return bit_count != 0; }
+
+        // Checks if the vector value can be resolved.
+        //
+        inline bool is_known() const { return unknown_bits == 0; }
+        inline bool is_unknown() const { return unknown_bits != 0; }
+        
+        // Gets the number of bits in the vector.
+        //
+        inline uint8_t size() const { return bit_count; }
+
+        // Gets the value represented, and nullopt if vector has unknown bits.
+        //
+        template<bool sgn = false>
+        inline std::optional<uint64_t> get() const { return is_known() ? std::optional{ sgn ? __sx64( known_bits, bit_count ) : __zx64( known_bits, bit_count ) } : std::nullopt; }
+
+        // Extends or shrinks the the vector.
+        //
+        bit_vector& resize( uint8_t new_size, bool sign_extend = false )
+        {
+            fassert( 0 < new_size && new_size <= 64 );
+
+            if( sign_extend && new_size > bit_count )
+            {
+                bit_state sign_bit = at( bit_count - 1 );
+                bool sign_bit_unk = at( bit_count - 1 ) == bit_state::unknown;
+                
+                if ( sign_bit == bit_state::unknown )
+                    unknown_bits |= mask( 64, bit_count );
+                else if ( sign_bit == bit_state::one )
+                    known_bits |= mask( 64, bit_count );
+            }
+
+            bit_count = new_size;
+            known_bits &= mask( new_size );
+            unknown_bits &= mask( new_size );
+            return *this;
+        }
+
+        // Gets the state of the bit at the index given.
+        //
+        bit_state at( uint8_t n ) const
+        {
+            if ( unknown_bits & ( 1ull << n ) ) return bit_state::unknown;
+            return bit_state( ( ( ( known_bits >> n ) & 1 ) << 1 ) - 1 );
+        }
+        inline bit_state operator[]( uint8_t n ) const { return at( n ); }
+
+        // Conversion to human-readable format.
+        //
+        std::string to_string() const
+        {
+            std::string o;
+            for ( int off = bit_count - 1; off >= 0; off-- )
+            {
+                uint64_t mask = 1ull << off;
+                o += unknown_bits & mask ? '?' : known_bits & mask ? '1' : '0';
+            }
+            return o;
+        }
+    };
 };
