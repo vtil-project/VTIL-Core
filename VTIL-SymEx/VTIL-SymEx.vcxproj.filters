@@ -2,38 +2,37 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <ClCompile Include="VTIL-SymEx.cpp" />
-    <ClCompile Include="directive.cpp">
+    <ClCompile Include="directives\directive.cpp">
       <Filter>Symbolic\Directives</Filter>
     </ClCompile>
-    <ClCompile Include="expression.cpp">
+    <ClCompile Include="expressions\expression.cpp">
       <Filter>Symbolic\Expression</Filter>
     </ClCompile>
-    <ClCompile Include="expression_simplifier.cpp">
+    <ClCompile Include="simplifier\expression_simplifier.cpp">
       <Filter>Symbolic\Simplifier</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="lol_crap_file.hpp" />
+    <ClInclude Include="directives\directive.hpp">
+      <Filter>Symbolic\Directives</Filter>
+    </ClInclude>
+    <ClInclude Include="directives\match_directive.hpp">
+      <Filter>Symbolic\Directives</Filter>
+    </ClInclude>
+    <ClInclude Include="expressions\expression.hpp">
+      <Filter>Symbolic\Expression</Filter>
+    </ClInclude>
+    <ClInclude Include="expressions\unique_identifier.hpp">
+      <Filter>Symbolic\Expression</Filter>
+    </ClInclude>
+    <ClInclude Include="simplifier\expression_simplifier.hpp">
+      <Filter>Symbolic\Simplifier</Filter>
+    </ClInclude>
+    <ClInclude Include="simplifier\simplifier_directives.hpp">
+      <Filter>Symbolic\Simplifier</Filter>
+    </ClInclude>
     <ClInclude Include="engine.hpp">
       <Filter>Symbolic</Filter>
-    </ClInclude>
-    <ClInclude Include="directive.hpp">
-      <Filter>Symbolic\Directives</Filter>
-    </ClInclude>
-    <ClInclude Include="expression_simplifier.hpp">
-      <Filter>Symbolic\Simplifier</Filter>
-    </ClInclude>
-    <ClInclude Include="expression.hpp">
-      <Filter>Symbolic\Expression</Filter>
-    </ClInclude>
-    <ClInclude Include="unique_identifier.hpp">
-      <Filter>Symbolic\Expression</Filter>
-    </ClInclude>
-    <ClInclude Include="simplifier_directives.hpp">
-      <Filter>Symbolic\Simplifier</Filter>
-    </ClInclude>
-    <ClInclude Include="match_directive.hpp">
-      <Filter>Symbolic\Directives</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

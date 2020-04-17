@@ -90,9 +90,9 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="directive.cpp" />
-    <ClCompile Include="expression.cpp" />
-    <ClCompile Include="expression_simplifier.cpp" />
+    <ClCompile Include="directives\directive.cpp" />
+    <ClCompile Include="expressions\expression.cpp" />
+    <ClCompile Include="simplifier\expression_simplifier.cpp" />
     <ClCompile Include="VTIL-SymEx.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -101,14 +101,13 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="directive.hpp" />
+    <ClInclude Include="directives\directive.hpp" />
+    <ClInclude Include="directives\match_directive.hpp" />
     <ClInclude Include="engine.hpp" />
-    <ClInclude Include="expression.hpp" />
-    <ClInclude Include="expression_simplifier.hpp" />
-    <ClInclude Include="lol_crap_file.hpp" />
-    <ClInclude Include="match_directive.hpp" />
-    <ClInclude Include="simplifier_directives.hpp" />
-    <ClInclude Include="unique_identifier.hpp" />
+    <ClInclude Include="expressions\expression.hpp" />
+    <ClInclude Include="expressions\unique_identifier.hpp" />
+    <ClInclude Include="simplifier\expression_simplifier.hpp" />
+    <ClInclude Include="simplifier\simplifier_directives.hpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="VTIL-SymEx.licenseheader" />
