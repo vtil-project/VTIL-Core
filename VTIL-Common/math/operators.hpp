@@ -1,4 +1,4 @@
-// Copyright (c) 2020 Can Bï¿½lï¿½k and contributors of the VTIL Project		   
+// Copyright (c) 2020 Can Bölük and contributors of the VTIL Project		   
 // All rights reserved.														   
 // 																			   
 // Redistribution and use in source and binary forms, with or without		   
@@ -115,7 +115,7 @@ namespace vtil::math
         less_eq,	    // LHS <= RHS
         less,		    // LHS < RHS
 
-        ugreater,	    // < Unsigned variants of above >
+        ugreater,	    // < Unsigned variants of above > [Note: equal and not_equal are always unsigned.]
         ugreater_eq,	//
         uless_eq,	    //
         uless,		    //
@@ -217,14 +217,14 @@ namespace vtil::math
         {    0,       false,    2,    false,          "?",        "if"                                    },
         {    0,       false,    2,    false,          nullptr,    "max",        operator_id::max_value    },
         {    0,       false,    2,    false,          nullptr,    "min",        operator_id::min_value    },
-        {    0,       false,    2,    false,          nullptr,    "max_sgn",    operator_id::smax_value   },
-        {    0,       false,    2,    false,          nullptr,    "min_sgn",    operator_id::smin_value   },
-        {   -1,       false,    2,    false,          ">",        "greater"                               },
-        {   -1,       false,    2,    false,          ">=",       "greater_eq"                            },
+        {    0,       true,     2,    false,          nullptr,    "max_sgn",    operator_id::smax_value   },
+        {    0,       true,     2,    false,          nullptr,    "min_sgn",    operator_id::smin_value   },
+        {   -1,       true,     2,    false,          ">",        "greater"                               },
+        {   -1,       true,     2,    false,          ">=",       "greater_eq"                            },
         {    0,       false,    2,    false,          "==",       "equal"                                 },
         {    0,       false,    2,    false,          "!=",       "not_equal"                             },
-        {   -1,       false,    2,    false,          "<=",       "less_eq"                               },
-        {   -1,       false,    2,    false,          "<",        "less"                                  },
+        {   -1,       true,     2,    false,          "<=",       "less_eq"                               },
+        {   -1,       true,     2,    false,          "<",        "less"                                  },
         {    0,       false,    2,    false,          "u>",       "ugreater"                              },
         {    0,       false,    2,    false,          "u>=",      "ugreater_eq"                           },
         {    0,       false,    2,    false,          "u<=",      "uless_eq"                              },
@@ -232,95 +232,33 @@ namespace vtil::math
     };
     inline static const operator_desc* descriptor_of( operator_id id ) { return ( operator_id::invalid < id && id < operator_id::max ) ? &descriptors[ ( size_t ) id ] : nullptr; }
 
-    // Evaluates the operator, on LHS and RHS. 
-    // - If unary LHS is ignored.
+    // Operators that return bit-indices, always use the following size.
     //
-    static uint64_t evaluate( operator_id id, uint8_t bcnt, uint64_t lhs, uint64_t rhs )
+    static constexpr uint8_t bit_index_size = 8;
+
+    // Before operators return their result, the result size is always rounded as following:
+    //
+    inline static constexpr uint8_t round_bit_count( uint8_t n )
     {
-        // Normalize the input.
-        //
-        if ( bcnt != 64 )
-        {
-            if ( descriptor_of( id )->is_signed )
-                lhs = math::sign_extend( lhs, bcnt ), rhs = math::sign_extend( rhs, bcnt );
-            else
-                lhs = math::zero_extend( lhs, bcnt ), rhs = math::zero_extend( rhs, bcnt );
-        }
-
-        // Create aliases for signed values to avoid ugly casts.
-        //
-        int64_t& ilhs = ( int64_t& ) lhs;
-        int64_t& irhs = ( int64_t& ) rhs;
-
-        // Calculate the result of the operation.
-        //
-        uint64_t result = 0;
-        switch ( id )
-        {
-            // - Bitwise operators.
-            //
-            case operator_id::bitwise_not:      result = ~rhs;                                                      break;
-            case operator_id::bitwise_and:      result = lhs & rhs;                                                 break;
-            case operator_id::bitwise_or:       result = lhs | rhs;                                                 break;
-            case operator_id::bitwise_xor:      result = lhs ^ rhs;                                                 break;
-            case operator_id::shift_right:      result = rhs >= bcnt ? 0 : lhs >> rhs;                              break;
-            case operator_id::shift_left:       result = rhs >= bcnt ? 0 : lhs << rhs;                              break;
-            case operator_id::rotate_right:     result = ( lhs >> ( rhs % bcnt ) )
-                                                        | ( lhs << ( bcnt - ( rhs % bcnt ) ) );                     break;
-            case operator_id::rotate_left:      result = ( lhs << ( rhs % bcnt ) )
-                                                        | ( lhs >> ( bcnt - ( rhs % bcnt ) ) );                     break;
-            // - Arithmetic operators.										                  
-            //																                  
-            case operator_id::negate:           result = -irhs;                                                     break;
-            case operator_id::add:              result = ilhs + irhs;                                               break;
-            case operator_id::substract:        result = ilhs - irhs;                                               break;
-            case operator_id::multiply_high:    result = bcnt == 64
-                                                        ? __mulh( ilhs, irhs )
-                                                        : uint64_t( ilhs * irhs ) >> bcnt;                          break;
-            case operator_id::umultiply_high:   result = bcnt == 64
-                                                        ? __umulh( lhs, rhs )
-                                                        : ( lhs * rhs ) >> bcnt;                                    break;
-            case operator_id::multiply:         result = ilhs * irhs;                                               break;
-            case operator_id::umultiply:        result = lhs * rhs;                                                 break;
-            case operator_id::divide:           result = ilhs / irhs;                                               break;
-            case operator_id::udivide:	        result = lhs / rhs;                                                 break;
-            case operator_id::remainder:        result = ilhs % irhs;                                               break;
-            case operator_id::uremainder:	    result = lhs % rhs;                                                 break;
-
-            // - Special operators.										                  
-            //																                  
-            case operator_id::sign_extend:      result = ilhs, bcnt = rhs;                                          break;
-            case operator_id::zero_extend:      result = lhs,  bcnt = rhs;                                          break;
-            case operator_id::popcnt:           result = __popcnt64( rhs );                                         break;
-            case operator_id::most_sig_bit:	    result = _BitScanReverse64( ( unsigned long* ) &result, lhs )
-                                                        ? result
-                                                        : rhs;													    break;
-            case operator_id::least_sig_bit:	result = _BitScanForward64( ( unsigned long* ) &result, lhs )
-                                                        ? result
-                                                        : rhs;													    break;
-            case operator_id::bit_test:	        result = ( lhs >> rhs ) & 1;                                        break;
-            case operator_id::mask:	            result = mask( bcnt );												break;
-            case operator_id::bitcnt:           result = bcnt;                                                      break;
-            case operator_id::value_if:         result = ( lhs & 1 ) ? rhs : 0;                                     break;
-
-            // - Comparison operators
-            //
-            case operator_id::greater:          result = ilhs > irhs;                                               break;
-            case operator_id::greater_eq:       result = ilhs >= irhs;                                              break;
-            case operator_id::equal:            result = lhs == rhs;                                                break;
-            case operator_id::not_equal:        result = lhs != rhs;                                                break;
-            case operator_id::less_eq:          result = ilhs <= irhs;                                              break;
-            case operator_id::less:	            result = ilhs < irhs;                                               break;
-            case operator_id::ugreater:         result = lhs > rhs;                                                 break;
-            case operator_id::ugreater_eq:      result = lhs >= rhs;                                                break;
-            case operator_id::uless_eq:         result = lhs <= rhs;                                                break;
-            case operator_id::uless:	        result = lhs < rhs;                                                 break;
-            default:                            unreachable();
-        }
-
-        // Mask and return.
-        //
-        result &= math::mask( bcnt );
-        return result;
+        if ( n > 32 )      return 64;
+        else if ( n > 16 ) return 32;
+        else if ( n > 8 )  return 16;
+        else if ( n > 1 )  return 8;
+        else               return 1;
     }
+
+    // Calculates the size of the result after after the application of the operator [id] on the operands.
+    //
+    uint8_t result_size( operator_id id, uint8_t bcnt_lhs, uint8_t bcnt_rhs );
+
+    // Applies the specified operator [id] on left hand side [lhs] and right hand side [rhs]
+    // and returns the output as a masked unsigned 64-bit integer <0> and the final size <1>.
+    //
+    std::pair<uint64_t, uint8_t> evaluate( operator_id id, uint8_t bcnt_lhs, uint64_t lhs, uint8_t bcnt_rhs, uint64_t rhs );
+
+    // Applies the specified operator [op] on left hand side [lhs] and right hand side [rhs] wher
+	// input and output values are expressed in the format of bit-vectors with optional unknowns,
+	// and no size constraints.
+	//
+    bit_vector evaluate_partial( operator_id op, const bit_vector& lhs, const bit_vector& rhs );
 };
