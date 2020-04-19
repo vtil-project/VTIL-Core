@@ -145,51 +145,34 @@ namespace vtil::math
         //																									                                
         bit_vector( uint64_t known_bits, uint64_t unknown_bits, uint8_t bit_count ) :   bit_count( bit_count ),     unknown_bits( unknown_bits & mask( bit_count ) ),   known_bits( known_bits & ~( unknown_bits & mask( bit_count ) ) ) {}
 
-        // Gets the mask of the whole vector.
+        // Some helpers to access the internal state.
         //
         inline uint64_t value_mask() const { return mask( bit_count ); }
-
-        // Gets the mask for unknown bits.
-        //
         inline uint64_t unknown_mask() const { return unknown_bits; }
-        
-        // Gets the mask for known bits.
-        //
         inline uint64_t known_mask() const { return mask( bit_count ) & ~unknown_bits; }
-
-        // Gets the mask of every known one.
-        //
         inline uint64_t known_one() const { return known_bits; }
-        
-        // Gets the mask of every known zero.
-        //
         inline uint64_t known_zero() const { return ~( unknown_bits | known_bits ); }
-
-        // Checks if the vector consists of only zeros.
-        //
         inline bool all_zero() const { return unknown_bits == 0 && !known_bits; }
-        
-        // Checks if the vector consists of only ones.
-        //
         inline bool all_one() const { return unknown_bits == 0 && ( known_bits == mask( bit_count ) ); }
-
-        // Checks if the vector is valid.
-        //
         inline bool is_valid() const { return bit_count != 0; }
-
-        // Checks if the vector value can be resolved.
-        //
-        inline bool is_known() const { return unknown_bits == 0; }
-        inline bool is_unknown() const { return unknown_bits != 0; }
-        
-        // Gets the number of bits in the vector.
-        //
+        inline bool is_known() const { return bit_count && unknown_bits == 0; }
+        inline bool is_unknown() const { return !bit_count || unknown_bits != 0; }
         inline uint8_t size() const { return bit_count; }
 
         // Gets the value represented, and nullopt if vector has unknown bits.
         //
-        template<bool sgn = false>
-        inline std::optional<uint64_t> get() const { return is_known() ? std::optional{ sgn ? __sx64( known_bits, bit_count ) : __zx64( known_bits, bit_count ) } : std::nullopt; }
+        template<bool as_signed = false, typename type = std::conditional_t<as_signed, int64_t, uint64_t>>
+        std::optional<type> get() const
+        { 
+            if ( is_known() )
+            {
+                if ( as_signed )
+                    return __sx64( known_bits, bit_count );
+                else
+                    return __zx64( known_bits, bit_count );
+            }
+            return std::nullopt;
+        }
 
         // Extends or shrinks the the vector.
         //
@@ -235,5 +218,13 @@ namespace vtil::math
             }
             return o;
         }
+
+        // Implement basic comparison operators.
+        // - Note: operator< should not be used for actual comparison
+        //         but is exported for use of std::.
+        //
+        inline bool operator==( const bit_vector& o ) const { return bit_count == o.bit_count && known_bits == o.known_bits && !unknown_bits && !o.unknown_bits; }
+        inline bool operator!=( const bit_vector& o ) const { return bit_count != o.bit_count || known_bits != o.known_bits || unknown_bits || o.unknown_bits; }
+        inline bool operator<( const bit_vector& o ) const { return bit_count < o.bit_count && known_bits < o.known_bits && unknown_bits < o.unknown_bits; }
     };
 };

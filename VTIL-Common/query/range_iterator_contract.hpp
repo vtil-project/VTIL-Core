@@ -41,11 +41,15 @@ namespace vtil::query
 		{
 			using T = typename std::remove_cvref_t<_T>;
 
-			// Must be inheriting from the iterator type, exported as T::iterator_type.
-			// - struct T : T::iterator_type {};
+			// Must be a valid standard bi-directional iterator.
 			//
-			if ( !std::is_base_of_v<typename T::iterator_type, T> )
-				return false;
+			using dist_type = decltype( std::declval<const T>() - std::declval<const T>() ) );
+			using next_type = decltype( std::next( std::declval<const T>() ) );
+			using prev_type = decltype( std::prev( std::declval<const T>() ) );
+			using dec_type = decltype( --std::declval<const T>() );
+			using inc_type = decltype( ++std::declval<const T>() );
+			using ref_type = decltype( std::declval<const T>().operator*() );
+			using ptr_type = decltype( std::declval<const T>().operator->() );
 
 			// Must have a public member called .container that is of type T::container_type*.
 			// - T::container_type* T::container;

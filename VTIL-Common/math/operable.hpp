@@ -30,6 +30,7 @@
 #include <optional>
 #include <utility>
 #include "operators.hpp"
+#include "bitwise.hpp"
 
 // Operables provide a very easy way to generate lazy math operators for all 
 // [Class x Integer], [Integer x Class], [Class x Class] posibilities as 
@@ -51,46 +52,38 @@ namespace vtil::math
     template<typename base_type>
     struct operable
     {
-        // Value of the constant if relevant.
+        // Value of the operand.
         //
-        union
-        {
-            uint64_t u64 = 0;
-            int64_t i64;
-        };
-
-        // Whether value is a known constant or not.
-        //
-        bool is_known = false;
-
-        // Number of bits the value holds.
-        //
-        uint8_t bit_count = 0;
+        math::bit_vector value = {};
 
         // Default constructor and the constructor for constant values.
         //
         operable() = default;
         template<typename T = uint64_t, std::enable_if_t<std::is_integral_v<T>, int> = 0>
-        operable( T value, uint8_t bit_count = sizeof( T ) * 8 ) : i64( value ), bit_count( bit_count ), is_known( true ) {}
+        operable( T value, uint8_t bit_count = sizeof( T ) * 8 ) : value( { value, bit_count } ) {}
 
-        // Helper to get (possibly!) the constant value.
+        // Gets the value represented, and nullopt if value has unknown bits.
         //
-        std::optional<int64_t> get( bool as_signed = false ) const 
+        template<bool as_signed = false, typename type = std::conditional_t<as_signed, int64_t, uint64_t>>
+        std::optional<type> get() const 
         { 
-            if ( is_known )
-                return as_signed ? sign_extend( u64, bit_count ) : zero_extend( u64, bit_count );
-            return {}; 
+            return value.get<as_signed, type>();
         }
 
-        // Helper to resize the constant, must be overriden by the base type
-        // in case we're not resizing a constant.
+        // Redirect certain helpers to bit_vector.
         //
-        void resize( uint8_t new_bit_count, bool sx = false )
+        inline uint8_t size() const { return value.size(); }
+        inline uint64_t known_mask() const { return value.known_mask(); }
+        inline uint64_t unknown_mask() const { return value.unknown_mask(); }
+        inline uint64_t known_one() const { return value.known_one(); }
+        inline bool is_constant() const { return value.is_known(); }
+
+        // Resizes the constant, must be overriden by the base type to handle unknowns.
+        //
+        void resize( uint8_t new_size, bool sign_extend = false )
         {
-            fassert( is_known );
-            u64 = sx ? sign_extend( u64, bit_count ) : zero_extend( u64, bit_count );
-            u64 &= mask( new_bit_count );
-            bit_count = new_bit_count;
+            fassert( value.is_known() );
+            value.resize( new_size, sign_extend );
         }
     };
 
@@ -183,7 +176,7 @@ DEFINE_OPERATION( __msb( T1&& a, T2&& b )			{ return { std::forward<T1>( a ), vt
 DEFINE_OPERATION( __lsb( T1&& a, T2&& b )			{ return { std::forward<T1>( a ), vtil::math::operator_id::least_sig_bit, std::forward<T2>( b ) }; } 	);
 DEFINE_OPERATION( __bt( T1&& a, T2&& b )			{ return { std::forward<T1>( a ), vtil::math::operator_id::bit_test, std::forward<T2>( b ) }; } 		);
 DEFINE_OPERATION( __mask( T1&& a )			        { return { vtil::math::operator_id::mask, std::forward<T2>( a ) }; } 			                        );
-DEFINE_OPERATION( __bitcnt( T1&& a )		        { return { vtil::math::operator_id::bitcnt, std::forward<T2>( a ) }; } 			                        );
+DEFINE_OPERATION( __bcnt( T1&& a )		        { return { vtil::math::operator_id::bit_count, std::forward<T2>( a ) }; } 			                        );
 DEFINE_OPERATION( __if( T1&& a, T2&& b )			{ return { std::forward<T1>( a ), vtil::math::operator_id::value_if, std::forward<T2>( b ) }; } 		);
 DEFINE_OPERATION( __max( T1&& a, T2&& b )           { return { std::forward<T1>( a ), vtil::math::operator_id::max_value, std::forward<T2>( b ) }; }        );
 DEFINE_OPERATION( __min( T1&& a, T2&& b )           { return { std::forward<T1>( a ), vtil::math::operator_id::min_value, std::forward<T2>( b ) }; }        );

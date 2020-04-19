@@ -40,7 +40,7 @@ namespace vtil::math
 		    // - Operators that work with bit-indices.
 		    //
 		    case operator_id::popcnt:         return bit_index_size;
-		    case operator_id::bitcnt:         return bit_index_size;
+		    case operator_id::bit_count:      return bit_index_size;
 		    case operator_id::most_sig_bit:
             case operator_id::least_sig_bit:  return round_bit_count( std::max( bit_index_size, bcnt_rhs ) );
 
@@ -147,7 +147,7 @@ namespace vtil::math
                                                         : rhs;													    break;
             case operator_id::bit_test:	        result = ( lhs >> rhs ) & 1;                                        break;
             case operator_id::mask:	            result = mask( bcnt_rhs );											break;
-            case operator_id::bitcnt:           result = bcnt_rhs;                                                  break;
+            case operator_id::bit_count:        result = bcnt_rhs;                                                  break;
             case operator_id::value_if:         result = ( lhs & 1 ) ? rhs : 0;                                     break;
 
             // - MinMax operators
@@ -183,9 +183,9 @@ namespace vtil::math
 	//
 	bit_vector evaluate_partial( operator_id op, const bit_vector& lhs, const bit_vector& rhs )
 	{
-		// If no unknown values, redirect to more efficient math::evaluate()
+		// If no unknown bits, redirect to more efficient math::evaluate()
 		//
-		if ( ( lhs.unknown_mask() | rhs.unknown_mask() ) == 0 )
+		if ( !lhs.unknown_mask() && !rhs.unknown_mask() )
 		{
 			auto [val, size] = evaluate( op, lhs.size(), lhs.known_one(), rhs.size(), rhs.known_one() );
 			return { val, size };
@@ -497,7 +497,7 @@ namespace vtil::math
 				//
 				return bit_vector( rhs.value_mask(), rhs.size() );
 
-			case operator_id::bitcnt:
+			case operator_id::bit_count:
 				// Return the number of bits in the vector as is.
 				//
 				return bit_vector( rhs.size(), bit_index_size );

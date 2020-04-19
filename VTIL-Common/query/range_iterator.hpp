@@ -36,7 +36,7 @@
 namespace vtil::query
 {
 	// Basic range iterators provide a simple range iterator implementation for default STL container and pretty much
-	// any other container adhereing to their standarts to be used with VTIL queries.
+	// any other container adhereing to their standards to be used with VTIL queries.
 	//
 	template<typename container_type, 
 		typename iterator_type = std::conditional_t<std::is_const_v<container_type>, typename container_type::const_iterator, typename container_type::iterator>>
@@ -57,8 +57,8 @@ namespace vtil::query
 
 		// Override equality operators to check container first.
 		//
-		bool operator!=( const basic_range_iterator& o ) const { return container != o.container || iterator_type::operator!=( o ); }
 		bool operator==( const basic_range_iterator& o ) const { return container == o.container && iterator_type::operator==( o ); }
+		bool operator!=( const basic_range_iterator& o ) const { return container != o.container || iterator_type::operator!=( o ); }
 
 		// Simple position/validity checks.
 		//

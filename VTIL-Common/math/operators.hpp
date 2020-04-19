@@ -89,7 +89,7 @@ namespace vtil::math
         least_sig_bit,  // LSB(LHS) or RHS if none
         bit_test,	    // [LHS>>RHS]&1
         mask,	        // RHS.mask()
-        bitcnt,	        // RHS.bitcount()
+        bit_count,	    // RHS.bitcount()
         value_if,	    // LHS&1 ? RHS : 0
 
         max_value,	    // LHS>=RHS ? LHS : RHS
@@ -203,7 +203,7 @@ namespace vtil::math
         {   +1,       false,    2,    false,          nullptr,    "__lsb"                                 },
         {   +1,       false,    2,    false,          nullptr,    "__bt"                                  },
         {   +1,       false,    1,    false,          nullptr,    "__mask"                                },
-        {   +1,       false,    1,    false,          nullptr,    "__bitcnt"                              },
+        {   +1,       false,    1,    false,          nullptr,    "__bcnt"                                },
         {    0,       false,    2,    false,          "?",        "if"                                    },
         {    0,       false,    2,    false,          nullptr,    "max",        operator_id::max_value    },
         {    0,       false,    2,    false,          nullptr,    "min",        operator_id::min_value    },
@@ -247,8 +247,8 @@ namespace vtil::math
     std::pair<uint64_t, uint8_t> evaluate( operator_id id, uint8_t bcnt_lhs, uint64_t lhs, uint8_t bcnt_rhs, uint64_t rhs );
 
     // Applies the specified operator [op] on left hand side [lhs] and right hand side [rhs] wher
-	// input and output values are expressed in the format of bit-vectors with optional unknowns,
-	// and no size constraints.
-	//
+    // input and output values are expressed in the format of bit-vectors with optional unknowns,
+    // and no size constraints.
+    //
     bit_vector evaluate_partial( operator_id op, const bit_vector& lhs, const bit_vector& rhs );
 };
