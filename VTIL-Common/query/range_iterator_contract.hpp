@@ -41,13 +41,16 @@ namespace vtil::query
 		{
 			using T = typename std::remove_cvref_t<_T>;
 
-			// Must be a valid standard bi-directional iterator.
+			/// Must a valid standard random-access iterator.
+			// - T::operator+=();
+			// - T::operator++();
+			// - T::operator--();
 			//
-			using dist_type = decltype( std::declval<const T>() - std::declval<const T>() ) );
+			using dist_type = decltype( std::declval<const T>() - std::declval<const T>() );
 			using next_type = decltype( std::next( std::declval<const T>() ) );
 			using prev_type = decltype( std::prev( std::declval<const T>() ) );
-			using dec_type = decltype( --std::declval<const T>() );
-			using inc_type = decltype( ++std::declval<const T>() );
+			using dec_type = decltype( --std::declval<T>() );
+			using inc_type = decltype( ++std::declval<T>() );
 			using ref_type = decltype( std::declval<const T>().operator*() );
 			using ptr_type = decltype( std::declval<const T>().operator->() );
 
@@ -65,17 +68,6 @@ namespace vtil::query
 			//
 			using comparison_assertation_1 = decltype( bool( std::declval<const T>() == std::declval<const T>() ) );
 			using comparison_assertation_2 = decltype( bool( std::declval<const T>() != std::declval<const T>() ) );
-
-			// Must be compatible with std::prev and std::next, meaning
-			// a fully functional bidirectional iterator.
-			// - X T::operator++();
-			// - X T::operator--();
-			// - X ++T::operator();
-			// - X --T::operator();
-			//
-			using prev_type = decltype( std::prev( std::declval<T::iterator_type>(), 0x1337 ) );
-			using prev_type = decltype( std::next( std::declval<T::iterator_type>(), 0x1337 ) );
-
 
 			// Must have the container-abstracting range checks implemented.
 			// - bool T::is_begin();

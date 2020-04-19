@@ -161,18 +161,20 @@ namespace vtil::math
 
         // Gets the value represented, and nullopt if vector has unknown bits.
         //
-        template<bool as_signed = false, typename type = std::conditional_t<as_signed, int64_t, uint64_t>>
+        template<typename type>
         std::optional<type> get() const
-        { 
+        {
             if ( is_known() )
             {
-                if ( as_signed )
+                if constexpr ( std::is_signed_v<type> )
                     return __sx64( known_bits, bit_count );
                 else
                     return __zx64( known_bits, bit_count );
             }
             return std::nullopt;
         }
+        template<bool as_signed = false, typename type = std::conditional_t<as_signed, int64_t, uint64_t>>
+        inline std::optional<type> get() const { return get<type>(); }
 
         // Extends or shrinks the the vector.
         //

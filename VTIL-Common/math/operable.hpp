@@ -64,11 +64,10 @@ namespace vtil::math
 
         // Gets the value represented, and nullopt if value has unknown bits.
         //
+        template<typename type>
+        std::optional<type> get() const { return value.get<type>(); }
         template<bool as_signed = false, typename type = std::conditional_t<as_signed, int64_t, uint64_t>>
-        std::optional<type> get() const 
-        { 
-            return value.get<as_signed, type>();
-        }
+        inline std::optional<type> get() const { return value.get<type>(); }
 
         // Redirect certain helpers to bit_vector.
         //
@@ -104,12 +103,12 @@ namespace vtil::math
     {
         // If T1 is a custom operable, T2 needs to be either an integral type or same type as T1.
         //
-        if ( is_custom_operable_v<T1> )
+        if constexpr ( is_custom_operable_v<T1> )
             return std::is_integral_v<T2> || std::is_same_v<T1, T2>;
 
         // If only T2 is a custom operable, T1 needs to be an integral type.
         //
-        else if ( is_custom_operable_v<T2> )
+        else if constexpr ( is_custom_operable_v<T2> )
             return std::is_integral_v<T1>;
         return false;
     }
