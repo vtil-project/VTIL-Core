@@ -125,12 +125,12 @@ namespace vtil::query
 			//
 			if ( direction == -1 )
 			{
-				if ( !iterator.is_begin() ) iterator--;
+				if ( !iterator.is_begin() ) --iterator;
 				direction = +1;
 			}
 			else if ( direction == +1 )
 			{
-				if ( !iterator.is_end() ) iterator++;
+				if ( !iterator.is_end() ) ++iterator;
 				direction = -1;
 			}
 		}
@@ -154,7 +154,7 @@ namespace vtil::query
 
 					// Point the iterator at the current item.
 					//
-					iterator--;
+					--iterator;
 
 					// If invalid, break.
 					//
@@ -184,7 +184,7 @@ namespace vtil::query
 				// If direction was forward, increment the iterator now.
 				//
 				if ( direction == +1 )
-					iterator++;
+					++iterator;
 
 				// If a breaking condition was satisfied, report so.
 				//

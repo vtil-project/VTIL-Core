@@ -106,6 +106,12 @@
     <ClInclude Include="includes\vtil\query">
       <Filter>Includes</Filter>
     </ClInclude>
+    <ClInclude Include="query\fixed_iterator.hpp">
+      <Filter>Queries</Filter>
+    </ClInclude>
+    <ClInclude Include="util\critical_section.hpp">
+      <Filter>Utility</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="amd64\register_details.cpp">
@@ -128,6 +134,9 @@
     </ClCompile>
     <ClCompile Include="math\operators.cpp">
       <Filter>Math</Filter>
+    </ClCompile>
+    <ClCompile Include="util\critical_section.cpp">
+      <Filter>Utility</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

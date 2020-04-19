@@ -4,3 +4,4 @@
 #include "..\..\query\query_descriptor.hpp"
 #include "..\..\query\view.hpp"
 #include "..\..\query\recursive_view.hpp"
+#include "..\..\query\fixed_iterator.hpp"

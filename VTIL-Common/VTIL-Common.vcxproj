@@ -118,11 +118,13 @@
     <ClInclude Include="math\operators.hpp" />
     <ClInclude Include="memory\copy_on_write.hpp" />
     <ClInclude Include="memory\rwx_allocator.hpp" />
+    <ClInclude Include="query\fixed_iterator.hpp" />
     <ClInclude Include="query\query_descriptor.hpp" />
     <ClInclude Include="query\range_iterator.hpp" />
     <ClInclude Include="query\range_iterator_contract.hpp" />
     <ClInclude Include="query\recursive_view.hpp" />
     <ClInclude Include="query\view.hpp" />
+    <ClInclude Include="util\critical_section.hpp" />
     <ClInclude Include="util\priority_list.hpp" />
   </ItemGroup>
   <ItemGroup>
@@ -133,6 +135,7 @@
     <ClCompile Include="io\logger.cpp" />
     <ClCompile Include="math\operators.cpp" />
     <ClCompile Include="memory\rwx_allocator.cpp" />
+    <ClCompile Include="util\critical_section.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="VTIL-Common.licenseheader" />

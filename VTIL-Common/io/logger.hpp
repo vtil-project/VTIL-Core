@@ -32,9 +32,12 @@
 #include <mutex>
 #include <intrin.h>
 #include "formatting.hpp"
+#include "..\util\critical_section.hpp"
 
 namespace vtil::logger
 {
+	// Console colors, only used on Windows platform.
+	//
 	enum console_color
 	{
 		CON_BRG = 15,
@@ -49,7 +52,7 @@ namespace vtil::logger
 
 	// State of the logging engine.
 	//
-	static std::mutex log_mutex;
+	static critical_section log_cs;
 	static bool log_disable = false;
 
 	// Padding customization for logger.
@@ -62,37 +65,31 @@ namespace vtil::logger
 	static int log_padding = -1;
 	static int log_padding_carry = 0;
 
-	// RAII hacks for setting scope padding and verbosity.
+	// RAII hack for incrementing the padding until routine ends.
+	// Can be used with the argument u=0 to act as a lock guard.
+	// - Will wait for the critical section ownership and hold it
+	//   until the scope ends.
 	//
 	struct scope_padding
 	{
-		uint32_t prev = 0;
-		inline scope_padding( unsigned u )
-		{
-			prev = log_padding;
-			log_padding += u;
-		}
-
-		inline void end()
-		{
-			log_padding = prev;
-		}
-		inline ~scope_padding() { end(); }
+		int prev = log_padding;
+		bool holds_lock = false;
+		scope_padding( unsigned u ) { log_padding += u; log_cs.lock(); holds_lock = true; }
+		void end() { if ( holds_lock ) log_cs.unlock(), holds_lock = false; log_padding = prev; }
+		~scope_padding() { end(); }
 	};
+
+	// RAII hack for changing verbosity of logs within the scope.
+	// - Will wait for the critical section ownership and hold it
+	//   until the scope ends.
+	//
 	struct scope_verbosity
 	{
-		bool prev = 0;
-		scope_verbosity( bool b )
-		{
-			prev = log_disable;
-			log_disable |= !b;
-		}
-
-		inline void end()
-		{
-			log_disable = prev;
-		}
-		inline ~scope_verbosity() { end(); }
+		bool prev = log_disable;
+		bool holds_lock = false;
+		scope_verbosity( bool verbose_output ) { log_disable |= !verbose_output; log_cs.lock(); holds_lock = true; }
+		void end() { if ( holds_lock ) log_cs.unlock(), holds_lock = false; log_disable = prev; }
+		~scope_verbosity() { end(); }
 	};
 
 	// Implementation details.
@@ -121,9 +118,9 @@ namespace vtil::logger
 		//
 		if ( log_disable ) return 0;
 
-		// Acquire the logging mutex.
+		// Hold the lock for the critical section guarding ::log.
 		//
-		std::lock_guard g( log_mutex );
+		std::lock_guard g( log_cs );
 
 		// Initialize logger if not done already.
 		//
@@ -167,7 +164,7 @@ namespace vtil::logger
 		// Set to requested color and redirect to printf.
 		//
 		impl::set_color( color );
-		return out_cnt + printf( fmt, vtil::format::fix_parameter<params>( std::forward<params>( ps ) )... );
+		return out_cnt + printf( fmt, format::fix_parameter<params>( std::forward<params>( ps ) )... );
 	}
 
 	// Prints an error message and breaks the execution.
@@ -175,8 +172,16 @@ namespace vtil::logger
 	template<typename... params>
 	__declspec( noreturn ) static void error( const char* fmt, params&&... ps )
 	{
+		// Error will stop any execution so feel free to ignore any locks.
+		//
+		new ( &log_cs ) critical_section();
+
+		// Print the erorr message.
+		//
 		log<CON_RED>( fmt, std::forward<params>( ps )... );
 
+		// Break the program.
+		//
 #ifdef _DEBUG
 		__debugbreak();
 #else

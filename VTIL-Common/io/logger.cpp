@@ -33,7 +33,7 @@
 	#include <Windows.h>
 #endif
 
-namespace  vtil::logger::impl
+namespace vtil::logger::impl
 {
 	// Internally used to change the console if possible.
 	//
