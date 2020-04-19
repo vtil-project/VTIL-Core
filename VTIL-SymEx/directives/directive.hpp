@@ -28,47 +28,80 @@
 #pragma once
 #include <vtil/math>
 #include <vtil/memory>
+#include <type_traits>
 
-namespace vtil::symbolic
+namespace vtil::symbolic::directive
 {
     // Custom operators to be used within simplifier directives.
     //
+    // - !x, indicates that x must be simplified for this directive to be valid.
     static constexpr math::operator_id simplify_dir = ( math::operator_id )( ( size_t ) math::operator_id::max + 1 );
+    //
+    // - __unpack(a,b), picks a if valid, otherwise b. Only one unpack decision can be made per directive
+    //   and the second unpack will use the same index as the previous one.
     static constexpr math::operator_id unpack_dir = ( math::operator_id )( ( size_t ) simplify_dir + 1 );
+    //
+    // - __iff(a,b), returns b if a holds, otherwise invalid.
     static constexpr math::operator_id iff_dir = ( math::operator_id )( ( size_t ) unpack_dir + 1 );
+    //
+    // - __or(a,b), picks a if valid, otherwise b. Similar to __unpack in that sense, but does not
+    //   propagate the chosen index.
     static constexpr math::operator_id or_dir = ( math::operator_id )( ( size_t ) iff_dir + 1 );
+    //
+    // - __unreachable(), indicates that this directive should never be matched and if it is,
+    //   simplifier logic has a bug which should be fixed, acts as a debugging/validation tool.
+    static constexpr math::operator_id unreachable_dir = ( math::operator_id )( ( size_t ) or_dir + 1 );
+
+    // Matching types of the variables:
+    //
+    enum matching_type
+    {
+        match_any,
+        match_variable,
+        match_constant,
+        match_expression,
+        match_variable_or_constant,
+    };
 
     // Used to describe a simplifier directive.
     //
-    struct directive : math::operable<directive>
+    struct instance : math::operable<instance>
     {
-        // Internal representation of the operation.
+        using reference = shared_reference<instance>;
+
+        // If symbolic variable, the identifier of the variable
+        // and type of expressions it can match.
         //
         const char* id = nullptr;
+        matching_type mtype = match_any;
+
+        // The operation we're matching and the operands.
+        //
         math::operator_id op = math::operator_id::invalid;
-        shared_reference<directive> lhs;
-        shared_reference<directive> rhs;
+        reference lhs = {};
+        reference rhs = {};
 
         // Default/copy/move constructors.
         //
-        directive() {};
-        directive( directive&& ) = default;
-        directive( const directive& ) = default;
-        directive& operator=( directive&& o ) = default;
-        directive& operator=( const directive& o ) = default;
+        instance() {};
+        instance( instance&& ) = default;
+        instance( const instance& ) = default;
+        instance& operator=( instance&& o ) = default;
+        instance& operator=( const instance& o ) = default;
 
         // Variable constructor.
         //
-        directive( const char* id ) : id( id ) {}
-        directive( int64_t v ) : operable( v ) {}
+        template<typename T = uint64_t, std::enable_if_t<std::is_integral_v<T>, int> = 0>
+        instance( T value ) : operable( int64_t( value ) ) {}
+        instance( const char* id, matching_type mtype = match_any ) : id( id ), mtype( mtype ) {}
 
         // Constructor for directive representing the result of an unary operator.
         //
-        directive( math::operator_id _op, const directive& e1 );
+        instance( math::operator_id _op, const instance& e1 );
 
         // Constructor for directive representing the result of a binary operator.
         //
-        directive( const directive& e1, math::operator_id _op, const directive& e2 );
+        instance( const instance& e1, math::operator_id _op, const instance& e2 );
 
         // Converts to human-readable format.
         //
@@ -76,13 +109,47 @@ namespace vtil::symbolic
 
         // Simple equivalence check.
         //
-        bool equals( const directive& o ) const;
+        bool equals( const instance& o ) const;
     };
 
     // Implement custom operators.
     //
-    static directive operator!( const directive& a ) { return { simplify_dir, a }; }
-    static directive __unpack( const directive& a, const directive& b ) { return { a, unpack_dir, b }; }
-    static directive __iff( const directive& a, const directive& b ) { return { a, iff_dir, b }; }
-    static directive __or( const directive& a, const directive& b ) { return { a, or_dir, b }; }
+    static instance operator!( const instance& a ) { return { simplify_dir, a }; }
+    static instance __unpack( const instance& a, const instance& b ) { return { a, unpack_dir, b }; }
+    static instance __iff( const instance& a, const instance& b ) { return { a, iff_dir, b }; }
+    static instance __or( const instance& a, const instance& b ) { return { a, or_dir, b }; }
+    static instance __unreachable() { return { 0ull, unreachable_dir, 0ull }; }
+
+    /*
+       The encoding below must be used when saving this file:
+         - Unicode (UTF-8 without signature) - Codepage 65001
+
+       Greek letters are used in simplifier directives as opposed to latin 
+       in-order to make the distinction between them painfully obvious.
+       
+       This really saves you from all the pain of debugging when you "leak"
+       a directive variable from the routines, which is why I'm so stubborn
+       on using them.
+
+
+       Used names are kept track using the table below:
+       -------------------------------------------------------
+       | Free                                     | Used     |
+       | ΑΝνΒΞξΓγΟοΔπΕΡρΖζσςΗηΤτΥυΙιΦφΚκΧχΛλΨψΜμω | ΠΣΘΩαβδε |
+       -------------------------------------------------------
+    */
+
+    // Symbolic variables to be used in rule creation:
+    //
+    static const instance A = { "α" };
+    static const instance B = { "β" };
+    static const instance C = { "δ" };
+    static const instance D = { "ε" };
+
+    // Special variables, one per type:
+    // 
+    static const instance V = { "Π", match_variable };
+    static const instance U = { "Σ", match_constant };
+    static const instance X = { "Θ", match_variable_or_constant };
+    static const instance Q = { "Ω", match_expression };
 };

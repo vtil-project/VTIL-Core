@@ -27,11 +27,11 @@
 //
 #include "directive.hpp"
 
-namespace vtil::symbolic
+namespace vtil::symbolic::directive
 {
 	// Constructor for directive representing the result of an unary operator.
 	//
-	directive::directive( math::operator_id _op, const directive& e1 )
+	instance::instance( math::operator_id _op, const instance& e1 )
 	{
 		// If directive is unpacking, handle it.
 		//
@@ -44,14 +44,14 @@ namespace vtil::symbolic
 		//
 		else
 		{
-			rhs = e1;
+			rhs = { e1 };
 			op = _op;
 		}
 	}
 
 	// Constructor for directive representing the result of a binary operator.
 	//
-	directive::directive( const directive& e1, math::operator_id _op, const directive& e2 )
+	instance::instance( const instance& e1, math::operator_id _op, const instance& e2 )
 	{
 		// If any of the directives are unpacking, handle it.
 		//
@@ -74,26 +74,28 @@ namespace vtil::symbolic
 		//
 		else
 		{
-			lhs = e1; rhs = e2;
+			lhs = { e1 };
+			rhs = { e2 };
 			op = _op;
 		}
 	}
 
 	// Converts to human-readable format.
 	//
-	std::string directive::to_string() const
+	std::string instance::to_string() const
 	{
 		// Handle constants.
 		//
 		if ( op == math::operator_id::invalid )
-			return id ? id : format::hex( i64 );
+			return id ? id : format::hex( get<true>().value() );
 
 		// Handle custom operators.
 		//
-		if ( op == simplify_dir ) return "!" + rhs->to_string();
-		if ( op == unpack_dir )   return "{" + lhs->to_string() + ", " + rhs->to_string() + "}";
-		if ( op == iff_dir )      return lhs->to_string() + " ? " + rhs->to_string();
-		if ( op == or_dir )       return lhs->to_string() + " <=> " + rhs->to_string();
+		if ( op == unreachable_dir ) return "<unreachable>";
+		if ( op == simplify_dir )    return "!" + rhs->to_string();
+		if ( op == unpack_dir )      return "{" + lhs->to_string() + ", " + rhs->to_string() + "}";
+		if ( op == iff_dir )         return lhs->to_string() + " ? " + rhs->to_string();
+		if ( op == or_dir )          return lhs->to_string() + " <=> " + rhs->to_string();
 
 		// Redirect to operator descriptor.
 		//
@@ -102,7 +104,7 @@ namespace vtil::symbolic
 
 	// Simple equivalence check.
 	//
-	bool directive::equals( const directive& o ) const
+	bool instance::equals( const instance& o ) const
 	{
 		// Operators must match.
 		//
@@ -112,7 +114,7 @@ namespace vtil::symbolic
 		// If variable, check the identifier and constant.
 		//
 		if ( op == math::operator_id::invalid )
-			return o.op == math::operator_id::invalid && id == o.id && u64 == o.u64;
+			return o.op == math::operator_id::invalid && id == o.id && value.get().value_or( 0 ) == o.value.get().value_or( 0 );
 
 		// Handle custom operators.
 		//
