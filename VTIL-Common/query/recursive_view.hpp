@@ -206,7 +206,7 @@ namespace vtil::query
 		//
 		template<typename enumerator_type,
 			typename return_type = decltype( std::declval<enumerator_type>()( std::declval<projected_type>() ) ),
-			typename result_type = std::conditional_t<std::is_same_v<return_type, void>, size_t, std::vector<return_type>>
+			typename result_type = std::conditional_t<std::is_same_v<return_type, void> || std::is_same_v<return_type, bool>, size_t, std::vector<return_type>>
 		>
 		recursive_result<result_type, container_type> for_each( const enumerator_type& enumerator )
 		{
