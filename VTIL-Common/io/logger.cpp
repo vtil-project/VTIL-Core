@@ -48,6 +48,7 @@ namespace  vtil::logger::impl
 	//
 	void initialize()
 	{
+		static bool log_init = false;
 		if ( log_init ) return;
 #if _WIN64
 		SetConsoleOutputCP( CP_UTF8 );

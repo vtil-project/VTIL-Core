@@ -50,7 +50,6 @@ namespace vtil::logger
 	// State of the logging engine.
 	//
 	static std::mutex log_mutex;
-	static bool log_init = false;
 	static bool log_disable = false;
 
 	// Padding customization for logger.
