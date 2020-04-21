@@ -88,6 +88,20 @@ namespace vtil
 #endif
 			return out;
 		}
+
+		template<typename T>
+		inline static T* reloc_const( const T* ptr, const void* src, void* dst )
+		{
+			int64_t reloc_delta = ( int64_t ) dst - ( int64_t ) src;
+			return ( T* ) ( ( size_t ) ptr + reloc_delta );
+		}
+
+		template<typename T>
+		inline static T& reloc_const( const T& ref, const void* src, void* dst )
+		{
+			int64_t reloc_delta = ( int64_t ) dst - ( int64_t ) src;
+			return *( T* ) ( ( size_t ) &ref + reloc_delta );
+		}
 	};
 
 	// This structure is used to describe copy-on-write references.
@@ -176,7 +190,19 @@ namespace vtil
 
 			// Redirect the operator to the reference.
 			//
-			return reference.operator->();
+			return ( T* ) get();
+		}
+
+		// Wrapper around ::own that can be called with arguments that are const-qualified 
+		// pointers or references which we will relocate to the new object as non-const qualified 
+		// owned instances of them.
+		//
+		template<typename... X>
+		auto own( X... params )
+		{
+			const T* prev = get();
+			T* owned = own();
+			return std::make_tuple( owned, impl::reloc_const( std::forward<X>( params ), prev, owned )... );
 		}
 
 		// Basic comparison operators are redirected to the pointer type.
@@ -186,8 +212,9 @@ namespace vtil
 
 		// Redirect pointer and dereferencing operator to the reference and cast to const-qualified equivalent.
 		//
-		const T* operator->() const { fassert( is_valid() ); return reference.operator->(); }
-		const T& operator*() const { fassert( is_valid() ); return *reference; }
+		const T* get() const { return reference.operator->(); }
+		const T* operator->() const { return get(); }
+		const T& operator*() const { return *reference; }
 
 		// Syntax sugar for ::own() using add operator.
 		//
