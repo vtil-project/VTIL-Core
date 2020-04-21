@@ -36,6 +36,8 @@ namespace vtil::symbolic::directive
     //
     static const std::pair<instance::reference, instance::reference> universal_simplifiers[] =
     {
+        // TODO: Arithmetic operators in general, */% etc.
+
         // Double inverse.
         //
         { -(-A),				                            A },
@@ -148,6 +150,7 @@ namespace vtil::symbolic::directive
     {
         // TODO: Should we add ADD and SUB to bitwise despite the partial evaluator?
         // TODO: NOT/XOR, Not really necessary since inverse is always described?
+        // TODO: Arithmetic operators in general, */% etc.
         
         // AND:
         //

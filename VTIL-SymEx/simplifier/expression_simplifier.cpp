@@ -290,11 +290,11 @@ namespace vtil::symbolic
 			}
 		}
 
+		// TODO: Not too sure.
 		// Heuristic to determine if expression can be simplified any further:
-		//
-		uint64_t res_unk = __popcnt64( exp->unknown_mask() );
-		uint64_t in_unk = __popcnt64( ( exp->lhs ? exp->lhs->unknown_mask() : 0 ) | exp->rhs->unknown_mask() );
-		if ( in_unk > res_unk || ( exp->depth > 1 && in_unk == res_unk ) )
+		//uint64_t res_unk = __popcnt64( exp->unknown_mask() );
+		//uint64_t in_unk = __popcnt64( ( exp->lhs ? exp->lhs->unknown_mask() : 0 ) | exp->rhs->unknown_mask() );
+		//if ( in_unk > res_unk || ( exp->depth > 1 && in_unk == res_unk ) )
 		{
 			// Enumerate each join descriptor:
 			//
