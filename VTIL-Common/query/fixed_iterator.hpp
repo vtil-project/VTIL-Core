@@ -60,7 +60,7 @@ namespace vtil::query
 		using container_type = container_type;
 		using iterator_type = const value_type*;
 		using value_type = value_type;
-		using recurse_function = std::vector<fixed_iterator>(*)( container_type * self, bool forward );
+		using recurse_function = std::vector<fixed_iterator>(*)( container_type* self, bool forward );
 
 		// Export the required traits of an standard iterator.
 		//

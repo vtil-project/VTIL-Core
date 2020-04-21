@@ -53,17 +53,17 @@ namespace vtil::logger
 	// State of the logging engine.
 	//
 	static critical_section log_cs;
-	static bool log_disable = false;
+	static volatile bool log_disable = false;
 
 	// Padding customization for logger.
 	//
 	static constexpr char log_padding_c = '|';
-	static constexpr uint32_t log_padding_step = 4;
+	static constexpr uint32_t log_padding_step = 2;
 
 	// Current logger padding.
 	//
-	static int log_padding = -1;
-	static int log_padding_carry = 0;
+	static volatile int log_padding = -1;
+	static volatile int log_padding_carry = 0;
 
 	// RAII hack for incrementing the padding until routine ends.
 	// Can be used with the argument u=0 to act as a lock guard.

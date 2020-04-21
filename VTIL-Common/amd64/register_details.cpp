@@ -136,7 +136,7 @@ namespace vtil::amd64
     //
     register_mapping resolve_mapping( uint8_t _reg )
     {
-        // Try to find the register mapping, if succesful return if
+        // Try to find the register mapping, if successful return if
         //
         auto it = register_mappings.find( ( x86_reg ) _reg );
         if ( it != register_mappings.end() )

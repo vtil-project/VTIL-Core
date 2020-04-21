@@ -75,6 +75,7 @@ namespace vtil::math
         inline uint64_t known_mask() const { return value.known_mask(); }
         inline uint64_t unknown_mask() const { return value.unknown_mask(); }
         inline uint64_t known_one() const { return value.known_one(); }
+        inline uint64_t known_zero() const { return value.known_zero(); }
         inline bool is_constant() const { return value.is_known(); }
 
         // Resizes the constant, must be overriden by the base type to handle unknowns.
@@ -168,8 +169,8 @@ DEFINE_OPERATION( umulhi( T1&& a, T2&& b )           { return { std::forward<T1>
 DEFINE_OPERATION( umul( T1&& a, T2&& b )             { return { std::forward<T1>( a ), vtil::math::operator_id::umultiply, std::forward<T2>( b ) }; }         );
 DEFINE_OPERATION( udiv( T1&& a, T2&& b )             { return { std::forward<T1>( a ), vtil::math::operator_id::udivide, std::forward<T2>( b ) }; }           );
 DEFINE_OPERATION( urem( T1&& a, T2&& b )             { return { std::forward<T1>( a ), vtil::math::operator_id::uremainder, std::forward<T2>( b ) }; }        );
-DEFINE_OPERATION( __zx( T1&& a, T2&& b )             { return { std::forward<T1>( a ), vtil::math::operator_id::zero_extend, std::forward<T2>( b ) }; }       );
-DEFINE_OPERATION( __sx( T1&& a, T2&& b )             { return { std::forward<T1>( a ), vtil::math::operator_id::sign_extend, std::forward<T2>( b ) }; }       );
+DEFINE_OPERATION( __ucast( T1&& a, T2&& b )          { return { std::forward<T1>( a ), vtil::math::operator_id::ucast, std::forward<T2>( b ) }; }             );
+DEFINE_OPERATION( __cast( T1&& a, T2&& b )           { return { std::forward<T1>( a ), vtil::math::operator_id::cast, std::forward<T2>( b ) }; }              );
 DEFINE_OPERATION( __popcnt( T1&& a )                 { return { vtil::math::operator_id::popcnt, std::forward<T2>( a ) }; }                                   );
 DEFINE_OPERATION( __msb( T1&& a, T2&& b )            { return { std::forward<T1>( a ), vtil::math::operator_id::most_sig_bit, std::forward<T2>( b ) }; }      );
 DEFINE_OPERATION( __lsb( T1&& a, T2&& b )            { return { std::forward<T1>( a ), vtil::math::operator_id::least_sig_bit, std::forward<T2>( b ) }; }     );
@@ -179,8 +180,8 @@ DEFINE_OPERATION( __bcnt( T1&& a )                   { return { vtil::math::oper
 DEFINE_OPERATION( __if( T1&& a, T2&& b )             { return { std::forward<T1>( a ), vtil::math::operator_id::value_if, std::forward<T2>( b ) }; }          );
 DEFINE_OPERATION( __max( T1&& a, T2&& b )            { return { std::forward<T1>( a ), vtil::math::operator_id::max_value, std::forward<T2>( b ) }; }         );
 DEFINE_OPERATION( __min( T1&& a, T2&& b )            { return { std::forward<T1>( a ), vtil::math::operator_id::min_value, std::forward<T2>( b ) }; }         );
-DEFINE_OPERATION( __max_sgn( T1&& a, T2&& b )        { return { std::forward<T1>( a ), vtil::math::operator_id::smax_value, std::forward<T2>( b ) }; }        );
-DEFINE_OPERATION( __min_sgn( T1&& a, T2&& b )        { return { std::forward<T1>( a ), vtil::math::operator_id::smin_value, std::forward<T2>( b ) }; }        );
+DEFINE_OPERATION( __umax( T1&& a, T2&& b )           { return { std::forward<T1>( a ), vtil::math::operator_id::umax_value, std::forward<T2>( b ) }; }        );
+DEFINE_OPERATION( __umin( T1&& a, T2&& b )           { return { std::forward<T1>( a ), vtil::math::operator_id::umin_value, std::forward<T2>( b ) }; }        );
 DEFINE_OPERATION( operator>( T1&& a, T2&& b )        { return { std::forward<T1>( a ), vtil::math::operator_id::greater, std::forward<T2>( b ) }; }           );
 DEFINE_OPERATION( operator>=( T1&& a, T2&& b )       { return { std::forward<T1>( a ), vtil::math::operator_id::greater_eq, std::forward<T2>( b ) }; }        );
 DEFINE_OPERATION( operator==( T1&& a, T2&& b )       { return { std::forward<T1>( a ), vtil::math::operator_id::equal, std::forward<T2>( b ) }; }             );
