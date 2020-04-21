@@ -71,8 +71,8 @@ namespace vtil::math
 
             // - Resizing operators should not call into this helper.
             //
-            case operator_id::zero_extend:
-            case operator_id::sign_extend:    unreachable();
+            case operator_id::cast:
+            case operator_id::ucast:          unreachable();
 	    }
 
         // - Rest default to maximum operand size.
@@ -136,8 +136,8 @@ namespace vtil::math
 
             // - Special operators.										                  
             //																                  
-            case operator_id::sign_extend:      result = ilhs, bcnt_res = rhs;                                      break;
-            case operator_id::zero_extend:      result = lhs,  bcnt_res = rhs;                                      break;
+            case operator_id::cast:             result = ilhs, bcnt_res = rhs;                                      break;
+            case operator_id::ucast:            result = lhs,  bcnt_res = rhs;                                      break;
             case operator_id::popcnt:           result = __popcnt64( rhs );                                         break;
             case operator_id::most_sig_bit:	    result = _BitScanReverse64( ( unsigned long* ) &result, lhs )
                                                         ? result
@@ -152,10 +152,10 @@ namespace vtil::math
 
             // - MinMax operators
             //
-            case operator_id::min_value:        result = std::min( lhs, rhs );                                      break;
-            case operator_id::max_value:        result = std::max( lhs, rhs );                                      break;
-            case operator_id::smin_value:       result = std::min( ilhs, irhs );                                    break;
-            case operator_id::smax_value:       result = std::max( ilhs, irhs );                                    break;
+            case operator_id::umin_value:       result = std::min( lhs, rhs );                                      break;
+            case operator_id::umax_value:       result = std::max( lhs, rhs );                                      break;
+            case operator_id::min_value:        result = std::min( ilhs, irhs );                                    break;
+            case operator_id::max_value:        result = std::max( ilhs, irhs );                                    break;
 
             // - Comparison operators
             //
@@ -411,13 +411,13 @@ namespace vtil::math
 			// Bitwise specials.
 			//
 			// ####################################################################################################################################
-			case operator_id::zero_extend:
+			case operator_id::ucast:
 				// Get new size from RHS as constant, and resize as vector of size size *8.
 				//
 				if ( auto new_size = rhs.get() )  return bit_vector( lhs ).resize( *new_size * 8, false );
 				else                              unreachable();
 
-			case operator_id::sign_extend:
+			case operator_id::cast:
 				// Get new size from RHS as constant, and resize as vector of size size *8 with sign extension.
 				//
 				if ( auto new_size = rhs.get() )  return bit_vector( lhs ).resize( *new_size * 8, true );
@@ -532,22 +532,22 @@ namespace vtil::math
 			// ####################################################################################################################################
 			case operator_id::min_value:
 			case operator_id::max_value:
-			case operator_id::smin_value:
-			case operator_id::smax_value:
+			case operator_id::umin_value:
+			case operator_id::umax_value:
 			{
 				// Map each min-max to a comperator.
 				//
 				operator_id cmp_id;
 				switch ( op )
 				{
-					case operator_id::min_value:   cmp_id = operator_id::uless;        break;
-					case operator_id::max_value:   cmp_id = operator_id::ugreater_eq;  break;
-					case operator_id::smin_value:  cmp_id = operator_id::less;         break;
-					case operator_id::smax_value:  cmp_id = operator_id::greater_eq;   break;
+					case operator_id::umin_value:   cmp_id = operator_id::uless;        break;
+					case operator_id::umax_value:   cmp_id = operator_id::ugreater_eq;  break;
+					case operator_id::min_value:    cmp_id = operator_id::less;         break;
+					case operator_id::max_value:    cmp_id = operator_id::greater_eq;   break;
 					default: unreachable();
 				}
 
-				// A < B ? A : B
+				// cmp<>(A,B) ? A : B
 				bit_state cmp_res = evaluate_partial( cmp_id, lhs, rhs )[ 0 ];
 				uint8_t cmp_out_size = std::max( lhs.size(), rhs.size() );
 				switch ( cmp_res )
