@@ -39,6 +39,8 @@ namespace vtil::symbolic
 	static bool prettify_verbose = false;
 	static thread_local std::unordered_map<size_t, std::pair<expression::reference, bool>> simplifier_cache;
 
+	// TODO: Logger for the use of debugging, ignore for now.
+	//
 	std::string to_base_exp( directive::symbol_table& sym, const expression::reference& exp, int depth = 0 )
 	{
 		using namespace logger;
@@ -290,6 +292,7 @@ namespace vtil::symbolic
 			}
 		}
 
+		
 		// TODO: Not too sure.
 		// Heuristic to determine if expression can be simplified any further:
 		//uint64_t res_unk = __popcnt64( exp->unknown_mask() );
