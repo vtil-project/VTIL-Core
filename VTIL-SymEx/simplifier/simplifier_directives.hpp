@@ -26,273 +26,243 @@
 // POSSIBILITY OF SUCH DAMAGE.        
 //
 #pragma once
+#include <tuple>
 #include "..\directives\directive.hpp"
-#include <vtil/utility>
 
-namespace vtil::symbolic
+namespace vtil::symbolic::directive
 {
-    // Symbolic variables used in rule creation:
+    // List of universal simplifiers, they have to reduce complexity or keep it equal
+    // at the very least to not cause an infinity loop.
     //
-    static const directive A = { "\xCE\xB1" };
-    static const directive B = { "\xCE\xB2" };
-    static const directive C = { "\xCE\xBB" };
-
-    // Special variables:
-    //
-    static const directive N = { "\xCE\xA9" }; // Equal to the bit-count of expression.
-    static const directive V = { "\xCF\x80" }; // Only accepts variables.
-    static const directive U = { "\xCE\xBC" }; // Only accepts constants.
-    static const directive X = { "\xCE\xA8" }; // Only accepts constants or variables.
-
-    static const directive& special_bitcnt = N;
-    static const directive& special_var = V;
-    static const directive& special_const = U;
-    static const directive& special_var_const = X;
-
-    static priority_list<std::pair<directive, directive>> basic_simplifiers =
+    static const std::pair<instance::reference, instance::reference> universal_simplifiers[] =
     {
         // Double inverse.
         //
-        { -(-A),				    A },
-        { ~(~A),				    A },
-        { -(~A),				    A+1 },
-        { ~(-A),				    A-1 },
+        { -(-A),				                            A },
+        { ~(~A),				                            A },
+        { -(~A),				                            A+1 },
+        { ~(-A),				                            A-1 },
+                                                            
+        // Identity constants.                              
+        //                                                  
+        { A+0,					                            A },
+        { A-0,					                            A },
+        { A|A,					                            A },
+        { A|0,					                            A },
+        { A&A,					                            A },
+        { A^0,					                            A },
+        { A&-1,					                            A },
+                                                            
+        // Constant result.                                 
+        //                                                  
+        { A-A,					                            0 },
+        { A+(-A),				                            0 },
+        { A&0,					                            0 },
+        { A^A,					                            0 },
+        { A&(~A),				                            0 },
+        { A|-1,					                            -1 },
+        { A^(~A),				                            -1 },
+        { A|(~A),				                            -1 },
+        { __rotl(A,0),			                            A },
+        { __rotr(A,0),			                            A },
+        { A>>0,					                            A },
+        { A<<0,					                            A },
+        //{ A>>B,					                          __iff(B>=__bcnt(A), 0) },     [Removed as partial evaluator will take care of this]
+        //{ A<<B,					                          __iff(B>=__bcnt(A), 0) },     [Removed as partial evaluator will take care of this]
+                                                            
+        // SUB conversion.                                  
+        //                                                  
+        { A+(-B),				                            A-B },
+        { ~((~A)+B),			                            A-B },
+        { ~(A-B),				                            (~A)+B },
+                                                            
+        // NEG conversion.                                  
+        //                                                  
+        { ~(A-1),				                            -A },
+        { 0-A,					                            -A },
+                                                            
+        // NOT conversion.                                  
+        //                                                  
+        { A^-1,					                            ~A },
+                                                            
+        // XOR conversion.                                  
+        //                                                  
+        { (A|B)&(~(A&B)),		                            A^B },
+        { (A|B)&((~A)|(~B)),	                            A^B },
+        { (A&(~B))|((~A)&B),	                            A^B },
+        { (~(A|B))|(A&B),		                            ~(A^B) },
+        { ((~A)&(~B))|(A&B),		                        ~(A^B) },
+                                                            
+        // Simplify AND OR NOT.                             
+        //                                                  
+        { A&(A|B),				                            A },
+        { A|(A&B),				                            A },
+                                                            
+        // Simplify rotation count.                         
+        //                                                  
+        { __rotl(A,U),                                      __iff(U>=__bcnt(A), __rotl(A,!(U%__bcnt(A)))) },
+        { __rotr(A,U),                                      __iff(U>=__bcnt(A), __rotr(A,!(U%__bcnt(A)))) },
 
-        // Identity constants.
+        // Simplifying variables into smaller, zero-extended versions where possible.
         //
-        { A+0,					    A },
-        { A-0,					    A },
-        { A|A,					    A },
-        { A|0,					    A },
-        { A&A,					    A },
-        { A^0,					    A },
-        { A&-1,					    A },
-
-        // Constant result.
-        //
-        { A-A,					    0ll },
-        { A+(-A),				    0ll },
-        { A&0,					    0ll },
-        { A^A,					    0ll },
-        { A&(~A),				    0ll },
-        { A|-1,					    -1 },
-        { A^(~A),				    -1 },
-        { A|(~A),				    -1 },
-        { __rotl(A,0),			    A },
-        { __rotr(A,0),			    A },
-        { A>>0,					    A },
-        { A<<0,					    A },
-
-        // SUB conversion.
-        //
-        { ~((~A)+B),			    A-B },
-        { ~(A-B),				    (~A)+B },
-
-        // NEG conversion.
-        //
-        { ~(A-1),				    -A },
-        { 0-A,					    -A },
-
-        // Simplify AND OR NOT.
-        //
-        { A&(A|B),				    A },
-        { A|(A&B),				    A },
-        //{ A&(B|C),				    __iff((A&B)==B, __iff((A&C)==C, B|C)) },
-        //{ A&(B^C),				    __iff((A&B)==B, __iff((A&C)==C, B^C)) },
-        //{ A&(B|C),				    __iff((A&B)==0, __iff((A&C)==0, 0ll)) },
-        //{ A&(B^C),				    __iff((A&B)==0, __iff((A&C)==0, 0ll)) },
-        //{ A|(B|C),				    __iff((A|__unpack(B,C))==__unpack(B,C), __unpack(B,C)|__unpack(C,B)) },
-        
-        // XOR|NAND|NOR -> NOT conversion.
-        //
-        { A^-1,					    ~A },
-        
-        // Prefer SUB over NEG.
-        //
-        { A+(-B),				    A-B },
-
-        // Convert into XOR.
-        //
-        { (A|B)&(~(A&B)),		    A^B },
-        { (A&(~B))|((~A)&B),	    A^B },
-        { (~(A|B))|(A&B),		    ~(A^B) },
-
-        // Simplify SHL|SHR and ROTL|ROTR.
-        //
-        { A>>B,					    __iff(B>=N, 0ll) },
-        { A<<B,					    __iff(B>=N, 0ll) },
-        { __zx(A,B)>>C,			    __iff((__mask(A)>>C)==0, 0ll) },
-        { __sx(A,B)>>C,			    __iff((__mask(A)>>C)==0, -1>>C) },
-        { __rotl(__rotl(A,B),C),    __rotl(A,!(B+C)) },
-        { __rotr(__rotr(A,B),C),    __rotr(A,!(B+C)) },
+        { V&U,                                              __iff(__bcnt(A)>8  & U==(U&0xFF),       __ucast(V, 8))  },
+        { V&U,                                              __iff(__bcnt(A)>16 & U==(U&0xFFFF),     __ucast(V, 16)) },
+        { V&U,                                              __iff(__bcnt(A)>32 & U==(U&0xFFFFFFFF), __ucast(V, 32)) },
 
         // Convert SHL|SHR and OR combinations to rotate.
         //
-        { (A>>B)|(A<<C),            __iff(C==(64-B), __rotr(A,B)) },
-        { (A<<B)|(A>>C),            __iff(C==(64-B), __rotl(A,B)) },
+        { (A>>B)|(A<<C),                                    __iff(C==(__bcnt(A)-B), __rotr(A,B)) },
+        { (A<<B)|(A>>C),                                    __iff(C==(__bcnt(A)-B), __rotl(A,B)) },
 
-        // Merge two SHL|SHR or ROTL|ROTR instances.
+        // Drop unnecessary extension.
         //
-        { (A>>B)>>C,			    A>>!(B+C) },
-        { (A<<B)<<C,			    A<<!(B+C) },
-        { __rotl(__rotr(A,B),C),    __iff(B>=C, __rotr(A,!(B-C))) },
-        { __rotl(__rotr(A,C),B),    __iff(B>=C, __rotl(A,!(B-C))) },
-        { __rotr(__rotl(A,B),C),    __iff(B>=C, __rotl(A,!(B-C))) },
-        { __rotr(__rotl(A,C),B),    __iff(B>=C, __rotr(A,!(B-C))) },
-        { (A>>B)<<C,			    __iff(B>=C, !((-1>>B)<<C)&(A>>!(B-C))) },
-        { (A>>C)<<B,			    __iff(B>=C, !((-1>>C)<<B)&(A<<!(B-C))) },
-        { (A<<B)>>C,			    __iff(B>=C, !((-1<<B)>>C)&(A<<!(B-C))) },
-        { (A<<C)>>B,			    __iff(B>=C, !((-1<<C)>>B)&(A>>!(B-C))) },
+        { __ucast(A,B),                                     __iff(__bcnt(A)==B, A) },
+        { __cast(A,B),                                      __iff(__bcnt(A)==B, A) },
 
-        // Simplify
+        // Simplify SHL|SHR and ROTL|ROTR.
         //
+        //{ __ucast(A,B)>>U,		                          __iff((__mask(A)>>U)==0, 0) },              [Removed as partial evaluator will take care of this]
+        //{ __cast(A,B)>>U,			                          __iff((__mask(A)>>U)==0, -1>>U) },          [Removed as partial evaluator will take care of this]
+        //{ __ucast(A,B)<<U,			                      __iff((__mask(A)<<U)==0, 0) },              [Removed as partial evaluator will take care of this]
+        { __cast(A,B)<<U,		                            __iff(U>((B*8)-__bcnt(A)), __ucast(A,B)<<U) },
 
-        // ????
+
+        // Simplify AND OR NOT combinations.
         //
-        //{ ~A|~B,                    ~(A&B) },
-        //{ ~A&~B,                    ~(A|B) },
-        //{ (A>>C)|(B>>C),		    (A|B)>>C },
-        //{ (A>>C)&(B>>C),		    (A&B)>>C },
-        //{ (A<<C)|(B<<C),		    (A|B)<<C },
-        //{ (A<<C)&(B<<C),		    (A&B)<<C },
+        { (~A)&(~B),                                        ~(A|B) },
+        { (~A)|(~B),                                        ~(A&B) },
+        { ~(U&A),                                           !(~U)|s(~A) },
+        { ~(U|A),                                           !(~U)&s(~A) },
 
-        // Distribute ADD
+        // Reduce ANDs & ORs.
         //
-        { A+(B+C),				    !(A+__unpack(B,C))+__unpack(C,B) },
-        { A+(B-C),				    !(A+B)-C },
-        { A+(B-C),				    !(A-C)+B },
-        
-        // Distribute SUB
-        //
-        { A-(B-C),				    !(A-B)+C },
-        { A-(B-C),				    !(A+C)-B },
-        { A-(B+C),				    !(A-__unpack(B,C))-__unpack(C,B) },
-        { (B-C)-A,				    !(B-A)-C },
-        { (B-C)-A,				    B-!(A+C) },
-        { (B+C)-A,				    !(__unpack(B,C)-A)+__unpack(C,B) },
-
-
-        // Dist. shift
-            
-        //{ A&(B&C),				    !(A&__unpack(B,C))&__unpack(C,B) },
-        //{ A|(B|C),				    !(A|__unpack(B,C))|__unpack(C,B) },
-
-
-        { (A|B)>>C,				    (A>>C)|(B>>C) },
-        { (A|B)<<C,				    (A<<C)|(B<<C) },
-        { (A&B)>>C,				    (A>>C)&(B>>C) },
-        { (A&B)<<C,				    (A<<C)&(B<<C) },
-        { (A^B)>>C,				    (A>>C)^(B>>C) },
-        { (A^B)<<C,				    (A<<C)^(B<<C) },
-        { (~A)>>U,				    (~(A>>U))&(-1>>U) },
-        { (~A)<<U,				    (~(A<<U))&(-1<<U) },
-            
-        { ~(A|B),                   (~A)&(~B) },
-        { ~(A&B),                   (~A)|(~B) },
-        { ~(A^B),                   (~A)^B },
-
-
-        //{ X&(B<<U),				    !(!(X>>U)&B)<<U },
-        //{ X&(B>>U),				    !(!(X<<U)&B)>>U },
-        //{ X|(B<<U),				    (X&((1<<U)-1))|!(!(X>>U)|B)<<U },
-        //{ X|(B>>U),				    (X&~(-1<<U))|!(!(X<<U)|B)>>U },
-        //{ X^(B<<U),				    (X&((1<<U)-1))|!(!(X>>U)^B)<<U },
-        //{ X^(B>>U),				    (X&~(-1<<U))|!(!(X<<U)^B)>>U },
-        
-        // -> __unpack(C, B)NF
-        //{ A&~(B|C),				    ~(!((~A)|__unpack(B, C))|__unpack(C, B)) },
-        //{ A&~(B&C),				    !(A&~__unpack(B, C))|(A&~__unpack(C, B)) },
-        //{ A|~(B|C),				    ~(!(__unpack(B, C)&~A)|(__unpack(C, B)&~A)) },
-        //{ A|~(B&C),				    ~(!((~A)&__unpack(B, C))&__unpack(C, B)) },
+        { U&A,                                              __iff((U&__mask_knw0(A))!=0, !(U&~( __mask_knw0(A)))&A) },
+        { U&A,                                              __iff(U==(__mask_unk(A)|__mask_knw1(A)), A) },
+        { U|A,                                              __iff((U&__mask_knw1(A))!=0, (U&!(__mask_unk(A)|__mask_knw0(A)))|A) },
     };
 
-    static priority_list<std::pair<directive, directive>> complex_directives =
+    // Describes the way operands of two operators join each other. 
+    // - Has no obligation to produce simple output, should be checked.
+    //
+    static const std::pair<instance::reference, instance::reference> join_descriptors[] =
     {
-        // Distribute ADD
-        //
-        { A+(B+C),				    !(A+__unpack(B,C))+__unpack(C,B) },
-        { A+(B-C),				    !(A+B)-C },
-        { A+(B-C),				    !(A-C)+B },
+        // TODO: Should we add ADD and SUB to bitwise despite the partial evaluator?
+        // TODO: NOT/XOR, Not really necessary since inverse is always described?
         
-        // Distribute SUB
+        // AND:
         //
-        { A-(B-C),				    !(A-B)+C },
-        { A-(B-C),				    !(A+C)-B },
-        { A-(B+C),				    !(A-__unpack(B,C))-__unpack(C,B) },
-        { (B-C)-A,				    !(B-A)-C },
-        { (B-C)-A,				    B-!(A+C) },
-        { (B+C)-A,				    !(__unpack(B,C)-A)+__unpack(C,B) },
+        { A&(B&C),                                          !(A&B)&!(A&C) },
+        { A&(B&C),                                          !(A& B)&__or(!(A&C), C) },
+        { A&(B|C),                                          !(A&B)|!(A&C) },
+        { A&(B|C),                                          A&s(!(A&B)|C) },
 
-        // Mask with variable mask.
-        //
-        { __zx(A,B)&C,			    __zx(A,B)&!(__mask(A)&C) },
+        { A&(B^C),                                          !(A&B)^!(A&C) },
+        { A&(B^C),                                          A&(!(A&B)^C) },
 
-        // Distribute AND
+        { A&(B<<U),				                            !(!(A>>U)&B)<<U },
+        { A&(B>>U),				                            !(!(A<<U)&B)>>U },
+        { A&(__rotl(B,C)),                                  __rotl(!(B&s(__rotr(A,C))), C) },
+        { A&(__rotr(B,C)),                                  __rotr(!(B&s(__rotl(A,C))), C) },
+        { A&~B,                                             ~!(B|s(~A)) },
+        
+        // OR: 
         //
-        { A&(B&C),				    !(A&__unpack(B,C))&__unpack(C,B) },
-        { A&(B|C),				    !(A&B)|!(A&C) },
-        { A&(B|C),				    A&(__or(!(A&B), B)|__or(!(A&C), C)) },
-        { A&(B^C),				    !(A&B)^!(A&C) },
-        { A&(B^C),				    A&(__or(!(A&B), B)^__or(!(A&C), C)) },
-        { A&(B<<U),				    (!(A>>U)&B)<<U },
-        { A&(B>>U),				    (!(A<<U)&B)>>U },
-        { A&__rotl(B,C),			__rotl(B&!__rotr(A,U),U)},
-        { A&__rotr(B,C),			__rotr(B&!__rotl(A,U),U)},
-        { A&~B,					    ~!(!(~A)|B) },
+        { A|(B|C),                                          !(A|B)|!(A|C) },
+        { A|(B|C),                                          !(A| B)|__or(!(A|C), C) },
+        { A|(B&C),                                          !(A|B)&!(A|C) },
+        { A|(B&C),                                          A|(!(A|B)&C) },
+        { A|(B^C),                                          A|(!(B&s(~A))^s(C&(~A))) },
+        { A|(B<<U),				                            !(!(A>>U)|B)<<U|s(A&((1<<U)-1)) },
+        { A|(B>>U),				                            !(!(A<<U)|B)>>U|s(A&(~(-1<<U))) },
+        { A|(__rotl(B,C)),                                  __rotl(!(B|s(__rotr(A,C))), C) },
+        { A|(__rotr(B,C)),                                  __rotr(!(B|s(__rotl(A,C))), C) },
+        { A|~B,                                             ~!(B&s(~A)) },
 
-        // Distribute OR
+        // ADD:
         //
-        { A|(B|C),				    !(A|__unpack(B,C))|__unpack(C,B) },
-        { A|(B&C),				    !(A|B)&!(A|C) },
-        { A|(B&C),				    A|(__or(!(!(~A)&B), B)&__or(!(!(~A)&C), C)) },
-        { A|(B^C),				    !(A|__unpack(B,C))^__unpack(C,B) },
-        { A|(B^C),				    A|(__or(!(!(~A)&B), B)^__or(!(!(~A)&C), C)) },
-        { A|(B<<U),				    !(A&((1<<U)-1))|(!(A>>U)|B)<<U },
-        { A|(B>>U),				    !(A&~(-1<<U))|(!(A<<U)|B)>>U },
-        { A|__rotl(B,U),			__rotl(B|!__rotr(A,U),U)},
-        { A|__rotr(B,U),			__rotr(B|!__rotl(A,U),U)},
-        { A|~B,					    ~!(!(~A)&B) },
+        { A+(B+C),                                          !(A+B)+C },
+        { A+(B-C),                                          !(A+B)-C },
+        { A+(B-C),                                          !(A-C)+B },
 
-        // Distribute XOR
+        // SUB:
         //
-        { A^(B^C),				    !(A^__unpack(B,C))^__unpack(C,B) },
-        { A^(B<<U),				    !(A&((1<<U)-1))|(!(A>>U)^B)<<U },
-        { A^(B>>U),				    (A&~(-1<<U))|(!(A<<U)^B)>>U },
-        { A^__rotl(B,U),			__rotl(B^!__rotr(A,U),U)},
-        { A^__rotr(B,U),			__rotr(B^!__rotl(A,U),U)},
-        { A^~B,					    !(~A)^B },
+        { A-(B+C),                                          !(A-B)-C },
+        { A-(B+C),                                          !(A-C)-B },
+        { A-(B-C),                                          !(A+C)-B },
+        { A-(B-C),                                          !(A-B)+C },
 
-        // Distribute Shift
+        // SHL:
         //
-        { (A|B)>>C,				    !(__unpack(A,B)>>C)|(__unpack(B,A)>>C) },
-        { (A|B)<<C,				    !(__unpack(A,B)<<C)|(__unpack(B,A)<<C) },
-        { (A&B)>>C,				    !(__unpack(A,B)>>C)&(__unpack(B,A)>>C) },
-        { (A&B)<<C,				    !(__unpack(A,B)<<C)&(__unpack(B,A)<<C) },
-        { (A^B)>>C,				    !(__unpack(A,B)>>C)^(__unpack(B,A)>>C) },
-        { (A^B)<<C,				    !(__unpack(A,B)<<C)^(__unpack(B,A)<<C) },
-        { (~A)>>U,				    (~(A>>U))&(-1>>U) },
-        { (~A)<<U,				    (~(A<<U))&(-1<<U) },
-    
-        // Distribute NOT
-        //
-        { ~(A|B),				    !(~__unpack(A,B))&(~__unpack(B,A)) },
-        { ~(A&B),				    !(~__unpack(A,B))|(~__unpack(B,A)) },
-        { ~(A^B),				    !(~__unpack(A,B))^(__unpack(B,A)) },
+        { (A<<B)<<C,			                            A<<!(B+C) },
+        { (A>>B)<<C,			                            __iff(B>=C, s(!((-1>>B)<<C)&(A>>!(B-C)))) },
+        { (A>>C)<<B,			                            __iff(B>=C, s(!((-1>>C)<<B)&(A<<!(B-C)))) },
+        { (A|B)<<C,                                         s(!(A<<C)|s(B<<C)) },
+        { (A^B)<<C,                                         s(!(A<<C)^s(B<<C)) },
+        { (A&B)<<C,                                         s(!(A<<C)&s(B<<C)) },
+        { (~A)<<U,				                            s((~(A<<U))&(-1<<U)) }, 
 
-        // Unpack ADD/SUB
+        // SHR:
         //
-        { A+B,					    !(A^B)+!(!(A&B)<<1) },
-        { A-B,					    !(A^B)-!(!(~A&B)<<1) },
+        { (A>>B)>>C,			                            A>>!(B+C) },
+        { (A<<B)>>C,			                            __iff(B>=C, s(!((-1<<B)>>C)&(A<<!(B-C)))) },
+        { (A<<C)>>B,			                            __iff(B>=C, s(!((-1<<C)>>B)&(A>>!(B-C)))) },
+        { (A|B)>>C,                                         s(!(A>>C)|s(B>>C)) },
+        { (A^B)>>C,                                         s(!(A>>C)^s(B>>C)) },
+        { (A&B)>>C,                                         s(!(A>>C)&s(B>>C)) },
+        { (~A)>>U,				                            s((~(A>>U))&(-1>>U)) }, 
 
-        // If AND with constant is being applied over ADD we only care about the bits 
-        // that are responsible for the creation of the result.
-        // TODO: Fix, __maskof def changed
+        // ROL:
         //
-        //{ U&(A+B),				    U&(!(A&__maskof(U))+!(B&__maskof(U))) },
-        //{ U&(A-B),				    U&(!(A&__maskof(U))-!(B&__maskof(U))) },
+        { __rotl(__rotl(A,B),C),                            __rotl(A,!(B+C)) },
+        { __rotl(__rotr(A,B),C),                            __iff(B>=C, __rotr(A,!(B-C))) },
+        { __rotl(__rotr(A,C),B),                            __iff(B>=C, __rotl(A,!(B-C))) },
+        { __rotl(A&B,C),                                    s(__rotl(A,C)&__rotl(B,C)) },
+        { __rotl(A^B,C),                                    s(__rotl(A,C)^__rotl(B,C)) },
+        { __rotl(A|B,C),                                    s(__rotl(A,C)|__rotl(B,C)) },
+        { __rotl(~A,C),                                     s(~__rotl(A,C)) },
 
-        // Unpack XOR
+        // ROR:
         //
-        { A^B,					    (A|B)&!(~(A&B)) },
+        { __rotr(__rotr(A,B),C),                            __rotr(A,(B+C)) },
+        { __rotr(__rotl(A,B),C),                            __iff(B>=C, __rotl(A,(B-C))) },
+        { __rotr(__rotl(A,C),B),                            __iff(B>=C, __rotr(A,(B-C))) },
+        { __rotr(A&B,C),                                    s(__rotr(A,C)&__rotr(B,C)) },
+        { __rotr(A^B,C),                                    s(__rotr(A,C)^__rotr(B,C)) },
+        { __rotr(A|B,C),                                    s(__rotr(A,C)|__rotr(B,C)) },
+        { __rotr(~A,C),                                     s(~__rotr(A,C)) },
+    };
+
+    // Grouping of simple representations into more complex directives.
+    //
+    static const std::pair<instance::reference, instance::reference> pack_descriptors[] =
+    {
+        { (A>>B)&1,                                         __bt(A,B) },                
+        { __if(A<=B,A)|__if(A>B,B),                         __min(A,B) },                       
+        { __if(A<=B,A)+__if(A>B,B),                         __min(A,B) },                       
+        { __if(A>=B,A)|__if(A<B,B),                         __max(A,B) },                       
+        { __if(A>=B,A)+__if(A<B,B),                         __max(A,B) },                       
+        { __if(__uless_eq(A,B),A)|__if(__ugreat(A,B),B),    __umin(A,B) },
+        { __if(__uless_eq(A,B),A)+__if(__ugreat(A,B),B),    __umin(A,B) },
+        { __if(__ugreat_eq(A,B),A)|__if(__uless(A,B),B),    __umax(A,B) },
+        { __if(__ugreat_eq(A,B),A)+__if(__uless(A,B),B),    __umax(A,B) },
+        { (~(A+(-1)))&B,                                    __iff((__mask_unk(A)|__mask_knw1(A))==1, __if(s(__ucast(A,1)),B)) },
+        { (~(A-1))&B,                                       __iff((__mask_unk(A)|__mask_knw1(A))==1, __if(s(__ucast(A,1)),B)) },
+        { ((A+(-1)))&B,                                     __iff((__mask_unk(A)|__mask_knw1(A))==1, __if(s(__ucast(~A,1)),B)) },
+        { ((A-1))&B,                                        __iff((__mask_unk(A)|__mask_knw1(A))==1, __if(s(__ucast(~A,1)),B)) },
+    };
+
+    // Conversion from more complex directives into simple representations.
+    //
+    static const std::pair<instance::reference, instance::reference> unpack_descriptors[] =
+    {
+        { __bt(A,B),                                        (A>>B)&1 },
+        { __min(A,B),                                       __if(A<=B,A)|__if(A>B,B) },
+        { __min(A,B),                                       __if(A<=B,A)+__if(A>B,B) },
+        { __max(A,B),                                       __if(A>=B,A)|__if(A<B,B) },
+        { __max(A,B),                                       __if(A>=B,A)+__if(A<B,B) },
+        { __umin(A,B),                                      __if(__uless_eq(A,B),A)|__if(__ugreat(A,B),B) },
+        { __umax(A,B),                                      __if(__ugreat_eq(A,B),A)|__if(__uless(A,B),B) },
+        { __if(~A,B),                                       (((__ucast(A,__bcnt(B))&1)-1))&B },
+        { __if(A,B),                                        (~((__ucast(A,__bcnt(B))&1)-1))&B },
     };
 };

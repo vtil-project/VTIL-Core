@@ -31,54 +31,11 @@ namespace vtil::symbolic::directive
 {
 	// Constructor for directive representing the result of an unary operator.
 	//
-	instance::instance( math::operator_id _op, const instance& e1 )
-	{
-		// If directive is unpacking, handle it.
-		//
-		if ( e1.op == unpack_dir )
-		{
-			lhs = { _op, *e1.lhs }; rhs = { _op, *e1.rhs };
-			op = unpack_dir;
-		}
-		// Otherwise describe as is.
-		//
-		else
-		{
-			rhs = { e1 };
-			op = _op;
-		}
-	}
+	instance::instance( math::operator_id op, const instance& e1 ) : rhs( e1 ), op( op ) {}
 
 	// Constructor for directive representing the result of a binary operator.
 	//
-	instance::instance( const instance& e1, math::operator_id _op, const instance& e2 )
-	{
-		// If any of the directives are unpacking, handle it.
-		//
-		if ( e1.op == unpack_dir && e2.op == unpack_dir )
-		{
-			lhs = { *e1.lhs, _op, *e2.lhs }; rhs = { *e1.rhs, _op, *e2.rhs };
-			op = unpack_dir;
-		}
-		else if ( e2.op == unpack_dir )
-		{
-			lhs = { e1, _op, *e2.lhs }; rhs = { e1, _op, *e2.rhs };
-			op = unpack_dir;
-		}
-		else if ( e1.op == unpack_dir )
-		{
-			lhs = { *e1.lhs, _op, e2 }; rhs = { *e1.rhs, _op, e2 };
-			op = unpack_dir;
-		}
-		// Otherwise describe as is.
-		//
-		else
-		{
-			lhs = { e1 };
-			rhs = { e2 };
-			op = _op;
-		}
-	}
+	instance::instance( const instance& e1, math::operator_id op, const instance& e2 ) : lhs( e1 ), rhs( e2 ), op( op ) {}
 
 	// Converts to human-readable format.
 	//
@@ -89,17 +46,14 @@ namespace vtil::symbolic::directive
 		if ( op == math::operator_id::invalid )
 			return id ? id : format::hex( get<true>().value() );
 
-		// Handle custom operators.
+		// Handle expression operators.
 		//
-		if ( op == unreachable_dir ) return "<unreachable>";
-		if ( op == simplify_dir )    return "!" + rhs->to_string();
-		if ( op == unpack_dir )      return "{" + lhs->to_string() + ", " + rhs->to_string() + "}";
-		if ( op == iff_dir )         return lhs->to_string() + " ? " + rhs->to_string();
-		if ( op == or_dir )          return lhs->to_string() + " <=> " + rhs->to_string();
+		if ( auto desc = math::descriptor_of( op ) )
+			return desc->to_string( lhs ? lhs->to_string() : "", rhs->to_string() );
 
-		// Redirect to operator descriptor.
+		// Handle directive operators.
 		//
-		return math::descriptor_of( op )->to_string( lhs ? lhs->to_string() : "", rhs->to_string() );
+		return directive_op_desc{ op }.to_string( lhs ? lhs->to_string() : "", rhs->to_string() );
 	}
 
 	// Simple equivalence check.
@@ -116,26 +70,12 @@ namespace vtil::symbolic::directive
 		if ( op == math::operator_id::invalid )
 			return o.op == math::operator_id::invalid && id == o.id && value.get().value_or( 0 ) == o.value.get().value_or( 0 );
 
-		// Handle custom operators.
+		// Strict operand checking (Commutative rule not applied).
 		//
-		if ( op == simplify_dir )
-			return rhs->equals( *o.rhs );
-		if ( op == unpack_dir || op == iff_dir || op == or_dir )
-			return lhs->equals( *o.lhs ) && rhs->equals( *o.rhs );
-
-		// Resolve operator descriptor, if unary, just compare right hand side.
-		//
-		const math::operator_desc* desc = math::descriptor_of( op );
-		if ( desc->operand_count == 1 )
-			return rhs->equals( *o.rhs );
-
-		// If both sides match, return true.
-		//
-		if ( lhs->equals( *o.lhs ) && rhs->equals( *o.rhs ) )
-			return true;
-
-		// If not, check in reverse as well if commutative and return the final result.
-		//
-		return desc->is_commutative && rhs->equals( *o.lhs ) && lhs->equals( *o.rhs );
+		if ( !rhs ) return !o.rhs;
+		else if ( !o.rhs || !rhs->equals( *o.rhs ) ) return false;
+		if ( !lhs ) return !o.lhs;
+		else if ( !o.lhs || !lhs->equals( *o.lhs ) ) return false;
+		return true;
 	}
 };

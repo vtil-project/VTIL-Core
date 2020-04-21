@@ -38,17 +38,13 @@ namespace vtil::math { template<> struct resolve_alias<shared_reference<symbolic
 
 namespace vtil::symbolic
 {
-	// Auto simplify state.
-	//
-	static constexpr bool auto_simplify = true;
-
 	// Expression descriptor.
 	//
 	struct expression : math::operable<expression>
 	{
 		using reference = shared_reference<expression>;
 
-		// If symbolic variable, the unique identifier that it maps to,
+		// If symbolic variable, the unique identifier that it maps to.
 		//
 		unique_identifier uid = {};
 
@@ -58,33 +54,25 @@ namespace vtil::symbolic
 		reference lhs = {};
 		reference rhs = {};
 
-		// Bit vector
+		// An arbitrarily defined complexity value that is used as an inverse reward function in simplification.
 		//
-		math::bit_vector result;
+		double complexity = 0;
 
-		struct state_desc
-		{
-			// Boolean to determine whether this is a full expression tree or just a variable.
-			//
-			bool is_variable = false;
+		// Depth of the current expression.
+		// - If constant or symbolic variable, = 0
+		// - Otherwise                         = max(operands...) + 1
+		//
+		size_t depth = 0;
 
-			// Arbitrary complexity value that is used as an inverse reward function for simplification, updated by ::initialize(...).
-			//
-			size_t complexity = 0;
+		// Hash of the expression used by the simplifier cache.
+		//
+		size_t hash;
 
-			// Depth of the current expression, updated by ::initialize(...).
-			//
-			size_t depth = 0;
-
-			// Hash of the expression used by the simplifier cache, updated by ::initialize(...).
-			//
-			size_t hash;
-
-			// Whether expression was simplified or not and whether it was successful.
-			//
-			bool simplified = false;
-			bool simplify_success = false;
-		} state;
+		// Whether expression passed the simplifier already or not, note that this is a hint and there may 
+		// be cases where it already has passed it and this flag was not set. Albeit those cases will most 
+		// likely not cause performance issues due to the caching system.
+		//
+		bool simplify_hint = false;
 
 		// Default constructor and copy/move.
 		//
@@ -97,20 +85,43 @@ namespace vtil::symbolic
 		// Construct from constants.
 		//
 		template<typename T = uint64_t, std::enable_if_t<std::is_integral_v<T>, int> = 0>
-		expression( T value, uint8_t bit_count = sizeof( T ) * 8 ) : operable( value, bit_count ) { update( false ); }
+		expression( T value, uint8_t bit_count = sizeof( T ) * 8 ) : operable( value, bit_count ) { update( true ); }
 
 		// Constructor for symbolic variables.
 		//
-		expression( const unique_identifier& uid, uint8_t bit_count ) : operable(), uid( uid ) { operable::bit_count = bit_count; state.is_variable = true; update( false ); }
+		expression( const unique_identifier& uid, uint8_t bit_count ) : operable(), uid( uid ) { value = math::bit_vector( bit_count ); update( true ); }
 
 		// Constructor for expressions.
 		//
-		expression( math::operator_id op, const reference& rhs ) : operable(), op( op ), rhs( rhs ) { update( auto_simplify ); }
-		expression( math::operator_id op, reference&& rhs ) : operable(), op( op ), rhs( std::move( rhs ) ) { update( auto_simplify ); }
-		expression( const reference& lhs, math::operator_id op, const reference& rhs ) : operable(), op( op ), lhs( lhs ), rhs( rhs ) { update( auto_simplify ); }
-		expression( reference&& lhs, math::operator_id op, const reference& rhs) : operable(), op( op ), lhs( std::move( lhs ) ), rhs( rhs ) { update( auto_simplify ); }
-		expression( const reference& lhs, math::operator_id op, reference&& rhs ) : operable(), op( op ), lhs( lhs ), rhs( std::move( rhs ) ) { update( auto_simplify ); }
-		expression( reference&& lhs, math::operator_id op, reference&& rhs ) : operable(), op( op ), lhs( std::move( lhs ) ), rhs( std::move( rhs ) ) { update( auto_simplify ); }
+		expression( math::operator_id op, const reference& rhs ) : operable(), op( op ), rhs( rhs ) { update( true ); }
+		expression( math::operator_id op, reference&& rhs ) : operable(), op( op ), rhs( std::move( rhs ) ) { update( true ); }
+		expression( const reference& lhs, math::operator_id op, const reference& rhs ) : operable(), op( op ), lhs( lhs ), rhs( rhs ) { update( true ); }
+		expression( reference&& lhs, math::operator_id op, const reference& rhs) : operable(), op( op ), lhs( std::move( lhs ) ), rhs( rhs ) { update( true ); }
+		expression( const reference& lhs, math::operator_id op, reference&& rhs ) : operable(), op( op ), lhs( lhs ), rhs( std::move( rhs ) ) { update( true ); }
+		expression( reference&& lhs, math::operator_id op, reference&& rhs ) : operable(), op( op ), lhs( std::move( lhs ) ), rhs( std::move( rhs ) ) { update( true ); }
+
+		// Alternate "constructors" for internal use for the sake of having control over auto-simplification of user-reaching expressions.
+		//
+		template<typename A>
+		static expression make( math::operator_id op, A&& op1 )
+		{
+			expression exp = {};
+			exp.op = op;
+			exp.rhs = std::forward<A>( op1 );
+			exp.update( false );
+			return exp;
+		}
+
+		template<typename A, typename B>
+		static expression make( A&& op1, math::operator_id op, B&& op2 )
+		{
+			expression exp = {};
+			exp.op = op;
+			exp.lhs = std::forward<A>( op1 );
+			exp.rhs = std::forward<B>( op2 );
+			exp.update( false );
+			return exp;
+		}
 
 		// Wrapper around math::descriptor_of()
 		//
@@ -118,12 +129,12 @@ namespace vtil::symbolic
 
 		// Helpers to determine the type of the expression.
 		//
-		bool is_constant() const { return is_known; }
-		bool is_variable() const { return state.is_variable; }
-		bool is_expression() const { return !is_variable() && op != math::operator_id::invalid; }
-		bool is_unary() const { return is_expression() && get_op_desc()->operand_count == 1; }
-		bool is_binary() const { return is_expression() && get_op_desc()->operand_count == 2; }
-		bool is_valid() const { return is_expression() || ( uid || is_constant()); }
+		inline bool is_variable() const { return uid; }
+		inline bool is_expression() const { return op != math::operator_id::invalid; }
+		inline bool is_unary() const { return is_expression() && get_op_desc()->operand_count == 1; }
+		inline bool is_binary() const { return is_expression() && get_op_desc()->operand_count == 2; }
+		inline bool is_valid() const { return is_expression() || is_variable() || is_constant(); }
+		inline operator bool() const { return is_valid(); }
 
 		// Returns the number of constants used in the expression.
 		//
@@ -137,7 +148,7 @@ namespace vtil::symbolic
 		//
 		size_t count_unique_variables( std::set<unique_identifier>* visited = nullptr ) const;
 
-		// Initializes the expression state and simplifies itself if requested so.
+		// Updates the expression state.
 		//
 		void update( bool auto_simplify );
 
@@ -145,9 +156,14 @@ namespace vtil::symbolic
 		//
 		std::string to_string() const;
 
-		// Simplifies the expression.
+		// Resizes the expression, if not constant, expression::resize will try to propagate 
+		// the operation as deep as possible.
 		//
-		expression& simplify( bool deep = false, bool discard = false );
+		void resize( uint8_t new_size, bool signed_cast = false );
+
+		// Simplifies and optionally prettifies the expression.
+		//
+		expression& simplify( bool prettify = false );
 
 		// Returns whether the given expression is equivalent to the current instance.
 		// - Note: basic comparison opeators should not be overloaded since expression is of type
@@ -175,9 +191,9 @@ namespace vtil::symbolic
 
 		// Implement comparison operators.
 		//
-		bool operator==( const boxed_expression& o ) const { return equals( o ); }
-		bool operator!=( const boxed_expression& o ) const { return !equals( o ); }
-		bool operator<( const boxed_expression& o ) const { return state.hash < o.state.hash; }
+		inline bool operator==( const boxed_expression& o ) const { return equals( o ); }
+		inline bool operator!=( const boxed_expression& o ) const { return !equals( o ); }
+		inline bool operator<( const boxed_expression& o ) const { return hash < o.hash; }
 	};
 };
 
@@ -185,8 +201,6 @@ namespace vtil::symbolic
 //
 namespace std
 {
-	template <> struct hash<vtil::symbolic::boxed_expression>
-	{ inline size_t operator()( const vtil::symbolic::boxed_expression& exp ) const { return exp.state.hash; } };
-	template <> struct hash<vtil::symbolic::boxed_expression::reference>
-	{ inline size_t operator()( const vtil::symbolic::boxed_expression::reference& ref ) const { return ref->state.hash; } };
+	template <> struct hash<vtil::symbolic::boxed_expression> { inline size_t operator()( const vtil::symbolic::boxed_expression& exp ) const { return exp.hash; } };
+	template <> struct hash<vtil::symbolic::boxed_expression::reference> { inline size_t operator()( const vtil::symbolic::boxed_expression::reference& ref ) const { return ref->hash; } };
 };

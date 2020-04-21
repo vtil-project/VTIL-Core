@@ -32,38 +32,114 @@
 
 namespace vtil::symbolic::directive
 {
-    // Custom operators to be used within simplifier directives.
-    //
-    // - !x, indicates that x must be simplified for this directive to be valid.
-    static constexpr math::operator_id simplify_dir = ( math::operator_id )( ( size_t ) math::operator_id::max + 1 );
-    //
-    // - __unpack(a,b), picks a if valid, otherwise b. Only one unpack decision can be made per directive
-    //   and the second unpack will use the same index as the previous one.
-    static constexpr math::operator_id unpack_dir = ( math::operator_id )( ( size_t ) simplify_dir + 1 );
-    //
-    // - __iff(a,b), returns b if a holds, otherwise invalid.
-    static constexpr math::operator_id iff_dir = ( math::operator_id )( ( size_t ) unpack_dir + 1 );
-    //
-    // - __or(a,b), picks a if valid, otherwise b. Similar to __unpack in that sense, but does not
-    //   propagate the chosen index.
-    static constexpr math::operator_id or_dir = ( math::operator_id )( ( size_t ) iff_dir + 1 );
-    //
-    // - __unreachable(), indicates that this directive should never be matched and if it is,
-    //   simplifier logic has a bug which should be fixed, acts as a debugging/validation tool.
-    static constexpr math::operator_id unreachable_dir = ( math::operator_id )( ( size_t ) or_dir + 1 );
-
-    // Matching types of the variables:
+    // Directive variables with mathching constraints:
     //
     enum matching_type
     {
+        // None.
         match_any,
+
+        // Must be a variable.
         match_variable,
+        
+        // Must be a constant.
         match_constant,
+        
+        // Must be a full-expression.
         match_expression,
+        
+        // Must be anything but a full-expression.
         match_variable_or_constant,
     };
 
-    // Used to describe a simplifier directive.
+    // Directive operators
+    // - Using a struct tagged enum instead of enum class to let's us define 
+    //   custom cast operators, constructors and member functions by allowing
+    //   by allowing implicit conversion between them.
+    //
+    //
+    struct directive_op_desc
+    {
+        static constexpr uint8_t begin_id = 1 + ( uint8_t ) math::operator_id::max;
+        enum _tag
+        {
+        min,
+            // Simplification Controller
+            // -------------------------
+            // - !x, indicates that x must be simplified for this directive to be valid.
+            simplify,
+            // - s(x), indicates that x should be passed through simplifier.
+            try_simplify,
+
+            // Conditional
+            // -----------
+            // - __iff(a,b), returns b if a holds, otherwise invalid.
+            iff,
+            // - __or(a,b), picks a if valid, otherwise b. Similar to __unpack in that sense, but does not
+            //   propagate the chosen index.
+            or_also,
+
+            // State-Accessor.
+            // ---------------
+            // - __mask_unk(x), will generate the mask for unknown bits.
+            mask_unknown,
+            // - __mask_unk(x), will generate the mask for known one bits.
+            mask_one,
+            // - __mask_unk(x), will generate the mask for known zero bits.
+            mask_zero,
+
+            // Evaluation-time Message
+            // -----------------------
+            // - __unreachable(), indicates that this directive should never be matched and if it is,
+            //   simplifier logic has a bug which should be fixed, acts as a debugging/validation tool.
+            unreachable,
+            // - __warning(), indicates that this directive should generate a warning.
+            warning,
+        max,
+        };
+        const _tag value = min;
+
+        // Default constructor / move / copy.
+        //
+        directive_op_desc() = default;
+        directive_op_desc( directive_op_desc&& ) = default;
+        directive_op_desc( const directive_op_desc& ) = default;
+        directive_op_desc& operator=( directive_op_desc&& ) = default;
+        directive_op_desc& operator=( const directive_op_desc& ) = default;
+
+        // Construct from tagged enum and math::operator_id.
+        //
+        constexpr directive_op_desc( _tag i ) : value( i ) {}
+        directive_op_desc( math::operator_id op ) : value( _tag( ( uint8_t ) op - begin_id ) ) { fassert( min < value && value < max ); }
+
+        // Conversion back to math::operator_id and integer.
+        //
+        constexpr operator uint8_t() const { return ( uint8_t ) value + begin_id; }
+        constexpr operator math::operator_id() const { return math::operator_id( ( uint8_t ) value + begin_id ); }
+
+        // Creates a string representation based on the operands passed.
+        //
+        std::string to_string( const std::string& lhs, const std::string& rhs ) const
+        {
+            switch ( value )
+            {
+                case simplify:      return "{!" + rhs + "}";
+                case try_simplify:  return "{try!" + rhs + "}";
+                case iff:           return "{" + lhs + " ? " + rhs + "}";
+                case or_also:       return "{" + lhs + " <=> " + rhs + "}";
+                case mask_unknown:  return "{mask=? " + rhs + "}";
+                case mask_one:      return "{mask=1 " + rhs + "}";
+                case mask_zero:     return "{mask=0 " + rhs + "}";
+                case unreachable:   return "unreachable()";
+                case warning:       return "{warning(), " + rhs + "}";
+                default:            unreachable();
+            }
+        }
+    };
+    template<directive_op_desc::_tag t>
+    static constexpr directive_op_desc tagged = t;
+
+    // Operable directive instance, used to describe a simplifier directive.
     //
     struct instance : math::operable<instance>
     {
@@ -112,14 +188,6 @@ namespace vtil::symbolic::directive
         bool equals( const instance& o ) const;
     };
 
-    // Implement custom operators.
-    //
-    static instance operator!( const instance& a ) { return { simplify_dir, a }; }
-    static instance __unpack( const instance& a, const instance& b ) { return { a, unpack_dir, b }; }
-    static instance __iff( const instance& a, const instance& b ) { return { a, iff_dir, b }; }
-    static instance __or( const instance& a, const instance& b ) { return { a, or_dir, b }; }
-    static instance __unreachable() { return { 0ull, unreachable_dir, 0ull }; }
-
     /*
        The encoding below must be used when saving this file:
          - Unicode (UTF-8 without signature) - Codepage 65001
@@ -152,4 +220,24 @@ namespace vtil::symbolic::directive
     static const instance U = { "Σ", match_constant };
     static const instance X = { "Θ", match_variable_or_constant };
     static const instance Q = { "Ω", match_expression };
+
+    // Operable-like directive operators.
+    //
+    static instance s( const instance& a ) { return { tagged<directive_op_desc::try_simplify>, a }; }
+    static instance operator!( const instance& a ) { return { tagged<directive_op_desc::simplify>, a }; }
+    static instance __iff( const instance& a, const instance& b ) { return { a, tagged<directive_op_desc::iff>, b }; }
+    static instance __or( const instance& a, const instance& b ) { return { a, tagged<directive_op_desc::or_also>, b }; }
+    static instance __unreachable() { return { 0ull, tagged<directive_op_desc::unreachable>, 0ull }; }
+    static instance __mask_unk( const instance& a ) { return { tagged<directive_op_desc::mask_unknown>, a }; }
+    static instance __mask_knw1( const instance& a ) { return { tagged<directive_op_desc::mask_one>, a }; }
+    static instance __mask_knw0( const instance& a ) { return { tagged<directive_op_desc::mask_zero>, a }; }
 };
+
+// Implement comparison operators between [directive::directive_op_desc] x [math::operator_id].
+//
+static bool operator==( vtil::symbolic::directive::directive_op_desc a, vtil::math::operator_id b ) { return uint8_t( b ) > vtil::symbolic::directive::directive_op_desc::begin_id && uint8_t( a ) == uint8_t( b ); }
+static bool operator==( vtil::math::operator_id a, vtil::symbolic::directive::directive_op_desc b ) { return uint8_t( a ) > vtil::symbolic::directive::directive_op_desc::begin_id && uint8_t( b ) == uint8_t( a ); }
+static bool operator==( vtil::symbolic::directive::directive_op_desc a, vtil::symbolic::directive::directive_op_desc b ) { return a.value == b.value; }
+static bool operator!=( vtil::symbolic::directive::directive_op_desc a, vtil::math::operator_id b ) { return uint8_t( b ) <= vtil::symbolic::directive::directive_op_desc::begin_id && uint8_t( a ) != uint8_t( b ); }
+static bool operator!=( vtil::math::operator_id a, vtil::symbolic::directive::directive_op_desc b ) { return uint8_t( a ) <= vtil::symbolic::directive::directive_op_desc::begin_id && uint8_t( b ) != uint8_t( a ); }
+static bool operator!=( vtil::symbolic::directive::directive_op_desc a, vtil::symbolic::directive::directive_op_desc b ) { return a.value != b.value; }

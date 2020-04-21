@@ -26,8 +26,11 @@
 // POSSIBILITY OF SUCH DAMAGE.        
 //
 #pragma once
+#include <vtil/memory>
+
 namespace vtil::symbolic
 {
 	struct expression;
-	bool simplify_expression( expression& exp );
+	bool simplify_expression( shared_reference<expression>& exp, bool pretty = false );
+	bool prettify_expression( shared_reference<expression>& exp );
 };

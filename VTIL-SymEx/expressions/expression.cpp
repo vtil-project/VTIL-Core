@@ -31,8 +31,10 @@
 
 namespace vtil::symbolic
 {
+	// FNV hash is used for hashing of the expressions.
+	//
 	static constexpr uint64_t fnv_initial = 0xcbf29ce484222325;
-	
+
 	template<typename T>
 	static inline void fnv_append( size_t* hash, const T& ref )
 	{
@@ -71,96 +73,364 @@ namespace vtil::symbolic
 			return visited->find( uid ) == visited->end();
 
 		return ( lhs ? lhs->count_unique_variables( visited ) : 0 ) +
-			( rhs ? rhs->count_unique_variables( visited ) : 0 );
+			   ( rhs ? rhs->count_unique_variables( visited ) : 0 );
 	}
 
-	// Updates the expression state and simplifies itself if requested so.
+	// Resizes the expression, if not constant, expression::resize will try to propagate 
+	// the operation as deep as possible.
+	//
+	void expression::resize( uint8_t new_size, bool signed_cast )
+	{
+		// If requested size is equal, skip.
+		//
+		if ( value.size() == new_size ) return;
+
+		// If boolean requested, signed cast is not valid.
+		//
+		if ( new_size == 1 ) signed_cast = false;
+
+		switch ( op )
+		{
+			// If constant resize the value, if variable apply the operation as is.
+			// 
+			case math::operator_id::invalid:
+				if ( is_constant() )
+				{
+					value = value.resize( new_size, signed_cast );
+					update( false );
+				}
+				else
+				{
+					if ( signed_cast )
+						*this = __cast( *this, new_size ).simplify();
+					else
+						*this = __ucast( *this, new_size ).simplify();
+				}
+				break;
+
+			// If basic unsigned operation, unsigned cast both sides if requested type is also unsigned.
+			//
+			case math::operator_id::bitwise_and:
+			case math::operator_id::bitwise_or:
+			case math::operator_id::bitwise_xor:
+			case math::operator_id::bitwise_not:
+			case math::operator_id::umultiply:
+			case math::operator_id::udivide:
+			case math::operator_id::uremainder:
+			case math::operator_id::umax_value:
+			case math::operator_id::umin_value:
+				if ( !signed_cast )
+				{
+					if ( lhs && lhs->size() != new_size ) ( +lhs )->resize( new_size, false );
+					if ( rhs->size() != new_size ) ( +rhs )->resize( new_size, false );
+					update( true );
+				}
+				else
+				{
+					*this = __cast( *this, new_size ).simplify();
+				}
+				break;
+				
+			// If basic signed operation, signed cast both sides if requested type is also signed.
+			//
+			case math::operator_id::multiply:
+			case math::operator_id::divide:
+			case math::operator_id::remainder:
+			case math::operator_id::add:
+			case math::operator_id::negate:
+			case math::operator_id::substract:
+			case math::operator_id::max_value:
+			case math::operator_id::min_value:
+				if ( signed_cast )
+				{
+					if ( lhs && lhs->size() != new_size ) ( +lhs )->resize( new_size, true );
+					if ( rhs->size() != new_size ) ( +rhs )->resize( new_size, true );
+					update( true );
+				}
+				else
+				{
+					*this = __ucast( *this, new_size ).simplify();
+				}
+				break;
+
+			// If casting the result of an unsigned cast, just change the parameter.
+			//
+			case math::operator_id::ucast:
+				// If it was shrinked:
+				//
+				if ( lhs->size() > rhs->get().value() )
+				{
+					*this = __ucast( ( *this & expression{ math::mask( rhs->get().value() ), lhs->size() } ).simplify(), new_size ).simplify();
+					break;
+				}
+				// If sizes match, escape cast operator.
+				//
+				else if ( lhs->size() == new_size )
+				{
+					*this = *lhs;
+				}
+				// Otherwise upgrade the parameter.
+				//
+				else
+				{
+					rhs = new_size;
+					update( true );
+				}
+				break;
+
+			// If casting the result of a signed cast, change the parameter if 
+			// requested cast is also a signed.
+			//
+			case math::operator_id::cast:
+				// If it was shrinked:
+				//
+				if ( lhs->size() > rhs->get().value() )
+				{
+					*this = __cast( ( *this & expression{ math::mask( rhs->get().value() ), lhs->size() } ).simplify(), new_size ).simplify();
+					break;
+				}
+				// If sizes match, escape cast operator.
+				//
+				else if ( lhs->size() == new_size )
+				{
+					*this = *lhs;
+				}
+				// Otherwise, if both are signed upgrade the parameter.
+				//
+				else if ( signed_cast )
+				{
+					rhs = new_size;
+					update( true );
+				}
+				// Else, convert to unsigned cast since top bits will be zero.
+				//
+				else
+				{
+					*this = __ucast( *this, new_size ).simplify();
+				}
+				break;
+
+			// Redirect to conditional output since zx 0 == sx 0.
+			//
+			case math::operator_id::most_sig_bit:
+			case math::operator_id::least_sig_bit:
+			case math::operator_id::value_if:
+				( +rhs )->resize( new_size, false );
+				update( true );
+				break;
+
+			// Boolean operators will ignore resizing requests.
+			//
+			case math::operator_id::bit_test:
+			case math::operator_id::greater:
+			case math::operator_id::greater_eq:
+			case math::operator_id::equal:
+			case math::operator_id::not_equal:
+			case math::operator_id::less_eq:
+			case math::operator_id::less:
+			case math::operator_id::ugreater:
+			case math::operator_id::ugreater_eq:
+			case math::operator_id::uless_eq:
+			case math::operator_id::uless:
+				hash += new_size - value.size();
+				value.resize( new_size, false );
+				break;
+
+			// If no handler found:
+			//
+			default:
+				if ( signed_cast )
+					*this = __cast( *this, new_size ).simplify();
+				else
+					*this = __ucast( *this, new_size ).simplify();
+				break;
+		}
+	}
+
+
+	// Updates the expression state.
 	//
 	void expression::update( bool auto_simplify )
 	{
-		// If transformation:
-		//
-		if ( is_expression() )
-		{
-			// Partially evaluate the function.
-			//
-			result = math::evaluate_partial( op, lhs ? lhs->result : math::bit_vector{ 0 }, rhs->result );
-			
-			// If no unknown bits and auto simplification is requested:
-			//
-			if ( result.is_known() && auto_simplify )
-			{
-				// Replace with constant.
-				//
-				logger::log<logger::CON_CYN>( "Simplified(%d, %d => %d) %s => %s\n", 
-											  lhs ? lhs->result.size() : 0,
-											  rhs ? rhs->result.size() : 0,
-											  result.size(),
-											  to_string(), format::hex( math::__sx64( result.known_one(), result.size() ) ) );
-				*this = expression( result.known_one(), result.size() );
-				state.simplified = true;
-				state.simplify_success = true;
-				return;
-			}
-
-			// Bit count is equal to the result's bit count.
-			//
-			bit_count = result.size();
-		}
-		// If constant/variable, simply represent as bit vector.
-		//
-		else
-		{
-			result = is_constant() 
-				? math::bit_vector( u64, bit_count ) 
-				: math::bit_vector( bit_count );
-		}
-
-		// If variable / constant:
+		// If it's not a full expression tree:
 		//
 		if ( !is_expression() )
 		{
-			state.complexity = is_constant() ? 1 : 2;
-			state.depth = 1;
-			state.hash = fnv_initial + ( is_constant() ? u64 : uid.hash );
-			fnv_append( &state.hash, is_constant() );
-			fnv_append( &state.hash, bit_count );
-			state.simplified = true;
-		}
-		// If transformation of unary operator:
-		//
-		else if ( is_unary() )
-		{
-			state.is_variable = false;
-			state.complexity = rhs->state.complexity << 1;
-			state.depth = rhs->state.depth + 1;
-			state.hash = rhs->state.hash;
-			fnv_append( &state.hash, state.depth + ( uint8_t ) op );
-
-			// Auto simplify if requested so.
+			// Reset depth.
 			//
-			if ( auto_simplify ) simplify();
-		}
-		// If transformation of binary operator:
-		//
-		else if ( is_binary() )
-		{
-			state.is_variable = false;
-			state.complexity = ( lhs->state.complexity + rhs->state.complexity ) << 1;
-			state.depth = std::max( lhs->state.depth, rhs->state.depth ) + 1;
-			if ( get_op_desc()->is_commutative )
+			depth = 0;
+
+			// If constant value:
+			//
+			if ( is_constant() )
 			{
-				state.hash = std::max( lhs->state.hash, rhs->state.hash );
-				fnv_append( &state.hash, rhs->state.hash ^ lhs->state.hash );
+				// Punish for each set bit of the absolute value, in a exponentially decreasing way.
+				//
+				complexity = sqrt( 1 + __popcnt64( abs( value.get<true>().value() ) ) );
+
+				// If value is 64-bits wide, hash is equal to the mutated value itself 
+				// since its not wise to hash a 64-bit integer, when the hash 
+				// itself is 64-bits, and hash[bit_count, value] otherwise.
+				//
+				if ( value.size() == 64 )
+				{
+					hash = fnv_initial + value.known_one();
+				}
+				else
+				{
+					hash = fnv_initial;
+					fnv_append( &hash, value.size() );
+					fnv_append( &hash, value.known_one() );
+				}
+				
+
 			}
+			// If symbolic variable
+			//
 			else
 			{
-				state.hash = rhs->state.hash;
-				fnv_append( &state.hash, lhs->state.hash );
-			}
-			fnv_append( &state.hash, state.depth + ( uint8_t ) op );
+				fassert( is_variable() );
 
-			// Auto simplify if requested so.
+				// Assign the constant complexity value.
+				//
+				complexity = 128;
+
+				// Hash is inherited with the addition of the size.
+				//
+				hash = uid.hash + value.size();
+			}
+
+			// Set simplification state.
+			//
+			simplify_hint = true;
+		}
+		else
+		{
+			fassert( is_expression() );
+
+			// If unary operator:
+			//
+			const math::operator_desc* desc = get_op_desc();
+			if ( desc->operand_count == 1 )
+			{
+				// Partially evaluate the expression.
+				//
+				value = math::evaluate_partial( op, {}, rhs->value );
+
+				// Calculate base complexity and the depth.
+				//
+				depth = rhs->depth + 1;
+				complexity = rhs->complexity * 2;
+				fassert( complexity != 0 );
+				
+				// Inherit the RHS hash and...
+				//
+				hash = fnv_initial;
+				fnv_append( &hash, rhs->hash );
+			}
+			// If binary operator:
+			//
+			else
+			{
+				fassert( desc->operand_count == 2 );
+
+				// If operation is __cast or __ucast, right hand side must always be a constant, propagate 
+				// left hand side value and resize as requested.
+				//
+				if ( op == math::operator_id::ucast || op == math::operator_id::cast )
+				{
+					value = lhs->value;
+					value.resize( rhs->get<uint8_t>().value(), op == math::operator_id::cast );
+				}
+				// Partially evaluate the expression if not resize.
+				//
+				else
+				{
+					value = math::evaluate_partial( op, lhs->value, rhs->value );
+				}
+
+				// Handle size mismatches.
+				//
+				switch ( op )
+				{
+					case math::operator_id::bitwise_and:
+					case math::operator_id::bitwise_or:
+					case math::operator_id::bitwise_xor:
+					case math::operator_id::umultiply_high:
+					case math::operator_id::umultiply:
+					case math::operator_id::udivide:
+					case math::operator_id::uremainder:
+					case math::operator_id::umax_value:
+					case math::operator_id::umin_value:
+						if ( lhs->size() != value.size() ) ( +lhs )->resize( value.size(), false );
+						if ( rhs->size() != value.size() ) ( +rhs )->resize( value.size(), false );
+						break;
+					case math::operator_id::multiply_high:
+					case math::operator_id::multiply:
+					case math::operator_id::divide:
+					case math::operator_id::remainder:
+					case math::operator_id::add:
+					case math::operator_id::substract:
+					case math::operator_id::max_value:
+					case math::operator_id::min_value:
+						if ( lhs->size() != value.size() ) ( +lhs )->resize( value.size(), true );
+						if ( rhs->size() != value.size() ) ( +rhs )->resize( value.size(), true );
+					default:
+						break;
+				}
+
+				// Calculate base complexity and the depth.
+				//
+				depth = std::max( lhs->depth, rhs->depth ) + 1;
+				complexity = ( lhs->complexity + rhs->complexity ) * 2;
+				fassert( complexity != 0 );
+
+				// If operator is commutative, calculate hash in a way that 
+				// the positions of operands do not matter.
+				//
+				if ( desc->is_commutative )
+				{
+					hash = fnv_initial;
+					fnv_append( &hash, std::max( lhs->hash, rhs->hash ) );
+					fnv_append( &hash, rhs->hash ^ lhs->hash );
+				}
+				// Else inherit the RHS hash and append LHS hash.
+				//
+				else
+				{
+					hash = fnv_initial;
+					fnv_append( &hash, lhs->hash );
+					fnv_append( &hash, rhs->hash );
+				}
+			}
+
+			// Append depth and operator information to the hash.
+			//
+			fnv_append( &hash, op );
+			fnv_append( &hash, depth );
+
+			// Punish for mixing bitwise and arithmetic operators.
+			//
+			for ( auto& operand : { &lhs, &rhs } )
+			{
+				if ( *operand && operand->reference->is_expression() )
+				{
+					// Bitwise hint of the descriptor contains +1 or -1 if the operator
+					// is strictly bitwise or arithmetic respectively and 0 otherwise.
+					// This works since mulitplication between them will only be negative
+					// if the signs mismatch thus setting the sign bit, 7th.
+					//
+					int8_t xop_hint = operand->reference->get_op_desc()->hint_bitwise * desc->hint_bitwise;
+					complexity *= 1 + ( uint8_t( xop_hint ) >> 7 );
+					fassert( complexity != 0 );
+				}
+			}
+			
+			// Reset simplification state since expression was updated.
+			//
+			simplify_hint = false;
+		
+			// If auto simplification is enabled, invoke it.
 			//
 			if ( auto_simplify ) simplify();
 		}
@@ -168,28 +438,31 @@ namespace vtil::symbolic
 
 	// Simplifies the expression.
 	//
-	expression& expression::simplify( bool deep, bool discard )
+	expression& expression::simplify( bool prettify )
 	{
-		// If discard is set, reset simplification status.
+		// By changing the prototype of simplify_expression from f(expression&) to
+		// f(expression::reference&), we gain an important performance benefit that is
+		// a significantly less amount of copies made. Cache will also store references 
+		// this way and additionally we avoid copying where an operand is being simplified
+		// as that can be replaced by a simple swap of shared references.
 		//
-		if ( discard ) state.simplified = false;
+		auto ref = make_local_reference( this );
+		simplify_expression( ref, prettify );
 
-		// If already simplified or variable, return.
+		// Only thing that we should be careful about is the case expression->simplify(),
+		// which is problematic since it is not actually a shared reference, which we can
+		// carefully solve with the local reference system (which will assert that, no 
+		// references to it was stored on destructor for us) and making sure to copy data
+		// if the pointer was replaced.
 		//
-		if ( is_variable() || state.simplified ) return *this;
+		if ( &*ref != this ) 
+			operator=( *ref );
+		else
+			fassert( ref.reference.use_count() == 1 );
 
-		// If deep, simplify each operand first.
+		// Set the simplifier hint to indicate skipping further calls to simplify_expression.
 		//
-		if ( deep )
-		{
-			if ( lhs ) ( +lhs )->simplify( true, discard );
-			if ( rhs ) ( +rhs )->simplify( true, discard );
-		}
-
-		// Invoke simplify_expression, save success flag and return.
-		//
-		state.simplify_success = simplify_expression( *this );
-		state.simplified = true;
+		simplify_hint = true;
 		return *this;
 	}
 
@@ -199,12 +472,12 @@ namespace vtil::symbolic
 	{
 		// If hash mismatch, return false without checking anything.
 		//
-		if ( state.hash != other.state.hash )
+		if ( hash != other.hash )
 			return false;
 
 		// If operator or the sizes are not the same, return false.
 		//
-		if ( op != other.op || bit_count != other.bit_count )
+		if ( op != other.op || size() != other.size() )
 			return false;
 
 		// If variable, check if the identifiers match.
@@ -215,7 +488,7 @@ namespace vtil::symbolic
 		// If constant, check if the constants match.
 		//
 		if ( is_constant() )
-			return other.is_constant() && u64 == other.u64;
+			return other.is_constant() && value == other.value;
 
 		// Resolve operator descriptor, if unary, just compare right hand side.
 		//
@@ -240,15 +513,16 @@ namespace vtil::symbolic
 	//
 	std::string expression::to_string() const
 	{
+		// Redirect to operator descriptor.
+		//
+		if ( is_expression() )
+			return get_op_desc()->to_string( lhs ? lhs->to_string() : "", rhs->to_string() );
+
 		// Handle constants, invalids and variables.
 		// -- TODO: Fix variable case, small hack for now
 		//
-		if ( is_constant() )      return format::hex( i64 );
-		if ( !is_valid() )        return "NULL";
-		if ( is_variable() )      return format::str( "%s:%d", ( const char* ) uid.ptr, bit_count );
-
-		// Redirect to operator descriptor.
-		//
-		return get_op_desc()->to_string( lhs ? lhs->to_string() : "", rhs->to_string() );
+		if ( is_constant() )      return format::hex( value.get<true>().value() );
+		if ( is_variable() )      return format::str( "%s:%d", ( const char* ) uid.ptr, size() );
+		return "NULL";
 	}
 };
