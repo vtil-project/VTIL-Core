@@ -178,11 +178,11 @@ namespace vtil::math
 
         // Extends or shrinks the the vector.
         //
-        bit_vector& resize( uint8_t new_size, bool sign_extend = false )
+        bit_vector& resize( uint8_t new_size, bool signed_cast = false )
         {
             fassert( 0 < new_size && new_size <= 64 );
 
-            if( sign_extend && new_size > bit_count )
+            if( signed_cast && new_size > bit_count )
             {
                 bit_state sign_bit = at( bit_count - 1 );
                 bool sign_bit_unk = at( bit_count - 1 ) == bit_state::unknown;
