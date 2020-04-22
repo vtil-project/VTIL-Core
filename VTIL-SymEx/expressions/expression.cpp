@@ -262,13 +262,10 @@ namespace vtil::symbolic
 			//
 			if ( is_constant() )
 			{
-				// Punish for each set bit of the absolute value in min_popcnt{v, -v, ~v}, in a exponentially decreasing way.
+				// Punish for each set bit in [min_{popcnt x}(v, |v|)], in an exponentially decreasing rate.
 				//
-				uint64_t cval = *value.get();
-				bitcnt_t cx_tmp =  math::popcnt( cval );
-				cx_tmp = std::min( math::popcnt( -cval ), cx_tmp );
-				cx_tmp = std::min( math::popcnt( ~cval ), cx_tmp );
-				complexity = sqrt( 1 + cx_tmp );
+				int64_t cval = *value.get<true>();
+				complexity = sqrt( 1 + std::min( math::popcnt( cval ), math::popcnt( abs( cval ) ) ) );
 
 				// Hash begins as initial FNV value incremented by the constant, after which we append the notted constant and its size.
 				//
