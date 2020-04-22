@@ -85,11 +85,11 @@ namespace vtil::symbolic
 		// Construct from constants.
 		//
 		template<typename T = uint64_t, std::enable_if_t<std::is_integral_v<T>, int> = 0>
-		expression( T value, uint8_t bit_count = sizeof( T ) * 8 ) : operable( value, bit_count ) { update( true ); }
+		expression( T value, bitcnt_t bit_count = sizeof( T ) * 8 ) : operable( value, bit_count ) { update( true ); }
 
 		// Constructor for symbolic variables.
 		//
-		expression( const unique_identifier& uid, uint8_t bit_count ) : operable(), uid( uid ) { value = math::bit_vector( bit_count ); update( true ); }
+		expression( const unique_identifier& uid, bitcnt_t bit_count ) : operable(), uid( uid ) { value = math::bit_vector( bit_count ); update( true ); }
 
 		// Constructor for expressions.
 		//

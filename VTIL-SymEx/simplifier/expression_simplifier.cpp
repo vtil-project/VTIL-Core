@@ -295,8 +295,8 @@ namespace vtil::symbolic
 		
 		// TODO: Not too sure.
 		// Heuristic to determine if expression can be simplified any further:
-		//uint64_t res_unk = __popcnt64( exp->unknown_mask() );
-		//uint64_t in_unk = __popcnt64( ( exp->lhs ? exp->lhs->unknown_mask() : 0 ) | exp->rhs->unknown_mask() );
+		//bitcnt_t res_unk = math::popcnt( exp->unknown_mask() );
+		//bitcnt_t in_unk = math::popcnt( ( exp->lhs ? exp->lhs->unknown_mask() : 0 ) | exp->rhs->unknown_mask() );
 		//if ( in_unk > res_unk || ( exp->depth > 1 && in_unk == res_unk ) )
 		{
 			// Enumerate each join descriptor:
@@ -362,14 +362,13 @@ namespace vtil::symbolic
 		if ( pretty )
 			prettify_expression( exp );
 
-		// Detect possible simplification.
+		// Detect possible simplification [Debug]
 		//
 		if ( simplify_verbose )
 		{
 			if ( exp->is_binary() )
 			{
-				uint64_t max_s = __popcnt64( ( exp->lhs ? exp->lhs->unknown_mask() : 0 ) | exp->rhs->unknown_mask() );
-				if ( __popcnt64( exp->unknown_mask() ) < max_s )
+				if ( math::popcnt( exp->unknown_mask() ) < math::popcnt( ( exp->lhs ? exp->lhs->unknown_mask() : 0 ) | exp->rhs->unknown_mask() ) )
 					log<CON_RED>( "Possible simplification missed!!!!\n" );
 			}
 		}

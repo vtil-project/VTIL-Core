@@ -33,7 +33,7 @@ namespace vtil::symbolic
 {
 	// FNV hash is used for hashing of the expressions.
 	//
-	static constexpr uint64_t fnv_initial = 0xcbf29ce484222325;
+	static constexpr size_t fnv_initial = 0xcbf29ce484222325;
 
 	template<typename T>
 	static inline void fnv_append( size_t* hash, const T& ref )
@@ -160,7 +160,7 @@ namespace vtil::symbolic
 				//
 				if ( lhs->size() > rhs->get().value() )
 				{
-					*this = __ucast( ( *this & expression{ math::mask( rhs->get().value() ), lhs->size() } ).simplify(), new_size ).simplify();
+					*this = __ucast( ( *this & expression{ math::fill( rhs->get().value() ), lhs->size() } ).simplify(), new_size ).simplify();
 					break;
 				}
 				// If sizes match, escape cast operator.
@@ -186,7 +186,7 @@ namespace vtil::symbolic
 				//
 				if ( lhs->size() > rhs->get().value() )
 				{
-					*this = __cast( ( *this & expression{ math::mask( rhs->get().value() ), lhs->size() } ).simplify(), new_size ).simplify();
+					*this = __cast( ( *this & expression{ math::fill( rhs->get().value() ), lhs->size() } ).simplify(), new_size ).simplify();
 					break;
 				}
 				// If sizes match, escape cast operator.
@@ -212,8 +212,6 @@ namespace vtil::symbolic
 
 			// Redirect to conditional output since zx 0 == sx 0.
 			//
-			case math::operator_id::most_sig_bit:
-			case math::operator_id::least_sig_bit:
 			case math::operator_id::value_if:
 				( +rhs )->resize( new_size, false );
 				update( true );
@@ -264,26 +262,19 @@ namespace vtil::symbolic
 			//
 			if ( is_constant() )
 			{
-				// Punish for each set bit of the absolute value, in a exponentially decreasing way.
+				// Punish for each set bit of the absolute value in min_popcnt{v, -v, ~v}, in a exponentially decreasing way.
 				//
-				complexity = sqrt( 1 + __popcnt64( abs( value.get<true>().value() ) ) );
+				uint64_t cval = *value.get();
+				bitcnt_t cx_tmp =  math::popcnt( cval );
+				cx_tmp = std::min( math::popcnt( -cval ), cx_tmp );
+				cx_tmp = std::min( math::popcnt( ~cval ), cx_tmp );
+				complexity = sqrt( 1 + cx_tmp );
 
-				// If value is 64-bits wide, hash is equal to the mutated value itself 
-				// since its not wise to hash a 64-bit integer, when the hash 
-				// itself is 64-bits, and hash[bit_count, value] otherwise.
+				// Hash begins as initial FNV value incremented by the constant, after which we append the notted constant and its size.
 				//
-				if ( value.size() == 64 )
-				{
-					hash = fnv_initial + value.known_one();
-				}
-				else
-				{
-					hash = fnv_initial;
-					fnv_append( &hash, value.size() );
-					fnv_append( &hash, value.known_one() );
-				}
-				
-
+				hash = fnv_initial + value.known_one();
+				fnv_append( &hash, value.size() );
+				fnv_append( &hash, value.known_zero() );
 			}
 			// If symbolic variable
 			//
@@ -418,11 +409,9 @@ namespace vtil::symbolic
 					// Bitwise hint of the descriptor contains +1 or -1 if the operator
 					// is strictly bitwise or arithmetic respectively and 0 otherwise.
 					// This works since mulitplication between them will only be negative
-					// if the signs mismatch thus setting the sign bit, 7th.
+					// if the hints mismatch.
 					//
-					int8_t xop_hint = operand->reference->get_op_desc()->hint_bitwise * desc->hint_bitwise;
-					complexity *= 1 + ( uint8_t( xop_hint ) >> 7 );
-					fassert( complexity != 0 );
+					complexity *= 1 + math::sgn( operand->reference->get_op_desc()->hint_bitwise * desc->hint_bitwise );
 				}
 			}
 			
