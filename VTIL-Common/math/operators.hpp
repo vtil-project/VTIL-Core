@@ -85,8 +85,6 @@ namespace vtil::math
         ucast,          // uintRHS_t(LHS, RHS)
         cast,	        // intRHS_t(LHS, RHS)
         popcnt,         // POPCNT(RHS)
-        most_sig_bit,   // MSB(LHS) or RHS if none
-        least_sig_bit,  // LSB(LHS) or RHS if none
         bit_test,	    // [LHS>>RHS]&1
         mask,	        // RHS.mask()
         bit_count,	    // RHS.bitcount()
@@ -118,11 +116,11 @@ namespace vtil::math
     {
         // >0 if bitwise operations are preferred as operands, <0 if arithmetic, ==0 if neutral.
         //
-        int8_t hint_bitwise;
+        int hint_bitwise;
 
         // Whether it expects signed operands or not.
         //
-        int8_t is_signed;
+        bool is_signed;
 
         // Number of operands it takes. Either 1 or 2.
         //
@@ -193,8 +191,6 @@ namespace vtil::math
         {    0,       false,    2,    false,          nullptr,    "__ucast"      },
         {   -1,       true,     2,    false,          nullptr,    "__cast"     },
         {   +1,       false,    1,    false,          nullptr,    "__popcnt"    },
-        {   +1,       false,    2,    false,          nullptr,    "__msb"       },
-        {   +1,       false,    2,    false,          nullptr,    "__lsb"       },
         {   +1,       false,    2,    false,          nullptr,    "__bt"        },
         {   +1,       false,    1,    false,          nullptr,    "__mask"      },
         {   +1,       false,    1,    false,          nullptr,    "__bcnt"      },
@@ -218,11 +214,12 @@ namespace vtil::math
 
     // Operators that return bit-indices, always use the following size.
     //
-    static constexpr uint8_t bit_index_size = 8;
+    static constexpr bitcnt_t bit_index_size = 8;
 
-    // Before operators return their result, the result size is always rounded as following:
+    // Before operators return their result, the result size is always
+    // rounded up to either 1, 8, 16, 32 or 64 (where available).
     //
-    inline static constexpr uint8_t round_bit_count( uint8_t n )
+    inline static constexpr bitcnt_t round_bit_count( bitcnt_t n )
     {
         if ( n > 32 )      return 64;
         else if ( n > 16 ) return 32;
@@ -233,12 +230,12 @@ namespace vtil::math
 
     // Calculates the size of the result after after the application of the operator [id] on the operands.
     //
-    uint8_t result_size( operator_id id, uint8_t bcnt_lhs, uint8_t bcnt_rhs );
+    bitcnt_t result_size( operator_id id, bitcnt_t bcnt_lhs, bitcnt_t bcnt_rhs );
 
     // Applies the specified operator [id] on left hand side [lhs] and right hand side [rhs]
     // and returns the output as a masked unsigned 64-bit integer <0> and the final size <1>.
     //
-    std::pair<uint64_t, uint8_t> evaluate( operator_id id, uint8_t bcnt_lhs, uint64_t lhs, uint8_t bcnt_rhs, uint64_t rhs );
+    std::pair<uint64_t, bitcnt_t> evaluate( operator_id id, bitcnt_t bcnt_lhs, uint64_t lhs, bitcnt_t bcnt_rhs, uint64_t rhs );
 
     // Applies the specified operator [op] on left hand side [lhs] and right hand side [rhs] wher
     // input and output values are expressed in the format of bit-vectors with optional unknowns,

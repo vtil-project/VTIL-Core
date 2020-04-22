@@ -31,7 +31,7 @@ namespace vtil::math
 {
     // Calculates the size of the result after after the application of the operator [id] on the operands.
     //
-    uint8_t result_size( operator_id id, uint8_t bcnt_lhs, uint8_t bcnt_rhs )
+	bitcnt_t result_size( operator_id id, bitcnt_t bcnt_lhs, bitcnt_t bcnt_rhs )
     {
         static_assert( round_bit_count( bit_index_size ) == bit_index_size, "Bit-index size must be rounded by default." );
 
@@ -41,8 +41,6 @@ namespace vtil::math
 		    //
 		    case operator_id::popcnt:         return bit_index_size;
 		    case operator_id::bit_count:      return bit_index_size;
-		    case operator_id::most_sig_bit:
-            case operator_id::least_sig_bit:  return round_bit_count( std::max( bit_index_size, bcnt_rhs ) );
 
 			// - Unary and parameterized unary-like operators.
 			//
@@ -83,15 +81,15 @@ namespace vtil::math
     // Applies the specified operator [id] on left hand side [lhs] and right hand side [rhs]
     // and returns the output as a masked unsigned 64-bit integer <0> and the final size <1>.
     //
-    std::pair<uint64_t, uint8_t> evaluate( operator_id id, uint8_t bcnt_lhs, uint64_t lhs, uint8_t bcnt_rhs, uint64_t rhs )
+    std::pair<uint64_t, bitcnt_t> evaluate( operator_id id, bitcnt_t bcnt_lhs, uint64_t lhs, bitcnt_t bcnt_rhs, uint64_t rhs )
     {
         // Normalize the input.
         //
         const operator_desc* desc = descriptor_of( id );
         if ( bcnt_lhs != 64 && desc->operand_count != 1 )  
-            lhs = desc->is_signed ? __sx64( lhs, bcnt_lhs ) : __zx64( lhs, bcnt_lhs );
+            lhs = desc->is_signed ? __sx( lhs, bcnt_lhs ) : __zx( lhs, bcnt_lhs );
         if ( bcnt_rhs != 64 )  
-            rhs = desc->is_signed ? __sx64( rhs, bcnt_rhs ) : __zx64( rhs, bcnt_rhs );
+            rhs = desc->is_signed ? __sx( rhs, bcnt_rhs ) : __zx( rhs, bcnt_rhs );
 
         // Create aliases for signed values to avoid ugly casts.
         //
@@ -101,7 +99,7 @@ namespace vtil::math
         // Calculate the result of the operation.
         //
         uint64_t result = 0;
-        uint8_t bcnt_res = result_size( id, bcnt_lhs, bcnt_rhs );
+		bitcnt_t bcnt_res = result_size( id, bcnt_lhs, bcnt_rhs );
         switch ( id )
         {
             // - Bitwise operators.
@@ -123,7 +121,7 @@ namespace vtil::math
             case operator_id::substract:        result = ilhs - irhs;                                               break;
             case operator_id::multiply_high:    result = bcnt_res == 64
                                                         ? __mulh( ilhs, irhs )
-                                                        : uint64_t( ilhs * irhs ) >> bcnt_res;                      break;
+                                                        : uint64_t( ilhs * irhs ) >> bcnt_res;                       break;
             case operator_id::umultiply_high:   result = bcnt_res == 64
                                                         ? __umulh( lhs, rhs )
                                                         : ( lhs * rhs ) >> bcnt_res;                                break;
@@ -138,15 +136,9 @@ namespace vtil::math
             //																                  
             case operator_id::cast:             result = ilhs, bcnt_res = rhs;                                      break;
             case operator_id::ucast:            result = lhs,  bcnt_res = rhs;                                      break;
-            case operator_id::popcnt:           result = __popcnt64( rhs );                                         break;
-            case operator_id::most_sig_bit:	    result = _BitScanReverse64( ( unsigned long* ) &result, lhs )
-                                                        ? result
-                                                        : rhs;													    break;
-            case operator_id::least_sig_bit:	result = _BitScanForward64( ( unsigned long* ) &result, lhs )
-                                                        ? result
-                                                        : rhs;													    break;
+            case operator_id::popcnt:           result = popcnt( rhs );                                             break;
             case operator_id::bit_test:	        result = ( lhs >> rhs ) & 1;                                        break;
-            case operator_id::mask:	            result = mask( bcnt_rhs );											break;
+            case operator_id::mask:	            result = fill( bcnt_rhs );											break;
             case operator_id::bit_count:        result = bcnt_rhs;                                                  break;
             case operator_id::value_if:         result = ( lhs & 1 ) ? rhs : 0;                                     break;
 
@@ -174,7 +166,7 @@ namespace vtil::math
 
         // Mask and return.
         //
-        return { result & mask( bcnt_res ), bcnt_res };
+        return { result & fill( bcnt_res ), bcnt_res };
     }
 
     // Applies the specified operator [op] on left hand side [lhs] and right hand side [rhs] wher
@@ -319,7 +311,7 @@ namespace vtil::math
 					//
 					uint64_t known_mask = 0;
 					uint64_t unknown_mask = 0;
-					uint8_t out_size = std::max( lhs.size(), rhs.size() );
+					bitcnt_t out_size = std::max( lhs.size(), rhs.size() );
 
 					// For each bit in the output size:
 					//
@@ -426,55 +418,7 @@ namespace vtil::math
 			case operator_id::popcnt:
 				// Cannot be calculated with unknown values, return unknown of expected size.
 				//
-				return bit_vector( __popcnt16( lhs.known_one() | lhs.unknown_mask() ) ).resize( bit_index_size );
-
-			case operator_id::most_sig_bit:
-			{
-				// Calculate output size.
-				//
-				uint64_t msb_out_mask = mask( std::max( __popcnt16( lhs.size() ), ( uint16_t ) rhs.size() ) );
-				uint8_t msb_out_size = round_bit_count( std::max( bit_index_size, rhs.size() ) );
-
-				// Get most significant bit of the unknown mask, which is guaranteed to be non-zero since we
-				// got called into the partial evaluation routine.
-				//
-				unsigned long msb_unknown;
-				_BitScanReverse64( &msb_unknown, lhs.unknown_mask() );
-
-				// Get the most significant bit from the known 1 mask, if it is higher, we can return it as is.
-				//
-				unsigned long msb_known;
-				if ( _BitScanReverse64( &msb_known, lhs.known_one() ) && msb_known > msb_unknown )
-					return bit_vector( msb_known, msb_out_size );
-
-				// Otherwise, return unknown of expected size.
-				//
-				return bit_vector( 0, msb_out_mask, msb_out_size );
-			}
-
-			case operator_id::least_sig_bit:
-			{
-				// Calculate output size.
-				//
-				uint64_t lsb_out_mask = mask( std::max( __popcnt16( lhs.size() ), ( uint16_t ) rhs.size() ) );
-				uint8_t lsb_out_size = round_bit_count( std::max( bit_index_size, rhs.size() ) );
-
-				// Get least significant bit of the unknown mask, which is guaranteed to be non-zero since we
-				// got called into the partial evaluation routine.
-				//
-				unsigned long lsb_unknown;
-				_BitScanForward64( &lsb_unknown, lhs.unknown_mask() );
-
-				// Get the least significant bit from the known 1 mask, if it is lower, we can return it as is.
-				//
-				unsigned long lsb_known;
-				if ( _BitScanForward64( &lsb_known, lhs.known_one() ) && lsb_known < lsb_unknown )
-					return bit_vector( lsb_known, lsb_out_size );
-
-				// Otherwise, return unknown of expected size.
-				//
-				return bit_vector( 0, lsb_out_mask, lsb_out_size );
-			}
+				return bit_vector( popcnt( lhs.known_one() | lhs.unknown_mask() ) ).resize( bit_index_size );
 
 			case operator_id::bit_test:
 				// If we can get the index being tested as constant, try to evaluate. 
@@ -506,8 +450,8 @@ namespace vtil::math
 				// Try to evaluate the (x&1)?y:0 statement.
 				//
 				if ( lhs.known_one() & 1 )         return rhs;
-				else if ( lhs.unknown_mask() & 1 ) return { 0, -1ull, rhs.size() };
-				else                               return { 0, 0, rhs.size() };
+				else if ( lhs.unknown_mask() & 1 ) return bit_vector{ rhs.size() };
+				else                               return bit_vector{ 0, rhs.size() };
 
 			
 			//
@@ -549,7 +493,7 @@ namespace vtil::math
 
 				// cmp<>(A,B) ? A : B
 				bit_state cmp_res = evaluate_partial( cmp_id, lhs, rhs )[ 0 ];
-				uint8_t cmp_out_size = std::max( lhs.size(), rhs.size() );
+				bitcnt_t cmp_out_size = std::max( lhs.size(), rhs.size() );
 				switch ( cmp_res )
 				{
 					case bit_state::one:	  return bit_vector{ lhs }.resize( cmp_out_size );
@@ -587,7 +531,7 @@ namespace vtil::math
 
 				// For each bit index we should compare:
 				//
-				uint8_t cmp_size = std::max( lhs.size(), rhs.size() );
+				bitcnt_t cmp_size = std::max( lhs.size(), rhs.size() );
 				bit_vector lhs_sx = bit_vector{ lhs }.resize( cmp_size, true );
 				bit_vector rhs_sx = bit_vector{ rhs }.resize( cmp_size, true );
 				for ( int i = cmp_size - 1; i >= 0; i-- )

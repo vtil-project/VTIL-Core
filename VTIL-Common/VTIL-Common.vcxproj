@@ -103,7 +103,7 @@
     <ClInclude Include="amd64\disassembly.hpp" />
     <ClInclude Include="amd64\emulator.hpp" />
     <ClInclude Include="amd64\register_details.hpp" />
-    <ClInclude Include="includes\vtil\common" />
+    <ClInclude Include="includes\vtil\vtil" />
     <ClInclude Include="includes\vtil\io" />
     <ClInclude Include="includes\vtil\math" />
     <ClInclude Include="includes\vtil\memory" />

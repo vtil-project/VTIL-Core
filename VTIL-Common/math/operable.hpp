@@ -60,7 +60,7 @@ namespace vtil::math
         //
         operable() = default;
         template<typename T = uint64_t, std::enable_if_t<std::is_integral_v<T>, int> = 0>
-        operable( T value, uint8_t bit_count = sizeof( T ) * 8 ) : value( { value, bit_count } ) {}
+        operable( T value, bitcnt_t bit_count = sizeof( T ) * 8 ) : value( { value, bit_count } ) {}
 
         // Gets the value represented, and nullopt if value has unknown bits.
         //
@@ -71,7 +71,7 @@ namespace vtil::math
 
         // Redirect certain helpers to bit_vector.
         //
-        inline uint8_t size() const { return value.size(); }
+        inline bitcnt_t size() const { return value.size(); }
         inline uint64_t known_mask() const { return value.known_mask(); }
         inline uint64_t unknown_mask() const { return value.unknown_mask(); }
         inline uint64_t known_one() const { return value.known_one(); }
@@ -80,7 +80,7 @@ namespace vtil::math
 
         // Resizes the constant, must be overriden by the base type to handle unknowns.
         //
-        void resize( uint8_t new_size, bool sign_extend = false )
+        void resize( bitcnt_t new_size, bool sign_extend = false )
         {
             fassert( value.is_known() );
             value.resize( new_size, sign_extend );
@@ -172,8 +172,6 @@ DEFINE_OPERATION( urem( T1&& a, T2&& b )             { return { std::forward<T1>
 DEFINE_OPERATION( __ucast( T1&& a, T2&& b )          { return { std::forward<T1>( a ), vtil::math::operator_id::ucast, std::forward<T2>( b ) }; }             );
 DEFINE_OPERATION( __cast( T1&& a, T2&& b )           { return { std::forward<T1>( a ), vtil::math::operator_id::cast, std::forward<T2>( b ) }; }              );
 DEFINE_OPERATION( __popcnt( T1&& a )                 { return { vtil::math::operator_id::popcnt, std::forward<T2>( a ) }; }                                   );
-DEFINE_OPERATION( __msb( T1&& a, T2&& b )            { return { std::forward<T1>( a ), vtil::math::operator_id::most_sig_bit, std::forward<T2>( b ) }; }      );
-DEFINE_OPERATION( __lsb( T1&& a, T2&& b )            { return { std::forward<T1>( a ), vtil::math::operator_id::least_sig_bit, std::forward<T2>( b ) }; }     );
 DEFINE_OPERATION( __bt( T1&& a, T2&& b )             { return { std::forward<T1>( a ), vtil::math::operator_id::bit_test, std::forward<T2>( b ) }; }          );
 DEFINE_OPERATION( __mask( T1&& a )                   { return { vtil::math::operator_id::mask, std::forward<T2>( a ) }; }                                     );
 DEFINE_OPERATION( __bcnt( T1&& a )                   { return { vtil::math::operator_id::bit_count, std::forward<T2>( a ) }; }                                );

@@ -61,9 +61,6 @@
     <ClInclude Include="includes\vtil\amd64">
       <Filter>Includes</Filter>
     </ClInclude>
-    <ClInclude Include="includes\vtil\common">
-      <Filter>Includes</Filter>
-    </ClInclude>
     <ClInclude Include="includes\vtil\io">
       <Filter>Includes</Filter>
     </ClInclude>
@@ -111,6 +108,9 @@
     </ClInclude>
     <ClInclude Include="util\critical_section.hpp">
       <Filter>Utility</Filter>
+    </ClInclude>
+    <ClInclude Include="includes\vtil\vtil">
+      <Filter>Includes</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
