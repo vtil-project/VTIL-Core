@@ -1,0 +1,7 @@
+#pragma once
+#include "..\..\expressions\expression.hpp"
+#include "..\..\expressions\unique_identifier.hpp"
+#include "..\..\simplifier\simplifier.hpp"
+#include "..\..\simplifier\directives.hpp"
+#include "..\..\directives\directive.hpp"
+#include "..\..\directives\matcher.hpp"

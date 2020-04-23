@@ -25,18 +25,20 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE  
 // POSSIBILITY OF SUCH DAMAGE.        
 //
-#include "expression_simplifier.hpp"
+#include "simplifier.hpp"
+#include "directives.hpp"
 #include "..\expressions\expression.hpp"
-#include "..\directives\directive.hpp"
-#include "simplifier_directives.hpp"
-#include "..\directives\match_directive.hpp"
-#include <vtil/io>
+#include "..\directives\matcher.hpp"
 #include <map>
+#include <vtil/io>
 
 namespace vtil::symbolic
 {
 	static bool simplify_verbose = false;
 	static bool prettify_verbose = false;
+
+	// Simplifier cache.
+	//
 	static thread_local std::unordered_map<size_t, std::pair<expression::reference, bool>> simplifier_cache;
 
 	// TODO: Logger for the use of debugging, ignore for now.
@@ -128,7 +130,9 @@ namespace vtil::symbolic
 		}
 	}
 
-	bool prettify_expression( expression::reference& exp )
+	// Attempts to prettify the expression given.
+	//
+	static void prettify_expression( expression::reference& exp )
 	{
 		using namespace logger;
 		scope_padding _p( 1 );
@@ -159,14 +163,16 @@ namespace vtil::symbolic
 				if ( prettify_verbose ) log<CON_PRP>( "[Pack] %s => %s\n", dir_src->to_string(), dir_dst->to_string() );
 				if ( prettify_verbose ) log<CON_GRN>( "= %s\n", exp->to_string() );
 				exp = exp_new;
-				return exp;
+				return;
 			}
 		}
 
 		if ( prettify_verbose ) log<CON_YLW>( "= %s\n", exp->to_string() );
-		return true;
 	}
 
+	// Attempts to simplify the expression given, returns whether the simplification
+	// succeeded or not.
+	//
 	bool simplify_expression( expression::reference& exp, bool pretty )
 	{
 		using namespace logger;

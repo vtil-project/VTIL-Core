@@ -19,13 +19,13 @@
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
-    <ConfigurationType>Application</ConfigurationType>
+    <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>Intel C++ Compiler 19.0</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
-    <ConfigurationType>Application</ConfigurationType>
+    <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>Intel C++ Compiler 19.0</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
@@ -91,23 +91,18 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="directives\directive.cpp" />
+    <ClCompile Include="directives\matcher.cpp" />
     <ClCompile Include="expressions\expression.cpp" />
-    <ClCompile Include="simplifier\expression_simplifier.cpp" />
-    <ClCompile Include="VTIL-SymEx.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\VTIL-Common\VTIL-Common.vcxproj">
-      <Project>{ec6b8f7f-730c-4086-b143-4664cc16df8f}</Project>
-    </ProjectReference>
+    <ClCompile Include="simplifier\simplifier.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="directives\directive.hpp" />
-    <ClInclude Include="directives\match_directive.hpp" />
-    <ClInclude Include="engine.hpp" />
+    <ClInclude Include="directives\matcher.hpp" />
     <ClInclude Include="expressions\expression.hpp" />
     <ClInclude Include="expressions\unique_identifier.hpp" />
-    <ClInclude Include="simplifier\expression_simplifier.hpp" />
-    <ClInclude Include="simplifier\simplifier_directives.hpp" />
+    <ClInclude Include="includes\vtil\symex" />
+    <ClInclude Include="simplifier\simplifier.hpp" />
+    <ClInclude Include="simplifier\directives.hpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="VTIL-SymEx.licenseheader" />

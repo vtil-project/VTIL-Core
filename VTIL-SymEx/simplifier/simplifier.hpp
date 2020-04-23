@@ -26,11 +26,12 @@
 // POSSIBILITY OF SUCH DAMAGE.        
 //
 #pragma once
-#include <vtil/memory>
+#include "..\expressions\expression.hpp"
 
 namespace vtil::symbolic
 {
-	struct expression;
-	bool simplify_expression( shared_reference<expression>& exp, bool pretty = false );
-	bool prettify_expression( shared_reference<expression>& exp );
+	// Attempts to simplify the expression given, returns whether the simplification
+	// succeeded or not.
+	//
+	bool simplify_expression( expression::reference& exp, bool pretty = false );
 };

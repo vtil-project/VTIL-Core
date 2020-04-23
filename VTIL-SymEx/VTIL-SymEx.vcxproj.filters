@@ -1,55 +1,54 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <ClCompile Include="VTIL-SymEx.cpp" />
     <ClCompile Include="directives\directive.cpp">
-      <Filter>Symbolic\Directives</Filter>
+      <Filter>Directives</Filter>
     </ClCompile>
     <ClCompile Include="expressions\expression.cpp">
-      <Filter>Symbolic\Expression</Filter>
+      <Filter>Expression</Filter>
     </ClCompile>
-    <ClCompile Include="simplifier\expression_simplifier.cpp">
-      <Filter>Symbolic\Simplifier</Filter>
+    <ClCompile Include="simplifier\simplifier.cpp">
+      <Filter>Simplifier</Filter>
+    </ClCompile>
+    <ClCompile Include="directives\matcher.cpp">
+      <Filter>Directives</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="directives\directive.hpp">
-      <Filter>Symbolic\Directives</Filter>
-    </ClInclude>
-    <ClInclude Include="directives\match_directive.hpp">
-      <Filter>Symbolic\Directives</Filter>
+      <Filter>Directives</Filter>
     </ClInclude>
     <ClInclude Include="expressions\expression.hpp">
-      <Filter>Symbolic\Expression</Filter>
+      <Filter>Expression</Filter>
     </ClInclude>
     <ClInclude Include="expressions\unique_identifier.hpp">
-      <Filter>Symbolic\Expression</Filter>
+      <Filter>Expression</Filter>
     </ClInclude>
-    <ClInclude Include="simplifier\expression_simplifier.hpp">
-      <Filter>Symbolic\Simplifier</Filter>
+    <ClInclude Include="simplifier\directives.hpp">
+      <Filter>Simplifier</Filter>
     </ClInclude>
-    <ClInclude Include="simplifier\simplifier_directives.hpp">
-      <Filter>Symbolic\Simplifier</Filter>
+    <ClInclude Include="directives\matcher.hpp">
+      <Filter>Directives</Filter>
     </ClInclude>
-    <ClInclude Include="engine.hpp">
-      <Filter>Symbolic</Filter>
+    <ClInclude Include="simplifier\simplifier.hpp">
+      <Filter>Simplifier</Filter>
+    </ClInclude>
+    <ClInclude Include="includes\vtil\symex">
+      <Filter>Includes</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <Filter Include="Experimental-Math">
-      <UniqueIdentifier>{e27a8004-d305-4a45-8388-ba45d921947b}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Symbolic">
-      <UniqueIdentifier>{977fbfa1-4f46-4eff-9a59-293fc43c5374}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Symbolic\Directives">
+    <Filter Include="Directives">
       <UniqueIdentifier>{35c6ec1c-2ebb-4138-8d23-9e073fb1ffac}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Symbolic\Simplifier">
+    <Filter Include="Expression">
+      <UniqueIdentifier>{224688f8-aeaa-4c55-87a9-60f61607dadf}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Simplifier">
       <UniqueIdentifier>{d397ea38-13ca-41f4-abec-88292fa650d5}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Symbolic\Expression">
-      <UniqueIdentifier>{224688f8-aeaa-4c55-87a9-60f61607dadf}</UniqueIdentifier>
+    <Filter Include="Includes">
+      <UniqueIdentifier>{4106c656-78ac-4d84-a633-3b5309fc1458}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

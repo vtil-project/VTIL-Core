@@ -25,73 +25,21 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE  
 // POSSIBILITY OF SUCH DAMAGE.        
 //
-#pragma once
-#include <map>
-#include "directive.hpp"
-#include "..\expressions\expression.hpp"
+#include "matcher.hpp"
+#include "..\simplifier\simplifier.hpp"
 
 namespace vtil::symbolic::directive
 {
 	static bool match_verbose = false;
 
-	// Internal representation of the Variable -> Expression mapping.
-	//
-	struct symbol_table
-	{
-		std::map<const char*, expression::reference> variable_map;
-
-		bool add( const instance::reference& dir, const expression::reference& exp )
-		{
-			// If it's the first time this variable is being used:
-			//
-			auto it = variable_map.find( dir->id );
-			if ( it == variable_map.end() )
-			{
-				// Check if the matching condition is met.
-				//
-				switch ( dir->mtype )
-				{
-					case match_any:                                                                   break;
-					case match_variable:               if ( !exp->is_variable()   )   return false;   break;
-					case match_constant:               if ( !exp->is_constant()   )   return false;   break;
-					case match_expression:             if ( !exp->is_expression() )   return false;   break;
-					case match_variable_or_constant:   if (  exp->is_expression() )   return false;   break;
-					default: unreachable();
-				}
-
-				// Save the mapping of this symbol and return success.
-				//
-				variable_map[ dir->id ] = exp;
-				return true;
-			}
-			else
-			{
-				// Check if saved expression is equivalent, if not fail.
-				//
-				return it->second->equals( *exp );
-			}
-		}
-
-		expression::reference translate( const instance::reference& dir ) const
-		{
-			// Lookup the map for the variable
-			//
-			auto it = variable_map.find( dir->id );
-
-			// Return the saved variable if found or else null reference.
-			//
-			return it != variable_map.end() ? it->second : expression::reference{};
-		}
-	};
-
 	// Translates the given directive into an expression (of size given) using the symbol table.
 	// - If speculative flag is set, it will either return a dummy reference if the expression could be built,
 	//   or a null reference if it would fail.
 	//
-	static expression::reference translate( const symbol_table& sym, 
-											const instance::reference& dir, 
-											bitcnt_t bit_cnt, 
-											bool speculative_condition )
+	expression::reference translate( const symbol_table& sym,
+									 const instance::reference& dir,
+									 bitcnt_t bit_cnt,
+									 bool speculative_condition )
 	{
 		using namespace logger;
 		scope_padding _p( 1 );
@@ -136,7 +84,7 @@ namespace vtil::symbolic::directive
 					if ( !lhs )	return {};
 					auto rhs = translate( sym, dir->rhs, bit_cnt, speculative_condition );
 					if ( !rhs ) return {};
-					
+
 					if ( auto sz = rhs->get() )
 					{
 						( +lhs )->resize( sz.value(), dir->op == math::operator_id::cast );
@@ -221,7 +169,7 @@ namespace vtil::symbolic::directive
 				// Translate left hand side, if failed to do so or is not equal to [true], fail.
 				//
 				auto condition_status = translate( sym, dir->lhs, bit_cnt, false );
-				if ( !condition_status || !(+condition_status)->simplify().get().value_or( false ) )
+				if ( !condition_status || !( +condition_status )->simplify().get().value_or( false ) )
 				{
 					if ( match_verbose ) log<CON_RED>( "Rejected %s, condition (%s) not met.\n", dir->rhs->to_string(), dir->lhs->to_string() );
 					return {};
@@ -301,11 +249,11 @@ namespace vtil::symbolic::directive
 	// requires speculative validation of the translation into another directive. This argument will
 	// not be propagated when recursing if it is not a tail call.
 	//
-	static bool match( symbol_table& sym, 
-					   const instance::reference& dir, 
-					   const expression::reference& exp,
-					   uint8_t bit_cnt,
-					   const instance::reference& target_directive = {} )
+	bool match( symbol_table& sym,
+				const instance::reference& dir,
+				const expression::reference& exp,
+				uint8_t bit_cnt,
+				const instance::reference& target_directive )
 	{
 		// If directive is a constant or a variable:
 		//
@@ -335,7 +283,7 @@ namespace vtil::symbolic::directive
 			// reached the end of this check, try speculatively mapping to the target and
 			// return failure if it fails.
 			//
-			if ( target_directive )    
+			if ( target_directive )
 				return translate( sym, bit_cnt, target_directive, true );
 			return true;
 		}
@@ -380,7 +328,7 @@ namespace vtil::symbolic::directive
 
 	// Attempts to transform the expression in form A to form B as indicated by the directives.
 	//
-	static expression::reference transform( const expression::reference& exp, const instance::reference& from, const instance::reference& to )
+	expression::reference transform( const expression::reference& exp, const instance::reference& from, const instance::reference& to )
 	{
 		using namespace logger;
 
@@ -389,7 +337,7 @@ namespace vtil::symbolic::directive
 		//
 		symbol_table sym;
 		if ( !match( sym, from, exp, to, exp->size() ) ) return {};
-		
+
 		// If all pre-conditions are met, request translation for the actual output.
 		//
 		if ( match_verbose )
