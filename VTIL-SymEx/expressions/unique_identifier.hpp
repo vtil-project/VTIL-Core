@@ -27,7 +27,7 @@
 //
 #pragma once
 #include <vtil/math>
-#include <vtil/memory>
+#include <vtil/utility>
 
 namespace vtil::symbolic
 {

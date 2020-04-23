@@ -27,7 +27,7 @@
 //
 #pragma once
 #include <vtil/math>
-#include <vtil/memory>
+#include <vtil/utility>
 #include <type_traits>
 
 namespace vtil::symbolic::directive
