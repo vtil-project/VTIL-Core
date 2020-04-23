@@ -47,11 +47,13 @@
     <LinkIncremental>true</LinkIncremental>
     <IncludePath>$(SolutionDir)..\Capstone\include;$(SolutionDir)..\Keystone\include;$(IncludePath)</IncludePath>
     <LibraryPath>$(SolutionDir)..\Keystone\llvm\lib\Debug;$(SolutionDir)..\Capstone\msvc\x64\Release;$(LibraryPath)</LibraryPath>
+    <OutDir>$(ProjectDir)$(Platform)\$(Configuration)\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
     <IncludePath>$(SolutionDir)..\Capstone\include;$(SolutionDir)..\Keystone\include;$(IncludePath)</IncludePath>
     <LibraryPath>$(SolutionDir)..\Keystone\llvm\lib\Release;$(SolutionDir)..\Capstone\msvc\x64\Release;$(LibraryPath)</LibraryPath>
+    <OutDir>$(ProjectDir)$(Platform)\$(Configuration)\</OutDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
