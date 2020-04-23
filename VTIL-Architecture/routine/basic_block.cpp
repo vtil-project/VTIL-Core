@@ -26,6 +26,7 @@
 // POSSIBILITY OF SUCH DAMAGE.        
 //
 #include "basic_block.hpp"
+//#include <vtil/amd64>
 
 namespace vtil
 {
@@ -89,12 +90,12 @@ namespace vtil
 
 	// Helpers for the allocation of unique temporary registers
 	//
-	arch::register_view basic_block::tmp( uint8_t size )
+	register_desc basic_block::tmp( uint8_t size )
 	{
-		return arch::register_view
+		return register_desc
 		{
-			"t" + std::to_string( ++owner->temporary_index_counter ),
-			0,
+			register_local,
+			++last_temporary_index,
 			size
 		};
 	}
@@ -103,50 +104,6 @@ namespace vtil
 	//
 	void basic_block::append_instruction( instruction ins )
 	{
-		// Cannot access EFLAGS directly.
-		//
-		static const auto EFLAGS_MAPPINGS = { std::pair{ REG_OF, X86_EFLAGS_OF_BIT },
-			std::pair{ REG_SF, X86_EFLAGS_SF_BIT },
-			std::pair{ REG_ZF, X86_EFLAGS_ZF_BIT },
-			std::pair{ REG_AF, X86_EFLAGS_AF_BIT },
-			std::pair{ REG_PF, X86_EFLAGS_PF_BIT } };
-
-		if ( int w_op = ins.writes_to( X86_REG_EFLAGS ) )
-		{
-			auto t1 = tmp( 8 );
-			mov( t1, 0ull );
-			ins.operands[ w_op - 1 ].reg.base = t1.base;
-
-			append_instruction( ins );
-
-			for ( auto& pair : EFLAGS_MAPPINGS )
-			{
-				auto t0 = tmp( 8 );
-				mov( t0, t1 );
-				bshr( t0, pair.second );
-				band( t0, 1 );
-				mov( pair.first, t0 )->stream.back().make_volatile();
-			}
-			return;
-		}
-		if ( int r_op = ins.reads_from( X86_REG_EFLAGS ) )
-		{
-			auto t1 = tmp( 8 );
-			mov( t1, 0ull );
-			ins.operands[ r_op - 1 ].reg.base = t1.base;
-
-			for ( auto& pair : EFLAGS_MAPPINGS )
-			{
-				auto t0 = tmp( 8 );
-				mov( t0, pair.first );
-				bshl( t0, pair.second );
-				band( t0, 1ull << pair.second );
-				bor( t1, t0 );
-			}
-		}
-
-		fassert( !ins.writes_to( X86_REG_EFLAGS ) && !ins.reads_from( X86_REG_EFLAGS ) );
-
 		// Instructions cannot be appended after a branching instruction was hit.
 		//
 		fassert( !is_complete() );
@@ -156,9 +113,9 @@ namespace vtil
 		ins.sp_offset = sp_offset;
 		ins.sp_index = sp_index;
 
-		// If instruction writes to RSP, reset the queued stack pointer.
+		// If instruction writes to SP, reset the queued stack pointer.
 		//
-		if ( ins.writes_to( X86_REG_RSP ) )
+		if ( ins.writes_to( REG_SP ) )
 		{
 			sp_offset = 0;
 			sp_index++;
@@ -168,28 +125,6 @@ namespace vtil
 		// Append the instruction to the stream.
 		//
 		stream.push_back( ins );
-	}
-
-	// Updates EFLAGS register based on the previous instruction executed and writes it
-	// into the operand given.
-	//
-	basic_block* basic_block::uflags_result( operand op, bool carry )
-	{
-		// SF, ZF, PF will be set according to the result.
-		//
-		//
-		// AF will be set to undefined, as they are not implemented yet.
-		// OF, CF will be cleared.
-
-		this->setz( REG_ZF, op )
-			->sets( REG_SF, op )
-			->setp( REG_PF, op )
-			->mov( REG_AF, REG_UNKB );
-		if ( carry )
-			seto( REG_OF, op )->setc( REG_CF, op );
-		else
-			mov( REG_OF, 0ull )->mov( REG_CF, 0ull );
-		return this;
 	}
 
 	// Queues a stack shift.
@@ -227,19 +162,19 @@ namespace vtil
 			//
 			it->sp_offset += offset;
 
-			// If instruction reads from RSP:
+			// If instruction reads from SP:
 			//
-			if ( it->reads_from( X86_REG_RSP ) )
+			if ( it->reads_from( REG_SP ) )
 			{
-				// If LDR|STR with memory operand RSP:
+				// If LDR|STR with memory base SP:
 				//
-				if ( it->base->accesses_memory() && it->operands[ it->base->memory_operand_index ].reg == X86_REG_RSP )
+				if ( it->base->accesses_memory() && it->operands[ it->base->memory_operand_index ].reg.is_stack_pointer() )
 				{
 					// Assert the offset operand is an immediate and 
 					// shift the offset as well.
 					//
 					fassert( it->operands[ it->base->memory_operand_index + 1 ].is_immediate() );
-					it->operands[ it->base->memory_operand_index + 1 ].i64 += offset;
+					it->operands[ it->base->memory_operand_index + 1 ].imm.i64 += offset;
 				}
 			}
 
@@ -265,17 +200,17 @@ namespace vtil
 	//
 	basic_block* basic_block::pushf()
 	{
-		return push( X86_REG_EFLAGS );
+		return push( REG_FLAGS );
 	}
 
 	// Emits an entire instruction using series of VEMITs.
 	//
-	basic_block* basic_block::vemits( const std::string& assembly )
+	/*basic_block* basic_block::vemits( const std::string& assembly )
 	{
 		auto res = keystone::assemble( assembly );
 		fassert( !res.empty() );
 		for ( uint8_t byte : res )
 			vemit( byte );
 		return this;
-	}
+	}*/
 };

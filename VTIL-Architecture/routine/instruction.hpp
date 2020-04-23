@@ -32,13 +32,6 @@
 
 namespace vtil
 {
-	// Remove the arch:: prefix from register view, operand and instructions as it 
-	// gets very redundant since it's commonly used in instruction creation.
-	//
-	using register_view = arch::register_view;
-	using operand = arch::operand;
-	namespace ins = arch::ins;
-
 	// Simple helper to create an immediate operand since vtil::operand( v, size ) gets redundant.
 	//
 	template<typename T> 
@@ -56,7 +49,7 @@ namespace vtil
 	{
 		// Base instruction type.
 		//
-		const arch::instruction_desc* base = nullptr;
+		const instruction_desc* base = nullptr;
 
 		// List of operands.
 		//
@@ -68,7 +61,7 @@ namespace vtil
 		vip_t vip = invalid_vip;
 
 		// The offset of current stack pointer from the last 
-		// [MOV RSP, <>] if applicable, or the beginning of 
+		// [MOV SP, <>] if applicable, or the beginning of 
 		// the basic block and the index of the stack instance.
 		//
 		int64_t sp_offset = 0;
@@ -83,7 +76,7 @@ namespace vtil
 		// instruction is valid according to the instruction descriptor.
 		//
 		instruction() = default;
-		instruction( const arch::instruction_desc* base,
+		instruction( const instruction_desc* base,
 					 const std::vector<operand>& operands = {},
 					 vip_t vip = invalid_vip,
 					 bool explicit_volatile = false ) :
@@ -116,19 +109,19 @@ namespace vtil
 
 		// Returns all memory accesses matching the criteria.
 		//
-		std::pair<arch::register_view, int64_t> get_mem_loc( arch::operand_access access = arch::invalid ) const;
+		std::pair<register_desc, int64_t> get_mem_loc( operand_access access = operand_access::invalid ) const;
 
 		// Checks whether the instruction reads from the given register or not.
 		//
-		int reads_from( const register_view& rw ) const;
+		int reads_from( const register_desc& rw ) const;
 
 		// Checks whether the instruction writes to the given register or not.
 		//
-		int writes_to( const register_view& rw ) const;
+		int writes_to( const register_desc& rw ) const;
 
 		// Checks whether the instruction overwrites the given register or not.
 		//
-		int overwrites( const register_view& rw ) const;
+		int overwrites( const register_desc& rw ) const;
 
 		// Basic comparison operators.
 		//

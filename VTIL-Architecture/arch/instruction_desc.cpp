@@ -27,7 +27,7 @@
 //
 #include "instruction_desc.hpp"
 
-namespace vtil::arch
+namespace vtil
 {
 	// Generic data-assignment constructor with certain validity checks.
 	//
@@ -35,7 +35,7 @@ namespace vtil::arch
 										const std::vector<operand_access>& access_types, 
 										int access_size_index, 
 										bool is_volatile, 
-										const std::string& symbolic_operator, 
+										math::operator_id symbolic_operator,
 										std::vector<int> branch_operands, 
 										const std::pair<int, bool>& memory_operands ) :
 		name( name ), access_types( access_types ), access_size_index( access_size_index - 1 ),

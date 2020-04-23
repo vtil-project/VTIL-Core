@@ -63,9 +63,9 @@ namespace vtil::debug
 		{
 			if ( op.is_register() )
 			{
-				if ( op.reg.base.maps_to == X86_REG_RSP )
+				if ( op.reg.is_stack_pointer() )
 					log<CON_PRP>( FMT_INS_OPR " ", op.reg.to_string() );				// Stack pointer
-				else if ( op.reg.base.maps_to != X86_REG_INVALID )
+				else if ( op.reg.is_physical() )
 					log<CON_BLU>( FMT_INS_OPR " ", op.reg.to_string() );				// Any hardware/special register
 				else
 					log<CON_GRN>( FMT_INS_OPR " ", op.reg.to_string() );				// Virtual register
@@ -76,24 +76,24 @@ namespace vtil::debug
 
 				if ( ins.base->memory_operand_index  != -1 &&
 					 &ins.operands[ ins.base->memory_operand_index + 1 ] == &op &&
-					 ins.operands[ ins.base->memory_operand_index ].reg == X86_REG_RSP )
+					 ins.operands[ ins.base->memory_operand_index ].reg.is_stack_pointer() )
 				{
-					if ( op.i64 >= 0 )
-						log<CON_YLW>( FMT_INS_OPR " ", format::hex( op.i64 ) );			 // External stack
+					if ( op.imm.i64 >= 0 )
+						log<CON_YLW>( FMT_INS_OPR " ", format::hex( op.imm.i64 ) );			 // External stack
 					else
-						log<CON_BRG>( FMT_INS_OPR " ", format::hex( op.i64 ) );			 // VM stack
+						log<CON_BRG>( FMT_INS_OPR " ", format::hex( op.imm.i64 ) );			 // VM stack
 				}
 				else
 				{
-					log<CON_CYN>( FMT_INS_OPR " ", format::hex( op.i64 ) );				 // Any immediate
+					log<CON_CYN>( FMT_INS_OPR " ", format::hex( op.imm.i64 ) );				 // Any immediate
 				}
 			}
 		}
 
 		// Print padding and end line
 		//
-		fassert( ins.operands.size() <= arch::max_operand_count );
-		for ( int i = ins.operands.size(); i < arch::max_operand_count; i++ )
+		fassert( ins.operands.size() <= max_operand_count );
+		for ( int i = ins.operands.size(); i < max_operand_count; i++ )
 			log( FMT_INS_OPR " ", "" );
 		log( "\n" );
 	}

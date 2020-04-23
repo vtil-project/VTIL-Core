@@ -27,63 +27,66 @@
 //
 #pragma once
 #include <string>
-#include <vtil/amd64>
-#include "register_view.hpp"
+#include <vtil/math>
+#include "register_desc.hpp"
 
-// Any operand used in a VTIL instruction will be essentialy either a register or an 
-// immediate value, where registers can also be either temporaries, physical registers or 
-// control registers.
-//
-//  - 1) Immediate value
-//  - 2) Register
-//	  - a) Temporaries
-//	  - b) Physical registers
-//	  - c) Control registers
-//
-namespace vtil::arch
+namespace vtil
 {
-	// The operand structure that is used to describe operands of an instruction.
+	// Operand structure either holds an immediate or a register.
 	//
 	struct operand
 	{
 		// If operand is a register:
 		//
-		register_view reg = {};
+		register_desc reg = {};
 
 		// If operand is an immediate:
 		//
-		union
+		struct
 		{
-			uint64_t u64 = 0;
-			int64_t i64;
-		};
-		uint8_t imm_size = 0;
+			union
+			{
+				int64_t i64;
+				uint64_t u64;
+			};
+			bitcnt_t bit_count = 0;
+		} imm;
 
 		// Operand type is constructed either by a register view or an immediate
 		// followed by an explicit size.
 		//
 		operand() = default;
-		operand( const register_view& rw ) : reg( rw ), imm_size( 0 ) {}
-		operand( uint64_t v, uint8_t size ) : u64( v ), imm_size( size ) {}
+		operand( register_desc&& rw ) : reg( std::move( rw ) ) {}
+		operand( const register_desc& rw ) : reg( rw ) {}
+		operand( int64_t v, bitcnt_t bit_count ) : imm( { v, bit_count } ) {}
 
 		// Getter for the operand size.
 		//
-		uint8_t size() const { return is_immediate() ? imm_size : reg.size; }
+		bitcnt_t size() const { return reg.is_valid() ? reg.bit_count : imm.bit_count; }
 
 		// Conversion to human-readable format.
 		//
-		std::string to_string() const { return is_register() ? reg.to_string() : format::hex( i64 ); }
+		std::string to_string() const { return is_register() ? reg.to_string() : format::hex( imm.i64 ); }
 
 		// Simple helpers to determine the type of operand.
 		//
 		bool is_register() const { return reg.is_valid(); }
-		bool is_immediate() const { return imm_size != 0; }
-		bool is_valid() const { return is_register() || is_immediate(); }
+		bool is_immediate() const { return imm.bit_count != 0; }
+		bool is_valid() const 
+		{ 
+			if ( is_register() )
+			{
+				if ( reg.bit_offset % 8 ) return false;
+				if ( reg.bit_count != 1 && ( reg.bit_count % 8 ) ) return false;
+				return true;
+			}
+			return is_immediate(); 
+		}
 
 		// Basic comparison operators.
 		//
 		bool operator!=( const operand& o ) const { return !operator==( o ); };
-		bool operator==( const operand& o ) const { return is_register() ? reg == o.reg : imm_size == o.imm_size && u64 == o.u64; }
-		bool operator<( const operand& o ) const { return is_register() ? reg < o.reg : ( imm_size == o.imm_size ? u64 < o.u64 : imm_size < o.imm_size ); }
+		bool operator==( const operand& o ) const { return is_register() ? reg == o.reg : ( imm.u64 == o.imm.u64 && imm.bit_count == o.imm.bit_count ); }
+		bool operator<( const operand& o ) const { return is_register() ? reg < o.reg : ( imm.u64 < o.imm.u64 || imm.bit_count < o.imm.bit_count ); }
 	};
 };

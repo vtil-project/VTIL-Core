@@ -49,10 +49,6 @@ namespace vtil
 		//
 		std::mutex mutex;
 
-		// Index of the last temporary register used.
-		//
-		std::atomic<int32_t> temporary_index_counter = -1;
-
 		// Cache of explored blocks, mapping virtual instruction
 		// pointer to the basic block structure.
 		//

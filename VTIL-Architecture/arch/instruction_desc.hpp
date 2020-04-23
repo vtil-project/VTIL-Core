@@ -28,9 +28,11 @@
 #pragma once
 #include <string>
 #include <vector>
+#include <vtil/io>
+#include <vtil/math>
 #include "operands.hpp"
 
-namespace vtil::arch
+namespace vtil
 {
     // Maximum operand count.
     //
@@ -40,7 +42,7 @@ namespace vtil::arch
     // constraints built around that, such as "immediate only" implied 
     // by the "_imm" suffix.
     //
-    enum operand_access : uint8_t
+    enum class operand_access : uint8_t
     {
         // Note: 
         // It still is valid to do != write for read and >= write for writes.
@@ -90,7 +92,7 @@ namespace vtil::arch
         // A pointer to the expression operator that describes the
         // operation of this instruction if applicable.
         //
-        std::string symbolic_operator = "";
+        math::operator_id symbolic_operator = math::operator_id::invalid;
 
         // List of operands that are thread as branching destinations.
         // - In the constructor version negative indices are used to 
@@ -113,7 +115,7 @@ namespace vtil::arch
                           const std::vector<operand_access>& access_types,
                           int access_size_index,
                           bool is_volatile,
-                          const std::string& symbolic_operator,
+                          math::operator_id symbolic_operator,
                           std::vector<int> branch_operands,
                           const std::pair<int, bool>& memory_operands );
 
@@ -138,7 +140,14 @@ namespace vtil::arch
 	    std::string to_string( uint8_t access_size ) const
 	    {
 		    if ( !access_size ) return name;
-		    return name + ( char ) format::suffix_map[ access_size ];
+            fassert( ( access_size % 8 ) == 0 );
+		    return name + ( char ) format::suffix_map[ access_size / 8 ];
 	    }
+
+        // Redirect basic comparison operators to the name of the instruction.
+        //
+        bool operator!=( const instruction_desc& o ) const { return name != o.name; }
+        bool operator==( const instruction_desc& o ) const { return name == o.name; }
+        bool operator<( const instruction_desc& o ) const { return name < o.name; }
     };
 };

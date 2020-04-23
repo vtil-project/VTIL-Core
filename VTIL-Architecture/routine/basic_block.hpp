@@ -31,12 +31,25 @@
 #include <vector>
 #include <algorithm>
 #include <iterator>
-#include <vtil/amd64>
 #include "routine.hpp"
 #include "instruction.hpp"
 
 namespace vtil
 {
+	// Should be overriden by the user to describe conversion of the
+	// register type they use (e.g. x86_reg for Capstone/Keystone) into
+	// VTIL register descriptors.
+	//
+	template<typename T>
+	struct register_cast
+	{
+		register_desc operator()( const T& value )
+		{
+			static_assert( value != value, "Failed to cast given operand into a register type." );
+			return {};
+		}
+	};
+
 	// Descriptor for any routine that is being translated.
 	// - Since optimization phase will be done in a single threaded
 	//   fashion, this structure contains no mutexes at all.
@@ -197,7 +210,7 @@ namespace vtil
 		std::vector<basic_block*> prev = {};
 
 		// The offset of current stack pointer from the last 
-		// [MOV RSP, <>] if applicable, or the beginning of 
+		// [MOV SP, <>] if applicable, or the beginning of 
 		// the basic block and the index of the stack instance.
 		//
 		int64_t sp_offset = 0;
@@ -213,6 +226,10 @@ namespace vtil
 		// to it valid even if an element is appended/removed.
 		//
 		std::list<instruction> stream = {};
+
+		// Last temporary index used.
+		//
+		uint32_t last_temporary_index = 0;
 
 		// Wrap the std::list fundamentals.
 		//
@@ -235,7 +252,7 @@ namespace vtil
 
 		// Helpers for the allocation of unique temporary registers
 		//
-		arch::register_view tmp( uint8_t size );
+		register_desc tmp( uint8_t size );
 		template<typename... params>
 		auto tmp( uint8_t size_0, params... size_n )
 		{
@@ -248,46 +265,32 @@ namespace vtil
 
 		// Lazy wrappers for every instruction
 		//
-		template<typename T>
-		operand prepare_operand( const T& value )
+		template<typename _T>
+		auto prepare_operand( _T&& value )
 		{
-			// If register_view or operand, return as is.
-			//
-			if constexpr ( std::is_same_v<T, register_view> ||
-						   std::is_same_v<T, operand> )
-				return operand( value );
+			using T = std::remove_cvref_t<_T>;
 
-			// If x86_reg, map to register_view
+			// If already register_desc or operand, return as is.
 			//
-			else if constexpr ( std::is_same_v<T, x86_reg> )
-			{
-				auto [base, offset, size] = amd64::resolve_mapping( value );
-				return operand( register_view( value, offset, size ) );
-			}
+			if constexpr ( std::is_same_v<T, register_desc> || std::is_same_v<T, operand> )
+				return std::forward<_T>( value );
 
-			// If std::string/register_desc, cast to register_view
-			//
-			else if constexpr ( std::is_same_v<T, std::string> ||
-								std::is_same_v<T, arch::register_desc> )
-				return operand( register_view( value ) );
-
-			// Else, treat as immediate
+			// If integer, describe as one.
 			//
 			else if constexpr ( std::is_integral_v<T> )
-				return operand( value, sizeof( T ) );
-			
-			// Failed to parse operand of lazy call.
+				return operand( value, sizeof( T ) * 8 );
+			// Try to cast into a register.
 			//
-			unreachable();
-			return {};
+			else
+				return operand( register_cast<T>{}( value ) );
 		}
 
-#define WRAP_LAZY(x)																											\
-		template<typename ...Ts>																								\
-		basic_block* x ( Ts... operands )																								\
-		{																														\
-			append_instruction( instruction{ &ins:: x, std::vector<operand>( { prepare_operand(operands)... } ) } );			\
-			return this;																										\
+#define WRAP_LAZY(x)																											                \
+		template<typename... Ts>																								                \
+		basic_block* x ( Ts&&... operands )																						                \
+		{																														                \
+			append_instruction( instruction{ &ins:: x, std::vector<operand>( { prepare_operand(std::forward<Ts>(operands))... } ) } );			\
+			return this;																										                \
 		}
 		WRAP_LAZY( mov );
 		WRAP_LAZY( str );
@@ -311,28 +314,18 @@ namespace vtil
 		WRAP_LAZY( band );
 		WRAP_LAZY( bror );
 		WRAP_LAZY( brol );
-		WRAP_LAZY( sets );
-		WRAP_LAZY( setz );
-		WRAP_LAZY( setp );
-		WRAP_LAZY( setc );
-		WRAP_LAZY( seto );
+		WRAP_LAZY( upflg );
 		WRAP_LAZY( js );
 		WRAP_LAZY( jmp );
 		WRAP_LAZY( vexit );
 		WRAP_LAZY( vemit );
 		WRAP_LAZY( vxcall );
 		WRAP_LAZY( nop );
-		WRAP_LAZY( vcmp0 );
 		WRAP_LAZY( vpinr );
 		WRAP_LAZY( vpinw );
 		WRAP_LAZY( vpinrm );
 		WRAP_LAZY( vpinwm );
 #undef WRAP_LAZY
-
-		// Updates EFLAGS register based on the previous instruction executed and writes it
-		// into the operand given.
-		//
-		basic_block* uflags_result( operand op, bool carry );
 
 		// Queues a stack shift.
 		//
@@ -355,17 +348,17 @@ namespace vtil
 		{
 			operand op = prepare_operand( _op );
 
-			// Handle RSP specially since we change the stack pointer
+			// Handle SP specially since we change the stack pointer
 			// before the instruction begins.
 			//
-			if ( op.is_register() && op.reg.base == X86_REG_RSP )
+			if ( op.is_register() && op.reg.is_stack_pointer() )
 			{
 				auto t0 = tmp( 8 );
 				return mov( t0, op )->push( t0 );
 			}
 
 			shift_sp( op.size() < stack_alignment ? -stack_alignment : -op.size() );
-			str( X86_REG_RSP, sp_offset, op );
+			str( REG_SP, sp_offset, op );
 			return this;
 		}
 
@@ -378,7 +371,7 @@ namespace vtil
 			operand op = prepare_operand( _op );
 			int64_t offset = sp_offset;
 			shift_sp( op.size() < stack_alignment ? stack_alignment : op.size() );
-			ldd( op, X86_REG_RSP, offset );
+			ldd( op, REG_SP, offset );
 			return this;
 		}
 	};

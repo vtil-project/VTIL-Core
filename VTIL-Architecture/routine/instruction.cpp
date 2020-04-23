@@ -49,9 +49,9 @@ namespace vtil
 		{
 			if ( !operands[ i ].is_valid() )
 				return false;
-			if ( base->access_types[ i ] == arch::read_imm && !operands[ i ].is_immediate() )
+			if ( base->access_types[ i ] == operand_access::read_imm && !operands[ i ].is_immediate() )
 				return false;
-			if ( base->access_types[ i ] == arch::read_reg && !operands[ i ].is_register() )
+			if ( base->access_types[ i ] == operand_access::read_reg && !operands[ i ].is_register() )
 				return false;
 		}
 
@@ -61,7 +61,7 @@ namespace vtil
 		{
 			const operand& mem_base = operands[ base->memory_operand_index ];
 			const operand& mem_offset = operands[ base->memory_operand_index + 1 ];
-			if ( !mem_base.is_register() || mem_base.size() != 8 )
+			if ( !mem_base.is_register() || mem_base.size() != 64 )
 				return false;
 			if ( !mem_offset.is_immediate() )
 				return false;
@@ -73,7 +73,7 @@ namespace vtil
 		{
 			for ( int idx : list )
 			{
-				if ( operands[ idx ].size() != 8 )
+				if ( operands[ idx ].size() != 64 )
 					return false;
 			}
 		}
@@ -82,11 +82,11 @@ namespace vtil
 
 	// Returns all memory accesses matching the criteria.
 	//
-	std::pair<arch::register_view, int64_t> instruction::get_mem_loc( arch::operand_access access ) const
+	std::pair<register_desc, int64_t> instruction::get_mem_loc( operand_access access ) const
 	{
 		// Validate arguments.
 		//
-		fassert( access == arch::invalid || access == arch::read || access == arch::write );
+		fassert( access == operand_access::invalid || access == operand_access::read || access == operand_access::write );
 
 		// If instruction does access memory:
 		//
@@ -94,43 +94,43 @@ namespace vtil
 		{
 			// Fetch and validate memory operands pair.
 			//
-			const register_view& mem_base = operands[ base->memory_operand_index ].reg;
+			const register_desc& mem_base = operands[ base->memory_operand_index ].reg;
 			const operand& mem_offset = operands[ base->memory_operand_index + 1 ];
 
-			if ( !base->memory_write && ( access == arch::read || access == arch::invalid ) )
-				return { mem_base, mem_offset.i64 };
-			else if ( base->memory_write && ( access == arch::write || access == arch::invalid ) )
-				return { mem_base, mem_offset.i64 };
+			if ( !base->memory_write && ( access == operand_access::read || access == operand_access::invalid ) )
+				return { mem_base, mem_offset.imm.i64 };
+			else if ( base->memory_write && ( access == operand_access::write || access == operand_access::invalid ) )
+				return { mem_base, mem_offset.imm.i64 };
 		}
 		return {};
 	}
 
 	// Checks whether the instruction reads from the given register or not.
 	//
-	int instruction::reads_from( const register_view& rw ) const
+	int instruction::reads_from( const register_desc& rw ) const
 	{
 		for ( int i = 0; i < base->access_types.size(); i++ )
-			if ( base->access_types[ i ] != arch::write && operands[ i ].reg.overlaps( rw ) )
+			if ( base->access_types[ i ] != operand_access::write && operands[ i ].reg.overlaps( rw ) )
 				return i + 1;
 		return 0;
 	}
 
 	// Checks whether the instruction writes to the given register or not.
 	//
-	int instruction::writes_to( const register_view& rw ) const
+	int instruction::writes_to( const register_desc& rw ) const
 	{
 		for ( int i = 0; i < base->access_types.size(); i++ )
-			if ( base->access_types[ i ] >= arch::write && operands[ i ].reg.overlaps( rw ) )
+			if ( base->access_types[ i ] >= operand_access::write && operands[ i ].reg.overlaps( rw ) )
 				return i + 1;
 		return 0;
 	}
 
 	// Checks whether the instruction overwrites the given register or not.
 	//
-	int instruction::overwrites( const register_view& rw ) const
+	int instruction::overwrites( const register_desc& rw ) const
 	{
 		for ( int i = 0; i < base->access_types.size(); i++ )
-			if ( base->access_types[ i ] == arch::write && operands[ i ].reg.overlaps( rw ) )
+			if ( base->access_types[ i ] == operand_access::write && operands[ i ].reg.overlaps( rw ) )
 				return i + 1;
 		return 0;
 	}
@@ -142,9 +142,9 @@ namespace vtil
 		std::vector<std::string> operand_str;
 		for ( auto& op : operands )
 			operand_str.push_back( op.to_string() );
-		fassert( operand_str.size() <= arch::max_operand_count &&
-				 arch::max_operand_count == 4 );
-		operand_str.resize( arch::max_operand_count );
+		fassert( operand_str.size() <= max_operand_count &&
+				 max_operand_count == 4 );
+		operand_str.resize( max_operand_count );
 
 		return format::str
 		(

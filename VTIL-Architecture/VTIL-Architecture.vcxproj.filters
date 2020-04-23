@@ -1,0 +1,60 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Architecture">
+      <UniqueIdentifier>{cdda70af-07dd-4d59-82df-6ede0201c94a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Miscellaneous">
+      <UniqueIdentifier>{fc75d30a-c12b-4902-a7bb-c665c2a9043c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Instruction Stream">
+      <UniqueIdentifier>{5111b44f-7760-4ccf-9f25-5c375a9480f7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Includes">
+      <UniqueIdentifier>{da55a262-7d21-4ce0-b5ef-c2de31a52d12}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="arch\operands.hpp">
+      <Filter>Architecture</Filter>
+    </ClInclude>
+    <ClInclude Include="routine\basic_block.hpp">
+      <Filter>Instruction Stream</Filter>
+    </ClInclude>
+    <ClInclude Include="routine\instruction.hpp">
+      <Filter>Instruction Stream</Filter>
+    </ClInclude>
+    <ClInclude Include="routine\routine.hpp">
+      <Filter>Instruction Stream</Filter>
+    </ClInclude>
+    <ClInclude Include="misc\debug.hpp">
+      <Filter>Miscellaneous</Filter>
+    </ClInclude>
+    <ClInclude Include="arch\instruction_desc.hpp">
+      <Filter>Architecture</Filter>
+    </ClInclude>
+    <ClInclude Include="arch\instruction_set.hpp">
+      <Filter>Architecture</Filter>
+    </ClInclude>
+    <ClInclude Include="arch\register_desc.hpp">
+      <Filter>Architecture</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="arch\instruction_desc.cpp">
+      <Filter>Architecture</Filter>
+    </ClCompile>
+    <ClCompile Include="routine\basic_block.cpp">
+      <Filter>Instruction Stream</Filter>
+    </ClCompile>
+    <ClCompile Include="routine\instruction.cpp">
+      <Filter>Instruction Stream</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="VTIL-Architecture.licenseheader" />
+    <None Include="includes\vtil\arch">
+      <Filter>Includes</Filter>
+    </None>
+  </ItemGroup>
+</Project>

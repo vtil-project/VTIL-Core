@@ -1,0 +1,9 @@
+#pragma once
+#include "..\..\misc\debug.hpp"
+#include "..\..\arch\instruction_desc.hpp"
+#include "..\..\arch\instruction_set.hpp"
+#include "..\..\arch\register_desc.hpp"
+#include "..\..\arch\operands.hpp"
+#include "..\..\routine\routine.hpp"
+#include "..\..\routine\basic_block.hpp"
+#include "..\..\routine\instruction.hpp"
