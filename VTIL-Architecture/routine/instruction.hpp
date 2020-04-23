@@ -35,7 +35,7 @@ namespace vtil
 	// Simple helper to create an immediate operand since vtil::operand( v, size ) gets redundant.
 	//
 	template<typename T> 
-	static operand make_imm( T value ) { return operand( value, sizeof( T ) ); }
+	static operand make_imm( T value ) { return operand( value, sizeof( T ) * 8 ); }
 
 	// Type we use to describe virtual instruction pointer in.
 	//
