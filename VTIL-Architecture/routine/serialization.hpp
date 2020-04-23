@@ -7,6 +7,7 @@
 #include "basic_block.hpp"
 #include "instruction.hpp"
 
+#pragma warning(disable:4267)
 namespace vtil
 {
 	namespace impl
@@ -17,10 +18,11 @@ namespace vtil
 		static constexpr bool _is_std_container( ... ) { return false; }
 		template <typename container_type,
 			typename iterator_type = typename container_type::iterator,
+			typename value_type = typename container_type::value_type,
 			typename = decltype( std::declval<container_type>().begin() ),
 			typename = decltype( std::declval<container_type>().end() ),
 			typename = decltype( std::declval<container_type>().clear() ),
-			typename = decltype( std::declval<container_type>().insert( std::declval<container_type>().begin(), *std::declval<container_type>().begin() ) ) >
+			typename = decltype( std::declval<container_type>().insert( std::declval<iterator_type>(), std::declval<value_type>() ) ) >
 		static constexpr bool _is_std_container( bool v ) { return true; }
 
 		template <typename T>
@@ -72,21 +74,6 @@ namespace vtil
 	// Container lengths are encoded using 32-bit integers instead of the 64-bit size_t.
 	//
 	using clength_t = uint32_t;
-
-	// Serialization of VTIL instructions.
-	//
-	void serialize( std::ostream& out, const instruction& in );
-	void deserialize( std::istream& in, instruction& out );
-
-	// Serialization of VTIL blocks.
-	//
-	void serialize( std::ostream& out, const basic_block* in );
-	void deserialize( std::istream& in, routine* rtn, basic_block*& blk );
-
-	// Serialization of VTIL routines.
-	//
-	void serialize( std::ostream& out, const routine* rtn );
-	routine* deserialize( std::istream& in, routine*& rtn );
 
 	// Serialization of any type except standard containers and pointers.
 	//
@@ -149,4 +136,20 @@ namespace vtil
 			impl::move_back( v, std::move( value ) );
 		}
 	}
+
+	// Serialization of VTIL blocks.
+	//
+	void serialize( std::ostream& out, const basic_block* in );
+	void deserialize( std::istream& in, routine* rtn, basic_block*& blk );
+
+	// Serialization of VTIL routines.
+	//
+	void serialize( std::ostream& out, const routine* rtn );
+	routine* deserialize( std::istream& in, routine*& rtn );
+
+	// Serialization of VTIL instructions.
+	//
+	void serialize( std::ostream& out, const instruction& in );
+	void deserialize( std::istream& in, instruction& out );
 };
+#pragma warning(default:4267)

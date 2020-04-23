@@ -7,41 +7,6 @@ namespace vtil
 	using magic_t = uint32_t;
 	static constexpr magic_t vtil_magic = 'LITV';
 
-	// Serialization of VTIL instructions.
-	//
-	void serialize( std::ostream& out, const instruction& in )
-	{
-		// Write only the name of the instruction instead of the pointer.
-		//
-		serialize( out, in.base->name );
-
-		// Write rest as is.
-		//
-		serialize( out, in.operands );
-		serialize( out, in.vip );
-		serialize( out, in.sp_offset );
-		serialize( out, in.sp_index );
-		serialize( out, in.sp_reset );
-	}
-	void deserialize( std::istream& in, instruction& out )
-	{
-		// Find the instruction by its name and write the pointer to the matched instance.
-		//
-		std::string name;
-		deserialize( in, name );
-		out.base = std::find( std::begin( instruction_list ), std::end( instruction_list ), name );
-		fassert( out.base != std::end( instruction_list ) );
-
-		// Read rest as is and validate.
-		//
-		deserialize( in, out.operands );
-		deserialize( in, out.vip );
-		deserialize( in, out.sp_offset );
-		deserialize( in, out.sp_index );
-		deserialize( in, out.sp_reset );
-		fassert( out.is_valid() );
-	}
-
 	// Serialization of VTIL blocks.
 	//
 	void serialize( std::ostream& out, const basic_block* in )
@@ -158,6 +123,41 @@ namespace vtil
 		rtn->entry_point = rtn->explored_blocks[ entry_vip ];
 		fassert( rtn->entry_point );
 		return rtn;
+	}
+
+	// Serialization of VTIL instructions.
+	//
+	static void serialize( std::ostream& out, const instruction& in )
+	{
+		// Write only the name of the instruction instead of the pointer.
+		//
+		serialize( out, in.base->name );
+
+		// Write rest as is.
+		//
+		serialize( out, in.operands );
+		serialize( out, in.vip );
+		serialize( out, in.sp_offset );
+		serialize( out, in.sp_index );
+		serialize( out, in.sp_reset );
+	}
+	static void deserialize( std::istream& in, instruction& out )
+	{
+		// Find the instruction by its name and write the pointer to the matched instance.
+		//
+		std::string name;
+		deserialize( in, name );
+		out.base = std::find( std::begin( instruction_list ), std::end( instruction_list ), name );
+		fassert( out.base != std::end( instruction_list ) );
+
+		// Read rest as is and validate.
+		//
+		deserialize( in, out.operands );
+		deserialize( in, out.vip );
+		deserialize( in, out.sp_offset );
+		deserialize( in, out.sp_index );
+		deserialize( in, out.sp_reset );
+		fassert( out.is_valid() );
 	}
 };
 #pragma warning(default:4267)

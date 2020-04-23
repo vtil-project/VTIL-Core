@@ -56,7 +56,9 @@
     <ClCompile Include="routine\serialization.cpp">
       <Filter>Instruction Stream</Filter>
     </ClCompile>
-    <ClCompile Include="routine\routine.cpp" />
+    <ClCompile Include="routine\routine.cpp">
+      <Filter>Instruction Stream</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="VTIL-Architecture.licenseheader" />

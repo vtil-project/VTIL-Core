@@ -27,10 +27,9 @@
 //
 #pragma once
 #include <map>
-#include <atomic>
 #include <mutex>
-#include <tuple>
 #include <type_traits>
+#include <functional>
 #include "instruction.hpp"
 
 namespace vtil
@@ -58,12 +57,11 @@ namespace vtil
 
 		// Invokes the enumerator passed for each basic block this routine contains.
 		//
-		template<typename enumerator_function>
-		void for_each( const enumerator_function& enumerator ) const
+		void for_each( const std::function<void( basic_block* )>& enumerator )
 		{
 			std::lock_guard _g( mutex );
-			for ( auto& block : explored_blocks )
-				enumerator( const_cast<basic_block*>(block.second) );
+			for ( auto& [vip, block] : explored_blocks )
+				enumerator( block );
 		}
 
 		// Routine structures free all basic blocks they own upon their destruction.
