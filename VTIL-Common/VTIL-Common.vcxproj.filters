@@ -11,17 +11,11 @@
     <Filter Include="amd64">
       <UniqueIdentifier>{cb6f5bfd-fdca-47fe-bbb7-e91d8e5ba642}</UniqueIdentifier>
     </Filter>
-    <Filter Include="amd64\Emulation">
-      <UniqueIdentifier>{673822af-de5d-4c16-9306-ac6c1441f341}</UniqueIdentifier>
-    </Filter>
     <Filter Include="amd64\Core">
       <UniqueIdentifier>{dbf4733d-3814-4218-9474-cf4b4e3c5719}</UniqueIdentifier>
     </Filter>
     <Filter Include="Math">
       <UniqueIdentifier>{e5d9bf65-c2c0-4dcf-aa87-65a7059e4e90}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Memory">
-      <UniqueIdentifier>{424c679d-7468-453f-8b9d-7d282aaf9470}</UniqueIdentifier>
     </Filter>
     <Filter Include="Utility">
       <UniqueIdentifier>{226c5e44-6592-44d0-adb0-31369963cb86}</UniqueIdentifier>
@@ -39,15 +33,6 @@
     </ClInclude>
     <ClInclude Include="amd64\disassembly.hpp">
       <Filter>amd64\Core</Filter>
-    </ClInclude>
-    <ClInclude Include="amd64\emulator.hpp">
-      <Filter>amd64\Emulation</Filter>
-    </ClInclude>
-    <ClInclude Include="memory\copy_on_write.hpp">
-      <Filter>Memory</Filter>
-    </ClInclude>
-    <ClInclude Include="memory\rwx_allocator.hpp">
-      <Filter>Memory</Filter>
     </ClInclude>
     <ClInclude Include="io\asserts.hpp">
       <Filter>I/O</Filter>
@@ -77,9 +62,6 @@
       <Filter>Math</Filter>
     </ClInclude>
     <ClInclude Include="includes\vtil\math">
-      <Filter>Includes</Filter>
-    </ClInclude>
-    <ClInclude Include="includes\vtil\memory">
       <Filter>Includes</Filter>
     </ClInclude>
     <ClInclude Include="util\priority_list.hpp">
@@ -112,6 +94,9 @@
     <ClInclude Include="util\critical_section.hpp">
       <Filter>Utility</Filter>
     </ClInclude>
+    <ClInclude Include="util\copy_on_write.hpp">
+      <Filter>Utility</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="amd64\register_details.cpp">
@@ -122,12 +107,6 @@
     </ClCompile>
     <ClCompile Include="amd64\disassembly.cpp">
       <Filter>amd64\Core</Filter>
-    </ClCompile>
-    <ClCompile Include="amd64\emulator.cpp">
-      <Filter>amd64\Emulation</Filter>
-    </ClCompile>
-    <ClCompile Include="memory\rwx_allocator.cpp">
-      <Filter>Memory</Filter>
     </ClCompile>
     <ClCompile Include="io\logger.cpp">
       <Filter>I/O</Filter>

@@ -371,7 +371,7 @@ namespace vtil::math
 			case operator_id::negate:
 				// -A = ~(A-1)
 				//
-				return evaluate_partial( operator_id::add, { ~rhs.known_one(), rhs.unknown_mask(), rhs.size() }, { -1ull, rhs.size() } );
+				return evaluate_partial( operator_id::add, { ~rhs.known_one(), rhs.unknown_mask(), rhs.size() }, { ~0ull, rhs.size() } );
 				
 				/*a = mask( rhs.size() ) & -__sx64( ( rhs.unknown_mask() | rhs.known_one() ), rhs.size() );
 				b = mask( rhs.size() ) & -__sx64( ( rhs.known_one() ),                      rhs.size() );
@@ -386,7 +386,7 @@ namespace vtil::math
 			case operator_id::substract:
 				// A-B = A+(-B)
 				//
-				return evaluate_partial( operator_id::add, lhs, evaluate_partial( operator_id::negate, {}, { -1ull, rhs.size() } ) );
+				return evaluate_partial( operator_id::add, lhs, evaluate_partial( operator_id::negate, {}, { ~0ull, rhs.size() } ) );
 				
 				/*a = ( lhs.unknown_mask() | lhs.known_one() ) - ( rhs.known_one()                      );
 				b = ( lhs.known_one()                      ) - ( rhs.unknown_mask() | rhs.known_one() );

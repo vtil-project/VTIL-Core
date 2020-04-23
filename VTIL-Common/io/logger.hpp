@@ -106,7 +106,7 @@ namespace vtil::logger
 	
 		// Used to mark functions noreturn.
 		//
-		__declspec( noreturn ) __forceinline static void noreturn_helper() { __debugbreak(); noreturn_helper(); }
+		__declspec( noreturn ) __forceinline static void noreturn_helper() { __debugbreak(); }
 	};
 
 	// Main function used when logging.

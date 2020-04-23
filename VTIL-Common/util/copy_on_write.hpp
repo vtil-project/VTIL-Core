@@ -31,10 +31,10 @@
 #include <type_traits>
 #include "..\io\asserts.hpp"
 
-// Thanks visual studio.
+// Define _AddressOfReturnAddress() for compilers that do not have it.
 //
-#ifdef __INTELLISENSE__
-	#define __builtin_frame_address(level) ((void*)1337)
+#if not defined(_MSC_VER) and not defined(__INTELLISENSE__)
+	#define _AddressOfReturnAddress() __builtin_frame_address(0)
 #endif
 
 // The copy-on-write interface defined here is used to avoid deep duplications of 
@@ -229,7 +229,7 @@ namespace vtil
 	{
 		// Save current frame address.
 		//
-		void* creation_frame = __builtin_frame_address( 0 );
+		void* creation_frame = _AddressOfReturnAddress();
 
 		// Create a shared_reference from a custom std::shared_ptr.
 		//
@@ -238,7 +238,7 @@ namespace vtil
 		{
 			// Should not be destructed above current frame.
 			//
-			fassert( creation_frame > __builtin_frame_address( 0 ) );
+			fassert( creation_frame > _AddressOfReturnAddress() );
 		} };
 
 		// Mark as locked and return.

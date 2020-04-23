@@ -60,7 +60,7 @@ namespace vtil::math
         //
         operable() = default;
         template<typename T = uint64_t, std::enable_if_t<std::is_integral_v<T>, int> = 0>
-        operable( T value, bitcnt_t bit_count = sizeof( T ) * 8 ) : value( { value, bit_count } ) {}
+        operable( T value, bitcnt_t bit_count = sizeof( T ) * 8 ) : value( uint64_t( value ), bit_count ) {}
 
         // Gets the value represented, and nullopt if value has unknown bits.
         //

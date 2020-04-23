@@ -61,7 +61,7 @@ namespace vtil::math
         x = ( x & 0x3333333333333333 ) + ( ( x >> 2 ) & 0x3333333333333333 );
         x = ( x + ( x >> 4 ) ) & 0x0f0f0f0f0f0f0f0f;
         x = ( x * 0x0101010101010101 ) >> 56;
-        return x;
+        return bitcnt_t( x );
     }
 
     // Generate a mask for the given variable size and offset.
@@ -69,7 +69,7 @@ namespace vtil::math
     static constexpr uint64_t fill( bitcnt_t bit_count, bitcnt_t bit_offset = 0 )
     {
         if ( bit_offset >= 64 ) return 0;
-        return ( -1ull >> ( 64 - bit_count ) ) << bit_offset;
+        return ( ( ~0ull ) >> ( 64 - bit_count ) ) << bit_offset;
     }
 
     // Zero extends the given integer.

@@ -1,3 +1,4 @@
 #pragma once
 #include "..\..\util\priority_list.hpp"
 #include "..\..\util\critical_section.hpp"
+#include "..\..\util\copy_on_write.hpp"

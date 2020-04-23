@@ -31,7 +31,7 @@
 
 namespace vtil::assert
 {
-	namespace impl { __declspec( noreturn ) __forceinline static void noreturn_helper() { __debugbreak(); noreturn_helper(); } };
+	namespace impl { __declspec( noreturn ) __forceinline static void noreturn_helper() { __debugbreak(); } };
 
 	static void or_die( bool condition, const char* file_name, const char* condition_str, uint32_t line_number )
 	{
