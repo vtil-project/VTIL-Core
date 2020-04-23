@@ -105,7 +105,7 @@ namespace vtil
 
 		// Returns the access size of the instruction.
 		//
-		uint8_t access_size() const { return operands.empty() ? 0 : operands[ base->access_size_index ].size(); }
+		size_t access_size() const { return operands.empty() ? 0 : operands[ base->access_size_index ].size(); }
 
 		// Returns all memory accesses matching the criteria.
 		//

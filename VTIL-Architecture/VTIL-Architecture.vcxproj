@@ -19,11 +19,14 @@
     <ClInclude Include="routine\basic_block.hpp" />
     <ClInclude Include="routine\instruction.hpp" />
     <ClInclude Include="routine\routine.hpp" />
+    <ClInclude Include="routine\serialization.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="arch\instruction_desc.cpp" />
     <ClCompile Include="routine\basic_block.cpp" />
     <ClCompile Include="routine\instruction.cpp" />
+    <ClCompile Include="routine\routine.cpp" />
+    <ClCompile Include="routine\serialization.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="includes\vtil\arch" />

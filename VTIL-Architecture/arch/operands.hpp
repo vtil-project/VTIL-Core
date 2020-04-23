@@ -67,9 +67,14 @@ namespace vtil
 		operand( T&& reg ) : reg( register_cast<std::remove_cvref_t<T>>{}( reg ) ) {}
 		operand( int64_t v, bitcnt_t bit_count ) : imm( { v, bit_count } ) {}
 
-		// Getter for the operand size.
+		// Getter for the operand size (in bytes).
 		//
-		bitcnt_t size() const { return reg.is_valid() ? reg.bit_count : imm.bit_count; }
+		size_t size() const 
+		{ 
+			bitcnt_t bit_cnt = is_register() ? reg.bit_count : imm.bit_count;
+			if ( bit_cnt == 1 ) return 1;
+			else                return bit_cnt / 8;
+		}
 
 		// Conversion to human-readable format.
 		//

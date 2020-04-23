@@ -95,7 +95,7 @@ namespace vtil
 		return register_desc
 		{
 			register_local,
-			++last_temporary_index,
+			last_temporary_index++,
 			size
 		};
 	}

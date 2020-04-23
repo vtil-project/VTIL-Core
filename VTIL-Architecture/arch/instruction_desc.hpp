@@ -137,15 +137,17 @@ namespace vtil
 
         // Conversion to human-readable format.
         //
-	    std::string to_string( uint8_t access_size ) const
+	    std::string to_string( size_t access_size ) const
 	    {
 		    if ( !access_size ) return name;
-            fassert( ( access_size % 8 ) == 0 );
-		    return name + ( char ) format::suffix_map[ access_size / 8 ];
+		    return name + ( char ) format::suffix_map[ access_size ];
 	    }
 
         // Redirect basic comparison operators to the name of the instruction.
         //
+        bool operator!=( const std::string& o ) const { return name != o; }
+        bool operator==( const std::string& o ) const { return name == o; }
+        bool operator<( const std::string& o ) const { return name < o; }
         bool operator!=( const instruction_desc& o ) const { return name != o.name; }
         bool operator==( const instruction_desc& o ) const { return name == o.name; }
         bool operator<( const instruction_desc& o ) const { return name < o.name; }

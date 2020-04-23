@@ -43,31 +43,31 @@ namespace vtil
 	//
 	struct routine
 	{
-		// Mutex guarding the whole structure, if a member is 
-		// not explicitly marked, this mutex should be acquired
-		// before accesing it.
+		// Mutex guarding the whole structure, more information on thread-safety can be found at basic_block.hpp.
 		//
 		std::mutex mutex;
 
-		// Cache of explored blocks, mapping virtual instruction
-		// pointer to the basic block structure.
+		// Cache of explored blocks, mapping virtual instruction pointer to the basic block structure.
 		//
 		std::map<vip_t, basic_block*> explored_blocks;
 
 		// Reference to the first block, entry point.
-		// - Can be accessed without acquiring the mutex as it
-		//   will be assigned strictly once.
+		// - Can be accessed without acquiring the mutex as it will be assigned strictly once.
 		//
 		basic_block* entry_point = nullptr;
 
-		// Invokes the enumerator passed for each basic block 
-		// this routine contains.
+		// Invokes the enumerator passed for each basic block this routine contains.
 		//
 		template<typename enumerator_function>
 		void for_each( const enumerator_function& enumerator ) const
 		{
+			std::lock_guard _g( mutex );
 			for ( auto& block : explored_blocks )
 				enumerator( const_cast<basic_block*>(block.second) );
 		}
+
+		// Routine structures free all basic blocks they own upon their destruction.
+		//
+		~routine();
 	};
 };

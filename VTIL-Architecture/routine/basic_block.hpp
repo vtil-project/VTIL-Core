@@ -338,7 +338,7 @@ namespace vtil
 				return mov( t0, op )->push( t0 );
 			}
 
-			shift_sp( op.size() < stack_alignment ? -stack_alignment : -op.size() );
+			shift_sp( op.size() < stack_alignment ? -stack_alignment : -int64_t( op.size() ) );
 			str( REG_SP, sp_offset, op );
 			return this;
 		}

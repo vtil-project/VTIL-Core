@@ -39,6 +39,9 @@
     <ClInclude Include="arch\register_desc.hpp">
       <Filter>Architecture</Filter>
     </ClInclude>
+    <ClInclude Include="routine\serialization.hpp">
+      <Filter>Instruction Stream</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="arch\instruction_desc.cpp">
@@ -50,6 +53,10 @@
     <ClCompile Include="routine\instruction.cpp">
       <Filter>Instruction Stream</Filter>
     </ClCompile>
+    <ClCompile Include="routine\serialization.cpp">
+      <Filter>Instruction Stream</Filter>
+    </ClCompile>
+    <ClCompile Include="routine\routine.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="VTIL-Architecture.licenseheader" />
