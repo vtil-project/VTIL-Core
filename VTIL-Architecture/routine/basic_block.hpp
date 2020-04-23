@@ -36,20 +36,6 @@
 
 namespace vtil
 {
-	// Should be overriden by the user to describe conversion of the
-	// register type they use (e.g. x86_reg for Capstone/Keystone) into
-	// VTIL register descriptors.
-	//
-	template<typename T>
-	struct register_cast
-	{
-		register_desc operator()( const T& value )
-		{
-			static_assert( value != value, "Failed to cast given operand into a register type." );
-			return {};
-		}
-	};
-
 	// Descriptor for any routine that is being translated.
 	// - Since optimization phase will be done in a single threaded
 	//   fashion, this structure contains no mutexes at all.
@@ -270,19 +256,14 @@ namespace vtil
 		{
 			using T = std::remove_cvref_t<_T>;
 
-			// If already register_desc or operand, return as is.
-			//
-			if constexpr ( std::is_same_v<T, register_desc> || std::is_same_v<T, operand> )
-				return std::forward<_T>( value );
-
 			// If integer, describe as one.
 			//
-			else if constexpr ( std::is_integral_v<T> )
+			if constexpr ( std::is_integral_v<T> )
 				return operand( value, sizeof( T ) * 8 );
-			// Try to cast into a register.
+			// Otherwise try explicitly casting.
 			//
 			else
-				return operand( register_cast<T>{}( value ) );
+				return operand( value );
 		}
 
 #define WRAP_LAZY(x)																											                \

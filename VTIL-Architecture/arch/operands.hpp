@@ -52,12 +52,19 @@ namespace vtil
 			bitcnt_t bit_count = 0;
 		} imm;
 
-		// Operand type is constructed either by a register view or an immediate
-		// followed by an explicit size.
+		// Default constructor / move / copy.
 		//
 		operand() = default;
-		operand( register_desc&& rw ) : reg( std::move( rw ) ) {}
-		operand( const register_desc& rw ) : reg( rw ) {}
+		operand( operand&& ) = default;
+		operand( const operand& ) = default;
+		operand& operator=( operand&& ) = default;
+		operand& operator=( const operand& ) = default;
+
+		// Operand type is constructed either by a register view or an immediate
+		// followed by an explicit size.
+		//		
+		template<typename T, std::enable_if_t<!std::is_same_v<std::remove_cvref_t<T>, operand>, int> = 0>
+		operand( T&& reg ) : reg( register_cast<std::remove_cvref_t<T>>{}( reg ) ) {}
 		operand( int64_t v, bitcnt_t bit_count ) : imm( { v, bit_count } ) {}
 
 		// Getter for the operand size.

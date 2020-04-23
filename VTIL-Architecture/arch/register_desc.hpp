@@ -200,6 +200,28 @@ namespace vtil
 		bool operator<( const register_desc& o ) const  { return local_id < o.local_id  || flags < o.flags  || bit_count < o.bit_count  || bit_offset < o.bit_offset; }
 	};
 
+	// Should be overriden by the user to describe conversion of the
+	// register type they use (e.g. x86_reg for Capstone/Keystone) into
+	// VTIL register descriptors for seamless casting into vtil::operand type.
+	//
+	template<typename T>
+	struct register_cast
+	{
+		register_desc operator()( const T& value )
+		{
+			static_assert( sizeof( T ) == -1, "Failed to cast given operand into a register type." );
+			return {};
+		}
+	};
+	template<> 
+	struct register_cast<register_desc>
+	{
+		template<typename T>
+		auto operator()( T&& v ) { return std::forward<T>( v ); }
+	};
+
+	// VTIL special registers.
+	//
 	static const register_desc REG_FLAGS = register_desc{ register_physical | register_flags,         0, 64, 0 };
 	static const register_desc REG_SP =    register_desc{ register_physical | register_stack_pointer, 0, 64, 0 };
 };
