@@ -43,14 +43,6 @@
 #include "disassembly.hpp"
 #include "..\io\asserts.hpp"
 
-#define X86_EFLAGS_CF_BIT		0ull
-#define X86_EFLAGS_PF_BIT		2ull
-#define X86_EFLAGS_AF_BIT		4ull
-#define X86_EFLAGS_ZF_BIT		6ull
-#define X86_EFLAGS_SF_BIT		7ull
-#define X86_EFLAGS_IF_BIT		9ull
-#define X86_EFLAGS_OF_BIT		11ull
-
 namespace vtil::amd64
 {
 	// Structure describing how a register maps to another register.

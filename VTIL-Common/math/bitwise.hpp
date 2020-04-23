@@ -37,7 +37,7 @@
 //   this value to an integer anyway and since char does not provide us any intrinsic
 //   safety either this only hurts us in terms of performance.
 //
-using bitcnt_t = unsigned int;
+using bitcnt_t = int;
 
 namespace vtil::math
 {
@@ -53,7 +53,7 @@ namespace vtil::math
 
     // Implement platform-indepdenent popcnt and bit_test/set/clear/flip.
     //
-    static bitcnt_t popcnt( uint64_t x )
+    static constexpr bitcnt_t popcnt( uint64_t x )
     {
         // https://www.chessprogramming.org/Population_Count#The_PopCount_routine
         //

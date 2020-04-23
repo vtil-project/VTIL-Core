@@ -103,7 +103,7 @@
     <ClInclude Include="amd64\disassembly.hpp" />
     <ClInclude Include="amd64\emulator.hpp" />
     <ClInclude Include="amd64\register_details.hpp" />
-    <ClInclude Include="includes\vtil\vtil" />
+    <ClInclude Include="includes\vtil\common" />
     <ClInclude Include="includes\vtil\io" />
     <ClInclude Include="includes\vtil\math" />
     <ClInclude Include="includes\vtil\memory" />
@@ -138,6 +138,7 @@
     <ClCompile Include="util\critical_section.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="includes\vtil\vtil" />
     <None Include="VTIL-Common.licenseheader" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

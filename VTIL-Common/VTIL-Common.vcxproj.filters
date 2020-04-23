@@ -61,6 +61,9 @@
     <ClInclude Include="includes\vtil\amd64">
       <Filter>Includes</Filter>
     </ClInclude>
+    <ClInclude Include="includes\vtil\common">
+      <Filter>Includes</Filter>
+    </ClInclude>
     <ClInclude Include="includes\vtil\io">
       <Filter>Includes</Filter>
     </ClInclude>
@@ -109,9 +112,6 @@
     <ClInclude Include="util\critical_section.hpp">
       <Filter>Utility</Filter>
     </ClInclude>
-    <ClInclude Include="includes\vtil\vtil">
-      <Filter>Includes</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="amd64\register_details.cpp">
@@ -141,5 +141,8 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="VTIL-Common.licenseheader" />
+    <None Include="includes\vtil\vtil">
+      <Filter>Includes</Filter>
+    </None>
   </ItemGroup>
 </Project>

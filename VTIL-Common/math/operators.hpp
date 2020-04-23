@@ -210,6 +210,7 @@ namespace vtil::math
         {    0,       false,    2,    false,          "u<=",      "uless_eq"    },
         {    0,       false,    2,    false,          "u<",       "uless"       },
     };
+    static_assert( std::size( descriptors ) == size_t( operator_id::max ), "Operator descriptor table is invalid." );
     inline static const operator_desc* descriptor_of( operator_id id ) { return ( operator_id::invalid < id && id < operator_id::max ) ? &descriptors[ ( size_t ) id ] : nullptr; }
 
     // Operators that return bit-indices, always use the following size.

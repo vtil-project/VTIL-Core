@@ -1,4 +1,4 @@
 #pragma once
-#include <vtil/memory>
-#include <vtil/io>
-#include <vtil/amd64>
+#include <vtil/common>
+#include <vtil/symex>
+#include <vtil/arch>
