@@ -55,6 +55,14 @@ namespace vtil
 		//
 		basic_block* entry_point = nullptr;
 
+		// This structure cannot be copied.
+		//
+		routine() = default;
+		routine( routine&& ) = default;
+		routine( const routine& ) = delete;
+		routine& operator=( routine&& ) = default;
+		routine& operator=( const routine& ) = delete;
+
 		// Invokes the enumerator passed for each basic block this routine contains.
 		//
 		void for_each( const std::function<void( basic_block* )>& enumerator )

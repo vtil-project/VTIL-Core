@@ -34,6 +34,7 @@ namespace vtil
 {
 	// Operand structure either holds an immediate or a register.
 	//
+	#pragma pack(push, 4)
 	struct operand
 	{
 		// If operand is a register:
@@ -101,4 +102,5 @@ namespace vtil
 		bool operator==( const operand& o ) const { return is_register() ? reg == o.reg : ( imm.u64 == o.imm.u64 && imm.bit_count == o.imm.bit_count ); }
 		bool operator<( const operand& o ) const { return is_register() ? reg < o.reg : ( imm.u64 < o.imm.u64 || imm.bit_count < o.imm.bit_count ); }
 	};
+	#pragma pack(pop)
 };

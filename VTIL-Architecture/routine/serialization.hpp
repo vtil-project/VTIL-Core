@@ -100,18 +100,22 @@ namespace vtil
 
 	// Container lengths are encoded using 32-bit integers instead of the 64-bit size_t.
 	//
-	using clength_t = uint32_t;
+	using clength_t = int32_t;
 
 	// Serialization of any type except standard containers and pointers.
 	//
 	template<typename T, std::enable_if_t<!std::is_pointer_v<T> && !impl::is_std_container_v<T>, int> = 0>
 	static void serialize( std::ostream& ss, const T& v ) 
 	{ 
+		// Write the actual value.
+		//
 		ss.write( ( const char* ) &v, sizeof( T ) ); 
 	}
 	template<typename T, std::enable_if_t<!std::is_pointer_v<T> && !impl::is_std_container_v<T>, int> = 0>
 	static void deserialize( std::istream& ss, T& v ) 
-	{ 
+	{
+		// Read the actual value.
+		//
 		ss.read( ( char* ) &v, sizeof( T ) ); 
 	}
 
@@ -156,7 +160,7 @@ namespace vtil
 
 		// Until counter reaches zero, deserialize an entry and then insert it at the end.
 		//
-		while ( n-- )
+		while ( n-- > 0 )
 		{
 			value_type value;
 			deserialize( ss, value );
