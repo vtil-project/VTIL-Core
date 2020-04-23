@@ -121,7 +121,7 @@ namespace vtil
 
         // Number of operands this instruction has.
         //
-        int operand_count() const { return access_types.size(); }
+        size_t operand_count() const { return access_types.size(); }
 
         // Whether the instruction branches for not.
         //

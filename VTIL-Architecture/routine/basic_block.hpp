@@ -67,11 +67,11 @@ namespace vtil
 	{
 		// Define a range iterator so queries can be used on this structure.
 		//
-		template<typename container_type, typename iterator_type>
-		struct riterator_base : iterator_type
+		template<typename _container_type, typename _iterator_type>
+		struct riterator_base : _iterator_type
 		{
-			using container_type = container_type;
-			using iterator_type = iterator_type;
+			using container_type = _container_type;
+			using iterator_type = _iterator_type;
 
 			// Reference to the block.
 			//
