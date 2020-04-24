@@ -26,7 +26,7 @@
 // POSSIBILITY OF SUCH DAMAGE.        
 //
 #include "basic_block.hpp"
-//#include <vtil/amd64>
+#include <vtil/amd64> // TODO: Remove me
 
 namespace vtil
 {
@@ -205,12 +205,12 @@ namespace vtil
 
 	// Emits an entire instruction using series of VEMITs.
 	//
-	/*basic_block* basic_block::vemits( const std::string& assembly )
+	basic_block* basic_block::vemits( const std::string& assembly )
 	{
 		auto res = keystone::assemble( assembly );
 		fassert( !res.empty() );
 		for ( uint8_t byte : res )
 			vemit( byte );
 		return this;
-	}*/
+	}
 };

@@ -28,23 +28,10 @@
 #pragma once
 #include <string>
 #include <vtil/math>
+#include <vtil/amd64> // TODO: Remove me.
 
 namespace vtil
 {
-	// This template can be overriden by the user to provide "actual" names for the physical registers,
-	// or to customize the way virtual registers are named.
-	//
-	template<bool is_physical>
-	struct register_namer 
-	{
-		// Positional suffix is provided so that this routine can choose to ignore it if register has a naming for the mapped position.
-		//
-		std::string operator()( size_t id, uint8_t bit_offset, uint8_t bit_count, const std::string& positional_suffix ) 
-		{ 
-			return ( is_physical ? "r" : "vr" ) + std::to_string( id ) + positional_suffix;
-		}
-	};
-
 	// Flags that describe the properties of the register.
 	//
 	enum register_flag : uint8_t
@@ -185,12 +172,12 @@ namespace vtil
 			if ( flags & register_stack_pointer ) return prefix + "$sp" + suffix;
 			if ( flags & register_local )         return prefix + "t" + std::to_string( local_id ) + suffix;
 
-			// Otherwise invoke the registered helper.
+			// Otherwise use the default naming.
 			//
-			if ( flags & register_physical )
-				return prefix + register_namer<false>{}( local_id, bit_count, bit_offset, suffix );
+			if ( ( flags & register_physical ) )
+				return amd64::name( amd64::extend( local_id ) ) + suffix;
 			else
-				return prefix + register_namer<true>{}( local_id, bit_count, bit_offset, suffix );
+				return "vr" + std::to_string( local_id ) + suffix;
 		}
 
 		// Basic comparison operators.

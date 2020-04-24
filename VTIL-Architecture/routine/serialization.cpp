@@ -123,7 +123,7 @@ namespace vtil
 		magic_t magic;
 		deserialize( in, magic );
 		if ( magic != vtil_magic )
-			return nullptr;
+			throw std::exception( "VTIL magic mismatch." );
 
 		// Create a new routine.
 		//
@@ -148,7 +148,8 @@ namespace vtil
 		// Assign the fetched entry point from cache and return.
 		//
 		rtn->entry_point = rtn->explored_blocks[ entry_vip ];
-		fassert( rtn->entry_point );
+		if ( !rtn->entry_point )
+			throw std::exception( "Failed resolving entry point." );
 		return rtn;
 	}
 
@@ -175,7 +176,8 @@ namespace vtil
 		std::string name;
 		deserialize( in, name );
 		out.base = std::find( std::begin( instruction_list ), std::end( instruction_list ), name );
-		fassert( out.base != std::end( instruction_list ) );
+		if( out.base == std::end( instruction_list ) )
+			throw std::exception( "Failed resolving instruction." );
 
 		// Read rest as is and validate.
 		//
@@ -184,7 +186,8 @@ namespace vtil
 		deserialize( in, out.sp_offset );
 		deserialize( in, out.sp_index );
 		deserialize( in, out.sp_reset );
-		fassert( out.is_valid() );
+		if( !out.is_valid() )
+			throw std::exception( "Resolved invalid instruction." );
 	}
 };
 #pragma warning(default:4267)
