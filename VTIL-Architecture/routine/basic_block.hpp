@@ -334,7 +334,7 @@ namespace vtil
 			//
 			if ( op.is_register() && op.reg.is_stack_pointer() )
 			{
-				auto t0 = tmp( 8 );
+				auto t0 = tmp( 64 );
 				return mov( t0, op )->push( t0 );
 			}
 
