@@ -46,6 +46,7 @@ namespace vtil
 {
 	// Variant can be used to store values of any type in a fast way.
 	//
+	#pragma pack(push, 1)
 	struct variant
 	{
 		static constexpr size_t small_type_optimization_limit = 0x30;
@@ -212,4 +213,5 @@ namespace vtil
 		void reset();
 		inline ~variant() { reset(); }
 	};
+	#pragma pack(pop)
 };
