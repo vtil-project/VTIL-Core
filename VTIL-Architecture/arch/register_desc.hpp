@@ -175,9 +175,10 @@ namespace vtil
 			// Otherwise use the default naming.
 			//
 			if ( ( flags & register_physical ) )
-				return amd64::name( amd64::extend( local_id ) ) + suffix;
+				#pragma warning(suppress: 4267)
+				return prefix + amd64::name( amd64::extend( local_id ) ) + suffix;
 			else
-				return "vr" + std::to_string( local_id ) + suffix;
+				return prefix + "vr" + std::to_string( local_id ) + suffix;
 		}
 
 		// Basic comparison operators.
