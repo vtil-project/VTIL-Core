@@ -2,3 +2,5 @@
 #include "..\..\util\priority_list.hpp"
 #include "..\..\util\critical_section.hpp"
 #include "..\..\util\copy_on_write.hpp"
+#include "..\..\util\concept.hpp"
+#include "..\..\util\variant.hpp"

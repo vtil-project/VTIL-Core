@@ -97,6 +97,12 @@
     <ClInclude Include="util\copy_on_write.hpp">
       <Filter>Utility</Filter>
     </ClInclude>
+    <ClInclude Include="util\concept.hpp">
+      <Filter>Utility</Filter>
+    </ClInclude>
+    <ClInclude Include="util\variant.hpp">
+      <Filter>Utility</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="amd64\register_details.cpp">
@@ -115,6 +121,9 @@
       <Filter>Math</Filter>
     </ClCompile>
     <ClCompile Include="util\critical_section.cpp">
+      <Filter>Utility</Filter>
+    </ClCompile>
+    <ClCompile Include="util\variant.cpp">
       <Filter>Utility</Filter>
     </ClCompile>
   </ItemGroup>

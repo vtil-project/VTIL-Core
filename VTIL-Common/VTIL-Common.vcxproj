@@ -122,9 +122,11 @@
     <ClInclude Include="query\range_iterator_contract.hpp" />
     <ClInclude Include="query\recursive_view.hpp" />
     <ClInclude Include="query\view.hpp" />
+    <ClInclude Include="util\concept.hpp" />
     <ClInclude Include="util\copy_on_write.hpp" />
     <ClInclude Include="util\critical_section.hpp" />
     <ClInclude Include="util\priority_list.hpp" />
+    <ClInclude Include="util\variant.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="amd64\assembler.cpp" />
@@ -133,6 +135,7 @@
     <ClCompile Include="io\logger.cpp" />
     <ClCompile Include="math\operators.cpp" />
     <ClCompile Include="util\critical_section.cpp" />
+    <ClCompile Include="util\variant.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="includes\vtil\vtil" />

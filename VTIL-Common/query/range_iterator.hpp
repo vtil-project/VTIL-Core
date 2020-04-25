@@ -38,12 +38,12 @@ namespace vtil::query
 	// Basic range iterators provide a simple range iterator implementation for default STL container and pretty much
 	// any other container adhereing to their standards to be used with VTIL queries.
 	//
-	template<typename container_type, 
-		typename iterator_type = std::conditional_t<std::is_const_v<container_type>, typename container_type::const_iterator, typename container_type::iterator>>
-	struct basic_range_iterator : iterator_type
+	template<typename _container_type,
+		typename _iterator_type = std::conditional_t<std::is_const_v<_container_type>, typename _container_type::const_iterator, typename _container_type::iterator>>
+	struct basic_range_iterator : _iterator_type
 	{
-		using container_type = container_type;
-		using iterator_type = iterator_type;
+		using container_type = _container_type;
+		using iterator_type = _iterator_type;
 
 		// Reference to the container.
 		//

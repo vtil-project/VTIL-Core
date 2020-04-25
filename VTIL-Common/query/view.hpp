@@ -38,10 +38,11 @@ namespace vtil::query
 	// with any query in a simple fashion using a projected type
 	// of their own choice.
 	//
-	template<typename projected_type, typename query_desc>
+	template<typename _projected_type, typename _query_desc>
 	struct view
 	{
-		using projected_type = projected_type;
+		using projected_type = _projected_type;
+		using query_desc = _query_desc;
 		using view_type = view<projected_type, query_desc>;
 
 		// Base query and its typedefs.

@@ -52,14 +52,14 @@ namespace vtil::query
 	// If vector entries are not pointers, they will be used to generate
 	// fake const_iterators mapping to each entry.
 	//
-	template<typename container_type, typename value_type>
+	template<typename _container_type, typename _value_type>
 	struct fixed_iterator
 	{
 		// Export the required traits of range iterators.
 		//
-		using container_type = container_type;
+		using container_type = _container_type;
+		using value_type = _value_type;
 		using iterator_type = const value_type*;
-		using value_type = value_type;
 		using recurse_function = std::vector<fixed_iterator>(*)( container_type* self, bool forward );
 
 		// Export the required traits of an standard iterator.
@@ -99,14 +99,14 @@ namespace vtil::query
 	// If vector entries are pointers, they will be used to generate
 	// fake iterators mapping to the address pointed by each entry instead.
 	//
-	template<typename container_type, typename value_type>
-	struct fixed_iterator<container_type, value_type*>
+	template<typename _container_type, typename _value_type>
+	struct fixed_iterator<_container_type, _value_type*>
 	{
 		// Export the required traits of range iterators.
 		//
-		using container_type = container_type;
+		using container_type = _container_type;
+		using value_type = _value_type;
 		using iterator_type = value_type*;
-		using value_type = value_type;
 		using recurse_function = std::vector<fixed_iterator>(*)(container_type* self, bool forward);
 
 		// Export the required traits of an standard iterator.

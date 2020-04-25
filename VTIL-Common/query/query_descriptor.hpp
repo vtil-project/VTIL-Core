@@ -37,10 +37,10 @@ namespace vtil::query
 	// Query descriptor is a structure describing the iteration state of any
 	// query object in dependent to the currently projected type.
 	//
-	template<typename iterator_type>
+	template<typename _iterator_type>
 	struct query_desc
 	{
-		using iterator_type = iterator_type;
+		using iterator_type = _iterator_type;
 		using reference_type = decltype( *std::declval<iterator_type>() );
 
 		// Current range iterator.
