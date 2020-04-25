@@ -37,13 +37,16 @@ namespace vtil::symbolic
 	static bool simplify_verbose = false;
 	static bool prettify_verbose = false;
 
-	// Simplifier cache.
+	// Simplifier cache and its accessors.
 	//
-	static thread_local std::unordered_map<size_t, std::pair<expression::reference, bool>> simplifier_cache;
+	static thread_local simplifier_cache_t simplifier_cache;
+
+	void purge_simplifier_cache() { simplifier_cache.clear(); }
+	simplifier_cache_t& ref_simplifier_cache() { return simplifier_cache; }
 
 	// TODO: Logger for the use of debugging, ignore for now.
 	//
-	std::string to_base_exp( directive::symbol_table& sym, const expression::reference& exp, int depth = 0 )
+	static std::string to_base_exp( directive::symbol_table& sym, const expression::reference& exp, int depth = 0 )
 	{
 		using namespace logger;
 

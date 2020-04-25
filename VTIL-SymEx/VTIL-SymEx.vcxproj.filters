@@ -13,15 +13,15 @@
     <ClCompile Include="directives\matcher.cpp">
       <Filter>Directives</Filter>
     </ClCompile>
+    <ClCompile Include="expressions\unique_identifier.cpp">
+      <Filter>Expression</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="directives\directive.hpp">
       <Filter>Directives</Filter>
     </ClInclude>
     <ClInclude Include="expressions\expression.hpp">
-      <Filter>Expression</Filter>
-    </ClInclude>
-    <ClInclude Include="expressions\unique_identifier.hpp">
       <Filter>Expression</Filter>
     </ClInclude>
     <ClInclude Include="simplifier\directives.hpp">
@@ -35,6 +35,9 @@
     </ClInclude>
     <ClInclude Include="includes\vtil\symex">
       <Filter>Includes</Filter>
+    </ClInclude>
+    <ClInclude Include="expressions\unique_identifier.hpp">
+      <Filter>Expression</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

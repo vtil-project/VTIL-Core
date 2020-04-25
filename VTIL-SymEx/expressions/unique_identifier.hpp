@@ -28,6 +28,8 @@
 #pragma once
 #include <vtil/math>
 #include <vtil/utility>
+#include <functional>
+#include <stdlib.h>
 
 namespace vtil::symbolic
 {
@@ -35,60 +37,177 @@ namespace vtil::symbolic
 	{
 		// Check if type is hashable using std::hash.
 		//
-		template <typename T>
-		static constexpr bool _is_std_hashable( ... ) { return false; }
-		template <typename T, typename = decltype( std::declval<std::hash<T>>()( std::declval<T>() ) )>
-		static constexpr bool _is_std_hashable( bool v ) { return true; }
+		template<typename... D>
+		struct is_hashable : concept_base<is_hashable, D...>
+		{
+			template<typename T>
+			static auto f( T v ) -> decltype( std::hash<std::remove_cvref_t<T>>{}( v ) );
+		};
 
-		template <typename T>
-		static constexpr bool is_std_hashable_v = _is_std_hashable<std::remove_cvref_t<T>>( true );
+		// Check if type is convertable to string using std::to_string.
+		//
+		template<typename... D>
+		struct std_to_string : concept_base<std_to_string, D...>
+		{
+			template<typename T>
+			static auto f( T v ) -> decltype( std::to_string( v ) );
+		};
+
+		// Check if type is convertable to string using T.to_string()
+		//
+		template<typename... D>
+		struct has_to_string : concept_base<has_to_string, D...>
+		{
+			template<typename T>
+			static auto f( T v ) -> decltype( v.to_string() );
+		};
 	};
 
 	// Unique identifier type to be used within symbolic expression context.
 	//
-#pragma pack(push, 1)
 	struct unique_identifier
 	{
-		// Any 64-bit value that uniquely identifies this symbol.
+		// Identifier stored as variant.
 		//
-		union
-		{
-			size_t hash;
-			const void* ptr;
-		};
+		variant value;
 
-		// Whether we have a valid instance or not.
+		// String cast of the stored type.
 		//
-		bool set;
+		std::function<std::string( const variant& )> string_cast;
 
-		// Default and copy constructors.
+		// Three-way comperator of the stored type.
 		//
-		unique_identifier() : set( false ) {};
+		int( *compare_value )( const unique_identifier&, const unique_identifier& );
+
+		// Hash of the identifier.
+		//
+		size_t hash;
+
+		// Default constructor/copy/move.
+		//
+		unique_identifier() : value( std::nullopt ) {};
 		unique_identifier( unique_identifier&& ) = default;
-		unique_identifier( const unique_identifier& ) = default;
 		unique_identifier& operator=( unique_identifier&& ) = default;
+		unique_identifier( const unique_identifier& ) = default;
 		unique_identifier& operator=( const unique_identifier& ) = default;
 
-		// Construct from arbitrary value and its hasher. Uses default std::hash<> if not pointer.
+		// Construct from a string.
 		//
-		template<typename T, typename hasher_t = std::enable_if_t<!std::is_pointer_v<T> && impl::is_std_hashable_v<T>, std::hash<T>>>
-		unique_identifier( const T& value ) : hash( hasher_t{}( value ) ), set( true ) {}
+		template<typename hasher_t = std::hash<std::string>>
+		unique_identifier( std::string name ) : value( std::move( name ) )
+		{
+			// Calculate hash using hasher.
+			//
+			hash = hasher_t{}( name );
 
-		// Construct from pointer type.
+			// Move string into string_cast capture to return as is.
+			//
+			string_cast = [ ] ( const variant& v ) { return v.get<std::string>(); };
+
+			// Set comparison operator.
+			//
+			compare_value = [ ] ( const unique_identifier& a, const unique_identifier& b )
+			{
+				return a.to_string().compare( b.to_string() );
+			};
+		}
+
+		// Construct from any other type.
 		//
-		unique_identifier( const void* p ) : ptr( p ), set( true ) {}
+		template<typename T, 
+			// If std::hash<T> is defined, standard hasher, else void.
+			typename hasher_t = std::conditional_t<impl::is_hashable<T>::apply(), std::hash<T>, void>,
+			// Must not be an array or [const unique_identifier&].
+			std::enable_if_t<!std::is_same_v<T, unique_identifier> && !std::extent_v<T>, int> = 0>
+			unique_identifier( const T& v, std::string&& name = "" ) : value( v )
+		{
+			// If name is provided, redirect string_cast to it.
+			//
+			if ( !name.empty() )
+			{
+				string_cast = [ name ] ( auto& ) { return name; };
+			}
+			// Otherwise try to name the variable.
+			//
+			else
+			{
+				// If has ::to_string(), redirect.
+				//
+				if constexpr ( impl::has_to_string<T>::apply() )
+				{
+					string_cast = [  ] ( const variant& v ) { return v.get<T>().to_string(); };
+				}
+				// If std::to_string is valid, redirect.
+				//
+				else if constexpr ( impl::std_to_string<T>::apply() )
+				{
+					string_cast = [  ] ( const variant& v ) { return std::to_string( v.get<T>() ); };
+				}
+				// Otherwise assert we have a valid hasher.
+				//
+				else
+				{
+					string_cast = [ ] ( const variant& v ) { return "[object]"; };
+					static_assert( !std::is_same_v<hasher_t, void>, "Unique identifier was not provided a hasher nor a way to acquire the name." );
+				}
+			}
+
+			// Set comparison operator.
+			//
+			compare_value = [ ] ( const unique_identifier& a, const unique_identifier& b )
+			{
+				auto& ta = a.get<T>();
+				auto& tb = b.get<T>();
+				if ( ta == tb ) return  0;
+				if ( ta < tb )  return -1;
+				else            return +1;
+			};
+
+			// If we don't have a hasher, hash the name.
+			//
+			if constexpr ( std::is_same_v<hasher_t, void> )
+				hash = std::hash<std::string>{}( to_string() );
+
+			// Otherwise use the hasher.
+			//
+			else
+				hash = hasher_t{}( v );
+
+			// Store value as a variant.
+			//
+			value = v;
+		}
+
+		// Gets the value stored by this structure.
+		//
+		template<typename T, typename R = std::conditional_t<std::is_same_v<T, std::string>, T, const T&>>
+		R get() const
+		{
+			// Strings are stored as capture lambdas.
+			//
+			if constexpr ( std::is_same_v<T, std::string> )
+				return string_cast( value );
+
+			// Rest are redirected to variant.
+			//
+			else
+				return value.get<T>();
+		}
+
+		// Conversion to human-readable format.
+		// - Note: Will cache the return value in string_cast as lambda capture if non-const-qualified.
+		//
+		std::string to_string();
+		std::string to_string() const;
 
 		// Cast to bool checks if valid or not.
 		//
-		operator bool() const { return set; }
+		inline operator bool() const { return value.has_value(); }
 
-		// Implement comparison operators.
-		// - Equals operator always returns false if not set.
-		// - Relative comparison considers the set side greater.
+		// Simple comparison operators.
 		//
-		bool operator==( const unique_identifier& o ) const { return set && o.set && hash == o.hash; }
-		bool operator!=( const unique_identifier& o ) const { return !operator==( o ); }
-		bool operator<( const unique_identifier& o ) const { return ( o.set && !set ) || hash < o.hash; }
+		bool operator==( const unique_identifier& o ) const;
+		bool operator<( const unique_identifier& o ) const;
+		inline bool operator!=( const unique_identifier& o ) const { return !operator==( o ); }
 	};
-#pragma pack(pop)
 };

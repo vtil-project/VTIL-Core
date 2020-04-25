@@ -48,7 +48,7 @@ namespace vtil::symbolic::directive
 		// Dummy expression used just to indicate success if speculative_condition is used, if seen in
 		// output of the simplifier, there's a major bug.
 		//
-		static const expression::reference dummy_expression = expression{ "@dummmy", 1 };
+		static const expression::reference dummy_expression = expression{ { "@dummmy" }, 1 };
 
 		// If expression operator:
 		//
@@ -85,7 +85,7 @@ namespace vtil::symbolic::directive
 					auto rhs = translate( sym, dir->rhs, bit_cnt, speculative_condition );
 					if ( !rhs ) return {};
 
-					if ( auto sz = rhs->get() )
+					if ( auto sz = rhs->get<bitcnt_t>() )
 					{
 						( +lhs )->resize( sz.value(), dir->op == math::operator_id::cast );
 						return lhs;

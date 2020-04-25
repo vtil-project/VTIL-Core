@@ -79,7 +79,7 @@ namespace vtil::symbolic
 	// Resizes the expression, if not constant, expression::resize will try to propagate 
 	// the operation as deep as possible.
 	//
-	void expression::resize( uint8_t new_size, bool signed_cast )
+	void expression::resize( bitcnt_t new_size, bool signed_cast )
 	{
 		// If requested size is equal, skip.
 		//
@@ -160,7 +160,7 @@ namespace vtil::symbolic
 				//
 				if ( lhs->size() > rhs->get().value() )
 				{
-					*this = __ucast( ( *this & expression{ math::fill( rhs->get().value() ), lhs->size() } ).simplify(), new_size ).simplify();
+					*this = __ucast( ( *this & expression{ math::fill( rhs->get<bitcnt_t>().value() ), lhs->size() } ).simplify(), new_size ).simplify();
 					break;
 				}
 				// If sizes match, escape cast operator.
@@ -186,7 +186,7 @@ namespace vtil::symbolic
 				//
 				if ( lhs->size() > rhs->get().value() )
 				{
-					*this = __cast( ( *this & expression{ math::fill( rhs->get().value() ), lhs->size() } ).simplify(), new_size ).simplify();
+					*this = __cast( ( *this & expression{ math::fill( rhs->get<bitcnt_t>().value() ), lhs->size() } ).simplify(), new_size ).simplify();
 					break;
 				}
 				// If sizes match, escape cast operator.
@@ -505,10 +505,9 @@ namespace vtil::symbolic
 			return get_op_desc()->to_string( lhs ? lhs->to_string() : "", rhs->to_string() );
 
 		// Handle constants, invalids and variables.
-		// -- TODO: Fix variable case, small hack for now
 		//
 		if ( is_constant() )      return format::hex( value.get<true>().value() );
-		if ( is_variable() )      return format::str( "%s:%d", ( const char* ) uid.ptr, size() );
+		if ( is_variable() )      return format::str( "%s:%d", uid.to_string(), size() );
 		return "NULL";
 	}
 };

@@ -159,7 +159,7 @@ namespace vtil::symbolic
 		// Resizes the expression, if not constant, expression::resize will try to propagate 
 		// the operation as deep as possible.
 		//
-		void resize( uint8_t new_size, bool signed_cast = false );
+		void resize( bitcnt_t new_size, bool signed_cast = false );
 
 		// Simplifies and optionally prettifies the expression.
 		//
