@@ -49,7 +49,7 @@ namespace vtil
 	#pragma pack(push, 1)
 	struct variant
 	{
-		static constexpr size_t small_type_optimization_limit = 0x30;
+		static constexpr size_t small_type_optimization_limit = 0x100;
 
 		// Value is either stored in the [char inl[]] as an inline object,
 		// or in [void* ext] as an external pointer.
@@ -103,13 +103,15 @@ namespace vtil
 
 		// Constructs variant from any type that is not variant, nullptr_t or nullopt_t.
 		//
-		template<typename arg_type, typename T = std::remove_cvref_t<arg_type>, 
+		template<typename arg_type, 
 			std::enable_if_t<
-			 !std::is_same_v<T, variant> && 
-			 !std::is_same_v<T, std::nullptr_t> && 
-			 !std::is_same_v<T, std::nullopt_t>, int> = 0>
+			 !std::is_same_v<std::remove_cvref_t<arg_type>, variant> &&
+			 !std::is_same_v<std::remove_cvref_t<arg_type>, std::nullptr_t> &&
+			 !std::is_same_v<std::remove_cvref_t<arg_type>, std::nullopt_t>, int> = 0>
 		variant( arg_type&& value )
 		{
+			using T = std::remove_cvref_t<arg_type>;
+
 			// Invoke copy constructor on allocated space.
 			//
 			T* out = new ( allocate( sizeof( T ), alignof( T ) ) ) T( std::forward<arg_type>( value ) );
@@ -156,8 +158,8 @@ namespace vtil
 
 		// Assignment by move/copy both reset current value and redirect to constructor.
 		//
-		inline variant& operator=( variant&& vo ) { reset(); return *new ( this ) variant( std::move( vo ) ); }
-		inline variant& operator=( const variant& o ) { reset(); return *new ( this ) variant( o ); }
+		variant& operator=( variant&& vo ) { reset(); return *new ( this ) variant( std::move( vo ) ); }
+		variant& operator=( const variant& o ) { reset(); return *new ( this ) variant( o ); }
 
 		// Variant does not have a value if the copy field is null.
 		//
@@ -177,7 +179,7 @@ namespace vtil
 		// - Will throw assert failure if the variant is empty.
 		//
 		template<typename T>
-		inline T& get() 
+		T& get() 
 		{ 
 			// If safe mode, validate type name (We can compare pointers as it's a unique pointer in .rdata)
 			//
@@ -189,7 +191,7 @@ namespace vtil
 			return *( T* ) get_address( sizeof( T ), alignof( T ) ); 
 		}
 		template<typename T>
-		inline const T& get() const 
+		const T& get() const 
 		{
 			// If safe mode, validate type name (We can compare pointers as it's a unique pointer in .rdata)
 			//
@@ -211,7 +213,7 @@ namespace vtil
 		// Deletes the currently stored variant.
 		//
 		void reset();
-		inline ~variant() { reset(); }
+		 ~variant() { reset(); }
 	};
 	#pragma pack(pop)
 };

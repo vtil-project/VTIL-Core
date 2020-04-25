@@ -4,3 +4,4 @@
 #include "..\..\util\copy_on_write.hpp"
 #include "..\..\util\concept.hpp"
 #include "..\..\util\variant.hpp"
+#include "..\..\util\hashable.hpp"
