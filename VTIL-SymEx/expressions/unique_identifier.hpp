@@ -94,7 +94,7 @@ namespace vtil::symbolic
 		// Construct from a string.
 		//
 		template<typename hasher_t = std::hash<std::string>>
-		unique_identifier( std::string name ) : value( std::move( name ) )
+		unique_identifier( std::string name )
 		{
 			// Calculate hash using hasher.
 			//
@@ -102,7 +102,7 @@ namespace vtil::symbolic
 
 			// Move string into string_cast capture to return as is.
 			//
-			string_cast = [ ] ( const variant& v ) { return v.get<std::string>(); };
+			string_cast = [ s = std::move( name ) ] ( const variant& v ) { return s; };
 
 			// Set comparison operator.
 			//
@@ -119,7 +119,7 @@ namespace vtil::symbolic
 			typename hasher_t = std::conditional_t<impl::is_hashable<T>::apply(), std::hash<T>, void>,
 			// Must not be an array or [const unique_identifier&].
 			std::enable_if_t<!std::is_same_v<T, unique_identifier> && !std::extent_v<T>, int> = 0>
-			unique_identifier( const T& v, std::string&& name = "" ) : value( v )
+			unique_identifier( const T& v, std::string&& name = "" )
 		{
 			// If name is provided, redirect string_cast to it.
 			//
@@ -193,6 +193,19 @@ namespace vtil::symbolic
 			else
 				return value.get<T>();
 		}
+		template<typename T, typename R = std::conditional_t<std::is_same_v<T, std::string>, T, T&>>
+		R get()
+		{
+			// Strings are stored as capture lambdas.
+			//
+			if constexpr ( std::is_same_v<T, std::string> )
+				return string_cast( value );
+
+			// Rest are redirected to variant.
+			//
+			else
+				return value.get<T>();
+		}
 
 		// Conversion to human-readable format.
 		// - Note: Will cache the return value in string_cast as lambda capture if non-const-qualified.
@@ -202,7 +215,7 @@ namespace vtil::symbolic
 
 		// Cast to bool checks if valid or not.
 		//
-		inline operator bool() const { return value.has_value(); }
+		inline operator bool() const { return ( bool ) string_cast; }
 
 		// Simple comparison operators.
 		//
