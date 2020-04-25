@@ -55,7 +55,7 @@ namespace vtil
 	{
 		// If source is storing a value:
 		//
-		if ( !src.has_value() )
+		if ( src.has_value() )
 		{
 			// If source is trivially copyable, invoke memcpy.
 			//
