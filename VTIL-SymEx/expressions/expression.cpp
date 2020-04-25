@@ -31,17 +31,6 @@
 
 namespace vtil::symbolic
 {
-	// FNV hash is used for hashing of the expressions.
-	//
-	static constexpr size_t fnv_initial = 0xcbf29ce484222325;
-
-	template<typename T>
-	static inline void fnv_append( size_t* hash, const T& ref )
-	{
-		for ( size_t i = 0; i < sizeof( T ); i++ )
-			*hash = ( ( ( const uint8_t* ) &ref )[ i ] ^ *hash ) * 0x100000001B3;
-	}
-
 	// Returns the number of constants used in the expression.
 	//
 	size_t expression::count_constants() const
@@ -79,11 +68,11 @@ namespace vtil::symbolic
 	// Resizes the expression, if not constant, expression::resize will try to propagate 
 	// the operation as deep as possible.
 	//
-	void expression::resize( bitcnt_t new_size, bool signed_cast )
+	expression& expression::resize( bitcnt_t new_size, bool signed_cast )
 	{
 		// If requested size is equal, skip.
 		//
-		if ( value.size() == new_size ) return;
+		if ( value.size() == new_size ) return *this;
 
 		// If boolean requested, signed cast is not valid.
 		//
@@ -230,7 +219,6 @@ namespace vtil::symbolic
 			case math::operator_id::ugreater_eq:
 			case math::operator_id::uless_eq:
 			case math::operator_id::uless:
-				hash += new_size - value.size();
 				value.resize( new_size, false );
 				break;
 
@@ -243,12 +231,13 @@ namespace vtil::symbolic
 					*this = __ucast( *this, new_size ).simplify();
 				break;
 		}
+		return *this;
 	}
 
 
 	// Updates the expression state.
 	//
-	void expression::update( bool auto_simplify )
+	expression& expression::update( bool auto_simplify )
 	{
 		// If it's not a full expression tree:
 		//
@@ -267,13 +256,13 @@ namespace vtil::symbolic
 				int64_t cval = *value.get<true>();
 				complexity = sqrt( 1 + std::min( math::popcnt( cval ), math::popcnt( abs( cval ) ) ) );
 
-				// Hash begins as initial FNV value incremented by the constant, after which we append the notted constant and its size.
+				// Append the constant, notted constant and the size.
 				//
-				hash = fnv_initial + value.known_one();
-				fnv_append( &hash, value.size() );
-				fnv_append( &hash, value.known_zero() );
+				hash_value << uint8_t( value.size() )
+					       << value.known_zero()
+					       << value.known_one();
 			}
-			// If symbolic variable
+			// If symbolic variable:
 			//
 			else
 			{
@@ -285,7 +274,7 @@ namespace vtil::symbolic
 
 				// Hash is inherited with the addition of the size.
 				//
-				hash = uid.hash + value.size();
+				hash_value = uid.hash() << uint8_t( value.size() );
 			}
 
 			// Set simplification state.
@@ -311,10 +300,9 @@ namespace vtil::symbolic
 				complexity = rhs->complexity * 2;
 				fassert( complexity != 0 );
 				
-				// Inherit the RHS hash and...
+				// Append the RHS hash.
 				//
-				hash = fnv_initial;
-				fnv_append( &hash, rhs->hash );
+				hash_value << rhs->hash();
 			}
 			// If binary operator:
 			//
@@ -373,29 +361,24 @@ namespace vtil::symbolic
 				complexity = ( lhs->complexity + rhs->complexity ) * 2;
 				fassert( complexity != 0 );
 
-				// If operator is commutative, calculate hash in a way that 
-				// the positions of operands do not matter.
+				hash_t operand_hashes[] = { lhs->hash(), rhs->hash() };
+
+				// If operator is commutative, sort the array so that the
+				// positioning does not matter.
 				//
 				if ( desc->is_commutative )
-				{
-					hash = fnv_initial;
-					fnv_append( &hash, std::max( lhs->hash, rhs->hash ) );
-					fnv_append( &hash, rhs->hash ^ lhs->hash );
-				}
-				// Else inherit the RHS hash and append LHS hash.
+					std::sort( operand_hashes, std::end( operand_hashes ) );
+				
+				// Append the operand hashes.
 				//
-				else
-				{
-					hash = fnv_initial;
-					fnv_append( &hash, lhs->hash );
-					fnv_append( &hash, rhs->hash );
-				}
+				hash_value << operand_hashes;
 			}
 
-			// Append depth and operator information to the hash.
+			// Append depth, size, and operator information to the hash.
 			//
-			fnv_append( &hash, op );
-			fnv_append( &hash, depth );
+			hash_value << op
+				       << depth
+				       << uint8_t( value.size() );
 
 			// Punish for mixing bitwise and arithmetic operators.
 			//
@@ -420,6 +403,7 @@ namespace vtil::symbolic
 			//
 			if ( auto_simplify ) simplify();
 		}
+		return *this;
 	}
 
 	// Simplifies the expression.
@@ -491,7 +475,7 @@ namespace vtil::symbolic
 	{
 		// If hash mismatch, return false without checking anything.
 		//
-		if ( hash != other.hash )
+		if ( hash() != other.hash() )
 			return false;
 
 		// If operator or the sizes are not the same, return false.

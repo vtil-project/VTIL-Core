@@ -35,15 +35,6 @@ namespace vtil::symbolic
 {
 	namespace impl
 	{
-		// Check if type is hashable using std::hash.
-		//
-		template<typename... D>
-		struct is_hashable : concept_base<is_hashable, D...>
-		{
-			template<typename T>
-			static auto f( T v ) -> decltype( std::hash<std::remove_cvref_t<T>>{}( v ) );
-		};
-
 		// Check if type is convertable to string using std::to_string.
 		//
 		template<typename... D>
@@ -81,7 +72,7 @@ namespace vtil::symbolic
 
 		// Hash of the identifier.
 		//
-		size_t hash;
+		hash_t hash_value;
 
 		// Default constructor/copy/move.
 		//
@@ -98,7 +89,7 @@ namespace vtil::symbolic
 		{
 			// Calculate hash using hasher.
 			//
-			hash = hasher_t{}( name );
+			hash_value = hasher_t{}( name );
 
 			// Move string into string_cast capture to return as is.
 			//
@@ -114,9 +105,7 @@ namespace vtil::symbolic
 
 		// Construct from any other type.
 		//
-		template<typename T, 
-			// If std::hash<T> is defined, standard hasher, else void.
-			typename hasher_t = std::conditional_t<impl::is_hashable<T>::apply(), std::hash<T>, void>,
+		template<typename T, typename hasher_t = default_hasher_t<T>,
 			// Must not be an array or [const unique_identifier&].
 			std::enable_if_t<!std::is_same_v<T, unique_identifier> && !std::extent_v<T>, int> = 0>
 			unique_identifier( const T& v, std::string&& name = "" )
@@ -166,12 +155,12 @@ namespace vtil::symbolic
 			// If we don't have a hasher, hash the name.
 			//
 			if constexpr ( std::is_same_v<hasher_t, void> )
-				hash = std::hash<std::string>{}( to_string() );
+				hash_value = std::hash<std::string>{}( to_string() );
 
 			// Otherwise use the hasher.
 			//
 			else
-				hash = hasher_t{}( v );
+				hash_value = hasher_t{}( v );
 
 			// Store value as a variant.
 			//
@@ -206,6 +195,10 @@ namespace vtil::symbolic
 			else
 				return value.get<T>();
 		}
+
+		// Returns the cached hash value to abide the standard vtil::hashable.
+		//
+		hash_t hash() const { return hash_value; }
 
 		// Conversion to human-readable format.
 		// - Note: Will cache the return value in string_cast as lambda capture if non-const-qualified.

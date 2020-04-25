@@ -58,7 +58,7 @@ namespace vtil::symbolic
 
 		// If hash mismatch, return false.
 		//
-		if ( hash != o.hash )
+		if ( hash() != o.hash() )
 			return false;
 
 		// Assert internal equivalance.
@@ -74,8 +74,8 @@ namespace vtil::symbolic
 
 		// Compare by hash first.
 		//
-		if ( hash != o.hash )
-			return hash < o.hash;
+		if ( hash() != o.hash() )
+			return hash() < o.hash();
 
 		// Compare internals if equivalent hash.
 		//

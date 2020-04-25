@@ -201,7 +201,7 @@ namespace vtil::symbolic
 		{
 			if ( !log_padding ) log( "\n" );
 			log( "[Input]  = %s ", exp->to_string() );
-			log( "(Hash: 0x%p)\n", exp->hash );
+			log( "(Hash: %s)\n", exp->hash().to_string() );
 
 			// DEBUGGGGG
 			log( "[SymFr]  = " );
@@ -212,7 +212,7 @@ namespace vtil::symbolic
 
 		// If we resolved a valid cache entry:
 		//
-		auto cache_it = simplifier_cache.find( exp->hash );
+		auto cache_it = simplifier_cache.find( exp->hash() );
 		if ( cache_it != simplifier_cache.end() )
 		{
 			// Replace with the cached entry, inherit simplification state.
@@ -229,7 +229,7 @@ namespace vtil::symbolic
 
 		// Otherwise create a new cache entry with {invalid, false} by default.
 		//
-		auto& [cache_entry, success_flag] = simplifier_cache[ exp->hash ];
+		auto& [cache_entry, success_flag] = simplifier_cache[ exp->hash() ];
 
 		// Simplify operands first if not done already.
 		//

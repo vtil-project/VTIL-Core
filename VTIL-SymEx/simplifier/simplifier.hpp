@@ -32,7 +32,7 @@
 
 namespace vtil::symbolic
 {
-	using simplifier_cache_t = std::unordered_map<size_t, std::pair<expression::reference, bool>>;
+	using simplifier_cache_t = std::unordered_map<hash_t, std::pair<expression::reference, bool>>;
 
 	// Attempts to simplify the expression given, returns whether the simplification
 	// succeeded or not.

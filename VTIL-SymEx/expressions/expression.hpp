@@ -66,7 +66,7 @@ namespace vtil::symbolic
 
 		// Hash of the expression used by the simplifier cache.
 		//
-		size_t hash;
+		hash_t hash_value = {};
 
 		// Whether expression passed the simplifier already or not, note that this is a hint and there may 
 		// be cases where it already has passed it and this flag was not set. Albeit those cases will most 
@@ -136,6 +136,10 @@ namespace vtil::symbolic
 		inline bool is_valid() const { return is_expression() || is_variable() || is_constant(); }
 		inline operator bool() const { return is_valid(); }
 
+		// Returns the cached hash value to abide the standard vtil::hashable.
+		//
+		hash_t hash() const { return hash_value; }
+
 		// Returns the number of constants used in the expression.
 		//
 		size_t count_constants() const;
@@ -150,7 +154,7 @@ namespace vtil::symbolic
 
 		// Updates the expression state.
 		//
-		void update( bool auto_simplify );
+		expression& update( bool auto_simplify );
 
 		// Converts to human-readable format.
 		//
@@ -159,7 +163,7 @@ namespace vtil::symbolic
 		// Resizes the expression, if not constant, expression::resize will try to propagate 
 		// the operation as deep as possible.
 		//
-		void resize( bitcnt_t new_size, bool signed_cast = false );
+		expression& resize( bitcnt_t new_size, bool signed_cast = false );
 
 		// Simplifies and optionally prettifies the expression.
 		//
@@ -199,14 +203,6 @@ namespace vtil::symbolic
 		//
 		inline bool operator==( const boxed_expression& o ) const { return is_identical( o ); }
 		inline bool operator!=( const boxed_expression& o ) const { return !is_identical( o ); }
-		inline bool operator<( const boxed_expression& o ) const { return hash < o.hash; }
+		inline bool operator<( const boxed_expression& o ) const { return hash() < o.hash(); }
 	};
-};
-
-// Make boxed expression and it's references std::hashable.
-//
-namespace std
-{
-	template <> struct hash<vtil::symbolic::boxed_expression> { inline size_t operator()( const vtil::symbolic::boxed_expression& exp ) const { return exp.hash; } };
-	template <> struct hash<vtil::symbolic::boxed_expression::reference> { inline size_t operator()( const vtil::symbolic::boxed_expression::reference& ref ) const { return ref->hash; } };
 };
