@@ -201,9 +201,9 @@ namespace vtil::math
             if ( is_known() )
             {
                 if constexpr ( std::is_signed_v<type> )
-                    return __sx( known_bits, bit_count );
+                    return ( type ) __sx( known_bits, bit_count );
                 else
-                    return __zx( known_bits, bit_count );
+                    return ( type ) __zx( known_bits, bit_count );
             }
             return std::nullopt;
         }

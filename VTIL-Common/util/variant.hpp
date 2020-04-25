@@ -33,8 +33,12 @@
 #include "..\io\asserts.hpp"
 
 #ifdef _DEBUG
-	#if __has_feature(cxx_rtti) || defined(__GXX_RTTI) || defined(_CPPRTTI)
-		#define VTIL_SAFE_VARIANT
+	#if defined(_CPPRTTI)
+		#define VTIL_SAFE_VARIANT	_CPPRTTI
+	#elif defined(__GXX_RTTI)
+		#define VTIL_SAFE_VARIANT	__GXX_RTTI
+	#else
+		#define VTIL_SAFE_VARIANT	__has_feature(cxx_rtti)
 	#endif
 #endif
 
@@ -139,7 +143,7 @@ namespace vtil
 
 			// If safe mode, assign type name.
 			//
-#ifdef VTIL_SAFE_VARIANT
+#if VTIL_SAFE_VARIANT
 			__typeid_name = typeid( T ).name();
 #endif
 		};
@@ -176,7 +180,7 @@ namespace vtil
 		{ 
 			// If safe mode, validate type name (We can compare pointers as it's a unique pointer in .rdata)
 			//
-#ifdef VTIL_SAFE_VARIANT
+#if VTIL_SAFE_VARIANT
 			fassert( __typeid_name == typeid( T ).name() );
 #endif
 			// Calculate the address and return a reference.
@@ -188,7 +192,7 @@ namespace vtil
 		{
 			// If safe mode, validate type name (We can compare pointers as it's a unique pointer in .rdata)
 			//
-#ifdef VTIL_SAFE_VARIANT
+#if VTIL_SAFE_VARIANT
 			fassert( __typeid_name == typeid( T ).name() );
 #endif
 			// Calculate the address and return a const qualified reference.
