@@ -165,9 +165,15 @@ namespace vtil::symbolic
 		//
 		expression& simplify( bool prettify = false );
 
-		// Returns whether the given expression is equivalent to the current instance.
+		// Returns whether the given expression is identical to the current instance.
 		// - Note: basic comparison opeators should not be overloaded since expression is of type
 		//         math::operable and that would create multiple meanings.
+		//
+		bool is_identical( const expression& other ) const;
+
+		// Returns whether the given expression is equivalent to the current instance.
+		// - This routine tries to match the simplified forms whereas ::is_identical will try to 
+		//   match the operators operands and uids one to one.
 		//
 		bool equals( const expression& other ) const;
 	};
@@ -191,8 +197,8 @@ namespace vtil::symbolic
 
 		// Implement comparison operators.
 		//
-		inline bool operator==( const boxed_expression& o ) const { return equals( o ); }
-		inline bool operator!=( const boxed_expression& o ) const { return !equals( o ); }
+		inline bool operator==( const boxed_expression& o ) const { return is_identical( o ); }
+		inline bool operator!=( const boxed_expression& o ) const { return !is_identical( o ); }
 		inline bool operator<( const boxed_expression& o ) const { return hash < o.hash; }
 	};
 };

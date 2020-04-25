@@ -66,7 +66,7 @@ namespace vtil::symbolic::directive
 			{
 				// Check if saved expression is equivalent, if not fail.
 				//
-				return it->second->equals( *exp );
+				return it->second->is_identical( *exp );
 			}
 		}
 

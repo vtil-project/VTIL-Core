@@ -53,7 +53,7 @@ namespace vtil::symbolic
 		if ( exp->is_variable() || ( !exp->is_constant() && depth > 1 ) )
 		{
 			for ( auto& pair : sym.variable_map )
-				if ( pair.second->equals( *exp ) )
+				if ( pair.second->is_identical( *exp ) )
 					return pair.first;
 
 			directive::instance::reference r;

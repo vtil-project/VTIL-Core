@@ -456,6 +456,39 @@ namespace vtil::symbolic
 	//
 	bool expression::equals( const expression& other ) const
 	{
+		// If identical, return true.
+		//
+		if ( is_identical( other ) )
+			return true;
+
+		// Simplify both expressions.
+		//
+		expression a = expression{ *this }.simplify();
+		expression b = expression{ other }.simplify();
+
+		// Determine the final bitwise hint.
+		//
+		int8_t a_hint = a.is_expression() ? a.get_op_desc()->hint_bitwise : 0;
+		int8_t b_hint = b.is_expression() ? b.get_op_desc()->hint_bitwise : 0;
+		int8_t m_hint = a_hint != 0 && b_hint != 0 ? a_hint * b_hint : ( a_hint != 0 ? a_hint : b_hint );
+
+		// If arithmetic hint, A-B==0 first and then A^B==0.
+		//
+		if ( m_hint == +1 )
+			return ( a - b ).simplify().get().value_or( -1 ) == 0 || 
+			       ( a ^ b ).simplify().get().value_or( -1 ) == 0;
+
+		// If bitwise or null hint, try A^B==0 first and then A-B==0.
+		//
+		else
+			return ( a ^ b ).simplify().get().value_or( -1 ) == 0 || 
+			       ( a - b ).simplify().get().value_or( -1 ) == 0;
+	}
+
+	// Returns whether the given expression is identical to the current instance.
+	//
+	bool expression::is_identical( const expression& other ) const
+	{
 		// If hash mismatch, return false without checking anything.
 		//
 		if ( hash != other.hash )
@@ -480,19 +513,19 @@ namespace vtil::symbolic
 		//
 		const math::operator_desc* desc = get_op_desc();
 		if ( desc->operand_count == 1 )
-			return rhs == other.rhs || rhs->equals( *other.rhs );
+			return rhs == other.rhs || rhs->is_identical( *other.rhs );
 
 		// If both sides match, return true.
 		//
-		if ( ( lhs == other.lhs || lhs->equals( *other.lhs ) ) &&
-			 ( rhs == other.rhs || rhs->equals( *other.rhs ) ))
+		if ( ( lhs == other.lhs || lhs->is_identical( *other.lhs ) ) &&
+			 ( rhs == other.rhs || rhs->is_identical( *other.rhs ) ))
 			return true;
 
 		// If not, check in reverse as well if commutative and return the final result.
 		//
 		return	desc->is_commutative && 
-				( lhs == other.rhs || lhs->equals( *other.rhs ) ) &&
-				( rhs == other.lhs || rhs->equals( *other.lhs ) );
+				( lhs == other.rhs || lhs->is_identical( *other.rhs ) ) &&
+				( rhs == other.lhs || rhs->is_identical( *other.lhs ) );
 	}
 
 	// Converts to human-readable format.
