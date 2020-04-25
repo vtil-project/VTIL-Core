@@ -96,14 +96,18 @@ namespace vtil
 		variant( std::nullptr_t ) : copy_fn( nullptr ) {};
 		variant( std::nullopt_t ) : copy_fn( nullptr ) {};
 
-		// Constructs variant from any type.
+		// Constructs variant from any type that is not variant, nullptr_t or nullopt_t.
 		//
-		template<typename T, std::enable_if_t<!std::is_same_v<T, variant>, int> = 0>
-		variant( const T& value )
+		template<typename arg_type, typename T = std::remove_cvref_t<arg_type>, 
+			std::enable_if_t<
+			 !std::is_same_v<T, variant> && 
+			 !std::is_same_v<T, std::nullptr_t> && 
+			 !std::is_same_v<T, std::nullopt_t>, int> = 0>
+		variant( arg_type&& value )
 		{
 			// Invoke copy constructor on allocated space.
 			//
-			T* out = new ( allocate( sizeof( T ), alignof( T ) ) ) T( value );
+			T* out = new ( allocate( sizeof( T ), alignof( T ) ) ) T( std::forward<arg_type>( value ) );
 
 			// Assign destructor if not trivially destructible.
 			//
