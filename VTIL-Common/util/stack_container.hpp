@@ -82,7 +82,7 @@ namespace vtil
 		{
 			// Calculate the beginning of the aligned array, and set base, limit and it based on it.
 			//
-			uint64_t mem_begin += ( uint64_t( std::begin( buffer ) ) + alignment_mask ) & ~alignment_mask;
+			uint64_t mem_begin = ( uint64_t( std::begin( buffer ) ) + alignment_mask ) & ~alignment_mask;
 			base = it = ( realigned_type* ) mem_begin;
 			limit = ( realigned_type* ) std::end( buffer );
 		}
@@ -192,8 +192,8 @@ namespace vtil
 		// Clamp the number of bytes in the buffer to [0x100, 0x1000].
 		// - Append 0x20 bytes for _DEBUG binaries to compensate for std::_Container_proxy;
 		//
-#ifdef _DEBUG
 		static constexpr size_t align_mask = alignof( T ) - 1;
+#ifdef _DEBUG
 		static constexpr size_t buffer_size = std::clamp<size_t>( N * sizeof( typename T::value_type ), 0x100, 0x1000 ) + ( 0x20 + sizeof( T ) + align_mask ) * 2;
 #else
 		static constexpr size_t buffer_size = std::clamp<size_t>( N * sizeof( typename T::value_type ), 0x100, 0x1000 );
