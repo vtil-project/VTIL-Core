@@ -52,20 +52,6 @@ namespace vtil
 
 		template<typename T, typename A>
 		using swap_allocator_t = typename swap_allocator<T, A>::type;
-
-		// Determines traits of equal and not equal comparison for the type.
-		//
-		template<typename... D>
-		struct is_eq_comparable : concept_base<is_eq_comparable, D...>
-		{
-			template<typename T> static auto f( T v ) -> decltype( v == v );
-		};
-
-		template<typename... D>
-		struct is_neq_comparable : concept_base<is_neq_comparable, D...>
-		{
-			template<typename T> static auto f( T v ) -> decltype( v != v );
-		};
 	};
 
 	// This allocator internally allocates a buffer of size [N]. The first 
