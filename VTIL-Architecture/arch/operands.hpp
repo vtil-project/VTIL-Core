@@ -28,6 +28,7 @@
 #pragma once
 #include <string>
 #include <vtil/math>
+#include <vtil/utility>
 #include "register_desc.hpp"
 
 namespace vtil
@@ -101,6 +102,15 @@ namespace vtil
 		bool operator!=( const operand& o ) const { return !operator==( o ); };
 		bool operator==( const operand& o ) const { return is_register() ? reg == o.reg : ( imm.u64 == o.imm.u64 && imm.bit_count == o.imm.bit_count ); }
 		bool operator<( const operand& o ) const { return is_register() ? reg < o.reg : ( imm.u64 < o.imm.u64 || imm.bit_count < o.imm.bit_count ); }
+
+		// Generates a hash for the operand.
+		//
+		hash_t hash() const
+		{
+			return hash_t{}
+				<< is_register()
+				<< is_register() ? reg.hash() : hash_t{} << imm;
+		}
 	};
 	#pragma pack(pop)
 };

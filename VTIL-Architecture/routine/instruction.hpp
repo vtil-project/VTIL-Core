@@ -28,6 +28,7 @@
 #pragma once
 #include <vector>
 #include <string>
+#include <vtil/utility>
 #include "..\arch\instruction_set.hpp"
 
 namespace vtil
@@ -132,5 +133,9 @@ namespace vtil
 		// Conversion to human-readable format.
 		//
 		std::string to_string() const;
+
+		// Generates a hash for the instruction.
+		//
+		hash_t hash() const;
 	};
 };

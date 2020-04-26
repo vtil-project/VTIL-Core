@@ -213,4 +213,21 @@ namespace vtil
 			vemit( byte );
 		return this;
 	}
+
+	// Generates a hash for the block.
+	//
+	hash_t basic_block::hash() const
+	{
+		hash_t value;
+
+		value << entry_vip
+			  << sp_offset
+			  << sp_index
+			  << last_temporary_index;
+
+		for ( auto& ins : stream )
+			value << ins.hash();
+
+		return value;
+	}
 };

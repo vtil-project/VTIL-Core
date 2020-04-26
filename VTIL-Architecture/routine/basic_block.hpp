@@ -31,6 +31,7 @@
 #include <vector>
 #include <algorithm>
 #include <iterator>
+#include <vtil/utility>
 #include "routine.hpp"
 #include "instruction.hpp"
 
@@ -355,6 +356,10 @@ namespace vtil
 			ldd( op, REG_SP, offset );
 			return this;
 		}
+
+		// Generates a hash for the block.
+		//
+		hash_t hash() const;
 	};
 
 	// Export iterator type for the sake of convinience.

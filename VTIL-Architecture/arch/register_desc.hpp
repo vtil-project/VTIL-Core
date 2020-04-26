@@ -28,6 +28,7 @@
 #pragma once
 #include <string>
 #include <vtil/math>
+#include <vtil/utility>
 #include <vtil/amd64> // TODO: Remove me.
 
 namespace vtil
@@ -186,6 +187,17 @@ namespace vtil
 		bool operator!=( const register_desc& o ) const { return local_id != o.local_id || flags != o.flags || bit_count != o.bit_count || bit_offset != o.bit_offset; }
 		bool operator==( const register_desc& o ) const { return local_id == o.local_id && flags == o.flags && bit_count == o.bit_count && bit_offset == o.bit_offset; }
 		bool operator<( const register_desc& o ) const  { return local_id < o.local_id  || flags < o.flags  || bit_count < o.bit_count  || bit_offset < o.bit_offset; }
+
+		// Generates a hash for the register.
+		//
+		hash_t hash() const
+		{
+			return hash_t{}
+				<< flags
+				<< local_id
+				<< bit_count
+				<< bit_offset;
+		}
 	};
 
 	// Should be overriden by the user to describe conversion of the
