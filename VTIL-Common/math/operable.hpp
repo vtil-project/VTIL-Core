@@ -145,7 +145,7 @@ namespace vtil::math
 //
 #define DEFINE_OPERATION(...)																				\
 template<typename T1, typename T2 = T1, typename result_t = typename vtil::math::xop_result<T1, T2>::type>	\
-inline static result_t __VA_ARGS__
+static result_t __VA_ARGS__
 
 #undef __max // Seriously stdlib?
 #undef __min

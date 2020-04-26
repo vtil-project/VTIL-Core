@@ -125,6 +125,8 @@
     <ClInclude Include="util\concept.hpp" />
     <ClInclude Include="util\copy_on_write.hpp" />
     <ClInclude Include="util\critical_section.hpp" />
+    <ClInclude Include="util\fnv128.hpp" />
+    <ClInclude Include="util\fnv64.hpp" />
     <ClInclude Include="util\hashable.hpp" />
     <ClInclude Include="util\priority_list.hpp" />
     <ClInclude Include="util\stack_container.hpp" />

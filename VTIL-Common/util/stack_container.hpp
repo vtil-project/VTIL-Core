@@ -54,30 +54,87 @@ namespace vtil
 		using swap_allocator_t = typename swap_allocator<T, A>::type;
 	};
 
-	// This allocator internally allocates a buffer of size [N]. The first 
+
+	// Stack buffer state with iterators enforcing equivalent alignment for any type.
+	//
+	template<typename T = uint8_t, typename real_type = T>
+	struct stack_buffer_state
+	{
+		// Align [T] as if it was the original type of the buffer.
+		//
+		static constexpr size_t alignment_mask = alignof( real_type ) - 1;
+		struct alignas( real_type ) realigned_type { T value; };
+
+		// Declare 3-pointer iterators based on this type.
+		//
+		realigned_type* base;
+		realigned_type* limit;
+		realigned_type* it;
+
+		// Default constructor.
+		//
+		stack_buffer_state() = default;
+
+		// Construct state from any Tx(&)[N].
+		//
+		template<typename buffer_type>
+		stack_buffer_state( buffer_type& buffer )
+		{
+			// Calculate the beginning of the aligned array, and set base, limit and it based on it.
+			//
+			uint64_t mem_begin += ( uint64_t( std::begin( buffer ) ) + alignment_mask ) & ~alignment_mask;
+			base = it = ( realigned_type* ) mem_begin;
+			limit = ( realigned_type* ) std::end( buffer );
+		}
+	};
+
+	// This allocator is constructed from a stack buffer state. The first 
 	// allocations that can be allocated directly from this buffer will use 
 	// the buffer and frees of those allocations will be ignored unless done 
 	// so in order. Rest of the allocations will invoke the default allocator. 
 	// It could be more efficient in terms of actually processing the deallocations 
 	// but might as well use the already implemented heap in that case.
 	//
-	// - Note: Naively assumes allocation and deallocation sizes respect the type's 
-	//         alignment requirements so do not rebind to another type.
-	//
-	template<typename T, size_t N, typename default_allocator = std::allocator<T>>
-	struct stack_buffered_allocator : default_allocator
+	template<typename T, typename real_type = T>
+	struct stack_buffered_allocator
 	{
-		// Clamp the N value to [0x100, 0x1000].
+		// Allocator traits.
 		//
-		static constexpr size_t max_allocation_size = std::clamp<size_t>( N, 0x100, 0x1000 );
+		using value_type =         T;
+		using pointer =            T*;
+		using const_pointer =      const T*;
+		using void_pointer =       void*;
+		using const_void_pointer = const void*;
+		using size_type =          size_t;
+		using difference_type =    int64_t;
+		using is_always_equal =    std::false_type;
 
-		// Buffer aligned to match the alignment of T. 
+		template<typename U>
+		struct rebind { using other = stack_buffered_allocator<U, T>; };
+
+		// State of the original buffer.
 		//
-		__declspec( align( alignof( T ) ) ) uint8_t buffer[ max_allocation_size ];
-		
-		// Number of bytes we've allocated.
+		stack_buffer_state<T, real_type>* state;
+
+		// Construct from buffer state.
 		//
-		size_t size_of_allocations = 0;
+		stack_buffered_allocator( stack_buffer_state<>* state ) 
+			: state( ( stack_buffer_state<T, real_type>* )state ) {}
+
+		// Construct from any buffered allocator of same [real_type].
+		//
+		template <typename T2>
+		stack_buffered_allocator( const stack_buffered_allocator<T2, real_type>& o ) 
+			: state( ( stack_buffer_state<T, real_type>* ) o.state ) {}
+
+		// Allocators are only equivalent if the internal state references
+		// the same stack buffer.
+		//
+		template<typename T2>
+		bool operator==( const stack_buffered_allocator<T2, real_type>& o ) const 
+		{ 
+			return ( void* ) state == ( void* ) o.state; 
+		}
 
 		// Allocation routine.
 		//
@@ -85,18 +142,19 @@ namespace vtil
 		{
 			// If it can be allocated from the buffer:
 			//
-			if ( ( size_of_allocations + n ) <= max_allocation_size )
+			if ( ( state->it + n ) <= state->limit )
 			{
-				// Forward the iterator [n] bytes ahead, return the previous iterator.
+				// Forward the iterator ahead [n] times, return the original iterator.
 				//
-				T* ptr = ( T* ) &buffer[ size_of_allocations ];
-				size_of_allocations += n;
+				T* ptr = &state->it->value;
+				state->it += n;
 				return ptr;
 			}
 
 			// Otherwise redirect to default allocator.
 			//
-			return default_allocator::allocate( n, hint );
+			std::allocator<T> default_allocator;
+			return std::allocator_traits<std::allocator<T>>::allocate( default_allocator, n, hint );
 		}
 
 		// Deallocation routine.
@@ -105,12 +163,12 @@ namespace vtil
 		{
 			// If deallocating from the buffer:
 			//
-			if ( ( void* ) std::begin( buffer ) <= ptr && ptr < ( void* ) std::end( buffer ) )
+			if ( &state->base->value <= ptr && ptr < &state->limit->value )
 			{
 				// If deallocating previous allocation, free buffer.
 				//
-				if ( buffer[ size_of_allocations - n ] == ( uint8_t* ) ptr )
-					size_of_allocations -= n;
+				if ( &( state->it - n )->value == ptr )
+					state->it -= n;
 				
 				// Return to the caller.
 				//
@@ -119,24 +177,39 @@ namespace vtil
 
 			// Otherwise redirect to default allocator.
 			//
-			default_allocator::deallocate( ptr, n );
+			std::allocator<T> default_allocator;
+			return std::allocator_traits<std::allocator<T>>::deallocate( default_allocator, ptr, n );
 		}
 	};
 
 	// Define generic stack-buffered container.
 	//
 	template<typename T, size_t N, bool do_reserve,
-		typename allocator_t = stack_buffered_allocator<typename T::value_type, N * sizeof( typename T::value_type ), typename T::allocator_type>,
+		typename allocator_t = stack_buffered_allocator<typename T::value_type>,
 		typename container_t = impl::swap_allocator_t<T, allocator_t>>
 	struct stack_buffered_container : public container_t
 	{
-		allocator_t stack_buffer = {};
+		// Clamp the number of bytes in the buffer to [0x100, 0x1000].
+		// - Append 0x20 bytes for _DEBUG binaries to compensate for std::_Container_proxy;
+		//
+#ifdef _DEBUG
+		static constexpr size_t align_mask = alignof( T ) - 1;
+		static constexpr size_t buffer_size = std::clamp<size_t>( N * sizeof( typename T::value_type ), 0x100, 0x1000 ) + ( 0x20 + sizeof( T ) + align_mask ) * 2;
+#else
+		static constexpr size_t buffer_size = std::clamp<size_t>( N * sizeof( typename T::value_type ), 0x100, 0x1000 );
+#endif
+
+		// Buffer aligned to match the alignment of T. 
+		//
+		uint8_t buffer[ buffer_size + align_mask ];
+		stack_buffer_state<> state;
 
 		// Constructor forwards as is, ideally should be initially constructed
 		// with no parameters to make sure the buffer is utilized as much as possible.
 		//
 		template<typename... T>
-		stack_buffered_container( T&&... args ) : container_t( std::forward<T>( args )..., stack_buffer ) 
+		stack_buffered_container( T&&... args )
+			: container_t( std::forward<T>( args )..., allocator_t{ &( state = buffer, state ) } )
 		{ 
 			if constexpr( do_reserve )
 				container_t::reserve( N ); 

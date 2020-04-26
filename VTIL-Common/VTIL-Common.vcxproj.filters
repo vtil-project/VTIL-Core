@@ -109,6 +109,12 @@
     <ClInclude Include="util\stack_container.hpp">
       <Filter>Utility</Filter>
     </ClInclude>
+    <ClInclude Include="util\fnv64.hpp">
+      <Filter>Utility</Filter>
+    </ClInclude>
+    <ClInclude Include="util\fnv128.hpp">
+      <Filter>Utility</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="amd64\register_details.cpp">

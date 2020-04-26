@@ -90,6 +90,14 @@ namespace vtil
 	//
 	variant::variant( variant&& src )
 	{
+		// If source has no value, simply create a null variant.
+		//
+		if ( !src.has_value() )
+		{
+			copy_fn = nullptr;
+			return;
+		}
+
 		// If target stores inline value:
 		//
 		if ( src.is_inline )
