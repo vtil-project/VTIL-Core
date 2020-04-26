@@ -180,7 +180,11 @@ namespace vtil
 				// to make a copy before modifying the reference.
 				//
 				if ( reference.use_count() > 1 || is_locked )
-					reference = impl::make_shared<T>( *reference );
+				{
+					T v = *reference;
+					reference = {};
+					reference = impl::make_shared<T>( std::move( v ) );
+				}
 
 				// Mark as unlocked and owning.
 				//

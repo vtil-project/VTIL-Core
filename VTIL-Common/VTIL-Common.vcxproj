@@ -127,6 +127,7 @@
     <ClInclude Include="util\critical_section.hpp" />
     <ClInclude Include="util\hashable.hpp" />
     <ClInclude Include="util\priority_list.hpp" />
+    <ClInclude Include="util\stack_container.hpp" />
     <ClInclude Include="util\variant.hpp" />
   </ItemGroup>
   <ItemGroup>

@@ -2,6 +2,7 @@
 #include <algorithm>
 #include <array>
 #include "concept.hpp"
+#include "..\io\formatting.hpp"
 
 namespace vtil
 {
@@ -75,14 +76,23 @@ namespace vtil
 
 		// Implicit conversion to 64-bit and 128-bit values.
 		//
-		operator size_t() const { return value[ 0 ] + value[ 1 ]; }
-		operator value_t() const { return value; }
+		size_t as64() const { return value[ 0 ] + value[ 1 ]; }
+		value_t as128() const { return value; }
+		operator size_t() const { return as64(); }
+		operator value_t() const { return as128(); }
+		
+		// Conversion to human-readable format.
+		//
+		std::string to_string() const
+		{
+			return format::str( "0x%p%p", value[ 1 ], value[ 0 ] );
+		}
 
 		// Basic comparison operators.
 		//
 		bool operator<( const hash_t& o ) const { return value < o.value; }
-		bool operator!=( const hash_t& o ) const { return value != o.value; }
 		bool operator==( const hash_t& o ) const { return value == o.value; }
+		bool operator!=( const hash_t& o ) const { return value != o.value; }
 	};
 
 	// Default hasher of VTIL objects, the type should export a public 

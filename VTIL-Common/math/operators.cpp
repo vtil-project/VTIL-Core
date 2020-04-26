@@ -384,9 +384,12 @@ namespace vtil::math
 				};
 				break;*/
 			case operator_id::substract:
-				// A-B = A+(-B)
+				// A-B = ~(~A+B)
 				//
-				return evaluate_partial( operator_id::add, lhs, evaluate_partial( operator_id::negate, {}, { ~0ull, rhs.size() } ) );
+				return  evaluate_partial( operator_id::bitwise_not, {},
+										  evaluate_partial( operator_id::add,
+											evaluate_partial( operator_id::bitwise_not, {}, lhs ),
+											rhs ) );
 				
 				/*a = ( lhs.unknown_mask() | lhs.known_one() ) - ( rhs.known_one()                      );
 				b = ( lhs.known_one()                      ) - ( rhs.unknown_mask() | rhs.known_one() );

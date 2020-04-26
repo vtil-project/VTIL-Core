@@ -33,26 +33,36 @@
 	#include <Windows.h>
 #endif
 
-namespace vtil::logger::impl
+namespace vtil::logger
 {
-	// Internally used to change the console if possible.
+	// State of the logging engine.
 	//
-	void set_color( console_color color )
-	{
-#if _WIN64
-		SetConsoleTextAttribute( GetStdHandle( STD_OUTPUT_HANDLE ), color );
-#endif
-	}
+	critical_section log_cs;
+	volatile bool log_disable = false;
+	volatile int log_padding = -1;
+	volatile int log_padding_carry = 0;
 
-	// Internally used to initialize the logger.
-	//
-	void initialize()
+	namespace impl
 	{
-		static bool log_init = false;
-		if ( log_init ) return;
-#if _WIN64
-		SetConsoleOutputCP( CP_UTF8 );
-#endif
-		log_init = true;
-	}
+		// Internally used to change the console if possible.
+		//
+		void set_color( console_color color )
+		{
+	#if _WIN64
+			SetConsoleTextAttribute( GetStdHandle( STD_OUTPUT_HANDLE ), color );
+	#endif
+		}
+
+		// Internally used to initialize the logger.
+		//
+		void initialize()
+		{
+			static bool log_init = false;
+			if ( log_init ) return;
+	#if _WIN64
+			SetConsoleOutputCP( CP_UTF8 );
+	#endif
+			log_init = true;
+		}
+	};
 };

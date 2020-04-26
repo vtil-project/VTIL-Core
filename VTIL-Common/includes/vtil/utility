@@ -5,3 +5,4 @@
 #include "..\..\util\concept.hpp"
 #include "..\..\util\variant.hpp"
 #include "..\..\util\hashable.hpp"
+#include "..\..\util\stack_container.hpp"
