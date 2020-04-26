@@ -173,21 +173,21 @@ namespace vtil
 	template<typename T, size_t N = 16>
 	using stack_vector =                 stack_buffered_container<std::vector<T>, N, true>;
 	
-	// Wrap set deriavtives:
+	// Wrap set derivatives:
 	//
 	template<typename T, typename P = std::less<T>, size_t N = 16>
 	using stack_set =                    stack_buffered_container<std::set<T, P>, N, false>;
 	template<typename T, typename H = std::hash<T>, size_t N = 16>
 	using unordered_stack_set =          stack_buffered_container<std::unordered_set<T, H>, N, false>;
 
-	// Wrap map deriavtives:
+	// Wrap map derivatives:
 	//
 	template<typename K, typename V, typename P = std::less<K>, size_t N = 16>
 	using stack_map =                    stack_buffered_container<std::map<K, V, P>, N, false>;
 	template<typename K, typename V, typename H = std::hash<K>, size_t N = 16>
 	using unordered_stack_map =          stack_buffered_container<std::unordered_map<K, V, H>, N, false>;
 
-	// Wrap multimap deriavtives:
+	// Wrap multimap derivatives:
 	//
 	template<typename K, typename V, typename P = std::less<K>, size_t N = 16>
 	using stack_multimap =               stack_buffered_container<std::multimap<K, V, P>, N, false>;
