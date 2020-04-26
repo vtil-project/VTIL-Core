@@ -28,8 +28,7 @@
 #include "simplifier.hpp"
 #include "directives.hpp"
 #include "..\expressions\expression.hpp"
-#include "..\directives\matcher.hpp"
-#include <map>
+#include "..\directives\transformer.hpp"
 #include <vtil/io>
 
 namespace vtil::symbolic
@@ -43,95 +42,6 @@ namespace vtil::symbolic
 
 	void purge_simplifier_cache() { simplifier_cache.clear(); }
 	simplifier_cache_t& ref_simplifier_cache() { return simplifier_cache; }
-
-	// TODO: Logger for the use of debugging, ignore for now.
-	//
-	static std::string to_base_exp( directive::symbol_table& sym, const expression::reference& exp, int depth = 0 )
-	{
-		using namespace logger;
-
-		if ( exp->is_variable() || ( !exp->is_constant() && depth > 1 ) )
-		{
-			for ( auto& pair : sym.variable_map )
-				if ( pair.second->is_identical( *exp ) )
-					return pair.first;
-
-			directive::instance::reference r;
-			switch ( sym.variable_map.size() )
-			{
-				case 0: r = directive::A; break;
-				case 1: r = directive::B; break;
-				case 2: r = directive::C; break;
-				case 3: r = directive::D; break;
-				default:
-					unreachable();
-			}
-
-			fassert( sym.add( r, exp ) );
-			return r->id;
-		}
-
-		scope_verbosity v( depth == 0 );
-
-		if ( exp->is_binary() )
-		{
-			std::string lhs = to_base_exp( sym, exp->lhs, depth + 1 );
-			std::string rhs = to_base_exp( sym, exp->rhs, depth + 1 );
-
-			auto desc = exp->get_op_desc();
-			if ( desc->symbol )
-			{
-				log<CON_BLU>( "(%s", lhs );
-				if ( depth == 0 )
-					log<CON_RED>( "%s", desc->symbol );
-				else
-					log<CON_YLW>( "%s", desc->symbol );
-				log<CON_BLU>( "%s)", rhs );
-
-				return lhs + desc->symbol + rhs;
-			}
-			else
-			{
-				if ( depth == 0 )
-					log<CON_RED>( "%s", desc->function_name );
-				else
-					log<CON_YLW>( "%s", desc->function_name );
-				log<CON_BLU>( "(%s, %s)", lhs, rhs );
-
-				return format::str( "%s(%s, %s)", desc->function_name, lhs, rhs );
-			}
-		}
-		else if ( exp->is_unary() )
-		{
-			std::string rhs = to_base_exp( sym, exp->rhs, depth + 1 );
-
-			auto desc = exp->get_op_desc();
-			if ( desc->symbol )
-			{
-				if ( depth == 0 )
-					log<CON_RED>( "%s", desc->symbol );
-				else
-					log<CON_YLW>( "%s", desc->symbol );
-				log<CON_BLU>( "(%s)", rhs );
-
-				return desc->symbol + rhs;
-			}
-			else
-			{
-				if ( depth == 0 )
-					log<CON_RED>( "%s", desc->function_name );
-				else
-					log<CON_YLW>( "%s", desc->function_name );
-				log<CON_BLU>( "(%s)", rhs );
-
-				return format::str( "%s(%s)", desc->function_name, rhs );
-			}
-		}
-		else
-		{
-			return format::hex( exp->get<true>().value() );
-		}
-	}
 
 	// Attempts to prettify the expression given.
 	//
@@ -161,7 +71,7 @@ namespace vtil::symbolic
 		{
 			// If we can transform the expression by the directive set:
 			//
-			if ( auto exp_new = directive::transform( exp, dir_src, dir_dst ) )
+			if ( auto exp_new = transform( exp, dir_src, dir_dst ) )
 			{
 				if ( prettify_verbose ) log<CON_PRP>( "[Pack] %s => %s\n", dir_src->to_string(), dir_dst->to_string() );
 				if ( prettify_verbose ) log<CON_GRN>( "= %s\n", exp->to_string() );
@@ -196,23 +106,19 @@ namespace vtil::symbolic
 			 exp->op == math::operator_id::cast )
 			return false;
 
+		// Log the input.
+		//
 		scope_padding _p( 1 );
 		if ( simplify_verbose )
 		{
 			if ( !log_padding ) log( "\n" );
 			log( "[Input]  = %s ", exp->to_string() );
 			log( "(Hash: %s)\n", exp->hash().to_string() );
-
-			// DEBUGGGGG
-			log( "[SymFr]  = " );
-			directive::symbol_table sss;
-			to_base_exp( sss, exp );
-			log( "\n" );
 		}
 
 		// If we resolved a valid cache entry:
 		//
-		auto cache_it = simplifier_cache.find( exp->hash() );
+		auto cache_it = simplifier_cache.find( ( boxed_expression& ) *exp );
 		if ( cache_it != simplifier_cache.end() )
 		{
 			// Replace with the cached entry, inherit simplification state.
@@ -229,7 +135,7 @@ namespace vtil::symbolic
 
 		// Otherwise create a new cache entry with {invalid, false} by default.
 		//
-		auto& [cache_entry, success_flag] = simplifier_cache[ exp->hash() ];
+		auto& [cache_entry, success_flag] = simplifier_cache[ ( boxed_expression& ) *exp ];
 
 		// Simplify operands first if not done already.
 		//
@@ -242,7 +148,7 @@ namespace vtil::symbolic
 
 			// If we could simplify the operand:
 			//
-			auto op_ref = *op_ptr;
+			expression::reference op_ref = *op_ptr;
 			if ( simplify_expression( op_ref, false ) )
 			{
 				// Own the reference and relocate the pointer.
@@ -285,7 +191,7 @@ namespace vtil::symbolic
 		{
 			// If we can transform the expression by the directive set:
 			//
-			if ( auto exp_new = directive::transform( exp, dir_src, dir_dst ) )
+			if ( auto exp_new = transform( exp, dir_src, dir_dst ) )
 			{
 				if ( simplify_verbose ) log<CON_GRN>( "[Simplify] %s => %s\n", dir_src->to_string(), dir_dst->to_string() );
 				if ( simplify_verbose ) log<CON_GRN>( "= %s [By simplify directive]\n", exp_new->to_string() );
@@ -301,68 +207,48 @@ namespace vtil::symbolic
 			}
 		}
 
-		
-		// TODO: Not too sure.
-		// Heuristic to determine if expression can be simplified any further:
-		//bitcnt_t res_unk = math::popcnt( exp->unknown_mask() );
-		//bitcnt_t in_unk = math::popcnt( ( exp->lhs ? exp->lhs->unknown_mask() : 0 ) | exp->rhs->unknown_mask() );
-		//if ( in_unk > res_unk || ( exp->depth > 1 && in_unk == res_unk ) )
+		// Enumerate each join descriptor:
+		//
+		for ( auto& [dir_src, dir_dst] : directive::join_descriptors )
 		{
-			// Enumerate each join descriptor:
+			// If we can transform the expression by the directive set:
 			//
-			for ( auto& [dir_src, dir_dst] : directive::join_descriptors )
+			if ( auto exp_new = transform( exp, dir_src, dir_dst, 
+				 [ & ] ( auto& exp_new ) { return exp_new->complexity < exp->complexity; } ) )
 			{
-				// If we can transform the expression by the directive set:
+				if ( simplify_verbose ) log<CON_GRN>( "[Join] %s => %s\n", dir_src->to_string(), dir_dst->to_string() );
+				if ( simplify_verbose ) log<CON_GRN>( "= %s [By join directive]\n", exp_new->to_string() );
+
+				// Recurse, set the hint and return the simplified instance.
 				//
-				if ( auto exp_new = directive::transform( exp, dir_src, dir_dst ) )
-				{
-					if ( simplify_verbose ) log<CON_GRN>( "[Join] %s => %s\n", dir_src->to_string(), dir_dst->to_string() );
-					if ( simplify_verbose ) log<CON_YLW>( "Src:   %s [Complexity: %lf]\n", exp->to_string(), exp->complexity );
-					if ( simplify_verbose ) log<CON_GRN>( "Dst:   %s [Complexity: %lf]\n", exp_new->to_string(), exp_new->complexity );
-
-					// If complexity increased, skip the directive.
-					//
-					if ( exp_new->complexity >= exp->complexity )
-					{
-						if ( simplify_verbose ) log<CON_RED>( "Complexity increased, rejecting.\n", exp->complexity, exp_new->complexity, exp->to_string() );
-						continue;
-					}
-					else
-					{
-						if ( simplify_verbose ) log<CON_GRN>( "= %s [By join directive]\n", exp_new->to_string() );
-					}
-
-					// Otherwise set the hint and return the simplified instance.
-					//
-					simplify_expression( exp_new, pretty );
-					( +exp_new )->simplify_hint = true;
-					cache_entry = exp_new;
-					success_flag = true;
-					exp = exp_new;
-					return success_flag;
-				}
+				simplify_expression( exp_new, pretty );
+				( +exp_new )->simplify_hint = true;
+				cache_entry = exp_new;
+				success_flag = true;
+				exp = exp_new;
+				return success_flag;
 			}
+		}
 
-			// Enumerate each unpack descriptor:
+		// Enumerate each unpack descriptor:
+		//
+		for ( auto& [dir_src, dir_dst] : directive::unpack_descriptors )
+		{
+			// If we can transform the expression by the directive set:
 			//
-			for ( auto& [dir_src, dir_dst] : directive::unpack_descriptors )
+			if ( auto exp_new = transform( exp, dir_src, dir_dst, 
+				 [ & ] ( auto& exp_new ) { return simplify_expression( exp_new, pretty ) && exp_new->complexity < exp->complexity; } ) )
 			{
-				// If we can transform the expression by the directive set:
-				//
-				if ( auto exp_new = directive::transform( exp, dir_src, dir_dst ) )
-				{
-					if ( simplify_verbose ) log<CON_YLW>( "[Unpack] %s => %s\n", dir_src->to_string(), dir_dst->to_string() );
-					if ( !simplify_expression( exp_new, pretty ) || exp_new->complexity >= exp->complexity ) break;
-					if ( simplify_verbose ) log<CON_GRN>( "= %s [By unpack directive]\n", exp_new->to_string() );
+				if ( simplify_verbose ) log<CON_YLW>( "[Unpack] %s => %s\n", dir_src->to_string(), dir_dst->to_string() );
+				if ( simplify_verbose ) log<CON_GRN>( "= %s [By unpack directive]\n", exp_new->to_string() );
 
-					// Otherwise set the hint and return the simplified instance.
-					//
-					( +exp_new )->simplify_hint = true;
-					cache_entry = exp_new;
-					success_flag = true;
-					exp = exp_new;
-					return success_flag;
-				}
+				// Set the hint and return the simplified instance.
+				//
+				( +exp_new )->simplify_hint = true;
+				cache_entry = exp_new;
+				success_flag = true;
+				exp = exp_new;
+				return success_flag;
 			}
 		}
 
@@ -371,22 +257,10 @@ namespace vtil::symbolic
 		if ( pretty )
 			prettify_expression( exp );
 
-		// Detect possible simplification [Debug]
+		// Log the output.
 		//
 		if ( simplify_verbose )
-		{
-			if ( exp->is_binary() )
-			{
-				if ( math::popcnt( exp->unknown_mask() ) < math::popcnt( ( exp->lhs ? exp->lhs->unknown_mask() : 0 ) | exp->rhs->unknown_mask() ) )
-					log<CON_RED>( "Possible simplification missed!!!!\n" );
-			}
-		}
-
-		if ( simplify_verbose )
-		{
-			log( "= %s\n", exp->to_string() );
-			log( "\n" );
-		}
+			log( "= %s\n\n", exp->to_string() );
 		return false;
 	}
 };

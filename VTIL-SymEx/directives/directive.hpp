@@ -29,6 +29,7 @@
 #include <vtil/math>
 #include <vtil/utility>
 #include <type_traits>
+#include <unordered_set>
 
 namespace vtil::symbolic::directive
 {
@@ -139,6 +140,12 @@ namespace vtil::symbolic::directive
     template<directive_op_desc::_tag t>
     static constexpr directive_op_desc tagged = t;
 
+    // To avoid string comparison each directive variable gets assigned a 
+    // lookup table index. Maximum index is an arbitrary constant to avoid heap 
+    // allocation for the lookup table.
+    //
+    static constexpr uint32_t max_lookup_index = 8;
+
     // Operable directive instance, used to describe a simplifier directive.
     //
     struct instance : math::operable<instance>
@@ -150,6 +157,7 @@ namespace vtil::symbolic::directive
         //
         const char* id = nullptr;
         matching_type mtype = match_any;
+        int lookup_index = 0;
 
         // The operation we're matching and the operands.
         //
@@ -169,7 +177,11 @@ namespace vtil::symbolic::directive
         //
         template<typename T = uint64_t, std::enable_if_t<std::is_integral_v<T>, int> = 0>
         instance( T value ) : operable( int64_t( value ) ) {}
-        instance( const char* id, matching_type mtype = match_any ) : id( id ), mtype( mtype ) {}
+        instance( const char* id, int lookup_index, matching_type mtype = match_any ) : 
+            id( id ), lookup_index( lookup_index ), mtype( mtype ) 
+        {
+            fassert( lookup_index < max_lookup_index );
+        }
 
         // Constructor for directive representing the result of an unary operator.
         //
@@ -178,6 +190,10 @@ namespace vtil::symbolic::directive
         // Constructor for directive representing the result of a binary operator.
         //
         instance( const instance& e1, math::operator_id _op, const instance& e2 );
+
+        // Enumerates each unique variable.
+        //
+        void enum_variables( const std::function<void( const instance& )>& fn, std::unordered_set<const char*>* s = nullptr ) const;
 
         // Converts to human-readable format.
         //
@@ -209,17 +225,17 @@ namespace vtil::symbolic::directive
 
     // Symbolic variables to be used in rule creation:
     //
-    static const instance A = { "α" };
-    static const instance B = { "β" };
-    static const instance C = { "δ" };
-    static const instance D = { "ε" };
+    static const instance A = { "α", 0 };
+    static const instance B = { "β", 1 };
+    static const instance C = { "δ", 2 };
+    static const instance D = { "ε", 3 };
 
     // Special variables, one per type:
     // 
-    static const instance V = { "Π", match_variable };
-    static const instance U = { "Σ", match_constant };
-    static const instance X = { "Θ", match_variable_or_constant };
-    static const instance Q = { "Ω", match_expression };
+    static const instance V = { "Π", 4, match_variable };
+    static const instance U = { "Σ", 5, match_constant };
+    static const instance X = { "Θ", 6, match_variable_or_constant };
+    static const instance Q = { "Ω", 7, match_expression };
 
     // Operable-like directive operators.
     //

@@ -10,11 +10,11 @@
     <ClCompile Include="simplifier\simplifier.cpp">
       <Filter>Simplifier</Filter>
     </ClCompile>
-    <ClCompile Include="directives\matcher.cpp">
-      <Filter>Directives</Filter>
-    </ClCompile>
     <ClCompile Include="expressions\unique_identifier.cpp">
       <Filter>Expression</Filter>
+    </ClCompile>
+    <ClCompile Include="directives\transformer.cpp">
+      <Filter>Directives</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -27,9 +27,6 @@
     <ClInclude Include="simplifier\directives.hpp">
       <Filter>Simplifier</Filter>
     </ClInclude>
-    <ClInclude Include="directives\matcher.hpp">
-      <Filter>Directives</Filter>
-    </ClInclude>
     <ClInclude Include="simplifier\simplifier.hpp">
       <Filter>Simplifier</Filter>
     </ClInclude>
@@ -38,6 +35,12 @@
     </ClInclude>
     <ClInclude Include="expressions\unique_identifier.hpp">
       <Filter>Expression</Filter>
+    </ClInclude>
+    <ClInclude Include="directives\fast_matcher.hpp">
+      <Filter>Directives</Filter>
+    </ClInclude>
+    <ClInclude Include="directives\transformer.hpp">
+      <Filter>Directives</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

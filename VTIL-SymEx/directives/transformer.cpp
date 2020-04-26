@@ -25,18 +25,20 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE  
 // POSSIBILITY OF SUCH DAMAGE.        
 //
-#include "matcher.hpp"
+#include "transformer.hpp"
+#include <vtil/utility>
 #include "..\simplifier\simplifier.hpp"
 
-namespace vtil::symbolic::directive
+namespace vtil::symbolic
 {
 	static bool match_verbose = false;
+	using namespace directive;
 
 	// Translates the given directive into an expression (of size given) using the symbol table.
 	// - If speculative flag is set, it will either return a dummy reference if the expression could be built,
 	//   or a null reference if it would fail.
 	//
-	expression::reference translate( const symbol_table& sym,
+	expression::reference translate( const symbol_table_t& sym,
 									 const instance::reference& dir,
 									 bitcnt_t bit_cnt,
 									 bool speculative_condition )
@@ -244,117 +246,110 @@ namespace vtil::symbolic::directive
 		return {};
 	}
 
-	// Tries to match the the given expression with the directive and fills the symbol table with
-	// the variable mapping it would be a valid match, target directive can be passed if the caller
-	// requires speculative validation of the translation into another directive. This argument will
-	// not be propagated when recursing if it is not a tail call.
+	// Attempts to transform the expression in form A to form B as indicated by the directives, 
+	// and returns the first instance that matches query.
 	//
-	bool match( symbol_table& sym,
-				const instance::reference& dir,
-				const expression::reference& exp,
-				uint8_t bit_cnt,
-				const instance::reference& target_directive )
-	{
-		// If directive is a constant or a variable:
-		//
-		if ( dir->op == math::operator_id::invalid )
-		{
-			// If directive is a variable:
-			//
-			if ( dir->id )
-			{
-				if ( !sym.add( dir, exp ) )
-					return false;
-			}
-			// If directive is a constant:
-			//
-			else
-			{
-				// Generate mask for the size of the constant and compare the masked values
-				// if expression is also a constant, else fail.
-				//
-				uint64_t mask = math::fill( exp->size() );
-				if ( !exp->is_constant() || ( exp->value.known_one() & mask ) != ( dir->value.known_one() & mask ) )
-					return false;
-			}
-
-			// If target directive is valid, this implies we're the tail call and as
-			// we matched with a variable, we will not recurse any deeper. Since we've 
-			// reached the end of this check, try speculatively mapping to the target and
-			// return failure if it fails.
-			//
-			if ( target_directive )
-				return translate( sym, bit_cnt, target_directive, true );
-			return true;
-		}
-		// If directive is an expression and the operators are the same
-		//
-		else if ( exp->op == dir->op )
-		{
-			// Resolve operator descriptor, if unary, just compare right hand side.
-			//
-			const math::operator_desc* desc = exp->get_op_desc();
-			if ( desc->operand_count == 1 )
-				return match( sym, dir->rhs, exp->rhs, bit_cnt, target_directive );
-
-			// Save the previous symbol table, check if we can match operands as is,
-			// if we succeed in doing so, indiciate success.
-			//
-			symbol_table symt0 = sym;
-			if ( match( symt0, dir->lhs, exp->lhs, bit_cnt, {} ) &&
-				 match( symt0, dir->rhs, exp->rhs, bit_cnt, target_directive ) )
-			{
-				sym = symt0;
-				return true;
-			}
-
-			// Restore the previous symbol table, check if we can match operands in 
-			// reverse, if we succeed in doing so, indiciate success.
-			//
-			symbol_table symt1 = sym;
-			if ( desc->is_commutative &&
-				 match( symt1, dir->rhs, exp->lhs, bit_cnt, {} ) &&
-				 match( symt1, dir->lhs, exp->rhs, bit_cnt, target_directive ) )
-			{
-				sym = symt1;
-				return true;
-			}
-		}
-
-		// Generic fail case.
-		//
-		return false;
-	}
-
-	// Attempts to transform the expression in form A to form B as indicated by the directives.
-	//
-	expression::reference transform( const expression::reference& exp, const instance::reference& from, const instance::reference& to )
+	expression::reference transform( const expression::reference& exp,
+									 const instance::reference& from, const instance::reference& to,
+									 const expression_filter_t& filter )
 	{
 		using namespace logger;
 
-		// If expression does not match the "from" directive or 
-		// if constraints are not satisfied during speculative parsing, fail.
+		// Match the expresison.
 		//
-		symbol_table sym;
-		if ( !match( sym, from, exp, to, exp->size() ) ) return {};
+		stack_vector<symbol_table_t> results;
+		if ( !fast_match( &results, from, exp ) ) return {};
 
-		// If all pre-conditions are met, request translation for the actual output.
+		// If a filter is provided:
 		//
-		if ( match_verbose )
+		if ( filter )
 		{
-			log<CON_BLU>( "Translating [%s] => [%s]:\n", from->to_string(), to->to_string() );
-			for ( auto& [var, exp] : sym.variable_map )
-				log<CON_BLU>( "            %s: %s\n", var, exp->to_string() );
-		}
-		if ( auto exp_new = translate( sym, to, exp->size(), false ) )
-		{
-			if ( match_verbose ) log<CON_GRN>( "Success.\n" );
-			return exp_new;
+			// For each possible match:
+			//
+			for ( auto& match : results )
+			{
+				// Log the translation.
+				//
+				if ( match_verbose )
+				{
+					log<CON_BLU>( "Translating [%s] => [%s]:\n", from->to_string(), to->to_string() );
+					from->enum_variables( [ & ] ( const instance& ins )
+					{
+						log<CON_BLU>( "            %s: %s\n", ins.id, match.translate( ins )->to_string() );
+					} );
+				}
+
+				// If we could translate the directive:
+				//
+				if ( auto exp_new = translate( match, to, exp->size() ) )
+				{
+					// If it passes through the filter:
+					//
+					if ( filter( exp_new ) )
+					{
+						// Log state and return the expression.
+						//
+						if ( match_verbose ) log<CON_GRN>( "Success.\n" );
+						return exp_new;
+					}
+
+					// Log state.
+					//
+					if ( match_verbose ) log<CON_RED>( "Rejected by filter.\n" );
+				}
+				// Otherwise, log state.
+				//
+				else if ( match_verbose )
+				{
+					log<CON_RED>( "Rejected by directive.\n" );
+				}
+			}
 		}
 		else
 		{
-			if ( match_verbose ) log<CON_RED>( "Failure.\n" );
-			return {};
+			// For each possible match:
+			//
+			for ( auto& match : results )
+			{
+				// Speculatively match, skip if fails.
+				//
+				if ( !translate( match, to, exp->size(), true ) )
+				{
+					// Log state.
+					//
+					if ( match_verbose ) log<CON_RED>( "Rejected by directive.\n" );
+					continue;
+				}
+
+				// Log the translation.
+				//
+				if ( match_verbose )
+				{
+					log<CON_BLU>( "Translating [%s] => [%s]:\n", from->to_string(), to->to_string() );
+					from->enum_variables( [ & ] ( const instance& ins )
+					{
+						log<CON_BLU>( "            %s: %s\n", ins.id, match.translate( ins )->to_string() );
+					} );
+				}
+
+				// Translate the whole expression.
+				//
+				auto exp_new = translate( match, to, exp->size() );
+
+				// Assert it was translated without failure since we speculatively 
+				// checked the conditions.
+				//
+				fassert( exp_new );
+
+				// Log state and return the expression.
+				//
+				if ( match_verbose ) log<CON_GRN>( "Success.\n" );
+				return exp_new;
+			}
 		}
+
+		// Indicate failure with null reference.
+		//
+		return {};
 	}
 };

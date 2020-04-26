@@ -91,9 +91,13 @@ namespace vtil::symbolic
 			//
 			hash_value = hasher_t{}( name );
 
-			// Move string into string_cast capture to return as is.
+			// Store value as a variant.
 			//
-			string_cast = [ s = std::move( name ) ] ( const variant& v ) { return s; };
+			value = std::move( name );
+
+			// String cast returns value as is.
+			//
+			string_cast = [ ] ( const variant& v ) { return v.get<std::string>(); };
 
 			// Set comparison operator.
 			//
@@ -169,32 +173,8 @@ namespace vtil::symbolic
 
 		// Gets the value stored by this structure.
 		//
-		template<typename T, typename R = std::conditional_t<std::is_same_v<T, std::string>, T, const T&>>
-		R get() const
-		{
-			// Strings are stored as capture lambdas.
-			//
-			if constexpr ( std::is_same_v<T, std::string> )
-				return string_cast( value );
-
-			// Rest are redirected to variant.
-			//
-			else
-				return value.get<T>();
-		}
-		template<typename T, typename R = std::conditional_t<std::is_same_v<T, std::string>, T, T&>>
-		R get()
-		{
-			// Strings are stored as capture lambdas.
-			//
-			if constexpr ( std::is_same_v<T, std::string> )
-				return string_cast( value );
-
-			// Rest are redirected to variant.
-			//
-			else
-				return value.get<T>();
-		}
+		template<typename T> const T& get() const { return value.get<T>(); }
+		template<typename T> T& get() { return value.get<T>(); }
 
 		// Returns the cached hash value to abide the standard vtil::hashable.
 		//
@@ -208,7 +188,7 @@ namespace vtil::symbolic
 
 		// Cast to bool checks if valid or not.
 		//
-		inline operator bool() const { return ( bool ) string_cast; }
+		inline operator bool() const { return ( bool ) value; }
 
 		// Simple comparison operators.
 		//

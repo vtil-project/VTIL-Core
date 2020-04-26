@@ -63,7 +63,7 @@ namespace vtil::symbolic
 
 		// Assert internal equivalance.
 		//
-		return compare_value ? compare_value( value, o.value ) == 0 : true;
+		return compare_value ? compare_value( *this, o ) == 0 : true;
 	}
 	bool unique_identifier::operator<( const unique_identifier& o ) const
 	{
@@ -79,6 +79,6 @@ namespace vtil::symbolic
 
 		// Compare internals if equivalent hash.
 		//
-		return compare_value ? compare_value( value, o.value ) < 0 : false;
+		return compare_value ? compare_value( *this, o ) < 0 : false;
 	}
 };

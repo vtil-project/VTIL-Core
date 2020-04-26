@@ -37,6 +37,22 @@ namespace vtil::symbolic::directive
 	//
 	instance::instance( const instance& e1, math::operator_id op, const instance& e2 ) : lhs( e1 ), rhs( e2 ), op( op ) {}
 
+	// Enumerates each unique variable.
+	//
+	void instance::enum_variables( const std::function<void( const instance& )>& fn, std::unordered_set<const char*>* s ) const
+	{
+		std::unordered_set<const char*> tmp;
+		if ( !s ) s = &tmp;
+
+		if ( lhs ) lhs->enum_variables( fn, s );
+		if ( rhs ) rhs->enum_variables( fn, s );
+		else if ( !is_constant() )
+		{
+			if ( s->find( id ) == tmp.end() )
+				s->insert( id ), fn( *this );
+		}
+	}
+
 	// Converts to human-readable format.
 	//
 	std::string instance::to_string() const

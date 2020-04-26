@@ -26,43 +26,28 @@
 // POSSIBILITY OF SUCH DAMAGE.        
 //
 #pragma once
-#include <iterator>
-#include <unordered_map>
+#include <functional>
+#include "directive.hpp"
+#include "fast_matcher.hpp"
 #include "..\expressions\expression.hpp"
 
 namespace vtil::symbolic
 {
-	using simplifier_cache_t = std::unordered_map<boxed_expression, std::pair<expression::reference, bool>, vtil::hash<boxed_expression>>;
+	using expression_filter_t = std::function<bool( expression::reference& ref )>;
 
-	// Attempts to simplify the expression given, returns whether the simplification
-	// succeeded or not.
+	// Translates the given directive into an expression (of size given) using the symbol table.
+	// - If speculative flag is set, it will either return a dummy reference if the expression could be built,
+	//   or a null reference if it would fail.
 	//
-	bool simplify_expression( expression::reference& exp, bool pretty = false );
+	expression::reference translate( const directive::symbol_table_t& sym,
+									 const directive::instance::reference& dir,
+									 bitcnt_t bit_cnt,
+									 bool speculative_condition = false );
 
-	// Purges/references the current thread's simplifier cache.
+	// Attempts to transform the expression in form A to form B as indicated by the directives, 
+	// and returns the first instance that matches query.
 	//
-	void purge_simplifier_cache();
-	simplifier_cache_t& ref_simplifier_cache();
-
-	// RAII hack to purge the cache once the we're out of scope.
-	//
-	struct cache_guard
-	{
-		// Constructor saves the current size of the simplifier cache, dummy argument 
-		// we take here is required since the compiler will not invoke this constructor otherwise.
-		//
-		size_t previous_size = 0;
-		cache_guard( bool _ = false )
-		{
-			previous_size = ref_simplifier_cache().size();
-		}
-
-		// Destructor resets simplifier cache to its original size.
-		//
-		~cache_guard()
-		{
-			auto& cache = ref_simplifier_cache();
-			cache.erase( std::next( cache.begin(), previous_size ), cache.end() );
-		}
-	};
+	expression::reference transform( const expression::reference& exp, 
+									 const directive::instance::reference& from, const directive::instance::reference& to,
+									 const expression_filter_t& filter = {} );
 };

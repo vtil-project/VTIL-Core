@@ -4,4 +4,5 @@
 #include "..\..\simplifier\simplifier.hpp"
 #include "..\..\simplifier\directives.hpp"
 #include "..\..\directives\directive.hpp"
-#include "..\..\directives\matcher.hpp"
+#include "..\..\directives\transformer.hpp"
+#include "..\..\directives\fast_matcher.hpp"
