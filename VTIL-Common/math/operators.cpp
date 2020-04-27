@@ -114,31 +114,31 @@ namespace vtil::math
                                                        | ( lhs << ( bcnt_rhs - ( rhs % bcnt_rhs ) ) );              break;
             case operator_id::rotate_left:      result = ( lhs << ( rhs % bcnt_rhs ) )
                                                        | ( lhs >> ( bcnt_rhs - ( rhs % bcnt_rhs ) ) );              break;
-            // - Arithmetic operators.										                  
-            //																                  
+            // - Arithmetic operators.                                                          
+            //                                                                                  
             case operator_id::negate:           result = -irhs;                                                     break;
             case operator_id::add:              result = ilhs + irhs;                                               break;
             case operator_id::substract:        result = ilhs - irhs;                                               break;
             case operator_id::multiply_high:    result = bcnt_res == 64
                                                         ? __mulh( ilhs, irhs )
-                                                        : uint64_t( ilhs * irhs ) >> bcnt_res;                       break;
+                                                        : uint64_t( ilhs * irhs ) >> bcnt_res;                      break;
             case operator_id::umultiply_high:   result = bcnt_res == 64
                                                         ? __umulh( lhs, rhs )
                                                         : ( lhs * rhs ) >> bcnt_res;                                break;
             case operator_id::multiply:         result = ilhs * irhs;                                               break;
             case operator_id::umultiply:        result = lhs * rhs;                                                 break;
             case operator_id::divide:           result = ilhs / irhs;                                               break;
-            case operator_id::udivide:	        result = lhs / rhs;                                                 break;
+            case operator_id::udivide:          result = lhs / rhs;                                                 break;
             case operator_id::remainder:        result = ilhs % irhs;                                               break;
-            case operator_id::uremainder:	    result = lhs % rhs;                                                 break;
+            case operator_id::uremainder:       result = lhs % rhs;                                                 break;
 
-            // - Special operators.										                  
-            //																                  
+            // - Special operators.                                                          
+            //                                                                                  
             case operator_id::cast:             result = ilhs, bcnt_res = rhs;                                      break;
             case operator_id::ucast:            result = lhs,  bcnt_res = rhs;                                      break;
             case operator_id::popcnt:           result = popcnt( rhs );                                             break;
-            case operator_id::bit_test:	        result = ( lhs >> rhs ) & 1;                                        break;
-            case operator_id::mask:	            result = fill( bcnt_rhs );											break;
+            case operator_id::bit_test:         result = ( lhs >> rhs ) & 1;                                        break;
+            case operator_id::mask:             result = fill( bcnt_rhs );                                          break;
             case operator_id::bit_count:        result = bcnt_rhs;                                                  break;
             case operator_id::value_if:         result = ( lhs & 1 ) ? rhs : 0;                                     break;
 
@@ -149,18 +149,18 @@ namespace vtil::math
             case operator_id::min_value:        result = std::min( ilhs, irhs );                                    break;
             case operator_id::max_value:        result = std::max( ilhs, irhs );                                    break;
 
-            // - Comparison operators
+                // - Comparison operators
             //
             case operator_id::greater:          result = ilhs > irhs;                                               break;
             case operator_id::greater_eq:       result = ilhs >= irhs;                                              break;
             case operator_id::equal:            result = lhs == rhs;                                                break;
             case operator_id::not_equal:        result = lhs != rhs;                                                break;
             case operator_id::less_eq:          result = ilhs <= irhs;                                              break;
-            case operator_id::less:	            result = ilhs < irhs;                                               break;
+            case operator_id::less:             result = ilhs < irhs;                                               break;
             case operator_id::ugreater:         result = lhs > rhs;                                                 break;
             case operator_id::ugreater_eq:      result = lhs >= rhs;                                                break;
             case operator_id::uless_eq:         result = lhs <= rhs;                                                break;
-            case operator_id::uless:	        result = lhs < rhs;                                                 break;
+            case operator_id::uless:            result = lhs < rhs;                                                 break;
             default:                            unreachable();
         }
 
@@ -499,8 +499,8 @@ namespace vtil::math
                 bitcnt_t cmp_out_size = std::max( lhs.size(), rhs.size() );
                 switch ( cmp_res )
                 {
-                    case bit_state::one:	  return bit_vector{ lhs }.resize( cmp_out_size );
-                    case bit_state::zero:	  return bit_vector{ rhs }.resize( cmp_out_size );
+                    case bit_state::one:      return bit_vector{ lhs }.resize( cmp_out_size );
+                    case bit_state::zero:      return bit_vector{ rhs }.resize( cmp_out_size );
                     case bit_state::unknown:  return bit_vector{ cmp_out_size };
                     default: unreachable();
                 }
