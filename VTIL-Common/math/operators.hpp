@@ -43,18 +43,18 @@ namespace vtil::math
 
         // Bitwise modifiers:
         //
-        bitwise_not,	// ~RHS
+        bitwise_not,    // ~RHS
 
         // Basic bitwise operations:
         //
-        bitwise_and,	// LHS&(RHS&...)
-        bitwise_or,	    // LHS|(RHS|...)
-        bitwise_xor,	// LHS^(RHS^...)
+        bitwise_and,    // LHS&(RHS&...)
+        bitwise_or,     // LHS|(RHS|...)
+        bitwise_xor,    // LHS^(RHS^...)
 
         // Distributing bitwise operations:
         //
-        shift_right,	// LHS>>(RHS+...)
-        shift_left,	    // LHS<<(RHS+...)
+        shift_right,    // LHS>>(RHS+...)
+        shift_left,     // LHS<<(RHS+...)
         rotate_right,   // LHS>](RHS+...)
         rotate_left,    // LHS[<(RHS+...)
 
@@ -62,12 +62,12 @@ namespace vtil::math
 
         // Arithmetic modifiers:
         //
-        negate,	        // -RHS
+        negate,         // -RHS
 
         // Basic arithmetic operations:
         //
-        add,	        // LHS+(RHS+...)
-        substract,	    // LHS-(RHS+...)
+        add,            // LHS+(RHS+...)
+        substract,      // LHS-(RHS+...)
 
         // Distributing arithmetic operations:
         //
@@ -83,30 +83,30 @@ namespace vtil::math
 
         // ----------------- Special Operators ----------------- //
         ucast,          // uintRHS_t(LHS, RHS)
-        cast,	        // intRHS_t(LHS, RHS)
+        cast,           // intRHS_t(LHS, RHS)
         popcnt,         // POPCNT(RHS)
-        bit_test,	    // [LHS>>RHS]&1
-        mask,	        // RHS.mask()
-        bit_count,	    // RHS.bitcount()
-        value_if,	    // LHS&1 ? RHS : 0
+        bit_test,       // [LHS>>RHS]&1
+        mask,           // RHS.mask()
+        bit_count,      // RHS.bitcount()
+        value_if,       // LHS&1 ? RHS : 0
 
-        max_value,	    // LHS>=RHS ? LHS : RHS
-        min_value,	    // LHS<=RHS ? LHS : RHS
+        max_value,      // LHS>=RHS ? LHS : RHS
+        min_value,      // LHS<=RHS ? LHS : RHS
 
-        umax_value,	    // < Unsigned variants of above >
-        umin_value,	    //
+        umax_value,     // < Unsigned variants of above >
+        umin_value,     //
 
-        greater,	    // LHS > RHS
-        greater_eq,	    // LHS >= RHS
-        equal,	        // LHS == RHS
-        not_equal,	    // LHS != RHS
-        less_eq,	    // LHS <= RHS
-        less,		    // LHS < RHS
-
-        ugreater,	    // < Unsigned variants of above > [Note: equal and not_equal are always unsigned.]
-        ugreater_eq,	//
-        uless_eq,	    //
-        uless,		    //
+        greater,        // LHS > RHS
+        greater_eq,     // LHS >= RHS
+        equal,          // LHS == RHS
+        not_equal,      // LHS != RHS
+        less_eq,        // LHS <= RHS
+        less,           // LHS < RHS
+                  
+        ugreater,       // < Unsigned variants of above > [Note: equal and not_equal are always unsigned.]
+        ugreater_eq,    //
+        uless_eq,       //
+        uless,          //
     max,
     };
 
