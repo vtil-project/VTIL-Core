@@ -132,7 +132,7 @@ namespace vtil
 
 		// Conversion to human-readable format.
 		//
-		std::string to_string() const;
+		std::string to_string( bool pad_right = false ) const;
 
 		// Generates a hash for the instruction.
 		//

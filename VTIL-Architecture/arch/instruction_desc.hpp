@@ -32,12 +32,15 @@
 #include <vtil/math>
 #include "operands.hpp"
 
+// [Configuration]
+// Determine maxmimum number of operands.
+//
+#ifndef VTIL_ARCH_MAX_OPERAND_COUNT
+    #define VTIL_ARCH_MAX_OPERAND_COUNT 4
+#endif
+
 namespace vtil
 {
-    // Maximum operand count.
-    //
-    static constexpr size_t max_operand_count = 4;
-
     // Describes the way an instruction acceses it's operands and the
     // constraints built around that, such as "immediate only" implied 
     // by the "_imm" suffix.

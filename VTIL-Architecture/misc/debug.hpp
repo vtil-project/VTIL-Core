@@ -90,11 +90,8 @@ namespace vtil::debug
 			}
 		}
 
-		// Print padding and end line
+		// End line
 		//
-		fassert( ins.operands.size() <= max_operand_count );
-		for ( int i = ins.operands.size(); i < max_operand_count; i++ )
-			log( FMT_INS_OPR " ", "" );
 		log( "\n" );
 	}
 

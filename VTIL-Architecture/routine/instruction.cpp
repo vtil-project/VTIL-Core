@@ -26,6 +26,7 @@
 // POSSIBILITY OF SUCH DAMAGE.        
 //
 #include "instruction.hpp"
+#include <algorithm>
 
 namespace vtil
 {
@@ -137,24 +138,19 @@ namespace vtil
 
 	// Conversion to human-readable format.
 	//
-	std::string instruction::to_string() const
+	std::string instruction::to_string( bool pad_right ) const
 	{
-		std::vector<std::string> operand_str;
+		std::string output = format::str( FMT_INS_MNM, base->to_string( access_size() ) );
 		for ( auto& op : operands )
-			operand_str.push_back( op.to_string() );
-		fassert( operand_str.size() <= max_operand_count &&
-				 max_operand_count == 4 );
-		operand_str.resize( max_operand_count );
+			output += format::str( " " FMT_INS_OPR, op.to_string() );
 
-		return format::str
-		(
-			FMT_INS,
-			base->to_string( access_size() ),
-			operand_str[ 0 ],
-			operand_str[ 1 ],
-			operand_str[ 2 ],
-			operand_str[ 3 ]
-		);
+		if ( pad_right )
+		{
+			size_t padding_cnt = ( VTIL_ARCH_MAX_OPERAND_COUNT - operands.size() ) * ( FMT_INS_OPR_S + 1 );
+			std::fill_n( std::back_inserter( output ), padding_cnt, ' ' );
+		}
+
+		return output;
 	}
 
 	// Generates a hash for the instruction.

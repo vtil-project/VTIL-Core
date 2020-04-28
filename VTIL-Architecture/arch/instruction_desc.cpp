@@ -42,7 +42,7 @@ namespace vtil
 		is_volatile( is_volatile ), symbolic_operator( symbolic_operator ),
 		memory_operand_index( memory_operands.first - 1 ), memory_write( memory_operands.second )
 	{
-		fassert( operand_count() <= max_operand_count );
+		fassert( operand_count() <= VTIL_ARCH_MAX_OPERAND_COUNT );
 
 		// Validate all operand indices.
 		//
