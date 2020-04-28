@@ -29,26 +29,32 @@
 #include <string>
 #include <type_traits>
 
-#define FMT_TEMP_REG	"t%d"
-#define FMT_INS_MNM		"%-8s"
-#define FMT_INS_MNM_S	8
-#define FMT_INS_OPR		"%-12s"
-#define FMT_INS_OPR_S	12
-
-// Billion dollar company yes? (::fix_parameter throws a warning otherwise.)
+// [Configuration]
+// Determine the way we format the instructions.
 //
-#ifdef __INTEL_COMPILER
-	#pragma warning (disable:1011)
+#ifndef VTIL_FMT_DEFINED
+	#define VTIL_FMT_INS_MNM	"%-8s"
+	#define VTIL_FMT_INS_OPR	"%-12s"
+	#define VTIL_FMT_INS_MNM_S	8
+	#define VTIL_FMT_INS_OPR_S	12
+	#define VTIL_FMT_SUFFIX_1	'b'
+	#define VTIL_FMT_SUFFIX_2	'w'
+	#define VTIL_FMT_SUFFIX_4	'd'
+	#define VTIL_FMT_SUFFIX_8	'q'
+	#define VTIL_FMT_DEFINED
 #endif
 
 namespace vtil::format
 {
 	// Suffixes used to indicate registers of N bytes.
 	//
-	static constexpr char suffix_map[] = { ' ', 'b', 'w', ' ', 'd', ' ', ' ', ' ', 'q' };
+	static constexpr char suffix_map[] = { 0, VTIL_FMT_SUFFIX_1, VTIL_FMT_SUFFIX_2, 0, VTIL_FMT_SUFFIX_4, 0, 0, 0, VTIL_FMT_SUFFIX_8 };
 
 	// Used to fix std::string usage in combination with "%s".
 	//
+	#ifdef __INTEL_COMPILER
+		#pragma warning (supress:1011) // Billion dollar company yes? #2
+	#endif
 	template<typename T>
 	__forceinline static auto fix_parameter( T&& x )
 	{

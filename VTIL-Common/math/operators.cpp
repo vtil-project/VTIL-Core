@@ -27,6 +27,8 @@
 //
 #include "operators.hpp"
 
+#pragma warning(push)
+#pragma warning(disable: 4244)
 namespace vtil::math
 {
     // Calculates the size of the result after after the application of the operator [id] on the operands.
@@ -615,3 +617,4 @@ namespace vtil::math
         unreachable();
     }
 };
+#pragma warning(pop)
