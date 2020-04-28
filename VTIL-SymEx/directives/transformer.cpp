@@ -31,7 +31,6 @@
 
 namespace vtil::symbolic
 {
-	static bool match_verbose = false;
 	using namespace directive;
 
 	// Translates the given directive into an expression (of size given) using the symbol table.
@@ -44,8 +43,10 @@ namespace vtil::symbolic
 									 bool speculative_condition )
 	{
 		using namespace logger;
+#if VTIL_SYMEX_SIMPLIFY_VERBOSE
 		scope_padding _p( 1 );
-		if ( match_verbose ) log<CON_BLU>( "[%s].\n", dir->to_string() );
+		log<CON_BLU>( "[%s].\n", dir->to_string() );
+#endif
 
 		// Dummy expression used just to indicate success if speculative_condition is used, if seen in
 		// output of the simplifier, there's a major bug.
@@ -131,7 +132,9 @@ namespace vtil::symbolic
 					if ( !e1->simplify_hint && simplify_expression( e1 ) )
 						return e1;
 				}
-				if ( match_verbose ) log<CON_RED>( "Rejected, does not simplify.\n", dir->rhs->to_string() );
+#if VTIL_SYMEX_SIMPLIFY_VERBOSE
+				log<CON_RED>( "Rejected, does not simplify.\n", dir->rhs->to_string() );
+#endif
 				break;
 			}
 			case directive_op_desc::try_simplify:
@@ -150,20 +153,28 @@ namespace vtil::symbolic
 			}
 			case directive_op_desc::or_also:
 			{
-				if ( match_verbose ) log<CON_BLU>( "Or directive hit %s.\n" );
-				if ( match_verbose ) log<CON_BLU>( "Trying [%s]...\n", dir->lhs->to_string() );
+#if VTIL_SYMEX_SIMPLIFY_VERBOSE
+				log<CON_BLU>( "Or directive hit %s.\n" );
+				log<CON_BLU>( "Trying [%s]...\n", dir->lhs->to_string() );
+#endif
 
 				// Unpack first expression, if translated successfully, return it as is.
 				//
 				if ( auto e1 = translate( sym, dir->lhs, bit_cnt, speculative_condition ) )
 					return e1;
-				if ( match_verbose ) log<CON_BLU>( "Trying [%s]...\n", dir->rhs->to_string() );
+
+#if VTIL_SYMEX_SIMPLIFY_VERBOSE
+				log<CON_BLU>( "Trying [%s]...\n", dir->rhs->to_string() );
+#endif
 
 				// Unpack second expression, if translated successfully, return it as is.
 				//
 				if ( auto e2 = translate( sym, dir->rhs, bit_cnt, speculative_condition ) )
 					return e2;
-				if ( match_verbose ) log<CON_RED>( "Both alternatives failed\n" );
+
+#if VTIL_SYMEX_SIMPLIFY_VERBOSE
+				log<CON_RED>( "Both alternatives failed\n" );
+#endif
 				break;
 			}
 			case directive_op_desc::iff:
@@ -173,7 +184,9 @@ namespace vtil::symbolic
 				auto condition_status = translate( sym, dir->lhs, bit_cnt, false );
 				if ( !condition_status || !( +condition_status )->simplify().get().value_or( false ) )
 				{
-					if ( match_verbose ) log<CON_RED>( "Rejected %s, condition (%s) not met.\n", dir->rhs->to_string(), dir->lhs->to_string() );
+#if VTIL_SYMEX_SIMPLIFY_VERBOSE
+					log<CON_RED>( "Rejected %s, condition (%s) not met.\n", dir->rhs->to_string(), dir->lhs->to_string() );
+#endif
 					return {};
 				}
 
@@ -221,17 +234,15 @@ namespace vtil::symbolic
 			{
 				// Print an error.
 				//
-				log<CON_RED>( "Directive-time assertation failure!\n" );
-
-				// Break execution.
-				//
-				unreachable();
+				error( "Directive-time assertation failure!\n" );
 			}
 			case directive_op_desc::warning:
 			{
+#if VTIL_SYMEX_SIMPLIFY_VERBOSE
 				// Print a warning.
 				//
 				log<CON_YLW>( "WARNING!\n" );
+#endif
 
 				// Continue the translation from the right hand side.
 				//
@@ -268,16 +279,15 @@ namespace vtil::symbolic
 			//
 			for ( auto& match : results )
 			{
+#if VTIL_SYMEX_SIMPLIFY_VERBOSE
 				// Log the translation.
 				//
-				if ( match_verbose )
+				log<CON_BLU>( "Translating [%s] => [%s]:\n", from->to_string(), to->to_string() );
+				from->enum_variables( [ & ] ( const instance& ins )
 				{
-					log<CON_BLU>( "Translating [%s] => [%s]:\n", from->to_string(), to->to_string() );
-					from->enum_variables( [ & ] ( const instance& ins )
-					{
-						log<CON_BLU>( "            %s: %s\n", ins.id, match.translate( ins )->to_string() );
-					} );
-				}
+					log<CON_BLU>( "            %s: %s\n", ins.id, match.translate( ins )->to_string() );
+				} );
+#endif
 
 				// If we could translate the directive:
 				//
@@ -287,22 +297,28 @@ namespace vtil::symbolic
 					//
 					if ( filter( exp_new ) )
 					{
+#if VTIL_SYMEX_SIMPLIFY_VERBOSE
 						// Log state and return the expression.
 						//
-						if ( match_verbose ) log<CON_GRN>( "Success.\n" );
+						log<CON_GRN>( "Success.\n" );
+#endif
 						return exp_new;
 					}
 
+#if VTIL_SYMEX_SIMPLIFY_VERBOSE
 					// Log state.
 					//
-					if ( match_verbose ) log<CON_RED>( "Rejected by filter.\n" );
+					log<CON_RED>( "Rejected by filter.\n" );
+#endif
 				}
+#if VTIL_SYMEX_SIMPLIFY_VERBOSE
 				// Otherwise, log state.
 				//
 				else if ( match_verbose )
 				{
 					log<CON_RED>( "Rejected by directive.\n" );
 				}
+#endif
 			}
 		}
 		else
@@ -315,22 +331,23 @@ namespace vtil::symbolic
 				//
 				if ( !translate( match, to, exp->size(), true ) )
 				{
+#if VTIL_SYMEX_SIMPLIFY_VERBOSE
 					// Log state.
 					//
-					if ( match_verbose ) log<CON_RED>( "Rejected by directive.\n" );
+					log<CON_RED>( "Rejected by directive.\n" );
+#endif
 					continue;
 				}
 
+#if VTIL_SYMEX_SIMPLIFY_VERBOSE
 				// Log the translation.
 				//
-				if ( match_verbose )
+				log<CON_BLU>( "Translating [%s] => [%s]:\n", from->to_string(), to->to_string() );
+				from->enum_variables( [ & ] ( const instance& ins )
 				{
-					log<CON_BLU>( "Translating [%s] => [%s]:\n", from->to_string(), to->to_string() );
-					from->enum_variables( [ & ] ( const instance& ins )
-					{
-						log<CON_BLU>( "            %s: %s\n", ins.id, match.translate( ins )->to_string() );
-					} );
-				}
+					log<CON_BLU>( "            %s: %s\n", ins.id, match.translate( ins )->to_string() );
+				} );
+#endif
 
 				// Translate the whole expression.
 				//
@@ -341,9 +358,11 @@ namespace vtil::symbolic
 				//
 				fassert( exp_new );
 
+#if VTIL_SYMEX_SIMPLIFY_VERBOSE
 				// Log state and return the expression.
 				//
-				if ( match_verbose ) log<CON_GRN>( "Success.\n" );
+				log<CON_GRN>( "Success.\n" );
+#endif
 				return exp_new;
 			}
 		}

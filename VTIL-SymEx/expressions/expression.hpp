@@ -31,6 +31,13 @@
 #include <set>
 #include "unique_identifier.hpp"
 
+// [Configuration]
+// Determine whether we should auto-simplify expressions or not.
+//
+#ifndef VTIL_SYMEX_AUTO_SIMPLIFY
+	#define VTIL_SYMEX_AUTO_SIMPLIFY 1
+#endif
+
 // Allow expression::reference to be used with expression type directly as operable.
 //
 namespace vtil::symbolic { struct expression; };
@@ -38,11 +45,7 @@ namespace vtil::math { template<> struct resolve_alias<shared_reference<symbolic
 
 namespace vtil::symbolic
 {
-#ifdef VTIL_SYMEX_NO_AUTO_SIMPLIFY
-	static constexpr bool auto_simplify = false;
-#else
-	static constexpr bool auto_simplify = true;
-#endif
+	static constexpr bool auto_simplify = VTIL_SYMEX_AUTO_SIMPLIFY;
 
 	// Expression descriptor.
 	//

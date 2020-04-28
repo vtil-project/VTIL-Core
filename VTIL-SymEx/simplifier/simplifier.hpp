@@ -30,6 +30,13 @@
 #include <unordered_map>
 #include "..\expressions\expression.hpp"
 
+// [Configuration]
+// Determine whether we should log the details of the simplification process.
+//
+#ifndef VTIL_SYMEX_SIMPLIFY_VERBOSE
+	#define VTIL_SYMEX_SIMPLIFY_VERBOSE 0
+#endif
+
 namespace vtil::symbolic
 {
 	using simplifier_cache_t = std::unordered_map<boxed_expression, std::pair<expression::reference, bool>, vtil::hash<boxed_expression>>;

@@ -140,12 +140,6 @@ namespace vtil::symbolic::directive
     template<directive_op_desc::_tag t>
     static constexpr directive_op_desc tagged = t;
 
-    // To avoid string comparison each directive variable gets assigned a 
-    // lookup table index. Maximum index is an arbitrary constant to avoid heap 
-    // allocation for the lookup table.
-    //
-    static constexpr uint32_t max_lookup_index = 8;
-
     // Operable directive instance, used to describe a simplifier directive.
     //
     struct instance : math::operable<instance>
@@ -178,10 +172,7 @@ namespace vtil::symbolic::directive
         template<typename T = uint64_t, std::enable_if_t<std::is_integral_v<T>, int> = 0>
         instance( T value ) : operable( int64_t( value ) ) {}
         instance( const char* id, int lookup_index, matching_type mtype = match_any ) : 
-            id( id ), lookup_index( lookup_index ), mtype( mtype ) 
-        {
-            fassert( lookup_index < max_lookup_index );
-        }
+            id( id ), lookup_index( lookup_index ), mtype( mtype ) { }
 
         // Constructor for directive representing the result of an unary operator.
         //
@@ -236,6 +227,12 @@ namespace vtil::symbolic::directive
     static const instance U = { "Σ", 5, match_constant };
     static const instance X = { "Θ", 6, match_variable_or_constant };
     static const instance Q = { "Ω", 7, match_expression };
+
+    // To avoid string comparison each directive variable gets assigned a 
+    // lookup table index. Maximum index is an arbitrary constant to avoid heap 
+    // allocation for the lookup table.
+    //
+    static constexpr uint32_t max_lookup_index = 8;
 
     // Operable-like directive operators.
     //

@@ -33,9 +33,6 @@
 
 namespace vtil::symbolic
 {
-	static bool simplify_verbose = false;
-	static bool prettify_verbose = false;
-
 	// Simplifier cache and its accessors.
 	//
 	static thread_local simplifier_cache_t simplifier_cache;
@@ -48,9 +45,10 @@ namespace vtil::symbolic
 	static void prettify_expression( expression::reference& exp )
 	{
 		using namespace logger;
+#if VTIL_SYMEX_SIMPLIFY_VERBOSE
 		scope_padding _p( 1 );
-
-		if( prettify_verbose ) log<CON_CYN>( "[Prettify]  = %s\n", exp->to_string() );
+		log<CON_CYN>( "[Prettify]  = %s\n", exp->to_string() );
+#endif
 
 		// Prettify each operand
 		//
@@ -73,14 +71,18 @@ namespace vtil::symbolic
 			//
 			if ( auto exp_new = transform( exp, dir_src, dir_dst ) )
 			{
-				if ( prettify_verbose ) log<CON_PRP>( "[Pack] %s => %s\n", dir_src->to_string(), dir_dst->to_string() );
-				if ( prettify_verbose ) log<CON_GRN>( "= %s\n", exp->to_string() );
+#if VTIL_SYMEX_SIMPLIFY_VERBOSE
+				log<CON_PRP>( "[Pack] %s => %s\n", dir_src->to_string(), dir_dst->to_string() );
+				log<CON_GRN>( "= %s\n", exp->to_string() );
+#endif
 				exp = exp_new;
 				return;
 			}
 		}
 
-		if ( prettify_verbose ) log<CON_YLW>( "= %s\n", exp->to_string() );
+#if VTIL_SYMEX_SIMPLIFY_VERBOSE
+		log<CON_YLW>( "= %s\n", exp->to_string() );
+#endif
 	}
 
 	// Attempts to simplify the expression given, returns whether the simplification
@@ -106,6 +108,7 @@ namespace vtil::symbolic
 			 exp->op == math::operator_id::cast )
 			return false;
 
+#if VTIL_SYMEX_SIMPLIFY_VERBOSE
 		// Log the input.
 		//
 		scope_padding _p( 1 );
@@ -115,6 +118,7 @@ namespace vtil::symbolic
 			log( "[Input]  = %s ", exp->to_string() );
 			log( "(Hash: %s)\n", exp->hash().to_string() );
 		}
+#endif
 
 		// If we resolved a valid cache entry:
 		//
@@ -125,11 +129,15 @@ namespace vtil::symbolic
 			//
 			if ( cache_it->second.first.is_valid() )
 			{
-				if ( simplify_verbose ) log<CON_YLW>( "= %s (From cache, Success: %d)\n", cache_it->second.first->to_string(), cache_it->second.second );
+#if VTIL_SYMEX_SIMPLIFY_VERBOSE
+				log<CON_YLW>( "= %s (From cache, Success: %d)\n", cache_it->second.first->to_string(), cache_it->second.second );
+#endif
 				exp = cache_it->second.first;
 				return cache_it->second.second;
 			}
-			if ( simplify_verbose ) log<CON_RED>( "Failed as directed by cache...\n" );
+#if VTIL_SYMEX_SIMPLIFY_VERBOSE
+			log<CON_RED>( "Failed as directed by cache...\n" );
+#endif
 			return false;
 		}
 
@@ -170,6 +178,12 @@ namespace vtil::symbolic
 			}
 		}
 
+#if VTIL_SYMEX_SIMPLIFY_VERBOSE
+		// Log the bit states.
+		//
+		log( "[Vector] = %s\n", exp->value.to_string() );
+#endif
+
 		// If reduced to a constant, replace it.
 		//
 		if ( exp->value.is_known() )
@@ -177,12 +191,10 @@ namespace vtil::symbolic
 			cache_entry = expression{ exp->value.known_one(), exp->value.size() };
 			success_flag = true;
 			exp = cache_entry;
-			if ( simplify_verbose ) log<CON_CYN>( "= %s [By evaluation]\n", exp->to_string() );
+#if VTIL_SYMEX_SIMPLIFY_VERBOSE
+			log<CON_CYN>( "= %s [By evaluation]\n", exp->to_string() );
+#endif
 			return success_flag;
-		}
-		else
-		{
-			if ( simplify_verbose ) log( "[Vector] = %s\n", exp->value.to_string() );
 		}
 
 		// Enumerate each universal simplifier:
@@ -193,8 +205,10 @@ namespace vtil::symbolic
 			//
 			if ( auto exp_new = transform( exp, dir_src, dir_dst ) )
 			{
-				if ( simplify_verbose ) log<CON_GRN>( "[Simplify] %s => %s\n", dir_src->to_string(), dir_dst->to_string() );
-				if ( simplify_verbose ) log<CON_GRN>( "= %s [By simplify directive]\n", exp_new->to_string() );
+#if VTIL_SYMEX_SIMPLIFY_VERBOSE
+				log<CON_GRN>( "[Simplify] %s => %s\n", dir_src->to_string(), dir_dst->to_string() );
+				log<CON_GRN>( "= %s [By simplify directive]\n", exp_new->to_string() );
+#endif
 
 				// Recurse, set the hint and return the simplified instance.
 				//
@@ -216,8 +230,10 @@ namespace vtil::symbolic
 			if ( auto exp_new = transform( exp, dir_src, dir_dst, 
 				 [ & ] ( auto& exp_new ) { return exp_new->complexity < exp->complexity; } ) )
 			{
-				if ( simplify_verbose ) log<CON_GRN>( "[Join] %s => %s\n", dir_src->to_string(), dir_dst->to_string() );
-				if ( simplify_verbose ) log<CON_GRN>( "= %s [By join directive]\n", exp_new->to_string() );
+#if VTIL_SYMEX_SIMPLIFY_VERBOSE
+				log<CON_GRN>( "[Join] %s => %s\n", dir_src->to_string(), dir_dst->to_string() );
+				log<CON_GRN>( "= %s [By join directive]\n", exp_new->to_string() );
+#endif
 
 				// Recurse, set the hint and return the simplified instance.
 				//
@@ -239,8 +255,10 @@ namespace vtil::symbolic
 			if ( auto exp_new = transform( exp, dir_src, dir_dst, 
 				 [ & ] ( auto& exp_new ) { return simplify_expression( exp_new, pretty ) && exp_new->complexity < exp->complexity; } ) )
 			{
-				if ( simplify_verbose ) log<CON_YLW>( "[Unpack] %s => %s\n", dir_src->to_string(), dir_dst->to_string() );
-				if ( simplify_verbose ) log<CON_GRN>( "= %s [By unpack directive]\n", exp_new->to_string() );
+#if VTIL_SYMEX_SIMPLIFY_VERBOSE
+				log<CON_YLW>( "[Unpack] %s => %s\n", dir_src->to_string(), dir_dst->to_string() );
+				log<CON_GRN>( "= %s [By unpack directive]\n", exp_new->to_string() );
+#endif
 
 				// Set the hint and return the simplified instance.
 				//
@@ -257,10 +275,11 @@ namespace vtil::symbolic
 		if ( pretty )
 			prettify_expression( exp );
 
+#if VTIL_SYMEX_SIMPLIFY_VERBOSE
 		// Log the output.
 		//
-		if ( simplify_verbose )
-			log( "= %s\n\n", exp->to_string() );
+		log( "= %s\n\n", exp->to_string() );
+#endif
 		return false;
 	}
 };
