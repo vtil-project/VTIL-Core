@@ -13,7 +13,7 @@ namespace vtil
 		//
 		using value_t = std::array<size_t, 2>;
 		static constexpr value_t default_seed = { 0x6C62272E07BB0142, 0x62B821756295C58D };
-		static constexpr value_t prime = { 0x0000000001000000, 0x000000000000013B };
+		static constexpr value_t prime =        { 0x0000000001000000, 0x000000000000013B };
 
 		// Current value of the hash.
 		//
@@ -40,32 +40,32 @@ namespace vtil
 			{
 				// Apply XOR over the low byte.
 				//
-				value[ 1 ] ^= byte;
+				value[ 0 ] ^= byte;
 
 				// Calculate [value * prime].
 				//
 				// A: 0x???????????????? 0x????????????????
 				//                    HA                 LA
-				uint64_t ha = value[ 0 ], la = value[ 1 ];
+				uint64_t ha = value[ 1 ], la = value[ 0 ];
 				// B: 0x0000000001000000 0x000000000000013B
 				//                    HB                 LB
-				uint64_t hb = prime[ 0 ], lb = prime[ 1 ];
+				uint64_t hb = prime[ 1 ], lb = prime[ 0 ];
 				//                                        x
 				// ----------------------------------------
 				// = (HA<<64 + LA) * (HB<<64 + LB)
 				//
 				// = LA     * LB       (Has both low and high parts)
 				//
-				value[ 1 ] = _umul128( la, lb, &value[ 0 ] );
+				value[ 0 ] = _umul128( la, lb, &value[ 1 ] );
 				//
 				//   HA<<64 * HB<<64 + (Discarded)
 				//   HA<<64 * LB     + (Will have no low part)
 				//
-				value[ 0 ] += ha * lb;
+				value[ 1 ] += ha * lb;
 				//
 				//   LA     * HB<<64 + (Will have no low part)
 				//
-				value[ 0 ] += la * hb;
+				value[ 1 ] += la * hb;
 			}
 
 			// Return a self-reference.
@@ -84,7 +84,7 @@ namespace vtil
 		//
 		std::string to_string() const
 		{
-			return format::str( "0x%p%p", value[ 0 ], value[ 1 ] );
+			return format::str( "0x%p%p", value[ 1 ], value[ 0 ] );
 		}
 
 		// Basic comparison operators.

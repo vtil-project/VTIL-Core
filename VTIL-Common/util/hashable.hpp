@@ -31,15 +31,29 @@
 #include "concept.hpp"
 #include "..\io\formatting.hpp"
 
+
+// Determine the size of vtil::hash_t.
+//
+#ifndef VTIL_HASH_SIZE
+	#ifdef _DEBUG
+		#define VTIL_HASH_SIZE 64
+	#else
+		#define VTIL_HASH_SIZE 128
+	#endif
+#endif
+
+
 // Include the hash header file for the hash type we use
 // and redirect the definition of hash_t to it.
 //
-#ifdef VTIL_USE_FNV_128
+#if VTIL_HASH_SIZE == 128
 	#include "fnv128.hpp"
 	using hash_t = vtil::fnv128_hash_t;
-#else
+#elif VTIL_HASH_SIZE == 64
 	#include "fnv64.hpp"
 	using hash_t = vtil::fnv64_hash_t;
+#else
+	#error FNV-1 Algorithm for the FNV algorithm is not defined for the given bit count.
 #endif
 
 namespace vtil

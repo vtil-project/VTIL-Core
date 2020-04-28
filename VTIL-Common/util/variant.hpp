@@ -32,14 +32,28 @@
 #include <optional>
 #include "..\io\asserts.hpp"
 
-#ifdef _DEBUG
+// [Configuration]
+// Determine whether we should use safe variants or not.
+//
+#if _DEBUG && not defined(VTIL_VARIANT_SAFE)
 	#if defined(_CPPRTTI)
-		#define VTIL_SAFE_VARIANT	_CPPRTTI
+		#define VTIL_VARIANT_SAFE	_CPPRTTI
 	#elif defined(__GXX_RTTI)
-		#define VTIL_SAFE_VARIANT	__GXX_RTTI
+		#define VTIL_VARIANT_SAFE	__GXX_RTTI
+	#elif defined(__has_feature)
+		#define VTIL_VARIANT_SAFE	__has_feature(cxx_rtti)
 	#else
-		#define VTIL_SAFE_VARIANT	__has_feature(cxx_rtti)
+		#define VTIL_VARIANT_SAFE	0
 	#endif
+#elif defined(VTIL_VARIANT_SAFE) && VTIL_VARIANT_SAFE
+	#error Debug mode binaries cannot use RTTI based variant safety checks.
+#endif
+
+// [Configuration]
+// Determine the maximum size of types we should inline.
+//
+#ifndef VTIL_VARIANT_INLINE_LIMIT
+	#define VTIL_VARIANT_INLINE_LIMIT 0x100
 #endif
 
 namespace vtil
@@ -49,14 +63,12 @@ namespace vtil
 	#pragma pack(push, 1)
 	struct variant
 	{
-		static constexpr size_t small_type_optimization_limit = 0x100;
-
 		// Value is either stored in the [char inl[]] as an inline object,
 		// or in [void* ext] as an external pointer.
 		//
 		union
 		{
-			char inl[ small_type_optimization_limit ];
+			char inl[ VTIL_VARIANT_INLINE_LIMIT ];
 			void* ext;
 		};
 
@@ -146,7 +158,7 @@ namespace vtil
 
 			// If safe mode, assign type name.
 			//
-#if VTIL_SAFE_VARIANT
+#if VTIL_VARIANT_SAFE
 			__typeid_name = typeid( T ).name();
 #endif
 		};
@@ -183,7 +195,7 @@ namespace vtil
 		{ 
 			// If safe mode, validate type name (We can compare pointers as it's a unique pointer in .rdata)
 			//
-#if VTIL_SAFE_VARIANT
+#if VTIL_VARIANT_SAFE
 			fassert( __typeid_name == typeid( T ).name() );
 #endif
 			// Calculate the address and return a reference.
@@ -195,7 +207,7 @@ namespace vtil
 		{
 			// If safe mode, validate type name (We can compare pointers as it's a unique pointer in .rdata)
 			//
-#if VTIL_SAFE_VARIANT
+#if VTIL_VARIANT_SAFE
 			fassert( __typeid_name == typeid( T ).name() );
 #endif
 			// Calculate the address and return a const qualified reference.

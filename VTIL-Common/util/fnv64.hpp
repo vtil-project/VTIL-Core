@@ -12,8 +12,8 @@ namespace vtil
 		// Magic constants for 64-bit FNV-1 .
 		//
 		using value_t = size_t;
-		static constexpr size_t default_seed = { 0XCBF29CE484222325 };
-		static constexpr size_t prime = { 0x00000100000001B3 };
+		static constexpr size_t default_seed = { 0xCBF29CE484222325 };
+		static constexpr size_t prime =        { 0x00000100000001B3 };
 
 		// Current value of the hash.
 		//

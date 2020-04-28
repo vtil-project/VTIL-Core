@@ -31,8 +31,9 @@
 
 #define FMT_TEMP_REG	"t%d"
 #define FMT_INS_MNM		"%-8s"
+#define FMT_INS_MNM_S	8
 #define FMT_INS_OPR		"%-12s"
-#define FMT_INS			FMT_INS_MNM " " FMT_INS_OPR " " FMT_INS_OPR " " FMT_INS_OPR " " FMT_INS_OPR
+#define FMT_INS_OPR_S	12
 
 // Billion dollar company yes? (::fix_parameter throws a warning otherwise.)
 //

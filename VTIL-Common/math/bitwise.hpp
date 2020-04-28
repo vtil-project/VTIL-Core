@@ -72,6 +72,23 @@ namespace vtil::math
         return ( ( ~0ull ) >> ( 64 - bit_count ) ) << bit_offset;
     }
 
+    // Fills the bits of the uint64_t type after the given offset with the sign bit.
+    // - We accept an [uint64_t] as the sign "bit" instead of a for 
+    //   the sake of a further trick we use to avoid branches.
+    //
+    static constexpr uint64_t fill_sign( uint64_t sign, bitcnt_t bit_offset = 0 )
+    {
+        // The XOR operation with 0b1 flips the sign bit, after which when we substract
+        // one to create 0xFF... for (1) and 0x00... for (0).
+        // - We could have also done [s *= ~0ull], but it's slower since:
+        //    1) XOR ~= [#μop: 1, latency: 1]
+        //    2) SUB ~= [#μop: 1, latency: 1]
+        //    vs
+        //    1) MUL ~= [#μop: 3, latency: 3]
+        //
+        return ( ( sign ^ 1 ) - 1 ) << bit_offset;
+    }
+
     // Zero extends the given integer.
     //
     static uint64_t __zx( uint64_t value, bitcnt_t bcnt_src )
