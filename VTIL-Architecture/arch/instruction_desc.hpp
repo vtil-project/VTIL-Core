@@ -142,8 +142,8 @@ namespace vtil
         //
 	    std::string to_string( size_t access_size ) const
 	    {
-		    if ( !access_size ) return name;
-		    return name + ( char ) format::suffix_map[ access_size ];
+            char suffix = format::suffix_map[ access_size ];
+            return suffix ? name + suffix : name;
 	    }
 
         // Redirect basic comparison operators to the name of the instruction.
