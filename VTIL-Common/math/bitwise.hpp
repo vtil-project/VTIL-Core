@@ -30,6 +30,7 @@
 #include <math.h>
 #include <optional>
 #include <type_traits>
+#include "..\util\reducable.hpp"
 #include "..\io\asserts.hpp"
 
 // Declare the type we will used for bit lenghts of data.
@@ -159,7 +160,7 @@ namespace vtil::math
 
     // Bit-vector holding 0 to 64 bits of value with optional unknowns.
     //
-    class bit_vector
+    class bit_vector : public reducable<bit_vector>
     {
         // Value of the known bits, mask of it can be found by [::known_mask()]
         // - Guaranteed to hold 0 for unknown bits.
@@ -272,11 +273,10 @@ namespace vtil::math
             return out;
         }
 
-        // Implement basic comparison operators.
-        // - Note: operator< should not be used for actual comparison but is exported for use of std:: maps etc.
+        // Declare reduction.
+        // - Note: Relative comparison operators should not be used for actual comparison 
+        //         but are there for the use of sorted containers.
         //
-        inline bool operator==( const bit_vector& o ) const { return bit_count == o.bit_count && known_bits == o.known_bits && !unknown_bits && !o.unknown_bits; }
-        inline bool operator!=( const bit_vector& o ) const { return bit_count != o.bit_count || known_bits != o.known_bits || unknown_bits || o.unknown_bits; }
-        inline bool operator<( const bit_vector& o ) const { return bit_count < o.bit_count && known_bits < o.known_bits && unknown_bits < o.unknown_bits; }
+        auto reduce() { return std::tie( bit_count, known_bits, unknown_bits ); }
     };
 };

@@ -6,3 +6,4 @@
 #include "..\..\util\variant.hpp"
 #include "..\..\util\hashable.hpp"
 #include "..\..\util\stack_container.hpp"
+#include "..\..\util\reducable.hpp"

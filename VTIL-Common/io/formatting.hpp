@@ -88,7 +88,7 @@ namespace vtil::format
 
 	// Formats the integer into a signed hexadecimal with explicit + if positive.
 	//
-	inline static std::string offset( int64_t value )
+	static std::string offset( int64_t value )
 	{
 		if ( value >= 0 )
 			return str( "+ 0x%llx", value );

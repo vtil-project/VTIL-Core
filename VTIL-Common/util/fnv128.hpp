@@ -1,46 +1,68 @@
+// Copyright (c) 2020 Can Boluk and contributors of the VTIL Project   
+// All rights reserved.   
+//    
+// Redistribution and use in source and binary forms, with or without   
+// modification, are permitted provided that the following conditions are met: 
+//    
+// 1. Redistributions of source code must retain the above copyright notice,   
+//    this list of conditions and the following disclaimer.   
+// 2. Redistributions in binary form must reproduce the above copyright   
+//    notice, this list of conditions and the following disclaimer in the   
+//    documentation and/or other materials provided with the distribution.   
+// 3. Neither the name of mosquitto nor the names of its   
+//    contributors may be used to endorse or promote products derived from   
+//    this software without specific prior written permission.   
+//    
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" 
+// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE   
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE  
+// ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE   
+// LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR   
+// CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF   
+// SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS   
+// INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN   
+// CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)   
+// ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE  
+// POSSIBILITY OF SUCH DAMAGE.        
+//
 #pragma once
 #include <string>
 #include <array>
+#include <functional>
 #include "..\io\formatting.hpp"
 
 namespace vtil
 {
 	// Defines a 128-bit hash type based on FNV-1.
 	//
-	class fnv128_hash_t
+	struct fnv128_hash_t
 	{
 		// Magic constants for 128-bit FNV-1 .
 		//
-		using value_t = std::array<size_t, 2>;
-		static constexpr value_t default_seed = { 0x6C62272E07BB0142, 0x62B821756295C58D };
-		static constexpr value_t prime =        { 0x0000000001000000, 0x000000000000013B };
+		static constexpr size_t default_seed[] = { 0x62B821756295C58D, 0x6C62272E07BB0142 };
+		static constexpr size_t prime[] =        { 0x000000000000013B, 0x0000000001000000 };
 
 		// Current value of the hash.
 		//
-		value_t value;
+		size_t value[ 2 ];
 
-		public:
 		// Construct a new hash from an optional seed of either 64-bit or 128-bit value.
 		//
-		fnv128_hash_t( size_t seed64 ) : value( { ~0ull, seed64 } ) {}
-		fnv128_hash_t( value_t seed128 = default_seed ) : value( seed128 ) {}
+		fnv128_hash_t( size_t seed64 ) { value[ 1 ] = ~0ull; value[ 0 ] = seed64; }
+		fnv128_hash_t( const size_t( &seed128 )[ 2 ] = default_seed ) { std::copy( seed128, std::end( seed128 ), value ); }
 
-		// Append the given item into hash.
+		// Appends the given array of bytes into the hash value.
 		//
 		template<typename T>
-		fnv128_hash_t& operator<<( const T& item )
+		void add_bytes( const T& data )
 		{
-			// Parse the item as an array of bytes.
-			//
-			auto& bytes = ( const uint8_t( & )[ sizeof( T ) ] ) item;
+			const uint8_t* bytes = ( const uint8_t* ) &data;
 
-			// Apply the FNV-1 algorithm and return self-reference.
-			//
-			for ( uint8_t byte : bytes )
+			for ( size_t i = 0; i != sizeof( T ); i++ )
 			{
 				// Apply XOR over the low byte.
 				//
-				value[ 0 ] ^= byte;
+				value[ 0 ] ^= bytes[ i ];
 
 				// Calculate [value * prime].
 				//
@@ -67,18 +89,12 @@ namespace vtil
 				//
 				value[ 1 ] += la * hb;
 			}
-
-			// Return a self-reference.
-			//
-			return *this;
 		}
 
 		// Implicit conversion to 64-bit and 128-bit values.
 		//
 		size_t as64() const { return value[ 0 ] + value[ 1 ]; }
-		value_t as128() const { return value; }
 		operator size_t() const { return as64(); }
-		operator value_t() const { return as128(); }
 
 		// Conversion to human-readable format.
 		//
@@ -89,9 +105,9 @@ namespace vtil
 
 		// Basic comparison operators.
 		//
-		bool operator<( const fnv128_hash_t& o ) const { return value < o.value; }
-		bool operator==( const fnv128_hash_t& o ) const { return value == o.value; }
-		bool operator!=( const fnv128_hash_t& o ) const { return value != o.value; }
+		bool operator<( const fnv128_hash_t& o ) const  { return memcmp( value, o.value, sizeof( value ) ) < 0; }
+		bool operator==( const fnv128_hash_t& o ) const { return memcmp( value, o.value, sizeof( value ) ) == 0; }
+		bool operator!=( const fnv128_hash_t& o ) const { return memcmp( value, o.value, sizeof( value ) ) != 0; }
 	};
 };
 
@@ -102,6 +118,6 @@ namespace std
 	template<>
 	struct hash<vtil::fnv128_hash_t>
 	{
-		size_t operator()( const vtil::fnv128_hash_t& value ) const { return value; }
+		size_t operator()( const vtil::fnv128_hash_t& value ) const { return value.as64(); }
 	};
 };
