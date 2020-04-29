@@ -39,7 +39,7 @@
 
 namespace vtil::symbolic
 {
-	using simplifier_cache_t = std::unordered_map<boxed_expression, std::pair<expression::reference, bool>, vtil::hash<boxed_expression>>;
+	using simplifier_cache_t = std::unordered_map<boxed_expression, std::pair<expression::reference, bool>, vtil::hasher<boxed_expression>>;
 
 	// Attempts to simplify the expression given, returns whether the simplification
 	// succeeded or not.

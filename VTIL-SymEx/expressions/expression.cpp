@@ -256,11 +256,9 @@ namespace vtil::symbolic
 				int64_t cval = *value.get<true>();
 				complexity = sqrt( 1 + std::min( math::popcnt( cval ), math::popcnt( abs( cval ) ) ) );
 
-				// Append the constant, notted constant and the size.
+				// Hash is made up of the bit vector masks and the number of bits.
 				//
-				hash_value << uint8_t( value.size() )
-					       << value.known_zero()
-					       << value.known_one();
+				hash_value = make_hash( value.known_zero(), value.known_one(), ( uint8_t ) value.size() );
 			}
 			// If symbolic variable:
 			//
@@ -272,9 +270,9 @@ namespace vtil::symbolic
 				//
 				complexity = 128;
 
-				// Hash is inherited with the addition of the size.
+				// Hash is made up of UID's hash and the number of bits.
 				//
-				hash_value = uid.hash() << uint8_t( value.size() );
+				hash_value = make_hash( uid.hash(), ( uint8_t ) value.size() );
 			}
 
 			// Set simplification state.
@@ -300,9 +298,9 @@ namespace vtil::symbolic
 				complexity = rhs->complexity * 2;
 				fassert( complexity != 0 );
 				
-				// Append the RHS hash.
+				// Begin hash as combine(rhs, rhs).
 				//
-				hash_value << rhs->hash();
+				hash_value = make_hash( rhs->hash() );
 			}
 			// If binary operator:
 			//
@@ -369,16 +367,14 @@ namespace vtil::symbolic
 				if ( desc->is_commutative )
 					std::sort( operand_hashes, std::end( operand_hashes ) );
 				
-				// Append the operand hashes.
+				// Begin hash as combine(op#1, op#2).
 				//
-				hash_value << operand_hashes;
+				hash_value = make_hash( operand_hashes );
 			}
 
 			// Append depth, size, and operator information to the hash.
 			//
-			hash_value << op
-				       << depth
-				       << uint8_t( value.size() );
+			hash_value = make_hash( hash_value, op, depth, uint8_t( value.size() ) );
 
 			// Punish for mixing bitwise and arithmetic operators.
 			//
