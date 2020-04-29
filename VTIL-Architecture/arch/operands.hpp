@@ -29,6 +29,7 @@
 #include <string>
 #include <vtil/math>
 #include <vtil/utility>
+#include <optional>
 #include "register_desc.hpp"
 
 namespace vtil
@@ -36,7 +37,7 @@ namespace vtil
 	// Operand structure either holds an immediate or a register.
 	//
 	#pragma pack(push, 4)
-	struct operand
+	struct operand : reducable<operand>
 	{
 		// If operand is a register:
 		//
@@ -44,15 +45,15 @@ namespace vtil
 
 		// If operand is an immediate:
 		//
-		struct
+		struct immediate_desc
 		{
 			union
 			{
 				int64_t i64;
 				uint64_t u64;
 			};
-			bitcnt_t bit_count = 0;
-		} imm;
+			bitcnt_t bit_count;
+		} imm = { 0,0 };
 
 		// Default constructor / move / copy.
 		//
@@ -97,20 +98,10 @@ namespace vtil
 			return is_immediate(); 
 		}
 
-		// Basic comparison operators.
+		// Declare reduction.
 		//
-		bool operator!=( const operand& o ) const { return !operator==( o ); };
-		bool operator==( const operand& o ) const { return is_register() ? reg == o.reg : ( imm.u64 == o.imm.u64 && imm.bit_count == o.imm.bit_count ); }
-		bool operator<( const operand& o ) const { return is_register() ? reg < o.reg : ( imm.u64 < o.imm.u64 || imm.bit_count < o.imm.bit_count ); }
-
-		// Generates a hash for the operand.
-		//
-		hash_t hash() const
-		{
-			return hash_t{}
-				<< is_register()
-				<< is_register() ? reg.hash() : hash_t{} << imm;
-		}
+		auto reduce() { return std::forward_as_tuple( is_register() ? reg : register_desc{},
+													  is_register() ? std::nullopt         : std::optional( imm ) ); }
 	};
 	#pragma pack(pop)
 };

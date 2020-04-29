@@ -66,7 +66,7 @@ namespace vtil
 
 	// This type describes any register instance.
 	//
-	struct register_desc
+	struct register_desc : reducable<register_desc>
 	{
 		// Flags of the current register, as described in "enum register_flag".
 		//
@@ -182,22 +182,9 @@ namespace vtil
 				return prefix + "vr" + std::to_string( local_id ) + suffix;
 		}
 
-		// Basic comparison operators.
+		// Declare reduction.
 		//
-		bool operator!=( const register_desc& o ) const { return local_id != o.local_id || flags != o.flags || bit_count != o.bit_count || bit_offset != o.bit_offset; }
-		bool operator==( const register_desc& o ) const { return local_id == o.local_id && flags == o.flags && bit_count == o.bit_count && bit_offset == o.bit_offset; }
-		bool operator<( const register_desc& o ) const  { return local_id < o.local_id  || flags < o.flags  || bit_count < o.bit_count  || bit_offset < o.bit_offset; }
-
-		// Generates a hash for the register.
-		//
-		hash_t hash() const
-		{
-			return hash_t{}
-				<< flags
-				<< local_id
-				<< bit_count
-				<< bit_offset;
-		}
+		auto reduce() { return std::tie( local_id, flags, bit_count, bit_offset ); }
 	};
 
 	// Should be overriden by the user to describe conversion of the

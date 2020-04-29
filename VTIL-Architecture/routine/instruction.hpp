@@ -46,7 +46,7 @@ namespace vtil
 	// This structure is used to describe instances of VTIL instructions in
 	// the instruction stream.
 	//
-	struct instruction
+	struct instruction : reducable<instruction>
 	{
 		// Base instruction type.
 		//
@@ -124,18 +124,12 @@ namespace vtil
 		//
 		int overwrites( const register_desc& rw ) const;
 
-		// Basic comparison operators.
-		//
-		bool operator==( const instruction& o ) const { return base == o.base && operands == o.operands; }
-		bool operator!=( const instruction& o ) const { return !operator==( o ); }
-		bool operator<( const instruction& o ) const { return vip < o.vip; }
-
 		// Conversion to human-readable format.
 		//
 		std::string to_string( bool pad_right = false ) const;
 
-		// Generates a hash for the instruction.
+		// Declare reduction.
 		//
-		hash_t hash() const;
+		auto reduce() { return std::tie( base->name, vip, operands, sp_offset, sp_index, sp_reset, explicit_volatile ); }
 	};
 };

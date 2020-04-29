@@ -152,23 +152,4 @@ namespace vtil
 
 		return output;
 	}
-
-	// Generates a hash for the instruction.
-	//
-	hash_t instruction::hash() const
-	{
-		hash_t value;
-
-		value << base->name
-			  << vip
-			  << sp_offset
-			  << sp_index
-			  << sp_reset
-			  << explicit_volatile;
-
-		for ( auto& operand : operands )
-			value << operand.hash();
-
-		return value;
-	}
 };

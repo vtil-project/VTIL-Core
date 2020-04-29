@@ -30,6 +30,7 @@
 #include <vector>
 #include <vtil/io>
 #include <vtil/math>
+#include <vtil/utility>
 #include "operands.hpp"
 
 // [Configuration]
@@ -72,7 +73,7 @@ namespace vtil
     // as a global constant. For the sake of consistency all operand indices
     // passed to the constructor start from 1. [Ref: branch_operands desc.]
     //
-    struct instruction_desc
+    struct instruction_desc : reducable<instruction_desc>
     {
         // Name of the instruction.
         //
@@ -146,13 +147,11 @@ namespace vtil
             return suffix ? name + suffix : name;
 	    }
 
-        // Redirect basic comparison operators to the name of the instruction.
+        // Declare reduction and basic comparison against std::string.
         //
+        auto reduce() { return std::tie( name ); }
         bool operator!=( const std::string& o ) const { return name != o; }
         bool operator==( const std::string& o ) const { return name == o; }
         bool operator<( const std::string& o ) const { return name < o; }
-        bool operator!=( const instruction_desc& o ) const { return name != o.name; }
-        bool operator==( const instruction_desc& o ) const { return name == o.name; }
-        bool operator<( const instruction_desc& o ) const { return name < o.name; }
     };
 };
