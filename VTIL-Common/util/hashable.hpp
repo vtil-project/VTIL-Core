@@ -123,11 +123,17 @@ namespace vtil
 				a.value[ i ] = ( _rotl64( a.value[ i ], ka ) + _rotl64( b.value[ i ], kb ) ) ^ hash_combination_keys[ ka ];
 			}
 		}
+
+		// This tag is used to simplify the use of hasher struct when passing to
+		// classic STL templates that take a type-tagged hasher, will redirect all
+		// instances of operator() to the default hasher as decided by make_hash(...).
+		//
+		struct hasher_default_tag_t {};
 	};
 
 	// Define basic hasher.
 	//
-	template<typename T>
+	template<typename T = impl::hasher_default_tag_t>
 	struct hasher 
 	{
 		hash_t operator()( const T& value ) const noexcept
@@ -244,6 +250,18 @@ namespace vtil
 		hash_t operator()( const std::tuple<T...>& obj ) const noexcept
 		{
 			return hash_all( obj, std::index_sequence_for<T...>{} );;
+		}
+	};
+
+	// Overload default instance.
+	//
+	template<>
+	struct hasher<impl::hasher_default_tag_t>
+	{
+		template<typename T>
+		hash_t operator()( const T& obj ) const noexcept
+		{
+			return make_hash( obj );
 		}
 	};
 };
