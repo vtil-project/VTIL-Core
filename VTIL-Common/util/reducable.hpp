@@ -55,7 +55,7 @@ namespace vtil
         template<template<typename> typename F, typename T>
         using apply_each_t = typename apply_each<F, T>::type;
 
-        // Appends a deep const qualifier constant.
+        // Appends a deep const qualifier to each referenced type.
         //
         template<typename T>
         using add_dconst_t = typename std::conditional_t
