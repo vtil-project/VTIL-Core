@@ -100,8 +100,8 @@ namespace vtil
 
 		// Declare reduction.
 		//
-		auto reduce() { return std::forward_as_tuple( is_register() ? reg : register_desc{},
-													  is_register() ? std::nullopt         : std::optional( imm ) ); }
+		auto reduce() { return std::forward_as_tuple( is_register() ? reg          : register_desc{},
+													  is_register() ? std::nullopt : std::optional( imm ) ); }
 	};
 	#pragma pack(pop)
 };

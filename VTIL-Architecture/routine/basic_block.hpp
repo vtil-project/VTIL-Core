@@ -248,7 +248,8 @@ namespace vtil
 
 		// Instruction pre-processor
 		//
-		void append_instruction( instruction ins );
+		void append_instruction( instruction&& ins );
+		inline void append_instruction( const instruction& ins ) { append_instruction( instruction{ ins } ); }
 
 		// Lazy wrappers for every instruction
 		//

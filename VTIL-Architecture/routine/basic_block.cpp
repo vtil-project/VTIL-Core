@@ -102,7 +102,7 @@ namespace vtil
 
 	// Instruction pre-processor
 	//
-	void basic_block::append_instruction( instruction ins )
+	void basic_block::append_instruction( instruction&& ins )
 	{
 		// Instructions cannot be appended after a branching instruction was hit.
 		//
@@ -124,7 +124,7 @@ namespace vtil
 
 		// Append the instruction to the stream.
 		//
-		stream.push_back( ins );
+		stream.push_back( std::move( ins ) );
 	}
 
 	// Queues a stack shift.
