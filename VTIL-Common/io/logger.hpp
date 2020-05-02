@@ -28,6 +28,7 @@
 #pragma once
 #include <iostream>
 #include <stdint.h>
+#include <cstring>
 #include <string>
 #include <mutex>
 #include "formatting.hpp"
