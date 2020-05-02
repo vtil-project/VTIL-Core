@@ -107,9 +107,9 @@ namespace vtil::symbolic::directive
 
         // Simplifying variables into smaller, zero-extended versions where possible.
         //
-        { V&U,                                                __iff(__bcnt(A)>8  & U==(U&0xFF),       __ucast(V, 8))  },
-        { V&U,                                                __iff(__bcnt(A)>16 & U==(U&0xFFFF),     __ucast(V, 16)) },
-        { V&U,                                                __iff(__bcnt(A)>32 & U==(U&0xFFFFFFFF), __ucast(V, 32)) },
+        //{ V&U,                                                __iff((__bcnt(A)>8 ) & (U==0xFF),       __ucast(V, 8))  },
+        //{ V&U,                                                __iff((__bcnt(A)>16) & (U==0xFFFF),     __ucast(V, 16)) },
+        //{ V&U,                                                __iff((__bcnt(A)>32) & (U==0xFFFFFFFF), __ucast(V, 32)) },
                                                               
         // Convert SHL|SHR and OR combinations to rotate.     
         //                                                    
@@ -141,7 +141,14 @@ namespace vtil::symbolic::directive
         { U&A,                                                __iff((U&__mask_knw0(A))!=0, !(U&~( __mask_knw0(A)))&A) },
         { U&A,                                                __iff(U==(__mask_unk(A)|__mask_knw1(A)), A) },
         { U|A,                                                __iff((U&__mask_knw1(A))!=0, (U&!(__mask_unk(A)|__mask_knw0(A)))|A) },
-        { U|A,                                                __iff( U&__mask_unk(A),  U|!( A & ~U )) },
+        //{ U|A,                                                __iff(U&__mask_unk(A),  U|!(A&s(~U))) },
+
+        // Clear inverse AND combinations via OR.
+        //
+        { (A&U)|(A&C),                                        __iff( (U|C)==__mask(A),  A) },
+        { (A&U)|(A&C),                                        __iff( (U|C)==0xFF,       __ucast(A, 8)) },
+        { (A&U)|(A&C),                                        __iff( (U|C)==0xFFFF,     __ucast(A, 16)) },
+        { (A&U)|(A&C),                                        __iff( (U|C)==0xFFFFFFFF, __ucast(A, 32)) },
     };
 
     // Describes the way operands of two operators join each other. 
@@ -167,7 +174,7 @@ namespace vtil::symbolic::directive
         { A&(__rotl(B,C)),                                    __rotl(!(B&s(__rotr(A,C))), C) },
         { A&(__rotr(B,C)),                                    __rotr(!(B&s(__rotl(A,C))), C) },
         { A&~B,                                               ~!(B|s(~A)) },
-                                                              
+
         // OR:                                                
         //                                                    
         { A|(B|C),                                            s(!(A|B)|!(A|C)) },
@@ -204,7 +211,7 @@ namespace vtil::symbolic::directive
         { (A|B)<<C,                                           s(!(A<<C)|s(B<<C)) },
         { (A^B)<<C,                                           s(!(A<<C)^s(B<<C)) },
         { (A&B)<<C,                                           s(!(A<<C)&s(B<<C)) },
-        { (~A)<<U,                                            s((~(A<<U))&(-1<<U)) }, 
+        { (~A)<<U,                                            s((~(A<<U))&(-1<<U)) },
                                                               
         // SHR:                                               
         //                                                    
