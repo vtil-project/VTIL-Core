@@ -13,6 +13,8 @@
 *.ilk
 *.db-shm
 *.db-wal
-.vs/
-x64/Debug/
-x64/Release/
+*/.vs/
+*/x64/Debug/
+*/x64/Release/
+Keystone/
+Capstone/
