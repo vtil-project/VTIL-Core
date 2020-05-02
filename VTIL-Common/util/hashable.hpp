@@ -243,8 +243,8 @@ namespace vtil
 
 	// Overload for std::tuple.
 	//
-	template<typename... T>
-	struct hasher<std::tuple<T...>>
+	template<typename... Tx>
+	struct hasher<std::tuple<Tx...>>
 	{
 		template<typename T, size_t... I>
 		auto hash_all( const T& obj, std::index_sequence<I...> ) const noexcept
@@ -252,9 +252,9 @@ namespace vtil
 			return make_hash( std::get<I>( obj )... );
 		}
 
-		hash_t operator()( const std::tuple<T...>& obj ) const noexcept
+		hash_t operator()( const std::tuple<Tx...>& obj ) const noexcept
 		{
-			return hash_all( obj, std::index_sequence_for<T...>{} );;
+			return hash_all( obj, std::index_sequence_for<Tx...>{} );;
 		}
 	};
 
