@@ -521,7 +521,7 @@ namespace vtil::symbolic
 		// Handle constants, invalids and variables.
 		//
 		if ( is_constant() )      return format::hex( value.get<true>().value() );
-		if ( is_variable() )      return format::str( "%s:%d", uid.to_string(), size() ); // REMOVE ME.
+		if ( is_variable() )      return uid.to_string();
 		return "NULL";
 	}
 };
