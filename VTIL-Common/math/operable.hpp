@@ -117,7 +117,7 @@ namespace vtil::math
     // Can be overriden externally to allow aliases.
     //
     template<typename T1>
-    struct resolve_alias { using type = typename T1; };
+    struct resolve_alias { using type = T1; };
 
     // Removes all qualifiers and resolves the base if aliased.
     //

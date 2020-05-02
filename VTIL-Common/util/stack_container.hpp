@@ -57,7 +57,7 @@ namespace vtil
 		template<typename T, typename A>
 		struct swap_allocator { using type = void; };
 		template<template<typename...> typename C, typename... T, typename A>
-		struct swap_allocator<C<T...>, A> { using type = typename C<std::conditional_t<std::is_same_v<T, typename C<T...>::allocator_type>, A, T>...>; };
+		struct swap_allocator<C<T...>, A> { using type = typename C<typename std::conditional_t<std::is_same_v<T, typename C<T...>::allocator_type>, A, T>...>; };
 
 		template<typename T, typename A>
 		using swap_allocator_t = typename swap_allocator<T, A>::type;
@@ -218,9 +218,9 @@ namespace vtil
 		// Constructor forwards as is, ideally should be initially constructed
 		// with no parameters to make sure the buffer is utilized as much as possible.
 		//
-		template<typename... T>
-		stack_buffered_container( T&&... args )
-			: container_t( std::forward<T>( args )..., allocator_t{ &( state = buffer, state ) } )
+		template<typename... Tx>
+		stack_buffered_container( Tx&&... args )
+			: container_t( std::forward<Tx>( args )..., allocator_t{ &( state = buffer, state ) } )
 		{ 
 			if constexpr( do_reserve )
 				container_t::reserve( N ); 

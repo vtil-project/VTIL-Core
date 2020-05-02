@@ -34,26 +34,27 @@
 #include <algorithm>
 #include <functional>
 #include <optional>
+#include <list>
 
 namespace vtil
 {
 	// Provides a (optionally atomic) list where entries are sorted by "points".
 	//
-	template<typename T, bool atomic = false>
+	template<typename Tv, bool atomic = false>
 	struct priority_list
 	{
 		// Entry type wrapping the actual object.
 		//
 		struct entry_type
 		{
-			T value = {};
+			Tv value = {};
 			std::atomic<int64_t> points = 0;
 
 			entry_type() = default;
 			entry_type( entry_type&& entry ) : points( entry.points.load() ), value( std::move( entry.value ) ) {}
 			entry_type( const entry_type& entry ) : points( entry.points.load() ), value( entry.value ) {}
-			entry_type( const T & value ) : value( value ) {}
-			entry_type( T&& value ) : value( std::move( value ) ) {}
+			entry_type( const Tv& value ) : value( value ) {}
+			entry_type( Tv&& value ) : value( std::move( value ) ) {}
 		};
 
 		// Remapped iterator hiding the base entry_type from the user.
@@ -115,14 +116,14 @@ namespace vtil
 
 		// Construct from a list of initial values.
 		//
-		priority_list( const std::initializer_list<T>& init_list )
+		priority_list( const std::initializer_list<Tv>& init_list )
 		{
-			for ( T& entry : init_list )
+			for ( Tv& entry : init_list )
 				push_back( entry );
 		}
-		priority_list( std::initializer_list<T>&& init_list )
+		priority_list( std::initializer_list<Tv>&& init_list )
 		{
-			for ( T& entry : init_list )
+			for ( Tv& entry : init_list )
 				push_back( std::move( entry ) );
 		}
 
