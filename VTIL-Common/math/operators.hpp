@@ -149,7 +149,7 @@ namespace vtil::math
                 // If it has a symbol, use it, else return in function format.
                 //
                 if ( symbol ) return symbol + rhs;
-                else          return format::str( "%s(%s)", function_name, lhs, rhs );
+                else          return format::str( "%s(%s)", function_name, rhs );
             }
             // If binary function:
             //
@@ -193,7 +193,7 @@ namespace vtil::math
         {   +1,       false,    1,    false,          nullptr,    "__popcnt"    },
         {   +1,       false,    2,    false,          nullptr,    "__bt"        },
         {   +1,       false,    1,    false,          nullptr,    "__mask"      },
-        {   +1,       false,    1,    false,          nullptr,    "__bcnt"      },
+        {    0,       false,    1,    false,          nullptr,    "__bcnt"      },
         {    0,       false,    2,    false,          "?",        "if"          },
         {    0,       false,    2,    false,          nullptr,    "max"         },
         {    0,       false,    2,    false,          nullptr,    "min"         },
