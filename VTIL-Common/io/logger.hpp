@@ -108,7 +108,7 @@ namespace vtil::logger
 	
 		// Used to mark functions noreturn.
 		//
-		__declspec( noreturn ) inline static void noreturn_helper() { __debugbreak(); }
+		inline static void noreturn_helper [[noreturn]] () { __debugbreak(); }
 	};
 
 	// Main function used when logging.
@@ -172,7 +172,7 @@ namespace vtil::logger
 	// Prints an error message and breaks the execution.
 	//
 	template<typename... params>
-	__declspec( noreturn ) static void error( const char* fmt, params&&... ps )
+	static void error [[noreturn]] ( const char* fmt, params&&... ps )
 	{
 		// Error will stop any execution so feel free to ignore any locks.
 		//
