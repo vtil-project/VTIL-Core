@@ -1,0 +1,14 @@
+language: cpp
+
+compiler:
+  - clang
+
+os: windows
+
+before_script:
+  - mkdir build
+  - cd build
+  - cmake -G "Visual Studio 15 2017" -A x64 ..
+
+script:
+  - cmake --build . --config Release
