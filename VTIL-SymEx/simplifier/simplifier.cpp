@@ -112,12 +112,9 @@ namespace vtil::symbolic
 		// Log the input.
 		//
 		scope_padding _p( 1 );
-		if ( simplify_verbose )
-		{
-			if ( !log_padding ) log( "\n" );
-			log( "[Input]  = %s ", exp->to_string() );
-			log( "(Hash: %s)\n", exp->hash().to_string() );
-		}
+		if ( !log_padding ) log( "\n" );
+		log( "[Input]  = %s ", exp->to_string() );
+		log( "(Hash: %s)\n", exp->hash().to_string() );
 #endif
 
 		// If we resolved a valid cache entry:

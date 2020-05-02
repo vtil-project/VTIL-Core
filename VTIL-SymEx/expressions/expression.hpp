@@ -31,13 +31,6 @@
 #include <set>
 #include "unique_identifier.hpp"
 
-// [Configuration]
-// Determine whether we should auto-simplify expressions or not.
-//
-#ifndef VTIL_SYMEX_AUTO_SIMPLIFY
-	#define VTIL_SYMEX_AUTO_SIMPLIFY 1
-#endif
-
 // Allow expression::reference to be used with expression type directly as operable.
 //
 namespace vtil::symbolic { struct expression; };
@@ -45,8 +38,6 @@ namespace vtil::math { template<> struct resolve_alias<shared_reference<symbolic
 
 namespace vtil::symbolic
 {
-	static constexpr bool auto_simplify = VTIL_SYMEX_AUTO_SIMPLIFY;
-
 	// Expression descriptor.
 	//
 	struct expression : math::operable<expression>
@@ -102,12 +93,12 @@ namespace vtil::symbolic
 
 		// Constructor for expressions.
 		//
-		expression( math::operator_id op, const reference& rhs ) : operable(), op( op ), rhs( rhs ) { update( auto_simplify ); }
-		expression( math::operator_id op, reference&& rhs ) : operable(), op( op ), rhs( std::move( rhs ) ) { update( auto_simplify ); }
-		expression( const reference& lhs, math::operator_id op, const reference& rhs ) : operable(), op( op ), lhs( lhs ), rhs( rhs ) { update( auto_simplify ); }
-		expression( reference&& lhs, math::operator_id op, const reference& rhs) : operable(), op( op ), lhs( std::move( lhs ) ), rhs( rhs ) { update( auto_simplify ); }
-		expression( const reference& lhs, math::operator_id op, reference&& rhs ) : operable(), op( op ), lhs( lhs ), rhs( std::move( rhs ) ) { update( auto_simplify ); }
-		expression( reference&& lhs, math::operator_id op, reference&& rhs ) : operable(), op( op ), lhs( std::move( lhs ) ), rhs( std::move( rhs ) ) { update( auto_simplify ); }
+		expression( math::operator_id op, const reference& rhs ) : operable(), op( op ), rhs( rhs ) { update( true ); }
+		expression( math::operator_id op, reference&& rhs ) : operable(), op( op ), rhs( std::move( rhs ) ) { update( true ); }
+		expression( const reference& lhs, math::operator_id op, const reference& rhs ) : operable(), op( op ), lhs( lhs ), rhs( rhs ) { update( true ); }
+		expression( reference&& lhs, math::operator_id op, const reference& rhs) : operable(), op( op ), lhs( std::move( lhs ) ), rhs( rhs ) { update( true ); }
+		expression( const reference& lhs, math::operator_id op, reference&& rhs ) : operable(), op( op ), lhs( lhs ), rhs( std::move( rhs ) ) { update( true ); }
+		expression( reference&& lhs, math::operator_id op, reference&& rhs ) : operable(), op( op ), lhs( std::move( lhs ) ), rhs( std::move( rhs ) ) { update( true ); }
 
 		// Alternate "constructors" for internal use for the sake of having control over auto-simplification of user-reaching expressions.
 		//

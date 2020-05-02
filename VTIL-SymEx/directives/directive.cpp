@@ -48,7 +48,7 @@ namespace vtil::symbolic::directive
 		if ( rhs ) rhs->enum_variables( fn, s );
 		else if ( !is_constant() )
 		{
-			if ( s->find( id ) == tmp.end() )
+			if ( s->find( id ) == s->end() )
 				s->insert( id ), fn( *this );
 		}
 	}

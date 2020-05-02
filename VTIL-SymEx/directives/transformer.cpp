@@ -308,13 +308,13 @@ namespace vtil::symbolic
 #if VTIL_SYMEX_SIMPLIFY_VERBOSE
 					// Log state.
 					//
-					log<CON_RED>( "Rejected by filter.\n" );
+					log<CON_RED>( "Rejected by filter (Complexity: %lf vs %lf).\n", exp_new->complexity, exp->complexity );
 #endif
 				}
 #if VTIL_SYMEX_SIMPLIFY_VERBOSE
 				// Otherwise, log state.
 				//
-				else if ( match_verbose )
+				else
 				{
 					log<CON_RED>( "Rejected by directive.\n" );
 				}

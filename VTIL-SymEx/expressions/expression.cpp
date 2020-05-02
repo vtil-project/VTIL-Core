@@ -86,14 +86,13 @@ namespace vtil::symbolic
 				if ( is_constant() )
 				{
 					value = value.resize( new_size, signed_cast );
-					update( false );
 				}
 				else
 				{
 					if ( signed_cast )
-						*this = __cast( *this, new_size ).simplify();
+						*this = __cast( *this, new_size );
 					else
-						*this = __ucast( *this, new_size ).simplify();
+						*this = __ucast( *this, new_size );
 				}
 				break;
 
@@ -112,11 +111,10 @@ namespace vtil::symbolic
 				{
 					if ( lhs && lhs->size() != new_size ) ( +lhs )->resize( new_size, false );
 					if ( rhs->size() != new_size ) ( +rhs )->resize( new_size, false );
-					update( true );
 				}
 				else
 				{
-					*this = __cast( *this, new_size ).simplify();
+					*this = __cast( *this, new_size );
 				}
 				break;
 				
@@ -127,18 +125,17 @@ namespace vtil::symbolic
 			case math::operator_id::remainder:
 			case math::operator_id::add:
 			case math::operator_id::negate:
-			case math::operator_id::substract:
+			case math::operator_id::subtract:
 			case math::operator_id::max_value:
 			case math::operator_id::min_value:
 				if ( signed_cast )
 				{
 					if ( lhs && lhs->size() != new_size ) ( +lhs )->resize( new_size, true );
 					if ( rhs->size() != new_size ) ( +rhs )->resize( new_size, true );
-					update( true );
 				}
 				else
 				{
-					*this = __ucast( *this, new_size ).simplify();
+					*this = __ucast( *this, new_size );
 				}
 				break;
 
@@ -149,7 +146,7 @@ namespace vtil::symbolic
 				//
 				if ( lhs->size() > rhs->get().value() )
 				{
-					*this = __ucast( ( *this & expression{ math::fill( rhs->get<bitcnt_t>().value() ), lhs->size() } ).simplify(), new_size ).simplify();
+					*this = ( lhs & expression{ math::fill( rhs->get<bitcnt_t>().value() ), lhs->size() } ).resize( new_size );
 					break;
 				}
 				// If sizes match, escape cast operator.
@@ -163,7 +160,6 @@ namespace vtil::symbolic
 				else
 				{
 					rhs = new_size;
-					update( true );
 				}
 				break;
 
@@ -175,7 +171,7 @@ namespace vtil::symbolic
 				//
 				if ( lhs->size() > rhs->get().value() )
 				{
-					*this = __cast( ( *this & expression{ math::fill( rhs->get<bitcnt_t>().value() ), lhs->size() } ).simplify(), new_size ).simplify();
+					*this = ( lhs & expression{ math::fill( rhs->get<bitcnt_t>().value() ), lhs->size() } ).resize( new_size, true );
 					break;
 				}
 				// If sizes match, escape cast operator.
@@ -189,13 +185,12 @@ namespace vtil::symbolic
 				else if ( signed_cast )
 				{
 					rhs = new_size;
-					update( true );
 				}
 				// Else, convert to unsigned cast since top bits will be zero.
 				//
 				else
 				{
-					*this = __ucast( *this, new_size ).simplify();
+					*this = __ucast( *this, new_size );
 				}
 				break;
 
@@ -203,7 +198,6 @@ namespace vtil::symbolic
 			//
 			case math::operator_id::value_if:
 				( +rhs )->resize( new_size, false );
-				update( true );
 				break;
 
 			// Boolean operators will ignore resizing requests.
@@ -226,11 +220,13 @@ namespace vtil::symbolic
 			//
 			default:
 				if ( signed_cast )
-					*this = __cast( *this, new_size ).simplify();
+					*this = __cast( *this, new_size );
 				else
-					*this = __ucast( *this, new_size ).simplify();
+					*this = __ucast( *this, new_size );
 				break;
 		}
+
+		update( true );
 		return *this;
 	}
 
@@ -344,7 +340,7 @@ namespace vtil::symbolic
 					case math::operator_id::divide:
 					case math::operator_id::remainder:
 					case math::operator_id::add:
-					case math::operator_id::substract:
+					case math::operator_id::subtract:
 					case math::operator_id::max_value:
 					case math::operator_id::min_value:
 						if ( lhs->size() != value.size() ) ( +lhs )->resize( value.size(), true );
@@ -359,8 +355,13 @@ namespace vtil::symbolic
 				complexity = ( lhs->complexity + rhs->complexity ) * 2;
 				fassert( complexity != 0 );
 
-				hash_t operand_hashes[] = { lhs->hash(), rhs->hash() };
+				// If bitshift / rotation, punish additionally.
+				//
+				if ( op == math::operator_id::shift_left || op == math::operator_id::shift_right ||
+					 op == math::operator_id::rotate_left || op == math::operator_id::rotate_right )
+					complexity *= 2;
 
+				hash_t operand_hashes[] = { lhs->hash(), rhs->hash() };
 				// If operator is commutative, sort the array so that the
 				// positioning does not matter.
 				//
@@ -395,7 +396,7 @@ namespace vtil::symbolic
 			//
 			simplify_hint = false;
 		
-			// If auto simplification is enabled, invoke it.
+			// If auto simplification is relevant, invoke it.
 			//
 			if ( auto_simplify ) simplify();
 		}
@@ -452,17 +453,17 @@ namespace vtil::symbolic
 		int8_t b_hint = b.is_expression() ? b.get_op_desc()->hint_bitwise : 0;
 		int8_t m_hint = a_hint != 0 && b_hint != 0 ? a_hint * b_hint : ( a_hint != 0 ? a_hint : b_hint );
 
-		// If arithmetic hint, A-B==0 first and then A^B==0.
+		// If arithmetic hint, try A-B==0 first and then A^B==0.
 		//
 		if ( m_hint == +1 )
-			return ( a - b ).simplify().get().value_or( -1 ) == 0 || 
-			       ( a ^ b ).simplify().get().value_or( -1 ) == 0;
+			return ( a - b ).get().value_or( -1 ) == 0 || 
+			       ( a ^ b ).get().value_or( -1 ) == 0;
 
 		// If bitwise or null hint, try A^B==0 first and then A-B==0.
 		//
 		else
-			return ( a ^ b ).simplify().get().value_or( -1 ) == 0 || 
-			       ( a - b ).simplify().get().value_or( -1 ) == 0;
+			return ( a ^ b ).get().value_or( -1 ) == 0 || 
+			       ( a - b ).get().value_or( -1 ) == 0;
 	}
 
 	// Returns whether the given expression is identical to the current instance.
@@ -520,7 +521,7 @@ namespace vtil::symbolic
 		// Handle constants, invalids and variables.
 		//
 		if ( is_constant() )      return format::hex( value.get<true>().value() );
-		if ( is_variable() )      return format::str( "%s:%d", uid.to_string(), size() );
+		if ( is_variable() )      return format::str( "%s:%d", uid.to_string(), size() ); // REMOVE ME.
 		return "NULL";
 	}
 };

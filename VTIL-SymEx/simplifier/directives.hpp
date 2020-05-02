@@ -141,6 +141,7 @@ namespace vtil::symbolic::directive
         { U&A,                                                __iff((U&__mask_knw0(A))!=0, !(U&~( __mask_knw0(A)))&A) },
         { U&A,                                                __iff(U==(__mask_unk(A)|__mask_knw1(A)), A) },
         { U|A,                                                __iff((U&__mask_knw1(A))!=0, (U&!(__mask_unk(A)|__mask_knw0(A)))|A) },
+        { U|A,                                                __iff( U&__mask_unk(A),  U|!( A & ~U )) },
     };
 
     // Describes the way operands of two operators join each other. 
@@ -154,13 +155,12 @@ namespace vtil::symbolic::directive
         
         // AND:
         //
-        { A&(B&C),                                            !(A&B)&!(A&C) },
-        { A&(B&C),                                            !(A& B)&__or(!(A&C), C) },
-        { A&(B|C),                                            !(A&B)|!(A&C) },
-        { A&(B|C),                                            A&s(!(A&B)|C) },
-                                                              
-        { A&(B^C),                                            !(A&B)^!(A&C) },
-        { A&(B^C),                                            A&(!(A&B)^C) },
+        { A&(B&C),                                            s(!(A&B)&!(A&C)) },
+        { A&(B&C),                                            s(!(A&B)&__or(!(A&C),C)) },
+        { A&(B|C),                                            s(!(A&B)|!(A&C)) },
+        { A&(B|C),                                            s(A&s(!(A&B)|C)) },
+        { A&(B^C),                                            s(!(A&B)^!(A&C)) },
+        { A&(B^C),                                            A&s(!(A&B)^C) },
                                                               
         { A&(B<<U),                                           !(!(A>>U)&B)<<U },
         { A&(B>>U),                                           !(!(A<<U)&B)>>U },
@@ -170,11 +170,11 @@ namespace vtil::symbolic::directive
                                                               
         // OR:                                                
         //                                                    
-        { A|(B|C),                                            !(A|B)|!(A|C) },
-        { A|(B|C),                                            !(A| B)|__or(!(A|C), C) },
-        { A|(B&C),                                            !(A|B)&!(A|C) },
-        { A|(B&C),                                            A|(!(A|B)&C) },
-        { A|(B^C),                                            A|(!(B&s(~A))^s(C&(~A))) },
+        { A|(B|C),                                            s(!(A|B)|!(A|C)) },
+        { A|(B|C),                                            s(!(A| B)|__or(!(A|C), C)) },
+        { A|(B&C),                                            s(!(A|B)&!(A|C)) },
+        { A|(B&C),                                            s(A|(!(A|B)&C)) },
+        { A|(B^C),                                            A|s(!(B&s(~A))^s(C&(~A))) },
         { A|(B<<U),                                           !(!(A>>U)|B)<<U|s(A&((1<<U)-1)) },
         { A|(B>>U),                                           !(!(A<<U)|B)>>U|s(A&(~(-1<<U))) },
         { A|(__rotl(B,C)),                                    __rotl(!(B|s(__rotr(A,C))), C) },
