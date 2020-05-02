@@ -156,7 +156,7 @@ namespace vtil
 
 	// Serialization of VTIL instructions.
 	//
-	static void serialize( std::ostream& out, const instruction& in )
+	void serialize( std::ostream& out, const instruction& in )
 	{
 		// Write only the name of the instruction instead of the pointer.
 		//
@@ -170,7 +170,7 @@ namespace vtil
 		serialize( out, in.sp_index );
 		serialize( out, in.sp_reset );
 	}
-	static void deserialize( std::istream& in, instruction& out )
+	void deserialize( std::istream& in, instruction& out )
 	{
 		// Find the instruction by its name and write the pointer to the matched instance.
 		//
