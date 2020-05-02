@@ -216,8 +216,8 @@ namespace vtil
 		iterator operator[]( size_t n ) { return at( n ); }
 		const_iterator at( size_t n ) const { if ( auto m = get_mutex() ) m->lock_shared(); auto r = std::next( container.begin(), n ); if ( auto m = get_mutex() ) m->unlock_shared(); return r; }
 		const_iterator operator[]( size_t n ) const { return at( n ); }
-		void push_back( T&& v ) { if ( auto m = get_mutex() ) m->lock(); container.push_back( std::move( v ) ); if ( auto m = get_mutex() ) m->unlock(); }
-		void push_back( const T& v ) { if ( auto m = get_mutex() ) m->lock(); container.push_back( v ); if ( auto m = get_mutex() ) m->unlock(); }
+		void push_back( Tv&& v ) { if ( auto m = get_mutex() ) m->lock(); container.push_back( std::move( v ) ); if ( auto m = get_mutex() ) m->unlock(); }
+		void push_back( const Tv& v ) { if ( auto m = get_mutex() ) m->lock(); container.push_back( v ); if ( auto m = get_mutex() ) m->unlock(); }
 		void resize( size_t v ) { if ( auto m = get_mutex() ) m->lock(); container.resize( v ); if ( auto m = get_mutex() ) m->unlock(); }
 	};
 };

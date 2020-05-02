@@ -57,7 +57,7 @@ namespace vtil
 		template<typename T, typename A>
 		struct swap_allocator { using type = void; };
 		template<template<typename...> typename C, typename... T, typename A>
-		struct swap_allocator<C<T...>, A> { using type = typename C<typename std::conditional_t<std::is_same_v<T, typename C<T...>::allocator_type>, A, T>...>; };
+		struct swap_allocator<C<T...>, A> { using type = C<typename std::conditional_t<std::is_same_v<T, typename C<T...>::allocator_type>, A, T>...>; };
 
 		template<typename T, typename A>
 		using swap_allocator_t = typename swap_allocator<T, A>::type;
