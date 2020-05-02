@@ -31,8 +31,6 @@
 
 namespace vtil::assert
 {
-	namespace impl { __declspec( noreturn ) inline static void noreturn_helper() { __debugbreak(); } };
-
 	static void or_die( bool condition, const char* file_name, const char* condition_str, uint32_t line_number )
 	{
 		if ( condition ) return;
@@ -52,4 +50,4 @@ namespace vtil::assert
 #else
 	#define fassert(...)
 #endif
-#define unreachable() vtil::assert::impl::noreturn_helper()
+#define unreachable() vtil::logger::impl::noreturn_helper()

@@ -30,9 +30,14 @@
 #include <stdint.h>
 #include <string>
 #include <mutex>
-#include <intrin.h>
 #include "formatting.hpp"
 #include "../util/critical_section.hpp"
+
+#if _WIN64
+	#include <intrin.h>
+#else
+	#define __debugbreak() __asm__ volatile( "int $3" )
+#endif
 
 namespace vtil::logger
 {

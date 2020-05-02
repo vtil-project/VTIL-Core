@@ -28,7 +28,6 @@
 #pragma once
 #include <mutex>
 #include <atomic>
-#include <intrin.h>
 
 namespace vtil
 {

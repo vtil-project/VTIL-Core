@@ -28,7 +28,6 @@
 #pragma once
 #include <stdint.h>
 #include <string>
-#include <intrin.h>
 #include <functional>
 #include <algorithm>
 #include "bitwise.hpp"
