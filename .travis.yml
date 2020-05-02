@@ -8,7 +8,7 @@ os: windows
 before_script:
   - mkdir build
   - cd build
-  - cmake ..
+  - cmake -G "Visual Studio 15 2017" -A x64 0T "ClangCL" ..
 
 script:
   - cmake --build . --config Release
