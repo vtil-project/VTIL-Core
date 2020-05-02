@@ -27,7 +27,7 @@
 //
 #include "transformer.hpp"
 #include <vtil/utility>
-#include "..\simplifier\simplifier.hpp"
+#include "../simplifier/simplifier.hpp"
 
 namespace vtil::symbolic
 {

@@ -29,7 +29,7 @@
 #include <functional>
 #include "directive.hpp"
 #include "fast_matcher.hpp"
-#include "..\expressions\expression.hpp"
+#include "../expressions/expression.hpp"
 
 namespace vtil::symbolic
 {

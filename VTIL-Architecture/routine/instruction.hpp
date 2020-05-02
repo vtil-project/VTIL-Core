@@ -29,7 +29,7 @@
 #include <vector>
 #include <string>
 #include <vtil/utility>
-#include "..\arch\instruction_set.hpp"
+#include "../arch/instruction_set.hpp"
 
 namespace vtil
 {

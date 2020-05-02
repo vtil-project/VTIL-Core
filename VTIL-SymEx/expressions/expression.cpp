@@ -27,7 +27,7 @@
 //
 #include "expression.hpp"
 #include <vtil/io>
-#include "..\simplifier\simplifier.hpp"
+#include "../simplifier/simplifier.hpp"
 
 namespace vtil::symbolic
 {

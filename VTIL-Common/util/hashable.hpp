@@ -29,7 +29,7 @@
 #include <algorithm>
 #include <variant>
 #include "concept.hpp"
-#include "..\io\formatting.hpp"
+#include "../io/formatting.hpp"
 
 // Determine the size of vtil::hash_t.
 //

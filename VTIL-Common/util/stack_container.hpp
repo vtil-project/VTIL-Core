@@ -37,7 +37,7 @@
 #include <stdlib.h>
 #include <optional>
 #include "concept.hpp"
-#include "..\io\asserts.hpp"
+#include "../io/asserts.hpp"
 
 // [Configuration]
 // Determine stack buffer clamping range.

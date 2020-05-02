@@ -38,6 +38,7 @@
 //
 #include "assembler.hpp"
 #include <keystone/keystone.h>
+#include <stdexcept>
 
 namespace keystone
 {
@@ -49,7 +50,7 @@ namespace keystone
 		{
 			ks_engine* handle;
 			if ( ks_open( KS_ARCH_X86, KS_MODE_64, &handle ) != KS_ERR_OK )
-				throw std::exception( "Failed to create the Keystone engine!" );
+				throw std::runtime_error( "Failed to create the Keystone engine!" );
 			return handle;
 		}( );
 		return handle;

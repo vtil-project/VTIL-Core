@@ -27,8 +27,8 @@
 //
 #include "simplifier.hpp"
 #include "directives.hpp"
-#include "..\expressions\expression.hpp"
-#include "..\directives\transformer.hpp"
+#include "../expressions/expression.hpp"
+#include "../directives/transformer.hpp"
 #include <vtil/io>
 
 namespace vtil::symbolic

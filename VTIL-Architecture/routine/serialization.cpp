@@ -27,6 +27,7 @@
 //
 #include "serialization.hpp"
 #include <algorithm>
+#include <stdexcept>
 
 #pragma warning(disable:4267)
 namespace vtil
@@ -123,7 +124,7 @@ namespace vtil
 		magic_t magic;
 		deserialize( in, magic );
 		if ( magic != vtil_magic )
-			throw std::exception( "VTIL magic mismatch." );
+			throw std::runtime_error( "VTIL magic mismatch." );
 
 		// Create a new routine.
 		//
@@ -149,7 +150,7 @@ namespace vtil
 		//
 		rtn->entry_point = rtn->explored_blocks[ entry_vip ];
 		if ( !rtn->entry_point )
-			throw std::exception( "Failed resolving entry point." );
+			throw std::runtime_error( "Failed resolving entry point." );
 		return rtn;
 	}
 
@@ -177,7 +178,7 @@ namespace vtil
 		deserialize( in, name );
 		out.base = std::find( std::begin( instruction_list ), std::end( instruction_list ), name );
 		if( out.base == std::end( instruction_list ) )
-			throw std::exception( "Failed resolving instruction." );
+			throw std::runtime_error( "Failed resolving instruction." );
 
 		// Read rest as is and validate.
 		//
@@ -187,7 +188,7 @@ namespace vtil
 		deserialize( in, out.sp_index );
 		deserialize( in, out.sp_reset );
 		if( !out.is_valid() )
-			throw std::exception( "Resolved invalid instruction." );
+			throw std::runtime_error( "Resolved invalid instruction." );
 	}
 };
 #pragma warning(default:4267)

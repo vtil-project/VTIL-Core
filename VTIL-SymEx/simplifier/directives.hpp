@@ -27,7 +27,7 @@
 //
 #pragma once
 #include <tuple>
-#include "..\directives\directive.hpp"
+#include "../directives/directive.hpp"
 
 namespace vtil::symbolic::directive
 {

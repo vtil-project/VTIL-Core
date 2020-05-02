@@ -28,7 +28,7 @@
 #pragma once
 #include <functional>
 #include "directive.hpp"
-#include "..\expressions\expression.hpp"
+#include "../expressions/expression.hpp"
 
 namespace vtil::symbolic::directive
 {

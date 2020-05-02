@@ -30,8 +30,8 @@
 #include <math.h>
 #include <optional>
 #include <type_traits>
-#include "..\util\reducable.hpp"
-#include "..\io\asserts.hpp"
+#include "../util/reducable.hpp"
+#include "../io/asserts.hpp"
 
 // Declare the type we will used for bit lenghts of data.
 // - We are using int instead of char since most operations will end up casting

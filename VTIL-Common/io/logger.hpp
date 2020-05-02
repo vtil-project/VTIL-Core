@@ -32,7 +32,7 @@
 #include <mutex>
 #include <intrin.h>
 #include "formatting.hpp"
-#include "..\util\critical_section.hpp"
+#include "../util/critical_section.hpp"
 
 namespace vtil::logger
 {

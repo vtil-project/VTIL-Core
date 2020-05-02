@@ -37,6 +37,7 @@
 // |--------------------------------------------------------------------------|
 //
 #include "disassembly.hpp"
+#include <stdexcept>
 
 namespace capstone
 {
@@ -49,7 +50,7 @@ namespace capstone
 			csh handle;
 			if ( cs_open( CS_ARCH_X86, CS_MODE_64, &handle ) != CS_ERR_OK 
 				 || cs_option( handle, CS_OPT_DETAIL, CS_OPT_ON ) != CS_ERR_OK )
-				throw std::exception( "Failed to create the Capstone engine!" );
+				throw std::runtime_error( "Failed to create the Capstone engine!" );
 			return handle;
 		}( );
 		return handle;

@@ -28,7 +28,7 @@
 #pragma once
 #include <iterator>
 #include <unordered_map>
-#include "..\expressions\expression.hpp"
+#include "../expressions/expression.hpp"
 
 // [Configuration]
 // Determine whether we should log the details of the simplification process.

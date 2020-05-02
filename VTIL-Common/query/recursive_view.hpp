@@ -30,7 +30,7 @@
 #include <vector>
 #include "view.hpp"
 #include "query_descriptor.hpp"
-#include "..\io\asserts.hpp"
+#include "../io/asserts.hpp"
 
 namespace vtil::query
 {

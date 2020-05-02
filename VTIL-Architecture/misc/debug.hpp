@@ -29,9 +29,9 @@
 #include <string>
 #include <set>
 #include <vtil/io>
-#include "..\arch\instruction_set.hpp"
-#include "..\routine\basic_block.hpp"
-#include "..\routine\instruction.hpp"
+#include "../arch/instruction_set.hpp"
+#include "../routine/basic_block.hpp"
+#include "../routine/instruction.hpp"
 
 namespace vtil::debug
 {
