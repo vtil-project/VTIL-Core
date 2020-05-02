@@ -229,7 +229,7 @@ namespace vtil
 	// note that they should not be stored under any condition.
 	//
 	template<typename T>
-	__forceinline shared_reference<T> make_local_reference( T* variable_pointer )
+	inline shared_reference<T> make_local_reference( T* variable_pointer )
 	{
 		// Save current frame address.
 		//

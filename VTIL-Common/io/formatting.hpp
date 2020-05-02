@@ -56,7 +56,7 @@ namespace vtil::format
 		#pragma warning (supress:1011) // Billion dollar company yes? #2
 	#endif
 	template<typename T>
-	__forceinline static auto fix_parameter( T&& x )
+	inline static auto fix_parameter( T&& x )
 	{
 		if constexpr ( std::is_same_v<std::remove_cvref_t<T>, std::string> || std::is_same_v<std::remove_cvref_t<T>, std::wstring> )
 			return x.data();
