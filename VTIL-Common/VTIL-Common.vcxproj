@@ -1,0 +1,152 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>16.0</VCProjectVersion>
+    <ProjectGuid>{EC6B8F7F-730C-4086-B143-4664CC16DF8F}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+    <RootNamespace>VTILCommon</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v142</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v142</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="Shared">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <LinkIncremental>true</LinkIncremental>
+    <IncludePath>$(SolutionDir)..\Capstone\include;$(SolutionDir)..\Keystone\include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(SolutionDir)..\Keystone\llvm\lib\Debug;$(SolutionDir)..\Capstone\msvc\x64\Release;$(LibraryPath)</LibraryPath>
+    <OutDir>$(ProjectDir)$(Platform)\$(Configuration)\</OutDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <LinkIncremental>false</LinkIncremental>
+    <IncludePath>$(SolutionDir)..\Capstone\include;$(SolutionDir)..\Keystone\include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(SolutionDir)..\Keystone\llvm\lib\Release;$(SolutionDir)..\Capstone\msvc\x64\Release;$(LibraryPath)</LibraryPath>
+    <OutDir>$(ProjectDir)$(Platform)\$(Configuration)\</OutDir>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <PrecompiledHeaderFile>
+      </PrecompiledHeaderFile>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
+      <CCppSupport>
+      </CCppSupport>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+    <Lib>
+      <AdditionalDependencies>keystone.lib;capstone.lib;</AdditionalDependencies>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
+      <CCppSupport>
+      </CCppSupport>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+    <Lib>
+      <AdditionalDependencies>keystone.lib;capstone.lib;</AdditionalDependencies>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClInclude Include="amd64\assembler.hpp" />
+    <ClInclude Include="amd64\disassembly.hpp" />
+    <ClInclude Include="amd64\register_details.hpp" />
+    <ClInclude Include="includes\vtil\common" />
+    <ClInclude Include="includes\vtil\io" />
+    <ClInclude Include="includes\vtil\math" />
+    <ClInclude Include="includes\vtil\amd64" />
+    <ClInclude Include="includes\vtil\query" />
+    <ClInclude Include="includes\vtil\utility" />
+    <ClInclude Include="io\asserts.hpp" />
+    <ClInclude Include="io\formatting.hpp" />
+    <ClInclude Include="io\logger.hpp" />
+    <ClInclude Include="math\bitwise.hpp" />
+    <ClInclude Include="math\operable.hpp" />
+    <ClInclude Include="math\operators.hpp" />
+    <ClInclude Include="query\fixed_iterator.hpp" />
+    <ClInclude Include="query\query_descriptor.hpp" />
+    <ClInclude Include="query\range_iterator.hpp" />
+    <ClInclude Include="query\range_iterator_contract.hpp" />
+    <ClInclude Include="query\recursive_view.hpp" />
+    <ClInclude Include="query\view.hpp" />
+    <ClInclude Include="util\concept.hpp" />
+    <ClInclude Include="util\copy_on_write.hpp" />
+    <ClInclude Include="util\critical_section.hpp" />
+    <ClInclude Include="util\fnv128.hpp" />
+    <ClInclude Include="util\fnv64.hpp" />
+    <ClInclude Include="util\hashable.hpp" />
+    <ClInclude Include="util\priority_list.hpp" />
+    <ClInclude Include="util\reducable.hpp" />
+    <ClInclude Include="util\stack_container.hpp" />
+    <ClInclude Include="util\variant.hpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="amd64\assembler.cpp" />
+    <ClCompile Include="amd64\disassembly.cpp" />
+    <ClCompile Include="amd64\register_details.cpp" />
+    <ClCompile Include="io\logger.cpp" />
+    <ClCompile Include="math\operators.cpp" />
+    <ClCompile Include="util\critical_section.cpp" />
+    <ClCompile Include="util\variant.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="includes\vtil\vtil" />
+    <None Include="VTIL-Common.licenseheader" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

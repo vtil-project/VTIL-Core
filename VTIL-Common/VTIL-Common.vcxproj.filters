@@ -1,0 +1,151 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Includes">
+      <UniqueIdentifier>{14333603-a637-4356-854a-db631a744d42}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="I/O">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;hm;inl;inc;ipp;xsd</Extensions>
+    </Filter>
+    <Filter Include="amd64">
+      <UniqueIdentifier>{cb6f5bfd-fdca-47fe-bbb7-e91d8e5ba642}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="amd64\Core">
+      <UniqueIdentifier>{dbf4733d-3814-4218-9474-cf4b4e3c5719}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Math">
+      <UniqueIdentifier>{e5d9bf65-c2c0-4dcf-aa87-65a7059e4e90}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Utility">
+      <UniqueIdentifier>{226c5e44-6592-44d0-adb0-31369963cb86}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Queries">
+      <UniqueIdentifier>{91e43426-e8a8-4753-8d61-374c3c62f081}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="amd64\register_details.hpp">
+      <Filter>amd64</Filter>
+    </ClInclude>
+    <ClInclude Include="amd64\assembler.hpp">
+      <Filter>amd64\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="amd64\disassembly.hpp">
+      <Filter>amd64\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="io\asserts.hpp">
+      <Filter>I/O</Filter>
+    </ClInclude>
+    <ClInclude Include="io\formatting.hpp">
+      <Filter>I/O</Filter>
+    </ClInclude>
+    <ClInclude Include="io\logger.hpp">
+      <Filter>I/O</Filter>
+    </ClInclude>
+    <ClInclude Include="includes\vtil\amd64">
+      <Filter>Includes</Filter>
+    </ClInclude>
+    <ClInclude Include="includes\vtil\common">
+      <Filter>Includes</Filter>
+    </ClInclude>
+    <ClInclude Include="includes\vtil\io">
+      <Filter>Includes</Filter>
+    </ClInclude>
+    <ClInclude Include="math\operable.hpp">
+      <Filter>Math</Filter>
+    </ClInclude>
+    <ClInclude Include="math\operators.hpp">
+      <Filter>Math</Filter>
+    </ClInclude>
+    <ClInclude Include="math\bitwise.hpp">
+      <Filter>Math</Filter>
+    </ClInclude>
+    <ClInclude Include="includes\vtil\math">
+      <Filter>Includes</Filter>
+    </ClInclude>
+    <ClInclude Include="util\priority_list.hpp">
+      <Filter>Utility</Filter>
+    </ClInclude>
+    <ClInclude Include="includes\vtil\utility">
+      <Filter>Includes</Filter>
+    </ClInclude>
+    <ClInclude Include="query\range_iterator.hpp">
+      <Filter>Queries</Filter>
+    </ClInclude>
+    <ClInclude Include="query\query_descriptor.hpp">
+      <Filter>Queries</Filter>
+    </ClInclude>
+    <ClInclude Include="query\range_iterator_contract.hpp">
+      <Filter>Queries</Filter>
+    </ClInclude>
+    <ClInclude Include="query\view.hpp">
+      <Filter>Queries</Filter>
+    </ClInclude>
+    <ClInclude Include="query\recursive_view.hpp">
+      <Filter>Queries</Filter>
+    </ClInclude>
+    <ClInclude Include="includes\vtil\query">
+      <Filter>Includes</Filter>
+    </ClInclude>
+    <ClInclude Include="query\fixed_iterator.hpp">
+      <Filter>Queries</Filter>
+    </ClInclude>
+    <ClInclude Include="util\critical_section.hpp">
+      <Filter>Utility</Filter>
+    </ClInclude>
+    <ClInclude Include="util\copy_on_write.hpp">
+      <Filter>Utility</Filter>
+    </ClInclude>
+    <ClInclude Include="util\concept.hpp">
+      <Filter>Utility</Filter>
+    </ClInclude>
+    <ClInclude Include="util\variant.hpp">
+      <Filter>Utility</Filter>
+    </ClInclude>
+    <ClInclude Include="util\hashable.hpp">
+      <Filter>Utility</Filter>
+    </ClInclude>
+    <ClInclude Include="util\stack_container.hpp">
+      <Filter>Utility</Filter>
+    </ClInclude>
+    <ClInclude Include="util\fnv64.hpp">
+      <Filter>Utility</Filter>
+    </ClInclude>
+    <ClInclude Include="util\fnv128.hpp">
+      <Filter>Utility</Filter>
+    </ClInclude>
+    <ClInclude Include="util\reducable.hpp">
+      <Filter>Utility</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="amd64\register_details.cpp">
+      <Filter>amd64</Filter>
+    </ClCompile>
+    <ClCompile Include="amd64\assembler.cpp">
+      <Filter>amd64\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="amd64\disassembly.cpp">
+      <Filter>amd64\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="io\logger.cpp">
+      <Filter>I/O</Filter>
+    </ClCompile>
+    <ClCompile Include="math\operators.cpp">
+      <Filter>Math</Filter>
+    </ClCompile>
+    <ClCompile Include="util\critical_section.cpp">
+      <Filter>Utility</Filter>
+    </ClCompile>
+    <ClCompile Include="util\variant.cpp">
+      <Filter>Utility</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="VTIL-Common.licenseheader" />
+    <None Include="includes\vtil\vtil">
+      <Filter>Includes</Filter>
+    </None>
+  </ItemGroup>
+</Project>
