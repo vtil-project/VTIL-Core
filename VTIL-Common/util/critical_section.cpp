@@ -30,7 +30,8 @@
 #if _WIN64
 	#include <intrin.h>
 #else
-	#include <sys/types.h>
+	#include <unistd.h>
+	#include <sys/syscall.h>
 #endif
 #include "../io/asserts.hpp"
 
@@ -46,7 +47,7 @@ namespace vtil
 		static_assert( sizeof( tid_t ) == 8, "Thread identifier must be defined as a quadword." );
 		return __readgsqword( 0x48 );
 #else
-		return ( tid_t ) gettid();
+		return ( tid_t ) syscall( SYS_gettid );
 #endif
 	}
 
