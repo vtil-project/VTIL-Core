@@ -43,6 +43,7 @@
 #include <cstring>
 #include <set>
 #include <capstone/capstone.h>
+#include <algorithm>
 #include "../io/formatting.hpp"
 
 namespace vtil::amd64

@@ -71,7 +71,7 @@ namespace vtil::format
 	{
 		std::string buffer;
 		buffer.resize( snprintf( nullptr, 0, fmt, fix_parameter<params>( std::forward<params>( ps ) )... ) );
-		sprintf_s( buffer.data(), buffer.size() + 1, fmt, fix_parameter<params>( std::forward<params>( ps ) )... );
+		snprintf( buffer.data(), buffer.size() + 1, fmt, fix_parameter<params>( std::forward<params>( ps ) )... );
 		return buffer;
 	}
 
