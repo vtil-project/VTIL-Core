@@ -165,7 +165,7 @@ namespace vtil
 			//
 			std::string suffix = "";
 			if ( bit_offset != 0 ) suffix = "@" + std::to_string( bit_offset );
-			if ( bit_count != 64 ) suffix = ":" + std::to_string( bit_count );
+			if ( bit_count != 64 ) suffix += ":" + std::to_string( bit_count );
 
 			// If special/local, use a fixed convention.
 			//

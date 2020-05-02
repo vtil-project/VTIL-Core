@@ -70,7 +70,7 @@ namespace vtil
         /*                                          [Name]        [Operands...]                                     [ASizeOp]   [Volatile]  [Operator]               [BranchOps] [MemOps]     */
         static const instruction_desc neg =        { "neg",       { a::readwrite                                 }, 1,            false,    op::negate,              {},         {}           };
         static const instruction_desc add =        { "add",       { a::readwrite,  a::read_any                   }, 1,            false,    op::add,                 {},         {}           };
-        static const instruction_desc sub =        { "sub",       { a::readwrite,  a::read_any                   }, 1,            false,    op::substract,           {},         {}           };
+        static const instruction_desc sub =        { "sub",       { a::readwrite,  a::read_any                   }, 1,            false,    op::subtract,            {},         {}           };
         static const instruction_desc mul =        { "mul",       { a::readwrite,  a::read_any                   }, 1,            false,    op::umultiply,           {},         {}           };
         static const instruction_desc imul =       { "imul",      { a::readwrite,  a::read_any                   }, 1,            false,    op::multiply,            {},         {}           };
         static const instruction_desc mulhi =      { "mulhi",     { a::readwrite,  a::read_any                   }, 1,            false,    op::multiply_high,       {},         {}           };
