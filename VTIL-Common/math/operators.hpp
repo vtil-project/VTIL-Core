@@ -67,7 +67,7 @@ namespace vtil::math
         // Basic arithmetic operations:
         //
         add,            // LHS+(RHS+...)
-        substract,      // LHS-(RHS+...)
+        subtract,       // LHS-(RHS+...)
 
         // Distributing arithmetic operations:
         //
@@ -188,8 +188,8 @@ namespace vtil::math
         {   -1,       false,    2,    true,           "u*",       "umul"        },
         {   -1,       false,    2,    false,          "u/",       "udiv"        },
         {   -1,       false,    2,    false,          "u%",       "urem"        },
-        {    0,       false,    2,    false,          nullptr,    "__ucast"      },
-        {   -1,       true,     2,    false,          nullptr,    "__cast"     },
+        {    0,       false,    2,    false,          nullptr,    "__ucast"     },
+        {   -1,       true,     2,    false,          nullptr,    "__cast"      },
         {   +1,       false,    1,    false,          nullptr,    "__popcnt"    },
         {   +1,       false,    2,    false,          nullptr,    "__bt"        },
         {   +1,       false,    1,    false,          nullptr,    "__mask"      },

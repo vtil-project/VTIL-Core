@@ -120,7 +120,7 @@ namespace vtil::math
             //                                                                                  
             case operator_id::negate:           result = -irhs;                                                     break;
             case operator_id::add:              result = ilhs + irhs;                                               break;
-            case operator_id::substract:        result = ilhs - irhs;                                               break;
+            case operator_id::subtract:         result = ilhs - irhs;                                               break;
             case operator_id::multiply_high:    result = bcnt_res == 64
                                                         ? __mulh( ilhs, irhs )
                                                         : uint64_t( ilhs * irhs ) >> bcnt_res;                      break;
@@ -385,7 +385,7 @@ namespace vtil::math
                     rhs.size()
                 };
                 break;*/
-            case operator_id::substract:
+            case operator_id::subtract:
                 // A-B = ~(~A+B)
                 //
                 return  evaluate_partial( operator_id::bitwise_not, {},

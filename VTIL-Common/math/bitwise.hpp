@@ -79,7 +79,7 @@ namespace vtil::math
     //
     static constexpr uint64_t fill_sign( uint64_t sign, bitcnt_t bit_offset = 0 )
     {
-        // The XOR operation with 0b1 flips the sign bit, after which when we substract
+        // The XOR operation with 0b1 flips the sign bit, after which when we subtract
         // one to create 0xFF... for (1) and 0x00... for (0).
         // - We could have also done [s *= ~0ull], but it's slower since:
         //    1) XOR ~= [#μop: 1, latency: 1]

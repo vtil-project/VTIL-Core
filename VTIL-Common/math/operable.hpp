@@ -160,7 +160,7 @@ DEFINE_OPERATION( __rotr( T1&& a, T2&& b )           { return { std::forward<T1>
 DEFINE_OPERATION( __rotl( T1&& a, T2&& b )           { return { std::forward<T1>( a ), vtil::math::operator_id::rotate_left, std::forward<T2>( b ) }; }       );
 DEFINE_OPERATION( operator-( T1&& a )                { return { vtil::math::operator_id::negate, std::forward<T1>( a ) }; }                                   );
 DEFINE_OPERATION( operator+( T1&& a, T2&& b )        { return { std::forward<T1>( a ), vtil::math::operator_id::add, std::forward<T2>( b ) }; }               );
-DEFINE_OPERATION( operator-( T1&& a, T2&& b )        { return { std::forward<T1>( a ), vtil::math::operator_id::substract, std::forward<T2>( b ) }; }         );
+DEFINE_OPERATION( operator-( T1&& a, T2&& b )        { return { std::forward<T1>( a ), vtil::math::operator_id::subtract, std::forward<T2>( b ) }; }          );
 DEFINE_OPERATION( imulhi( T1&& a, T2&& b )           { return { std::forward<T1>( a ), vtil::math::operator_id::multiply_high, std::forward<T2>( b ) }; }     );
 DEFINE_OPERATION( operator*( T1&& a, T2&& b )        { return { std::forward<T1>( a ), vtil::math::operator_id::multiply, std::forward<T2>( b ) }; }          );
 DEFINE_OPERATION( operator/( T1&& a, T2&& b )        { return { std::forward<T1>( a ), vtil::math::operator_id::divide, std::forward<T2>( b ) }; }            );
