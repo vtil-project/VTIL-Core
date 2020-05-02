@@ -26,6 +26,7 @@
 // POSSIBILITY OF SUCH DAMAGE.        
 //
 #include "variant.hpp"
+#include <stdlib.h>
 
 namespace vtil
 {
@@ -178,7 +179,11 @@ namespace vtil
 		else
 		{
 			is_inline = false;
+#ifdef _MSC_VER
 			return ext = _aligned_malloc( size, align );
+#else
+			return ext = aligned_alloc( align, size );
+#endif
 		}
 	}
 	// Deletes the currently stored variant.
@@ -195,7 +200,14 @@ namespace vtil
 
 			// If object was not inlined, invoke aligned free.
 			//
-			if ( !is_inline ) _aligned_free( ext );
+			if ( !is_inline )
+			{
+#ifdef _MSC_VER
+				_aligned_free( ext );
+#else
+				free( ext );
+#endif
+			}
 
 			// Null copy function to indicate null value.
 			//
