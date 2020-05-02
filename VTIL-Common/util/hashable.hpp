@@ -89,6 +89,11 @@ namespace vtil
 		//
 		static void combine_hash( hash_t& a, const hash_t& b )
 		{
+			static constexpr auto rotl64 = [ ] ( uint64_t x, int r ) 
+			{
+				return ( x << r ) | ( x >> ( 64 - r ) );
+			};
+
 			static constexpr uint64_t hash_combination_keys[] =
 			{
 				0x0c214449f2ced59a, 0x63799bb9f17566b6,	0xbccb2d46778c06d1, 0x4570d058141eca81,
@@ -120,7 +125,7 @@ namespace vtil
 
 				// Rotate both hashes, add together and combine with the combination key.
 				//
-				a.value[ i ] = ( _rotl64( a.value[ i ], ka ) + _rotl64( b.value[ i ], kb ) ) ^ hash_combination_keys[ ka ];
+				a.value[ i ] = ( rotl64( a.value[ i ], ka ) + rotl64( b.value[ i ], kb ) ) ^ hash_combination_keys[ ka ];
 			}
 		}
 

@@ -128,6 +128,7 @@
     <ClInclude Include="util\fnv128.hpp" />
     <ClInclude Include="util\fnv64.hpp" />
     <ClInclude Include="util\hashable.hpp" />
+    <ClInclude Include="util\mul128.hpp" />
     <ClInclude Include="util\priority_list.hpp" />
     <ClInclude Include="util\reducable.hpp" />
     <ClInclude Include="util\stack_container.hpp" />

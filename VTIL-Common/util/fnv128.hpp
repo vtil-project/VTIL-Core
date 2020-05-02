@@ -29,6 +29,8 @@
 #include <string>
 #include <array>
 #include <functional>
+#include <cstring>
+#include "mul128.hpp"
 #include "../io/formatting.hpp"
 
 namespace vtil

@@ -34,7 +34,7 @@
 #include "formatting.hpp"
 #include "../util/critical_section.hpp"
 
-#if _WIN64
+#ifdef _MSC_VER
 	#include <intrin.h>
 #else
 	#define __debugbreak() __asm__ volatile( "int $3" )

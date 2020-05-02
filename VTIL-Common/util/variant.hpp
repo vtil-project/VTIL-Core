@@ -29,6 +29,7 @@
 #include <type_traits>
 #include <functional>
 #include <stdint.h>
+#include <cstring>
 #include <optional>
 #include "../io/asserts.hpp"
 

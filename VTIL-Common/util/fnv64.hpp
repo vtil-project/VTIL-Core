@@ -29,6 +29,7 @@
 #include <string>
 #include <array>
 #include <functional>
+#include <cstring>
 #include "../io/formatting.hpp"
 
 namespace vtil

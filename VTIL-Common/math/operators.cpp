@@ -26,6 +26,7 @@
 // POSSIBILITY OF SUCH DAMAGE.        
 //
 #include "operators.hpp"
+#include "../util/mul128.hpp"
 
 #pragma warning(push)
 #pragma warning(disable: 4244)
