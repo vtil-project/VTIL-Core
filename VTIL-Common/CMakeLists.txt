@@ -21,9 +21,9 @@ set_property(TARGET common PROPERTY CXX_STANDARD_REQUIRED ON)
 # Common needs Capstone & Keystone
 target_link_libraries(common capstone-static keystone)
 
-# For portability on non-MSVC compilers, disable narrowing warnings
+# For portability on non-MSVC compilers, disable volatile warnings
 if (CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR CMAKE_CXX_COMPILER_ID MATCHES "GNU")
-    target_compile_options(common PUBLIC -Wno-c++11-narrowing)
+    target_compile_options(common PUBLIC -Wvolatile)
 endif()
 
 # Add -fpermissive on MSVC
