@@ -71,19 +71,19 @@ namespace vtil
 
 			// Default constructor and the block-bound constructor.
 			//
-			riterator_base() = default;
+			riterator_base() {}
 			riterator_base( container_type* ref, const iterator_type& i ): container( ref ), iterator_type( i ) {}
 			template<typename X, typename Y> riterator_base( const riterator_base<X, Y>& o ) : container( o.container ), iterator_type( Y( o ) ) {}
 
 			// Override equality operators to check container first.
 			//
-			bool operator!=( const riterator_base& o ) const { return container != o.container || iterator_type::operator!=( o ); }
-			bool operator==( const riterator_base& o ) const { return container == o.container && iterator_type::operator==( o ); }
+			bool operator!=( const riterator_base& o ) const { return container != o.container || ((const iterator_type&)*this) != o; }
+			bool operator==( const riterator_base& o ) const { return container == o.container && ((const iterator_type&)*this) == o; }
 
 			// Simple position/validity checks.
 			//
-			bool is_end() const { return !container || iterator_type::operator==( ( iterator_type ) container->stream.end() ); }
-			bool is_begin() const { return !container || iterator_type::operator==( ( iterator_type ) container->stream.begin() ); }
+			bool is_end() const { return !container || operator==( { container, container->stream.end() } ); }
+			bool is_begin() const { return !container || operator==( { container, container->stream.begin() } ); }
 			bool is_valid() const { return !is_begin() || !is_end(); }
 
 			// Simple helper used to trace paths towards a container.

@@ -51,19 +51,19 @@ namespace vtil::query
 
 		// Default constructor and the container-bound constructor.
 		//
-		basic_range_iterator() = default;
+		basic_range_iterator() {}
 		basic_range_iterator( container_type* container, iterator_type i ) : iterator_type( i ), container( container ) {}
 		template<typename X, typename Y> basic_range_iterator( const basic_range_iterator<X, Y>& o ) : container( o.container ), iterator_type( Y( o ) ) {}
 
 		// Override equality operators to check container first.
 		//
-		bool operator==( const basic_range_iterator& o ) const { return container == o.container && iterator_type::operator==( o ); }
-		bool operator!=( const basic_range_iterator& o ) const { return container != o.container || iterator_type::operator!=( o ); }
+		bool operator!=( const basic_range_iterator& o ) const { return container != o.container || ( ( const iterator_type& ) *this ) != o; }
+		bool operator==( const basic_range_iterator& o ) const { return container == o.container && ( ( const iterator_type& ) *this ) == o; }
 
 		// Simple position/validity checks.
 		//
-		bool is_end() const { return !container || iterator_type::operator==( ( iterator_type ) container->end() ); }
-		bool is_begin() const { return !container || iterator_type::operator==( ( iterator_type ) container->begin() ); }
+		bool is_end() const { return !container || operator==( { container, container.end() } ); }
+		bool is_begin() const { return !container || operator==( { container, container.begin() } ); }
 		bool is_valid() const { return !is_begin() || !is_end(); }
 
 		// No default implementation for recursion since STL has no default tree-based container.
