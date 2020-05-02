@@ -110,12 +110,12 @@ namespace vtil::math
             case operator_id::bitwise_and:      result = lhs & rhs;                                                 break;
             case operator_id::bitwise_or:       result = lhs | rhs;                                                 break;
             case operator_id::bitwise_xor:      result = lhs ^ rhs;                                                 break;
-            case operator_id::shift_right:      result = rhs >= bcnt_rhs ? 0 : lhs >> rhs;                          break;
-            case operator_id::shift_left:       result = rhs >= bcnt_rhs ? 0 : lhs << rhs;                          break;
-            case operator_id::rotate_right:     result = ( lhs >> ( rhs % bcnt_rhs ) )
-                                                       | ( lhs << ( bcnt_rhs - ( rhs % bcnt_rhs ) ) );              break;
-            case operator_id::rotate_left:      result = ( lhs << ( rhs % bcnt_rhs ) )
-                                                       | ( lhs >> ( bcnt_rhs - ( rhs % bcnt_rhs ) ) );              break;
+            case operator_id::shift_right:      result = rhs >= bcnt_lhs ? 0 : lhs >> rhs;                          break;
+            case operator_id::shift_left:       result = rhs >= bcnt_lhs ? 0 : lhs << rhs;                          break;
+            case operator_id::rotate_right:     result = ( lhs >> ( rhs % bcnt_lhs ) )
+                                                       | ( lhs << ( bcnt_lhs - ( rhs % bcnt_lhs ) ) );              break;
+            case operator_id::rotate_left:      result = ( lhs << ( rhs % bcnt_lhs ) )
+                                                       | ( lhs >> ( bcnt_lhs - ( rhs % bcnt_lhs ) ) );              break;
             // - Arithmetic operators.                                                          
             //                                                                                  
             case operator_id::negate:           result = -irhs;                                                     break;
