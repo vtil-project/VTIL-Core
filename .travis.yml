@@ -9,17 +9,24 @@ before_script:
   - mkdir build
   - cd build
   
-  - sudo mkdir /opt/cmake-3.17
-  - sudo wget https://github.com/Kitware/CMake/releases/download/v3.17.2/cmake-3.17.2-Linux-x86_64.sh -O cmake-3.17.sh
-  - sudo sh cmake-3.17.sh --prefix=/opt/cmake-3.17 --skip-license
-  - sudo ln -s /opt/cmake-3.17/bin/cmake /usr/local/bin/cmake-3.17
-  - cmake-3.17 --version
-  
-  - sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y
-  - sudo apt-get update -y
+  # Install latest CMake from Kitware
+  - sudo DEBIAN_FRONTEND=noninteractive apt-get -yq  install apt-transport-https ca-certificates gnupg software-properties-common wget
+  - wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc 2>/dev/null | gpg --dearmor - | sudo tee /etc/apt/trusted.gpg.d/kitware.gpg >/dev/null
+  - sudo apt-add-repository 'deb https://apt.kitware.com/ubuntu/ bionic main'
+  - sudo DEBIAN_FRONTEND=noninteractive apt-get -yq update
+  - sudo DEBIAN_FRONTEND=noninteractive apt-get -yq install cmake
+
+  # Install latest LLVM from LLVM repository
   - sudo bash -c "$(wget -O - https://apt.llvm.org/llvm.sh)"
-    
-  - cmake-3.17 -D CMAKE_C_COMPILER=clang-10 -D CMAKE_CXX_COMPILER=clang++-10 ..
+
+  # Setup env variables to use Clang 10
+  - CC=/usr/bin/clang-10
+  - CCX=/usr/bin/clang++-10
+
+  # Run CMake generator
+  - cmake -D CMAKE_C_COMPILER=/usr/bin/clang-10 -D CMAKE_CXX_COMPILER=/usr/bin/clang++-10 ..
+
+
 
 script:
-  - cmake-3.17 --build .
+  - cmake --build .
