@@ -14,7 +14,7 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
     # Clang-only flags
     if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
         # Use libc++ if compiling C++
-        add_compile_options(-std=c++20 -stdlib=libc++ -lc++abi)
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++20 -stdlib=libc++ -lc++abi")
     endif()
 
     # GCC-only flags
