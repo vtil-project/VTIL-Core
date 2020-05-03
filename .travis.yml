@@ -1,14 +1,14 @@
 language: cpp
 
 compiler:
-  - clang
+  - gcc
 
-os: windows
+os: linux
 
 before_script:
   - mkdir build
   - cd build
-  - cmake -G "Visual Studio 15 2017" -A x64 ..
+  - cmake -D CMAKE_CXX_COMPILER=g++-10 -D CMAKE_C_COMPILER=gcc-10 ..
 
 script:
   - cmake --build . --config Release
