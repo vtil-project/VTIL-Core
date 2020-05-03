@@ -4,17 +4,22 @@ compiler:
   - clang
 
 os: linux
+dist: bionic
 
 before_script:
   - mkdir build
   - cd build
+
+  # Remove default version of cmake
+  - sudo DEBIAN_FRONTEND=noninteractive apt-get -yq remove cmake
+
   
   # Install latest CMake from Kitware
   - sudo DEBIAN_FRONTEND=noninteractive apt-get -yq  install apt-transport-https ca-certificates gnupg software-properties-common wget
   - wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc 2>/dev/null | gpg --dearmor - | sudo tee /etc/apt/trusted.gpg.d/kitware.gpg >/dev/null
   - sudo apt-add-repository 'deb https://apt.kitware.com/ubuntu/ bionic main'
   - sudo DEBIAN_FRONTEND=noninteractive apt-get -yq update
-  - sudo DEBIAN_FRONTEND=noninteractive apt-get -yq --only-upgrade install cmake
+  - sudo DEBIAN_FRONTEND=noninteractive apt-get -yq install cmake=3.17.2-0kitware1 # force Travis to use a later version of CMake and fail build if not achievable
 
   # Install latest LLVM from LLVM repository
   - sudo bash -c "$(wget -O - https://apt.llvm.org/llvm.sh)"
