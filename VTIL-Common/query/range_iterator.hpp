@@ -62,8 +62,8 @@ namespace vtil::query
 
 		// Simple position/validity checks.
 		//
-		bool is_end() const { return !container || operator==( { container, container.end() } ); }
-		bool is_begin() const { return !container || operator==( { container, container.begin() } ); }
+		bool is_end() const { return !container || operator==( { container, container->end() } ); }
+		bool is_begin() const { return !container || operator==( { container, container->begin() } ); }
 		bool is_valid() const { return !is_begin() || !is_end(); }
 
 		// No default implementation for recursion since STL has no default tree-based container.
