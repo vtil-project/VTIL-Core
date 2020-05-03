@@ -16,10 +16,10 @@ set_property(TARGET architecture PROPERTY CXX_STANDARD_REQUIRED ON)
 
 # For portability on non-MSVC compilers, disable volatile warnings
 if (CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR CMAKE_CXX_COMPILER_ID MATCHES "GNU")
-    target_compile_options(common PUBLIC -Wvolatile)
+    target_compile_options(architecture PRIVATE "-Wvolatile")
 endif()
 
 # Add -fpermissive on MSVC
 if (CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
-    target_compile_options(common PUBLIC -fpermissive)
+    target_compile_options(architecture PRIVATE "/permissive-")
 endif()
