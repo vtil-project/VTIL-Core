@@ -8,7 +8,7 @@
 
   <p align="center">
     <a href="https://travis-ci.com/vtil-project/VTIL-Core">
-      <img src="https://img.shields.io/travis/vtil-project/vtil-core/master.svg?style=flat-square" alt="travis-ci"/>
+      <img src="https://img.shields.io/travis/com/vtil-project/vtil-core/master.svg?style=flat-square" alt="travis-ci"/>
     </a>
     <a href="https://github.com/vtil-project/vtil-core/blob/master/LICENSE.md">
       <img src="https://img.shields.io/github/license/vtil-project/vtil-core.svg?style=flat-square" alt="license"/>
@@ -23,17 +23,16 @@
 # Introduction
 
 ## 1) What is VTIL?
-VTIL Project, Virtual-machine Translation Intermediate Language, is a set of tools that can be used for binary deobfuscation and devirtualization. 
 
-Main difference between VTIL and other optimizing compilers such as LLVM is that it has an extremely versatile IL that makes it trivial to lift from any architecture including stack machines. Since it is built for translation, the IL does not completely abstract away the original ISA and keeps the concept of a stack, physical registers and non-SSA architecture as is. 
+VTIL Project, standing for Virtual-machine Translation Intermediate Language, is a set of tools designed to be used for binary deobfuscation and devirtualization.
 
-Physical registers and stack can be used freely with VTIL instructions while still having infinite temporaries to use during code generation. It is also possible to emit native instructions in the middle of the IL stream.
+Main difference between VTIL and other optimizing compilers such as LLVM is that it has an extremely versatile IL that makes it trivial to lift from any architecture including stack machines. Since it is built for translation, VTIL does not abstract away the native ISA and keeps the concept of a stack, physical registers and non-SSA architecture as is. Native instructions can be emitted in the middle of the IL stream and the physical registers can be addressed from VTIL instructions freely.
 
 VTIL also makes it trivial to emit code back into the native format at any virtual address requested without being contrained to a specific file format.
 
 ## 2) What is this repostiory?
 
-This repository contains the core components of the VTIL Project used across the VTIL toolchain.
+This repository contains the core components of the VTIL Project used across the toolchain.
 
 It is currently incomplete as initial release is not done yet, and documentation and FAQ will be within this repository and the organization website once they're done.
 
