@@ -4,19 +4,20 @@
     <img width="256" heigth="256" src="https://vtil.org/logo.png">
   </a>  
 
-  <h1>VTIL</h1>
+  <h1 align="center">VTIL</h1>
 
-  <div>
+  <p align="center">
     <a href="https://travis-ci.org/vtil-project/vtil-core">
-      <img src="https://img.shields.io/travis/vtil-project/vtil-core/master.svg?style=flat-square" alt="travis-ci" />
+      <img src="https://img.shields.io/travis/vtil-project/vtil-core/master.svg?style=flat-square" alt="travis-ci"/>
     </a>
     <a href="https://github.com/vtil-project/vtil-core/blob/master/LICENSE.md">
-      <img src="https://img.shields.io/github/license/vtil-project/vtil-core.svg?colorB=f48041&style=flat-square" alt="license" />
+      <img src="https://img.shields.io/github/license/vtil-project/vtil-core.svg?style=flat-square" alt="license"/>
     </a>
-  </div>
+  </p>
 
-  <p>Virtual-machine Translation Intermediate Language</p>
-  
+  <p align="center">
+    Virtual-machine Translation Intermediate Language
+  </p>
 </p>
 
 # Introduction
