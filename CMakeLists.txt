@@ -7,10 +7,29 @@ project(VTIL)
 # Append the CMake module search path so we can use our own modules
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/cmake)
 
-# Suppress unsafe warnings on MSVC
-if(MSVC)
-    add_definitions(/D_CRT_SECURE_NO_WARNINGS)
+# For portability on non-MSVC compilers, add some compile options
+if (CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
+    add_compile_options(-Wno-narrowing)
+
+    # GCC-only flags
+    if(CMAKE_CXX_COMPILER_ID MATCHES "GNU")
+        add_compile_options(-Wvolatile)
+        add_compile_options(-fpermissive)
+    endif()
 endif()
+
+
+
+if(MSVC)
+    # Supress CRT security warnings
+    add_definitions(/D_CRT_SECURE_NO_WARNINGS)
+    # -fpermissive MSVC equivalent
+    add_compile_options(/permissive-)
+endif()
+
+# Set default C++ standard to C++20
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED true)
 
 # Resolve external dependencies
 # This should automatically pull in Capstone & Keystone as CMake linkable libraries
