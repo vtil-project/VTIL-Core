@@ -1,5 +1,5 @@
-# Require at least CMake version 3.11 or later
-cmake_minimum_required(VERSION 3.11)
+# Require at least CMake version 3.15 or later for FetchContent
+cmake_minimum_required(VERSION 3.14.5)
 
 # Define the VTIL project
 project(VTIL)
@@ -10,6 +10,12 @@ list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/cmake)
 # For portability on non-MSVC compilers, add some compile options
 if (CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
     add_compile_options(-Wno-narrowing)
+
+    # Clang-only flags
+    if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+        # Use libc++ if compiling C++
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++20 -stdlib=libc++")
+    endif()
 
     # GCC-only flags
     if(CMAKE_CXX_COMPILER_ID MATCHES "GNU")
