@@ -10,5 +10,15 @@ before_script:
   - cd build
   - cmake -D CMAKE_CXX_COMPILER=g++-10 -D CMAKE_C_COMPILER=gcc-10 ..
 
+
+addons:
+  apt:
+    sources:
+    - sourceline: 'ppa:ubuntu-toolchain-r/test'
+    packages:
+    - cmake
+    - gcc-10
+    - g++-10
+    
 script:
   - cmake --build . --config Release
