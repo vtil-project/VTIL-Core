@@ -11,6 +11,11 @@ list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/cmake)
 if (CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
     add_compile_options(-Wno-narrowing)
 
+    # Clang-only flags
+    if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+        add_compile_options(-stdlib=libc++)
+    endif()
+
     # GCC-only flags
     if(CMAKE_CXX_COMPILER_ID MATCHES "GNU")
         add_compile_options(-Wvolatile)
