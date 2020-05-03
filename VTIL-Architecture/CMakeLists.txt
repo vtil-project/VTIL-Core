@@ -14,12 +14,13 @@ target_link_libraries(architecture common)
 set_property(TARGET architecture PROPERTY CXX_STANDARD 20)
 set_property(TARGET architecture PROPERTY CXX_STANDARD_REQUIRED ON)
 
-# For portability on non-MSVC compilers, disable volatile warnings
-if (CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR CMAKE_CXX_COMPILER_ID MATCHES "GNU")
-    target_compile_options(architecture PRIVATE "-Wvolatile")
-endif()
-
-# Add -fpermissive on MSVC
-if (CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
-    target_compile_options(architecture PRIVATE "/permissive-")
+# For portability on non-MSVC compilers, disable volatile warnings and allow type narrowing on Clang.
+# Fix the bugs on MSVC with -fpermissive.
+#
+if (CMAKE_CXX_COMPILER_ID MATCHES "GNU")
+    string(APPEND CMAKE_CXX_FLAGS "-Wno-volatile")
+elseif (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    string(APPEND CMAKE_CXX_FLAGS " -Wno-c++11-narrowing -Wno-deprecated-volatile")
+elseif (CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
+    string(APPEND CMAKE_CXX_FLAGS " /permissive-")
 endif()
