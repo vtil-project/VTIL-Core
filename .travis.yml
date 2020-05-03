@@ -9,10 +9,6 @@ dist: bionic
 before_script:
   - mkdir build
   - cd build
-
-  # Remove default version of cmake
-  - sudo DEBIAN_FRONTEND=noninteractive apt-get -yq remove cmake
-
   
   # Install latest CMake from Kitware
   - sudo DEBIAN_FRONTEND=noninteractive apt-get -yq  install apt-transport-https ca-certificates gnupg software-properties-common wget
@@ -29,10 +25,10 @@ before_script:
   - CCX=/usr/bin/clang++-10
 
   # Run CMake generator
-  - cmake --version # print so we can see which version travis is using
-  - cmake -D CMAKE_C_COMPILER=/usr/bin/clang-10 -D CMAKE_CXX_COMPILER=/usr/bin/clang++-10 ..
+  - /usr/bin/cmake --version # print so we can see which version travis is using
+  - /usr/bin/cmake -D CMAKE_C_COMPILER=/usr/bin/clang-10 -D CMAKE_CXX_COMPILER=/usr/bin/clang++-10 ..
 
 
 
 script:
-  - cmake --build .
+  - /usr/bin/cmake --build .
