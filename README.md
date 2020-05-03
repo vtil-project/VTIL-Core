@@ -7,7 +7,7 @@
   <h1 align="center">VTIL</h1>
 
   <p align="center">
-    <a href="https://travis-ci.org/vtil-project/vtil-core">
+    <a href="https://travis-ci.com/vtil-project/VTIL-Core">
       <img src="https://img.shields.io/travis/vtil-project/vtil-core/master.svg?style=flat-square" alt="travis-ci"/>
     </a>
     <a href="https://github.com/vtil-project/vtil-core/blob/master/LICENSE.md">
