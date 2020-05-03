@@ -1,24 +1,25 @@
 language: cpp
 
 compiler:
-  - gcc
+  - clang
 
 os: linux
 
 before_script:
   - mkdir build
   - cd build
-  - cmake -D CMAKE_CXX_COMPILER=g++-10 -D CMAKE_C_COMPILER=gcc-10 ..
-
-
-addons:
-  apt:
-    sources:
-    - sourceline: 'ppa:ubuntu-toolchain-r/test'
-    packages:
-    - cmake
-    - gcc-10
-    - g++-10
+  
+  - sudo mkdir /opt/cmake-3.17
+  - sudo wget https://github.com/Kitware/CMake/releases/download/v3.17.2/cmake-3.17.2-Linux-x86_64.sh -O cmake-3.17.sh
+  - sudo sh cmake-3.17.sh --prefix=/opt/cmake-3.17 --skip-license
+  - sudo ln -s /opt/cmake-3.17/bin/cmake /usr/local/bin/cmake-3.17
+  - cmake-3.17 --version
+  
+  - sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y
+  - sudo apt-get update -y
+  - sudo bash -c "$(wget -O - https://apt.llvm.org/llvm.sh)"
     
+  - cmake-3.17 -D CMAKE_C_COMPILER=clang-10 -D CMAKE_CXX_COMPILER=clang++-10 ..
+
 script:
-  - cmake --build . --config Release
+  - cmake-3.17 --build .
