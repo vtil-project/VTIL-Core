@@ -74,9 +74,43 @@ namespace vtil::symbolic
 		//
 		if ( value.size() == new_size ) return *this;
 
-		// If boolean requested, signed cast is not valid.
+		// Try to convert signed casts into unsigned ones:
 		//
-		if ( new_size == 1 ) signed_cast = false;
+		if ( signed_cast )
+		{
+			// If result is a boolean or is smaller than current value, sign is irrelevant:
+			//
+			if ( new_size == 1 || new_size < value.size() )
+			{
+				signed_cast = false;
+			}
+			// If high bit is known zero:
+			//
+			else if ( value.at( value.size() - 1 ) == math::bit_state::zero )
+			{
+				signed_cast = false;
+			}
+			/*// If high bit is known one:
+			//
+			else if ( value.at( value.size() - 1 ) == math::bit_state::one )
+			{
+				// Extend the sign bit.
+				//
+				uint64_t sign_mask = math::fill( 64, value.size() );
+
+				// Perform unsigned cast.
+				//
+				resize( new_size, false );
+
+				// Apply the extended sign bit.
+				//
+				*this = *this | sign_mask;
+
+				// Return the resulting expression.
+				//
+				return *this;
+			}*/
+		}
 
 		switch ( op )
 		{
@@ -87,6 +121,67 @@ namespace vtil::symbolic
 				{
 					value = value.resize( new_size, signed_cast );
 				}
+				else
+				{
+					if ( signed_cast )
+						*this = __cast( *this, new_size );
+					else
+						*this = __ucast( *this, new_size );
+				}
+				break;
+
+			// If rotation, unpack into two shifts if non-zero constant rotation and operation is not signed:
+			//
+			case math::operator_id::rotate_left:
+				if ( rhs->is_constant() && rhs->known_one() != 0 && !signed_cast )
+				{
+					*this = ( ( lhs << rhs ).resize( new_size ) | ( lhs >> ( lhs->size() - rhs ) ).resize( new_size ) );
+				}
+				else
+				{
+					if ( signed_cast )
+						*this = __cast( *this, new_size );
+					else
+						*this = __ucast( *this, new_size );
+				}
+				break;
+			case math::operator_id::rotate_right:
+				if ( rhs->is_constant() && rhs->known_one() != 0 && !signed_cast )
+				{
+					*this = ( ( lhs >> rhs ).resize( new_size ) | ( lhs << ( lhs->size() - rhs ) ).resize( new_size ) );
+				}
+				else
+				{
+					if ( signed_cast )
+						*this = __cast( *this, new_size );
+					else
+						*this = __ucast( *this, new_size );
+				}
+				break;
+
+			// If bitshift, propagate if zero extension:
+			//
+			case math::operator_id::shift_left:
+			case math::operator_id::shift_right:
+				// If zero extend[!]:
+				//
+				if( !signed_cast && new_size > value.size() )
+				{
+					// Calculate the original result mask.
+					//
+					expression mask = { expression{ value.value_mask(), new_size }, this->op, rhs };
+
+					// Resize shifted expression and update self.
+					//
+					( +lhs )->resize( new_size, false );
+					update( false );
+
+					// Mask the result.
+					//
+					*this = *this & mask;
+				}
+				// Otherwise nothing else to do.
+				//
 				else
 				{
 					if ( signed_cast )

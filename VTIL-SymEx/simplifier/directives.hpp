@@ -116,7 +116,7 @@ namespace vtil::symbolic::directive
         { (A>>B)|(A<<C),                                      __iff(C==(__bcnt(A)-B), __rotr(A,B)) },
         { (A<<B)|(A>>C),                                      __iff(C==(__bcnt(A)-B), __rotl(A,B)) },
                                                               
-        // Drop unnecessary extension.                        
+        // Drop unnecessary casts.                        
         //                                                    
         { __ucast(A,B),                                       __iff(__bcnt(A)==B, A) },
         { __cast(A,B),                                        __iff(__bcnt(A)==B, A) },
@@ -129,26 +129,21 @@ namespace vtil::symbolic::directive
         { __cast(A,B)<<U,                                     __iff(U>((B*8)-__bcnt(A)), __ucast(A,B)<<U) },
                                                               
                                                               
-        // Simplify AND OR NOT combinations.                  
+        // Simplify AND/OR/NOT combinations.                  
         //                                                    
         { (~A)&(~B),                                          ~(A|B) },
         { (~A)|(~B),                                          ~(A&B) },
         { ~(U&A),                                             !(~U)|s(~A) },
         { ~(U|A),                                             !(~U)&s(~A) },
+        { (A&B)|(A&C),                                        A&(B|C) },
+        { (A|B)&(A|C),                                        A|(B&C) },
                                                               
         // Reduce ANDs & ORs.                                 
-        //                                                    
-        { U&A,                                                __iff((U&__mask_knw0(A))!=0, !(U&~( __mask_knw0(A)))&A) },
-        { U&A,                                                __iff(U==(__mask_unk(A)|__mask_knw1(A)), A) },
-        { U|A,                                                __iff((U&__mask_knw1(A))!=0, (U&!(__mask_unk(A)|__mask_knw0(A)))|A) },
-        //{ U|A,                                                __iff(U&__mask_unk(A),  U|!(A&s(~U))) },
-
-        // Clear inverse AND combinations via OR.
         //
-        { (A&U)|(A&C),                                        __iff( (U|C)==__mask(A),  A) },
-        { (A&U)|(A&C),                                        __iff( (U|C)==0xFF,       __ucast(A, 8)) },
-        { (A&U)|(A&C),                                        __iff( (U|C)==0xFFFF,     __ucast(A, 16)) },
-        { (A&U)|(A&C),                                        __iff( (U|C)==0xFFFFFFFF, __ucast(A, 32)) },
+        { A|B,                                                __iff((__mask_knw1(A)&__mask_unk(B))!=0, A|!(B&!(~__mask_knw1(A))))},
+        { A&B,                                                __iff((__mask_knw0(A)&~__mask_knw0(B))!=0, A&!(B&!(~__mask_knw0(A))))},
+        { U|B,                                                __iff(U==(__mask_knw1(B)), B) },
+        { U&B,                                                __iff(U==(__mask_unk(B)|__mask_knw1(B)), B) },
     };
 
     // Describes the way operands of two operators join each other. 
@@ -159,7 +154,7 @@ namespace vtil::symbolic::directive
         // TODO: Should we add ADD and SUB to bitwise despite the partial evaluator?
         // TODO: NOT/XOR, Not really necessary since inverse is always described?
         // TODO: Arithmetic operators in general, */% etc.
-        
+
         // AND:
         //
         { A&(B&C),                                            s(!(A&B)&!(A&C)) },

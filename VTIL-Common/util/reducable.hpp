@@ -116,7 +116,7 @@ namespace vtil
     public:
         // Define basic comparison operators using std::tuple.
         //
-        template<std::enable_if_t<flags &reducable_equ, int> = 0>
+        template<std::enable_if_t<flags&reducable_equ, int> = 0>
         auto operator==( const T& other ) const { return reduce_proxy( ( T& ) *this ) == reduce_proxy( other ); }
         template<std::enable_if_t<flags&reducable_nequ, int> = 0>
         auto operator!=( const T& other ) const { return reduce_proxy( ( T& ) *this ) != reduce_proxy( other ); }
