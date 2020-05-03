@@ -30,6 +30,13 @@ FetchDep(Keystone "https://github.com/keystone-engine/keystone.git")
 get_target_property(Capstone_SOURCE_DIR capstone-static SOURCE_DIR)
 set_property(TARGET capstone-static PROPERTY INTERFACE_INCLUDE_DIRECTORIES ${Capstone_SOURCE_DIR}/include)
 
+
 get_target_property(Keystone_SOURCE_DIR keystone SOURCE_DIR)
 get_target_property(Keystone_INCLUDE_DIRS keystone INCLUDE_DIRECTORIES)
 set_property(TARGET keystone PROPERTY INTERFACE_INCLUDE_DIRECTORIES ${Keystone_INCLUDE_DIRS} ${Keystone_SOURCE_DIR}/include)
+
+# Downgrade C++ standard on these targets since they depend on some removed/deprecated features
+set_property(TARGET capstone-static PROPERTY CXX_STANDARD 11)
+set_property(TARGET capstone-static PROPERTY CXX_STANDARD_REQUIRED ON)
+set_property(TARGET keystone PROPERTY CXX_STANDARD 11)
+set_property(TARGET keystone PROPERTY CXX_STANDARD_REQUIRED ON)
