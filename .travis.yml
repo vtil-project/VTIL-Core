@@ -10,6 +10,7 @@ before_script:
   - cd build
   - sudo apt install software-properties-common -y
   - sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y
+  - sudo apt-get update -y
   - sudo apt install gcc-10 g++-10 -y
   - cmake -D CMAKE_CXX_COMPILER=g++-10 -D CMAKE_C_COMPILER=gcc-10 ..
 
