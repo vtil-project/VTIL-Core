@@ -13,7 +13,8 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
 
     # Clang-only flags
     if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-        add_compile_options(-stdlib=libc++)
+        # Use libc++ if compiling C++
+        add_compile_options($<$<COMPILE_LANGUAGE:CXX>:-stdlib=libc++ $<$<COMPILE_LANGUAGE:CXX>:-lc++abi)
     endif()
 
     # GCC-only flags
