@@ -9,9 +9,9 @@ before_script:
   - mkdir build
   - cd build
   
-  - wget https://github.com/Kitware/CMake/releases/download/v3.17.2/cmake-3.17.2-Linux-x86_64.sh
   - sudo mkdir /opt/cmake-3.17
-  - sudo ./cmake-3.17.2-Linux-x86_64.sh --prefix=/opt/cmake-3.17 --skip-license
+  - sudo wget https://github.com/Kitware/CMake/releases/download/v3.17.2/cmake-3.17.2-Linux-x86_64.sh -O cmake-3.17.sh
+  - sudo sh cmake-3.17.sh --prefix=/opt/cmake-3.17 --skip-license
   - sudo ln -s /opt/cmake-3.17/bin/cmake /usr/local/bin/cmake-3.17
   - cmake-3.17 --version
   
