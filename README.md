@@ -1,4 +1,4 @@
-<p style="text-align:center;">
+<p align="center">
 
   <a href="https://www.vtil.org/">
     <img width="256" heigth="256" src="https://vtil.org/logo.png">
