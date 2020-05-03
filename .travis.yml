@@ -15,7 +15,7 @@ before_script:
   - wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc 2>/dev/null | gpg --dearmor - | sudo tee /etc/apt/trusted.gpg.d/kitware.gpg >/dev/null
   - sudo apt-add-repository 'deb https://apt.kitware.com/ubuntu/ bionic main'
   - sudo DEBIAN_FRONTEND=noninteractive apt-get -yq update
-  - sudo DEBIAN_FRONTEND=noninteractive apt-get -yq install cmake=3.17.2-0kitware1 # force Travis to use a later version of CMake and fail build if not achievable
+  - sudo DEBIAN_FRONTEND=noninteractive apt-get -yq install cmake
 
   # Install latest LLVM from LLVM repository
   - sudo bash -c "$(wget -O - https://apt.llvm.org/llvm.sh)"
