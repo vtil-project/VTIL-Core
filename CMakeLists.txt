@@ -1,5 +1,5 @@
-# Require at least CMake version 3.11 or later
-cmake_minimum_required(VERSION 3.11)
+# Require at least CMake version 3.15 or later for FetchContent
+cmake_minimum_required(VERSION 3.14.5)
 
 # Define the VTIL project
 project(VTIL)
