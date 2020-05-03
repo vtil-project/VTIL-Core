@@ -50,7 +50,10 @@ namespace vtil::symbolic::directive
         match_expression,
         
         // Must be anything but a full-expression.
-        match_variable_or_constant,
+        match_non_expression,
+
+        // Must be anything but a constant (including those that are not folded into a constant yet).
+        match_non_constant,
     };
 
     // Directive operators
@@ -210,7 +213,7 @@ namespace vtil::symbolic::directive
        Used names are kept track using the table below:
        -------------------------------------------------------
        | Free                                     | Used     |
-       | ΑΝνΒΞξΓγΟοΔπΕΡρΖζσςΗηΤτΥυΙιΦφΚκΧχΛλΨψΜμω | ΠΣΘΩαβδε |
+       | ΑΝνΒΞξΓγΟοΔπΕΡρΖζσςΗηΤτΥυΙιΦφΚκΧχΛλψΜμω  | ΠΣΘΩαβδεΨ |
        -------------------------------------------------------
     */
 
@@ -225,8 +228,9 @@ namespace vtil::symbolic::directive
     // 
     static const instance V = { "Π", 4, match_variable };
     static const instance U = { "Σ", 5, match_constant };
-    static const instance X = { "Θ", 6, match_variable_or_constant };
-    static const instance Q = { "Ω", 7, match_expression };
+    static const instance Q = { "Ω", 6, match_expression };
+    static const instance W = { "Ψ", 7, match_non_constant };
+    static const instance X = { "Θ", 8, match_non_expression };
 
     // To avoid string comparison each directive variable gets assigned a 
     // lookup table index. Maximum index is an arbitrary constant to avoid heap 

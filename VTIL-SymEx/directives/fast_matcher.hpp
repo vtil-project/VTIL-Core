@@ -36,7 +36,7 @@ namespace vtil::symbolic::directive
 	//
 	struct symbol_table_t
 	{
-		expression::reference lookup_table[ max_lookup_index ];
+		expression::reference lookup_table[ max_lookup_index + 1 ];
 
 		// Adds the mapping of a variable to an expression.
 		//
@@ -54,7 +54,8 @@ namespace vtil::symbolic::directive
 					case match_variable:               if ( !exp->is_variable() )   return false;     break;
 					case match_constant:               if ( !exp->is_constant() )   return false;     break;
 					case match_expression:             if ( !exp->is_expression() ) return false;     break;
-					case match_variable_or_constant:   if ( exp->is_expression() )  return false;     break;
+					case match_non_constant:           if ( !exp->unknown_mask() )  return false;     break;
+					case match_non_expression:         if ( exp->is_expression() )  return false;     break;
 					default: unreachable();
 				}
 
