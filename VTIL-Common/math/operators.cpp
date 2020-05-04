@@ -410,15 +410,15 @@ namespace vtil::math
             //
             // ####################################################################################################################################
             case operator_id::ucast:
-                // Get new size from RHS as constant, and resize as vector of size size *8.
+                // Get new size from RHS as constant, and resize LHS to be of size [RHS] with zero extension if relevant.
                 //
-                if ( auto new_size = rhs.get() )  return bit_vector( lhs ).resize( *new_size * 8, false );
+                if ( auto new_size = rhs.get() )  return bit_vector( lhs ).resize( *new_size, false );
                 else                              unreachable();
 
             case operator_id::cast:
-                // Get new size from RHS as constant, and resize as vector of size size *8 with sign extension.
+                // Get new size from RHS as constant, and resize LHS to be of size [RHS] with sign extension if relevant.
                 //
-                if ( auto new_size = rhs.get() )  return bit_vector( lhs ).resize( *new_size * 8, true );
+                if ( auto new_size = rhs.get() )  return bit_vector( lhs ).resize( *new_size, true );
                 else                              unreachable();
 
             case operator_id::popcnt:
