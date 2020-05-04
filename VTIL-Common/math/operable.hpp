@@ -67,16 +67,16 @@ namespace vtil::math
         template<typename type>
         std::optional<type> get() const { return value.get<type>(); }
         template<bool as_signed = false, typename type = std::conditional_t<as_signed, int64_t, uint64_t>>
-        inline std::optional<type> get() const { return value.get<type>(); }
+        std::optional<type> get() const { return value.get<type>(); }
 
         // Redirect certain helpers to bit_vector.
         //
-        inline bitcnt_t size() const { return value.size(); }
-        inline uint64_t known_mask() const { return value.known_mask(); }
-        inline uint64_t unknown_mask() const { return value.unknown_mask(); }
-        inline uint64_t known_one() const { return value.known_one(); }
-        inline uint64_t known_zero() const { return value.known_zero(); }
-        inline bool is_constant() const { return value.is_known(); }
+        bitcnt_t size() const { return value.size(); }
+        uint64_t known_mask() const { return value.known_mask(); }
+        uint64_t unknown_mask() const { return value.unknown_mask(); }
+        uint64_t known_one() const { return value.known_one(); }
+        uint64_t known_zero() const { return value.known_zero(); }
+        bool is_constant() const { return value.is_known(); }
 
         // Resizes the constant, must be overriden by the base type to handle unknowns.
         //

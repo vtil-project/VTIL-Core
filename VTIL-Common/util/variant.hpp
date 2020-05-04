@@ -176,8 +176,8 @@ namespace vtil
 
 		// Variant does not have a value if the copy field is null.
 		//
-		inline bool has_value() const { return copy_fn != nullptr; }
-		inline operator bool() const { return has_value(); }
+		bool has_value() const { return copy_fn != nullptr; }
+		operator bool() const { return has_value(); }
 
 		// Gets the address of the object with the given properties.
 		// - Will throw assert failure if the variant is empty.
@@ -221,7 +221,7 @@ namespace vtil
 		//   is empty and will return nullopt instead.
 		//
 		template<typename T>
-		inline std::optional<T> as() const { return has_value() ? std::optional{ get<T>() } : std::nullopt; }
+		std::optional<T> as() const { return has_value() ? std::optional{ get<T>() } : std::nullopt; }
 
 		// Deletes the currently stored variant.
 		//

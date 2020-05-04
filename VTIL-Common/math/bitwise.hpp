@@ -199,17 +199,17 @@ namespace vtil::math
 
         // Some helpers to access the internal state.
         //
-        inline uint64_t value_mask() const { return fill( bit_count ); }
-        inline uint64_t unknown_mask() const { return unknown_bits; }
-        inline uint64_t known_mask() const { return fill( bit_count ) & ~unknown_bits; }
-        inline uint64_t known_one() const { return known_bits; }
-        inline uint64_t known_zero() const { return ~( unknown_bits | known_bits ); }
-        inline bool all_zero() const { return unknown_bits == 0 && !known_bits; }
-        inline bool all_one() const { return unknown_bits == 0 && ( known_bits == fill( bit_count ) ); }
-        inline bool is_valid() const { return bit_count != 0; }
-        inline bool is_known() const { return bit_count && unknown_bits == 0; }
-        inline bool is_unknown() const { return !bit_count || unknown_bits != 0; }
-        inline bitcnt_t size() const { return bit_count; }
+        uint64_t value_mask() const { return fill( bit_count ); }
+        uint64_t unknown_mask() const { return unknown_bits; }
+        uint64_t known_mask() const { return fill( bit_count ) & ~unknown_bits; }
+        uint64_t known_one() const { return known_bits; }
+        uint64_t known_zero() const { return ~( unknown_bits | known_bits ); }
+        bool all_zero() const { return unknown_bits == 0 && !known_bits; }
+        bool all_one() const { return unknown_bits == 0 && ( known_bits == fill( bit_count ) ); }
+        bool is_valid() const { return bit_count != 0; }
+        bool is_known() const { return bit_count && unknown_bits == 0; }
+        bool is_unknown() const { return !bit_count || unknown_bits != 0; }
+        bitcnt_t size() const { return bit_count; }
 
         // Gets the value represented, and nullopt if vector has unknown bits.
         //
@@ -226,7 +226,7 @@ namespace vtil::math
             return std::nullopt;
         }
         template<bool as_signed = false, typename type = std::conditional_t<as_signed, int64_t, uint64_t>>
-        inline std::optional<type> get() const { return get<type>(); }
+        std::optional<type> get() const { return get<type>(); }
 
         // Extends or shrinks the the vector.
         //
@@ -258,7 +258,7 @@ namespace vtil::math
             if ( unknown_bits & ( 1ull << n ) ) return bit_state::unknown;
             return bit_state( ( ( ( known_bits >> n ) & 1 ) << 1 ) - 1 );
         }
-        inline bit_state operator[]( bitcnt_t n ) const { return at( n ); }
+        bit_state operator[]( bitcnt_t n ) const { return at( n ); }
 
         // Conversion to human-readable format.
         //

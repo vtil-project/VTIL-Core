@@ -104,7 +104,7 @@ namespace vtil
 
 		// Returns whether the descriptor is valid or not.
 		//
-		inline bool is_valid() const 
+		bool is_valid() const 
 		{ 
 			// Validate bit count and offset.
 			//
@@ -128,14 +128,14 @@ namespace vtil
 
 		// Simple helpers to determine some properties.
 		// 
-		inline bool is_flags() const { return flags & register_flags; }
-		inline bool is_local() const { return flags & register_local; }
-		inline bool is_global() const { return ( ~flags ) & register_local; }
-		inline bool is_virtual() const { return ( ~flags ) & register_physical; }
-		inline bool is_physical() const { return flags & register_physical; }
-		inline bool is_volatile() const { return flags & register_volatile; }
-		inline bool is_read_only() const { return flags & register_readonly; }
-		inline bool is_stack_pointer() const { return flags & register_stack_pointer; }
+		bool is_flags() const { return flags & register_flags; }
+		bool is_local() const { return flags & register_local; }
+		bool is_global() const { return ( ~flags ) & register_local; }
+		bool is_virtual() const { return ( ~flags ) & register_physical; }
+		bool is_physical() const { return flags & register_physical; }
+		bool is_volatile() const { return flags & register_volatile; }
+		bool is_read_only() const { return flags & register_readonly; }
+		bool is_stack_pointer() const { return flags & register_stack_pointer; }
 
 		// Returns the mask for the bits that this register's value would occupy in a 64-bit register.
 		//

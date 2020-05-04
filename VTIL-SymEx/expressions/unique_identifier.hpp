@@ -188,12 +188,12 @@ namespace vtil::symbolic
 
 		// Cast to bool checks if valid or not.
 		//
-		inline operator bool() const { return ( bool ) value; }
+		operator bool() const { return ( bool ) value; }
 
 		// Simple comparison operators.
 		//
 		bool operator==( const unique_identifier& o ) const;
 		bool operator<( const unique_identifier& o ) const;
-		inline bool operator!=( const unique_identifier& o ) const { return !operator==( o ); }
+		bool operator!=( const unique_identifier& o ) const { return !operator==( o ); }
 	};
 };

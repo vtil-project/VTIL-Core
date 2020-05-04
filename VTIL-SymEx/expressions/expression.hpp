@@ -129,12 +129,12 @@ namespace vtil::symbolic
 
 		// Helpers to determine the type of the expression.
 		//
-		inline bool is_variable() const { return uid; }
-		inline bool is_expression() const { return op != math::operator_id::invalid; }
-		inline bool is_unary() const { return is_expression() && get_op_desc()->operand_count == 1; }
-		inline bool is_binary() const { return is_expression() && get_op_desc()->operand_count == 2; }
-		inline bool is_valid() const { return is_expression() || is_variable() || is_constant(); }
-		inline operator bool() const { return is_valid(); }
+		bool is_variable() const { return uid; }
+		bool is_expression() const { return op != math::operator_id::invalid; }
+		bool is_unary() const { return is_expression() && get_op_desc()->operand_count == 1; }
+		bool is_binary() const { return is_expression() && get_op_desc()->operand_count == 2; }
+		bool is_valid() const { return is_expression() || is_variable() || is_constant(); }
+		operator bool() const { return is_valid(); }
 
 		// Returns the cached hash value to abide the standard vtil::hashable.
 		//
@@ -180,6 +180,16 @@ namespace vtil::symbolic
 		//   match the operators operands and uids one to one.
 		//
 		bool equals( const expression& other ) const;
+
+		// Enumerates the whole tree.
+		//
+		template<typename T>
+		void enumerate( const T& fn ) const
+		{
+			fn( *this );
+			if ( lhs ) fn( *lhs );
+			if ( rhs ) fn( *rhs );
+		}
 	};
 
 	// Boxed expression solves the aforementioned problem by creating a type that can be 
@@ -201,8 +211,8 @@ namespace vtil::symbolic
 
 		// Implement comparison operators.
 		//
-		inline bool operator==( const boxed_expression& o ) const { return is_identical( o ); }
-		inline bool operator!=( const boxed_expression& o ) const { return !is_identical( o ); }
-		inline bool operator<( const boxed_expression& o ) const { return hash() < o.hash(); }
+		bool operator==( const boxed_expression& o ) const { return is_identical( o ); }
+		bool operator!=( const boxed_expression& o ) const { return !is_identical( o ); }
+		bool operator<( const boxed_expression& o ) const { return hash() < o.hash(); }
 	};
 };

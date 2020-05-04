@@ -47,7 +47,7 @@ namespace vtil::query
 		struct _tag {};
 		constexpr explicit fixed_iterator_end_t( _tag ) {}
 	};
-	inline constexpr fixed_iterator_end_t fixed_iterator_end{ fixed_iterator_end_t::_tag{} };
+	static constexpr fixed_iterator_end_t fixed_iterator_end{ fixed_iterator_end_t::_tag{} };
 
 	// If vector entries are not pointers, they will be used to generate
 	// fake const_iterators mapping to each entry.
