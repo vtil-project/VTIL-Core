@@ -172,7 +172,7 @@ namespace vtil::math
         return { result & fill( bcnt_res ), bcnt_res };
     }
 
-    // Applies the specified operator [op] on left hand side [lhs] and right hand side [rhs] wher
+    // Applies the specified operator [op] on left hand side [lhs] and right hand side [rhs] where
     // input and output values are expressed in the format of bit-vectors with optional unknowns,
     // and no size constraints.
     //
