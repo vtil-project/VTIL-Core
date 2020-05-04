@@ -68,7 +68,7 @@ namespace vtil::query
 		// if not .end(), backwards otherwise.
 		//
 		query_desc() = default;
-		inline query_desc( iterator_type it, int8_t dir = 0 ) : iterator( it )
+		query_desc( iterator_type it, int8_t dir = 0 ) : iterator( it )
 		{
 			if ( it.is_end() && !it.is_begin() )
 				direction = dir != 0 ? dir : -1;
@@ -105,15 +105,25 @@ namespace vtil::query
 
 		// Invalidates current query.
 		//
-		inline void stop() { iterator = prev(); direction = 0; }
+		void stop() { iterator = prev(); direction = 0; }
 
 		// Value that next() processed previously.
 		//
-		inline iterator_type prev() const { return direction != +1 ? iterator : ( iterator.is_begin() ? iterator_type{} : std::prev( iterator ) ); }
+		iterator_type prev() const 
+		{ 
+			return direction != +1 
+				? iterator 
+				: ( iterator.is_begin() ? iterator_type{} : std::prev( iterator ) ); 
+		}
 
 		// Value that next() will process next.
 		//
-		inline iterator_type next() const { return direction != -1 ? iterator : ( iterator.is_begin() ? iterator_type{} : std::prev( iterator ) ); }
+		iterator_type next() const 
+		{ 
+			return direction != -1 
+				? iterator 
+				: ( iterator.is_begin() ? iterator_type{} : std::prev( iterator ) ); 
+		}
 
 		// Reverses the current query direction
 		//

@@ -220,16 +220,16 @@ namespace vtil
 
 		// Wrap the std::list fundamentals.
 		//
-		inline auto size() const { return stream.size(); }
-		inline iterator end() { return { this, stream.end() }; }
-		inline iterator begin() { return { this, stream.begin() }; }
-		inline const_iterator end() const { return { this, stream.end() }; }
-		inline const_iterator begin() const { return { this, stream.begin() }; }
+		auto size() const { return stream.size(); }
+		iterator end() { return { this, stream.end() }; }
+		iterator begin() { return { this, stream.begin() }; }
+		const_iterator end() const { return { this, stream.end() }; }
+		const_iterator begin() const { return { this, stream.begin() }; }
 
 		// Returns whether or not block is complete, a complete
 		// block ends with a branching instruction.
 		//
-		inline bool is_complete() const { return !stream.empty() && stream.back().base->is_branching(); }
+		bool is_complete() const { return !stream.empty() && stream.back().base->is_branching(); }
 		
 		// Constructor does not exist. Should be created either using
 		// ::begin(...) or ->fork(...).
@@ -249,7 +249,7 @@ namespace vtil
 		// Instruction pre-processor
 		//
 		void append_instruction( instruction&& ins );
-		inline void append_instruction( const instruction& ins ) { append_instruction( instruction{ ins } ); }
+		void append_instruction( const instruction& ins ) { append_instruction( instruction{ ins } ); }
 
 		// Lazy wrappers for every instruction
 		//

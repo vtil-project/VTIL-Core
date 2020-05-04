@@ -139,7 +139,7 @@ namespace vtil::math
 
         // Creates a string representation based on the operands passed.
         //
-        inline std::string to_string( const std::string& lhs, const std::string& rhs ) const
+        std::string to_string( const std::string& lhs, const std::string& rhs ) const
         {
             // If unary function:
             //
@@ -210,7 +210,10 @@ namespace vtil::math
         {    0,       false,    2,    false,          "u<",       "uless"       },
     };
     static_assert( std::size( descriptors ) == size_t( operator_id::max ), "Operator descriptor table is invalid." );
-    inline static const operator_desc* descriptor_of( operator_id id ) { return ( operator_id::invalid < id && id < operator_id::max ) ? &descriptors[ ( size_t ) id ] : nullptr; }
+    static const operator_desc* descriptor_of( operator_id id ) 
+    { 
+        return ( operator_id::invalid < id && id < operator_id::max ) ? &descriptors[ ( size_t ) id ] : nullptr; 
+    }
 
     // Operators that return bit-indices, always use the following size.
     //
@@ -219,7 +222,7 @@ namespace vtil::math
     // Before operators return their result, the result size is always
     // rounded up to either 1, 8, 16, 32 or 64 (where available).
     //
-    inline static constexpr bitcnt_t round_bit_count( bitcnt_t n )
+    static constexpr bitcnt_t round_bit_count( bitcnt_t n )
     {
         if ( n > 32 )      return 64;
         else if ( n > 16 ) return 32;

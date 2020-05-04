@@ -61,7 +61,9 @@ namespace vtil::amd64
 		//
 		uint8_t size;
 
-		inline operator std::tuple<x86_reg, uint8_t, uint8_t>() { return { base_register, offset, size }; }
+		// Cast to tuple for structured binding.
+		//
+		operator std::tuple<x86_reg, uint8_t, uint8_t>() { return { base_register, offset, size }; }
 	};
 
 	// Gets the offset<0> and size<1> of the mapping for the given register.

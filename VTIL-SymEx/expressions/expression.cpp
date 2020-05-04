@@ -159,26 +159,36 @@ namespace vtil::symbolic
 				}
 				break;
 
-			// If bitshift, propagate if zero extension:
+			// If bitshift, propagate where possible:
 			//
 			case math::operator_id::shift_left:
+				// If we're shrinking the result:
+				// - Cannot be handled for shift right.
+				//
+				if ( new_size < value.size() )
+				{
+					// Resize shifted expression and break.
+					//
+					( +lhs )->resize( new_size, false );
+					break;
+				}
 			case math::operator_id::shift_right:
-				// If zero extend[!]:
+				// If we're zero-extending the result:
 				//
 				if( !signed_cast && new_size > value.size() )
 				{
-					// Calculate the original result mask.
+					// Calculate the original result's mask.
 					//
-					expression mask = { expression{ value.value_mask(), new_size }, this->op, rhs };
+					expression mask = { value.value_mask(), new_size };
 
-					// Resize shifted expression and update self.
+					// Resize shifted expression and update it.
 					//
 					( +lhs )->resize( new_size, false );
-					update( false );
+					update( true );
 
 					// Mask the result.
 					//
-					*this = *this & mask;
+					*this = expression::make( *this, math::operator_id::bitwise_and, mask );
 				}
 				// Otherwise nothing else to do.
 				//
