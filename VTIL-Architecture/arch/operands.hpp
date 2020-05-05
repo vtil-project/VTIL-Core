@@ -29,7 +29,7 @@
 #include <string>
 #include <vtil/math>
 #include <vtil/utility>
-#include <optional>
+#include <variant>
 #include "register_desc.hpp"
 
 namespace vtil
@@ -62,7 +62,8 @@ namespace vtil
 
 			// Replicate default constructor, skipping the reducable base.
 			//
-			immediate_t( uint64_t u64 = 0, bitcnt_t bit_count = 0 )
+			immediate_t() {}
+			immediate_t( uint64_t u64, bitcnt_t bit_count )
 				: u64( u64 ), bit_count( bit_count ) {}
 
 			// Declare reduction.
@@ -72,11 +73,11 @@ namespace vtil
 
 		// Descriptor of this operand.
 		//
-		std::variant<immediate_t, register_t> descriptor;
+		std::variant<immediate_t, register_t> descriptor = {};
 
 		// Default constructor / move / copy.
 		//
-		operand() = default;
+		operand()  {}
 		operand( operand&& ) = default;
 		operand( const operand& ) = default;
 		operand& operator=( operand&& ) = default;
