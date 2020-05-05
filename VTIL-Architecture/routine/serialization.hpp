@@ -182,5 +182,10 @@ namespace vtil
 	//
 	void serialize( std::ostream& out, const instruction& in );
 	void deserialize( std::istream& in, instruction& out );
+
+	// Serialization of VTIL operands.
+	//
+	void serialize( std::ostream& out, const operand& in );
+	void deserialize( std::istream& in, operand& out );
 };
 #pragma warning(default:4267)
