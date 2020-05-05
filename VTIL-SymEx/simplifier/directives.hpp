@@ -123,7 +123,6 @@ namespace vtil::symbolic::directive
         //{ __ucast(A,B)<<U,                                    __iff((__mask(A)<<U)==0, 0) },              [Removed as partial evaluator will take care of this]
         { __cast(A,B)<<U,                                     __iff(U>((B*8)-__bcnt(A)), __ucast(A,B)<<U) },
 
-
         // Simplify AND/OR/NOT combinations.
         //
         { (~A)&(~B),                                          ~(A|B) },

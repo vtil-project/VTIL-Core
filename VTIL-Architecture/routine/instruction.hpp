@@ -130,6 +130,6 @@ namespace vtil
 
 		// Declare reduction.
 		//
-		auto reduce() { return std::tie( base->name, vip, operands, sp_offset, sp_index, sp_reset, explicit_volatile ); }
+		auto reduce() { return reference_as_tuple( base->name, vip, operands, sp_offset, sp_index, sp_reset, explicit_volatile ); }
 	};
 };

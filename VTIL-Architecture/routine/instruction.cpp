@@ -95,13 +95,13 @@ namespace vtil
 		{
 			// Fetch and validate memory operands pair.
 			//
-			const register_desc& mem_base = operands[ base->memory_operand_index ].reg;
+			const register_desc& mem_base = operands[ base->memory_operand_index ].reg();
 			const operand& mem_offset = operands[ base->memory_operand_index + 1 ];
 
 			if ( !base->memory_write && ( access == operand_access::read || access == operand_access::invalid ) )
-				return { mem_base, mem_offset.imm.i64 };
+				return { mem_base, mem_offset.imm().i64 };
 			else if ( base->memory_write && ( access == operand_access::write || access == operand_access::invalid ) )
-				return { mem_base, mem_offset.imm.i64 };
+				return { mem_base, mem_offset.imm().i64 };
 		}
 		return {};
 	}
@@ -111,7 +111,7 @@ namespace vtil
 	int instruction::reads_from( const register_desc& rw ) const
 	{
 		for ( int i = 0; i < base->access_types.size(); i++ )
-			if ( base->access_types[ i ] != operand_access::write && operands[ i ].reg.overlaps( rw ) )
+			if ( base->access_types[ i ] != operand_access::write && operands[ i ].reg().overlaps( rw ) )
 				return i + 1;
 		return 0;
 	}
@@ -121,7 +121,7 @@ namespace vtil
 	int instruction::writes_to( const register_desc& rw ) const
 	{
 		for ( int i = 0; i < base->access_types.size(); i++ )
-			if ( base->access_types[ i ] >= operand_access::write && operands[ i ].reg.overlaps( rw ) )
+			if ( base->access_types[ i ] >= operand_access::write && operands[ i ].reg().overlaps( rw ) )
 				return i + 1;
 		return 0;
 	}
@@ -131,7 +131,7 @@ namespace vtil
 	int instruction::overwrites( const register_desc& rw ) const
 	{
 		for ( int i = 0; i < base->access_types.size(); i++ )
-			if ( base->access_types[ i ] == operand_access::write && operands[ i ].reg.overlaps( rw ) )
+			if ( base->access_types[ i ] == operand_access::write && operands[ i ].reg().overlaps( rw ) )
 				return i + 1;
 		return 0;
 	}

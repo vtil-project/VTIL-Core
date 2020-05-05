@@ -168,13 +168,13 @@ namespace vtil
 			{
 				// If LDR|STR with memory base SP:
 				//
-				if ( it->base->accesses_memory() && it->operands[ it->base->memory_operand_index ].reg.is_stack_pointer() )
+				if ( it->base->accesses_memory() && it->operands[ it->base->memory_operand_index ].reg().is_stack_pointer() )
 				{
 					// Assert the offset operand is an immediate and 
 					// shift the offset as well.
 					//
 					fassert( it->operands[ it->base->memory_operand_index + 1 ].is_immediate() );
-					it->operands[ it->base->memory_operand_index + 1 ].imm.i64 += offset;
+					it->operands[ it->base->memory_operand_index + 1 ].imm().i64 += offset;
 				}
 			}
 

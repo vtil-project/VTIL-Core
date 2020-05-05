@@ -90,9 +90,9 @@ namespace vtil::math
         //
         const operator_desc* desc = descriptor_of( id );
         if ( bcnt_lhs != 64 && desc->operand_count != 1 )  
-            lhs = desc->is_signed ? __sx( lhs, bcnt_lhs ) : __zx( lhs, bcnt_lhs );
+            lhs = desc->is_signed ? sign_extend( lhs, bcnt_lhs ) : zero_extend( lhs, bcnt_lhs );
         if ( bcnt_rhs != 64 )  
-            rhs = desc->is_signed ? __sx( rhs, bcnt_rhs ) : __zx( rhs, bcnt_rhs );
+            rhs = desc->is_signed ? sign_extend( rhs, bcnt_rhs ) : zero_extend( rhs, bcnt_rhs );
 
         // Create aliases for signed values to avoid ugly casts.
         //
@@ -172,7 +172,7 @@ namespace vtil::math
         return { result & fill( bcnt_res ), bcnt_res };
     }
 
-    // Applies the specified operator [op] on left hand side [lhs] and right hand side [rhs] wher
+    // Applies the specified operator [op] on left hand side [lhs] and right hand side [rhs] where
     // input and output values are expressed in the format of bit-vectors with optional unknowns,
     // and no size constraints.
     //

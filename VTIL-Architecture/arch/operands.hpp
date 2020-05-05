@@ -39,21 +39,40 @@ namespace vtil
 	#pragma pack(push, 4)
 	struct operand : reducable<operand>
 	{
-		// If operand is a register:
+		// If register type, we just need the register descriptor.
 		//
-		register_desc reg = {};
+		using register_t = register_desc;
 
-		// If operand is an immediate:
+		// If immediate type, we need the immediate itself and
+		// its size in number of bits.
 		//
-		struct immediate_desc
+		struct immediate_t : reducable<immediate_t>
 		{
+			// Immediate value stored.
+			//
 			union
 			{
 				int64_t i64;
 				uint64_t u64;
 			};
-			bitcnt_t bit_count;
-		} imm = { 0,0 };
+
+			// Number of bits it is expressed in.
+			//
+			bitcnt_t bit_count = 0;
+
+			// Replicate default constructor, skipping the reducable base.
+			//
+			immediate_t( uint64_t u64 = 0, bitcnt_t bit_count = 0 )
+				: u64( u64 ), bit_count( bit_count ) {}
+
+			// Declare reduction.
+			//
+			auto reduce() { return reference_as_tuple( u64, bit_count ); }
+		};
+
+		// Descriptor of this operand.
+		//
+		std::variant<immediate_t, register_t> descriptor;
 
 		// Default constructor / move / copy.
 		//
@@ -63,45 +82,56 @@ namespace vtil
 		operand& operator=( operand&& ) = default;
 		operand& operator=( const operand& ) = default;
 
-		// Operand type is constructed either by a register view or an immediate
-		// followed by an explicit size.
+		// Construct by register descriptor.
 		//		
 		template<typename T, std::enable_if_t<!std::is_same_v<std::remove_cvref_t<T>, operand>, int> = 0>
-		operand( T&& reg ) : reg( register_cast<std::remove_cvref_t<T>>{}( reg ) ) {}
-		operand( int64_t v, bitcnt_t bit_count ) : imm( { v, bit_count } ) {}
+		operand( T&& reg ) : descriptor( register_cast<std::remove_cvref_t<T>>{}( reg ) ) {}
 
-		// Getter for the operand size (in bytes).
+		// Construct by immediate followed by the number of bits.
 		//
-		size_t size() const 
-		{ 
-			bitcnt_t bit_cnt = is_register() ? reg.bit_count : imm.bit_count;
-			if ( bit_cnt == 1 ) return 1;
-			else                return bit_cnt / 8;
-		}
+		template<typename T, std::enable_if_t<std::is_integral_v<T>, int> = 0>
+		operand( T value, bitcnt_t bit_count ) : descriptor( immediate_t{ ( uint64_t ) math::imm_extend( value ), bit_count } ) {}
+
+		// Wrappers around std::get.
+		//
+		immediate_t& imm() { return std::get<immediate_t>( descriptor ); }
+		const immediate_t& imm() const { return std::get<immediate_t>( descriptor ); }
+		register_t& reg() { return std::get<register_t>( descriptor ); }
+		const register_t& reg() const { return std::get<register_t>( descriptor ); }
+
+		// Getter for the operand size (rounded-up to bytes).
+		//
+		size_t size() const { return ( ( is_register() ? reg().bit_count : imm().bit_count ) + 7 ) / 8; }
 
 		// Conversion to human-readable format.
 		//
-		std::string to_string() const { return is_register() ? reg.to_string() : format::hex( imm.i64 ); }
+		std::string to_string() const { return is_register() ? reg().to_string() : format::hex( imm().i64 ); }
 
 		// Simple helpers to determine the type of operand.
 		//
-		bool is_register() const { return reg.is_valid(); }
-		bool is_immediate() const { return imm.bit_count != 0; }
+		bool is_register() const { return std::holds_alternative<register_t>( descriptor ); }
+		bool is_immediate() const { return std::holds_alternative<immediate_t>( descriptor ) && imm().bit_count != 0; }
 		bool is_valid() const 
 		{ 
+			// If register:
+			//
 			if ( is_register() )
 			{
-				if ( reg.bit_offset % 8 ) return false;
-				if ( reg.bit_count != 1 && ( reg.bit_count % 8 ) ) return false;
-				return true;
+				// Bit offset and bit count must be both byte-aligned
+				// with the exception of bit count == 1 for boolean registers.
+				//
+				return !( reg().bit_offset & 7 ) &&
+					 ( !( reg().bit_count & 7  ) || reg().bit_count == 1 );
 			}
+
+			// Otherwise must be a valid immediate.
+			//
 			return is_immediate(); 
 		}
 
 		// Declare reduction.
 		//
-		auto reduce() { return std::forward_as_tuple( is_register() ? reg          : register_desc{},
-													  is_register() ? std::nullopt : std::optional( imm ) ); }
+		auto reduce() { return reference_as_tuple( descriptor ); }
 	};
 	#pragma pack(pop)
 };

@@ -28,7 +28,9 @@
 #pragma once
 #include <algorithm>
 #include <variant>
+#include <optional>
 #include "concept.hpp"
+#include "lt_typeid.hpp"
 #include "../io/formatting.hpp"
 
 // Determine the size of vtil::hash_t.
@@ -210,10 +212,8 @@ namespace vtil
 	{
 		hash_t operator()( const std::optional<T>& value ) const noexcept
 		{
-			if ( value )
-				return make_hash( *value, sizeof( T ), true );
-			else
-				return make_hash( -int( sizeof( T ) ), false );
+			if ( value ) return make_hash( *value );
+			else         return lt_typeid<T>::get();
 		}
 	};
 

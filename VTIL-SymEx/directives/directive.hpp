@@ -250,6 +250,17 @@ namespace vtil::symbolic::directive
     static instance __mask_knw0( const instance& a ) { return { tagged<directive_op_desc::mask_zero>, a }; }
 };
 
+// Allow directive::instance::reference to be used with directive::instance directly as operable.
+//
+namespace vtil::math 
+{ 
+    template<> 
+    struct resolve_alias<shared_reference<symbolic::directive::instance::reference>> 
+    { 
+        using type = symbolic::directive::instance; 
+    }; 
+};
+
 // Implement comparison operators between [directive::directive_op_desc] x [math::operator_id].
 //
 static bool operator==( vtil::symbolic::directive::directive_op_desc a, vtil::math::operator_id b ) { return uint8_t( b ) > vtil::symbolic::directive::directive_op_desc::begin_id && uint8_t( a ) == uint8_t( b ); }

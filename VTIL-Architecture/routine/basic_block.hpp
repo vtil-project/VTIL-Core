@@ -334,7 +334,7 @@ namespace vtil
 			// Handle SP specially since we change the stack pointer
 			// before the instruction begins.
 			//
-			if ( op.is_register() && op.reg.is_stack_pointer() )
+			if ( op.is_register() && op.reg().is_stack_pointer() )
 			{
 				auto t0 = tmp( 64 );
 				return mov( t0, op )->push( t0 );
