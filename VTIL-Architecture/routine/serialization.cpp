@@ -190,5 +190,46 @@ namespace vtil
 		if( !out.is_valid() )
 			throw std::runtime_error( "Resolved invalid instruction." );
 	}
+
+	// Serialization of VTIL operands.
+	//
+	void serialize( std::ostream& out, const operand& in )
+	{
+		// Write type index.
+		//
+		serialize<clength_t>( out, in.descriptor.index() );
+		
+		// Write the variant.
+		//
+		if ( in.descriptor.index() == 0 ) 
+			return serialize( out, std::get<operand::immediate_t>( in.descriptor ) );
+		if ( in.descriptor.index() == 1 ) 
+			return serialize( out, std::get<operand::register_t>( in.descriptor ) );
+		unreachable();
+	}
+	void deserialize( std::istream& in, operand& out )
+	{
+		// Read type index.
+		//
+		clength_t index;
+		deserialize( in, index );
+
+		// Try to read the variant.
+		//
+		if ( index == 0 )
+		{
+			operand::immediate_t value;
+			deserialize( in, value );
+			out.descriptor = value;
+		}
+		else if( index == 1 )
+		{
+			operand::register_t value;
+			deserialize( in, value );
+			out.descriptor = value;
+		}
+
+		throw std::runtime_error( "Resolved invalid operand." );
+	}
 };
 #pragma warning(default:4267)
