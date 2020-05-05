@@ -10,11 +10,18 @@ namespace vtil
 	template<typename T>
 	struct optional_reference
 	{
-		T* pointer;
+		T* pointer = nullptr;
+		
+		// Default constructor / move / copy.
+        //
+        optional_reference() = default;
+		optional_reference( optional_reference&& ) = default;
+		optional_reference( const optional_reference& ) = default;
+		optional_reference& operator=( optional_reference&& ) = default;
+		optional_reference& operator=( const optional_reference& ) = default;
 
 		// Null reference constructors.
 		//
-		optional_reference() : pointer( nullptr ) {}
 		optional_reference( std::nullopt_t ) : pointer( nullptr ) {}
 		
 		// Constructs by reference to type.
