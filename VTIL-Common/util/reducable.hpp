@@ -28,14 +28,15 @@
 #pragma once
 #include <tuple>
 #include "hashable.hpp"
+#include "optional_reference.hpp"
 
 // Reducable types essentially let us do member-type reflection
 // which we use to auto generate useful but repetetive methods 
 // like ::hash() or comparison operators. Base type has to define
 // the following routine where [...] should be replaced by members
-// that should be constributing to the comparison/hash operations.
+// that should be contributing to the comparison/hash operations.
 //
-// - auto reduce() { return std::tie( ... ); }
+// - auto reduce() { return vtil::reference_as_tuple( ... ); }
 //
 #pragma warning(push)
 #pragma warning(disable: 4305)
@@ -62,6 +63,13 @@ namespace vtil
             <std::is_reference_v<T>,
                 std::add_lvalue_reference_t<std::add_const_t<std::remove_reference_t<T>>>,
                 std::add_const_t<T>>;
+
+        // Checks if type is optional_reference<T>.
+        //
+        template <typename T> struct is_optional_reference : std::false_type {};
+        template <typename T> struct is_optional_reference<optional_reference<T>> : std::true_type {};
+        template <typename T>
+        static constexpr bool is_optional_reference_v = is_optional_reference<std::remove_cvref_t<T>>::value;
     };
 
     // Mask of requested reducable auto declerations.
@@ -138,5 +146,23 @@ namespace vtil
         //
         auto reduce() const { return reduce_proxy( ( const T& ) *this ); }
     };
+
+    // Helper used to create reduced tuples.
+    //
+    template <typename... Tx>
+    static constexpr std::tuple<Tx...> reference_as_tuple( Tx&&... args )
+    {
+        static_assert
+        ( 
+            std::conjunction_v<
+                std::bool_constant<
+                    std::is_trivial_v<Tx> || 
+                    std::is_reference_v<Tx> || 
+                    impl::is_optional_reference_v<Tx>>...>,
+            "Reduction function should not pass any non-trivial values by value." 
+        );
+
+        return std::tuple<Tx...>( std::forward<Tx>( args )... );
+    }
 };
 #pragma warning(pop)

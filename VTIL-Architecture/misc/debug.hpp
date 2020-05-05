@@ -63,12 +63,12 @@ namespace vtil::debug
 		{
 			if ( op.is_register() )
 			{
-				if ( op.reg.is_stack_pointer() )
-					log<CON_PRP>( VTIL_FMT_INS_OPR " ", op.reg.to_string() );						// Stack pointer
-				else if ( op.reg.is_physical() )
-					log<CON_BLU>( VTIL_FMT_INS_OPR " ", op.reg.to_string() );						// Any hardware/special register
+				if ( op.reg().is_stack_pointer() )
+					log<CON_PRP>( VTIL_FMT_INS_OPR " ", op.reg().to_string() );						// Stack pointer
+				else if ( op.reg().is_physical() )
+					log<CON_BLU>( VTIL_FMT_INS_OPR " ", op.reg().to_string() );						// Any hardware/special register
 				else
-					log<CON_GRN>( VTIL_FMT_INS_OPR " ", op.reg.to_string() );						// Virtual register
+					log<CON_GRN>( VTIL_FMT_INS_OPR " ", op.reg().to_string() );						// Virtual register
 			}
 			else
 			{
@@ -76,16 +76,16 @@ namespace vtil::debug
 
 				if ( ins.base->memory_operand_index  != -1 &&
 					 &ins.operands[ ins.base->memory_operand_index + 1 ] == &op &&
-					 ins.operands[ ins.base->memory_operand_index ].reg.is_stack_pointer() )
+					 ins.operands[ ins.base->memory_operand_index ].reg().is_stack_pointer() )
 				{
-					if ( op.imm.i64 >= 0 )
-						log<CON_YLW>( VTIL_FMT_INS_OPR " ", format::hex( op.imm.i64 ) );			 // External stack
+					if ( op.imm().i64 >= 0 )
+						log<CON_YLW>( VTIL_FMT_INS_OPR " ", format::hex( op.imm().i64 ) );			 // External stack
 					else
-						log<CON_BRG>( VTIL_FMT_INS_OPR " ", format::hex( op.imm.i64 ) );			 // VM stack
+						log<CON_BRG>( VTIL_FMT_INS_OPR " ", format::hex( op.imm().i64 ) );			 // VM stack
 				}
 				else
 				{
-					log<CON_CYN>( VTIL_FMT_INS_OPR " ", format::hex( op.imm.i64 ) );				 // Any immediate
+					log<CON_CYN>( VTIL_FMT_INS_OPR " ", format::hex( op.imm().i64 ) );				 // Any immediate
 				}
 			}
 		}

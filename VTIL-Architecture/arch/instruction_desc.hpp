@@ -149,7 +149,7 @@ namespace vtil
 
         // Declare reduction and basic comparison against std::string.
         //
-        auto reduce() { return std::tie( name ); }
+        auto reduce() { return reference_as_tuple( name ); }
         
         using reducable<instruction_desc>::operator!=;
         bool operator!=( const std::string& o ) const { return name != o; }

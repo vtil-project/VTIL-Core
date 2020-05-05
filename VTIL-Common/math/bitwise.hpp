@@ -52,7 +52,7 @@ namespace vtil::math
     template<typename T, std::enable_if_t<std::is_integral_v<T>, int> = 0>
     static constexpr bool sgn( T type ) { return bool( type >> ( bitcnt<T> - 1 ) ); }
 
-    // Implement platform-indepdenent popcnt and bit_test/set/clear/flip.
+    // Implement platform-indepdenent popcnt.
     //
     static constexpr bitcnt_t popcnt( uint64_t x )
     {
@@ -90,9 +90,20 @@ namespace vtil::math
         return ( ( sign ^ 1 ) - 1 ) << bit_offset;
     }
 
+    // Extends the given integral type into uint64_t or int64_t.
+    //
+    template<typename T, std::enable_if_t<std::is_integral_v<T>, int> = 0>
+    static auto imm_extend( T imm )
+    {
+        if constexpr ( std::is_signed_v<T> )
+            return ( int64_t ) imm;
+        else
+            return ( uint64_t ) imm;
+    }
+
     // Zero extends the given integer.
     //
-    static uint64_t __zx( uint64_t value, bitcnt_t bcnt_src )
+    static uint64_t zero_extend( uint64_t value, bitcnt_t bcnt_src )
     {
         // Use simple casts where possible.
         //
@@ -117,7 +128,7 @@ namespace vtil::math
 
     // Sign extends the given integer.
     //
-    static int64_t __sx( uint64_t value, bitcnt_t bcnt_src )
+    static int64_t sign_extend( uint64_t value, bitcnt_t bcnt_src )
     {
         // Use simple casts where possible.
         //
@@ -219,9 +230,9 @@ namespace vtil::math
             if ( is_known() )
             {
                 if constexpr ( std::is_signed_v<type> )
-                    return ( type ) __sx( known_bits, bit_count );
+                    return ( type ) sign_extend( known_bits, bit_count );
                 else
-                    return ( type ) __zx( known_bits, bit_count );
+                    return ( type ) zero_extend( known_bits, bit_count );
             }
             return std::nullopt;
         }
@@ -277,6 +288,6 @@ namespace vtil::math
         // - Note: Relative comparison operators should not be used for actual comparison 
         //         but are there for the use of sorted containers.
         //
-        auto reduce() { return std::tie( bit_count, known_bits, unknown_bits ); }
+        auto reduce() { return reference_as_tuple( bit_count, known_bits, unknown_bits ); }
     };
 };
