@@ -132,12 +132,12 @@ namespace vtil::symbolic::directive
         { (A&B)|(A&C),                                        A&(B|C) },
         { (A|B)&(A|C),                                        A|(B&C) },
 
-        // Reduce ANDs & ORs.
+        // -- Special AND OR directives to reduce unknown:
         //
-        { A|B,                                                __iff((__mask_knw1(A)&__mask_unk(B))!=0, A|!(B&!(~__mask_knw1(A))))},
-        { A&B,                                                __iff((__mask_knw0(A)&~__mask_knw0(B))!=0, A&!(B&!(~__mask_knw0(A))))},
         { U|B,                                                __iff(U==(__mask_knw1(B)), B) },
+        { U|B,                                                __iff(((~__mask_knw0(B))&(~U))==0,  U) },
         { U&B,                                                __iff(U==(__mask_unk(B)|__mask_knw1(B)), B) },
+        { U&B,                                                __iff(((~__mask_knw0(B))&U)==0,  0) },
 
         // Penetrate shrinked expression with shift left.
         // - This is an exceptional case and has to be addressed due to the fact
@@ -156,6 +156,11 @@ namespace vtil::symbolic::directive
         // TODO: Arithmetic operators, */% etc.
         // TODO: Should we add ADD and SUB to bitwise despite the partial evaluator?
         //
+
+        // -- Special AND OR directives to reduce unknown:
+        //
+        { A|B,                                                __iff((__mask_knw1(A)&__mask_unk(B))!=0, A|!(B&!(~__mask_knw1(A))))},
+        { A&B,                                                __iff((__mask_knw0(A)&~__mask_knw0(B))!=0, A&!(B&!(~__mask_knw0(A))))},
 
         // ADD:
         //

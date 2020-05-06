@@ -13,8 +13,8 @@ namespace vtil
 		T* pointer = nullptr;
 		
 		// Default constructor / move / copy.
-        //
-        optional_reference() = default;
+		//
+		optional_reference() = default;
 		optional_reference( optional_reference&& ) = default;
 		optional_reference( const optional_reference& ) = default;
 		optional_reference& operator=( optional_reference&& ) = default;
