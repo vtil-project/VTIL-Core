@@ -98,7 +98,7 @@ namespace vtil
         static const instruction_desc bshr =        { "shr",      { a::readwrite,  a::read_any                   }, 1,          false,      op::shift_right,         {},          {}          };
         static const instruction_desc bshl =        { "shl",      { a::readwrite,  a::read_any                   }, 1,          false,      op::shift_left,          {},          {}          };
         static const instruction_desc bxor =        { "xor",      { a::readwrite,  a::read_any                   }, 1,          false,      op::bitwise_xor,         {},          {}          };
-        static const instruction_desc bor =         { "or",       { a::readwrite,  a::read_any                   }, 1,          false,      op::bitwise_xor,         {},          {}          };
+        static const instruction_desc bor =         { "or",       { a::readwrite,  a::read_any                   }, 1,          false,      op::bitwise_or,          {},          {}          };
         static const instruction_desc band =        { "and",      { a::readwrite,  a::read_any                   }, 1,          false,      op::bitwise_and,         {},          {}          };
         static const instruction_desc bror =        { "ror",      { a::readwrite,  a::read_any                   }, 1,          false,      op::rotate_right,        {},          {}          };
         static const instruction_desc brol =        { "rol",      { a::readwrite,  a::read_any                   }, 1,          false,      op::rotate_left,         {},          {}          };

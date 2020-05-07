@@ -187,8 +187,20 @@ namespace vtil::symbolic
 		void enumerate( const T& fn ) const
 		{
 			fn( *this );
-			if ( lhs ) fn( *lhs );
-			if ( rhs ) fn( *rhs );
+			if ( lhs ) lhs->enumerate( fn );
+			if ( rhs ) rhs->enumerate( fn );
+		}
+
+		// Transforms the whole tree according to the 
+		// functor starting from the bottom.
+		//
+		template<typename T>
+		void transform( const T& fn, bool auto_simplify = true )
+		{
+			if ( rhs ) ( +rhs )->transform( fn, auto_simplify );
+			if ( lhs ) ( +lhs )->transform( fn, auto_simplify );
+			fn( *this );
+			update( auto_simplify );
 		}
 	};
 

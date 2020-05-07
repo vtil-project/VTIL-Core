@@ -38,7 +38,7 @@ namespace vtil::symbolic
 		if ( is_constant() )
 			return 1;
 		return ( lhs ? lhs->count_constants() : 0 ) +
-			( rhs ? rhs->count_constants() : 0 );
+			   ( rhs ? rhs->count_constants() : 0 );
 	}
 
 	// Returns the number of variables used in the expression.
@@ -48,7 +48,7 @@ namespace vtil::symbolic
 		if ( is_variable() )
 			return 1;
 		return ( lhs ? lhs->count_variables() : 0 ) +
-			( rhs ? rhs->count_variables() : 0 );
+			   ( rhs ? rhs->count_variables() : 0 );
 	}
 
 	// Returns the number of unique variables used in the expression.
@@ -58,11 +58,16 @@ namespace vtil::symbolic
 		std::set<unique_identifier> tmp;
 		if ( !visited ) visited = &tmp;
 
-		if ( is_variable() )
-			return visited->find( uid ) == visited->end();
-
-		return ( lhs ? lhs->count_unique_variables( visited ) : 0 ) +
-			   ( rhs ? rhs->count_unique_variables( visited ) : 0 );
+		if ( is_variable() && visited->find( uid ) == visited->end() )
+		{
+			visited->insert( uid );
+			return 1;
+		}
+		else
+		{
+			return ( lhs ? lhs->count_unique_variables( visited ) : 0 ) +
+				   ( rhs ? rhs->count_unique_variables( visited ) : 0 );
+		}
 	}
 
 	// Resizes the expression, if not constant, expression::resize will try to propagate 
@@ -627,6 +632,6 @@ namespace vtil::symbolic
 		//
 		if ( is_constant() )      return format::hex( value.get<true>().value() );
 		if ( is_variable() )      return uid.to_string();
-		return "NULL";
+		return "null";
 	}
 };

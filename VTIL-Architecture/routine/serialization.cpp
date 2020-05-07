@@ -228,8 +228,10 @@ namespace vtil
 			deserialize( in, value );
 			out.descriptor = value;
 		}
-
-		throw std::runtime_error( "Resolved invalid operand." );
+		else
+		{
+			throw std::runtime_error( "Resolved invalid operand." );
+		}
 	}
 };
 #pragma warning(default:4267)
