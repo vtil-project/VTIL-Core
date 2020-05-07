@@ -98,6 +98,7 @@ namespace vtil::debug
 	static void dump( const basic_block* blk, std::set<const basic_block*>* visited = nullptr )
 	{
 		using namespace vtil::logger;
+		scope_padding _p( 4 );
 
 		bool blk_visited = visited ? visited->find( blk ) != visited->end() : false;
 
@@ -139,12 +140,8 @@ namespace vtil::debug
 		if ( visited )
 		{
 			visited->insert( blk );
-			log_padding++;
-			log( "\n" );
 			for ( auto& child : blk->next )
 				dump( child, visited );
-			log_padding--;
-			log( "\n" );
 		}
 	}
 
