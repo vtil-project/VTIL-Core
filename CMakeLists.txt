@@ -42,8 +42,9 @@ set(CMAKE_CXX_STANDARD_REQUIRED true)
 include(IncludeDeps)
 
 # Include subprojects
-# The dependency chain order is  Common > Architecture > SymEx, so include in that order
+# The dependency chain order is  Common > Architecture + SymEx > Optimizer, so include in that order
 #
 add_subdirectory(VTIL-Common)
-add_subdirectory(VTIL-Architecture)
 add_subdirectory(VTIL-SymEx)
+add_subdirectory(VTIL-Architecture)
+add_subdirectory(VTIL-Optimizer)
