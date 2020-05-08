@@ -28,8 +28,8 @@
 #pragma once
 #include <variant>
 #include <string>
-#include <vtil/utility>
 #include <vtil/io>
+#include <vtil/utility>
 #include <vtil/arch>
 #include <vtil/symex>
 

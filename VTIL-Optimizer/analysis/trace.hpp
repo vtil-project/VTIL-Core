@@ -29,6 +29,8 @@
 #include <functional>
 #include <algorithm>
 #include <vtil/io>
+#include <vtil/utility>
+#include <vtil/arch>
 #include <vtil/symex>
 #include "variable.hpp"
 

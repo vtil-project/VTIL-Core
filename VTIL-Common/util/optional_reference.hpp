@@ -2,6 +2,7 @@
 #include <type_traits>
 #include <optional>
 #include "hashable.hpp"
+#include "reducable.hpp"
 
 namespace vtil
 {

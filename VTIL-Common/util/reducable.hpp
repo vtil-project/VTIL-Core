@@ -28,7 +28,6 @@
 #pragma once
 #include <tuple>
 #include "hashable.hpp"
-#include "optional_reference.hpp"
 
 // Reducable types essentially let us do member-type reflection
 // which we use to auto generate useful but repetetive methods 
@@ -42,6 +41,11 @@
 #pragma warning(disable: 4305)
 namespace vtil
 {
+    // Forward decleration for optional reference type.
+    //
+    template<typename T>
+    struct optional_reference;
+
     namespace impl
     {
         // Applies type modifier over each element in pair/tuple.
