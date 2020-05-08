@@ -1,0 +1,10 @@
+# VTIL-Optimizer target
+#
+
+set(optimizer_SOURCES analysis/trace.cpp
+    analysis/variable.cpp
+)
+
+add_library(optimizer STATIC ${optimizer_SOURCES})
+target_include_directories(optimizer PUBLIC "./includes")
+target_link_libraries(optimizer common)
