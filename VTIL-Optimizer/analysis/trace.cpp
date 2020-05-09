@@ -31,18 +31,18 @@ namespace vtil::optimizer
 {
     // Internal typedefs.
     //
-    using subquery_function_t = std::function<symbolic::expression( bitcnt_t offset, bitcnt_t size )>;
+    using partial_tracer_t = std::function<symbolic::expression( bitcnt_t offset, bitcnt_t size )>;
 
-    // Basic tracer with the query_function_t signature implemented using primitive tracer.
+    // Basic tracer with the trace_function_t signature implemented using primitive tracer.
     //
     static symbolic::expression trace_basic( const variable& lookup )
     {
         using namespace logger;
 
 #if VTIL_OPT_TRACE_VERBOSE
-        // Log the beginning of the query.
+        // Log the beginning of the trace.
         //
-        log<CON_BRG>( "Query(%s)\n", lookup.to_string() );
+        log<CON_BRG>( "Trace(%s)\n", lookup.to_string() );
         scope_padding _p( 1 );
 #endif
 
@@ -67,7 +67,7 @@ namespace vtil::optimizer
     //
     static symbolic::expression propagate( const symbolic::expression& ref,
                                            const ilstream_const_iterator& it,
-                                           const query_function_t& query )
+                                           const trace_function_t& tracer )
     {
         using namespace logger;
         scope_padding _p( 3 );
@@ -135,7 +135,7 @@ namespace vtil::optimizer
 
             // Trace the variable in the destination block, fail if it fails.
             //
-            symbolic::expression var_traced = query( var );
+            symbolic::expression var_traced = tracer( var );
             if ( !var_traced )
                 return {};
 
@@ -164,20 +164,20 @@ namespace vtil::optimizer
     //
     static symbolic::expression resolve_partial( bitcnt_t write_offset, bitcnt_t read_offset,
                                                  bitcnt_t write_size,   bitcnt_t read_size,
-                                                 const subquery_function_t& subquery )
+                                                 const partial_tracer_t& ptracer )
     {
         using namespace logger;
 
         // Fetch the result of this operation.
         //
-        symbolic::expression base = subquery( write_offset, write_size );
+        symbolic::expression base = ptracer( write_offset, write_size );
 
-        // Query a low part if we have to.
+        // Trace a low part if we have to.
         //
         if ( write_offset > read_offset )
         {
             bitcnt_t low_bcnt = write_offset - read_offset;
-            auto res = subquery( read_offset, low_bcnt );
+            auto res = ptracer( read_offset, low_bcnt );
 #if VTIL_OPT_TRACE_VERBOSE
             // Log the low and middle bits.
             //
@@ -206,12 +206,12 @@ namespace vtil::optimizer
 #endif
         }
 
-        // Query a high part if we have to.
+        // Trace a high part if we have to.
         //
         if ( ( read_offset + read_size ) > ( write_offset + write_size ) )
         {
             bitcnt_t high_bnct = ( read_offset + read_size ) - ( write_offset + write_size );
-            auto res = subquery( write_offset + write_size, high_bnct );
+            auto res = ptracer( write_offset + write_size, high_bnct );
 #if VTIL_OPT_TRACE_VERBOSE
             // Log the high bits.
             //
@@ -230,10 +230,11 @@ namespace vtil::optimizer
         return base.resize( read_size );
     }
 
-    // Traces a variable across the basic block's instruction stream it belongs to. 
-    // Invokes the passed query helper for any subqueries it generates.
+    // Traces a variable across the basic block it belongs to and generates a symbolic expression 
+    // that describes it's value at the bound point. Will invoke the passed tracer for any additional 
+    // tracing it requires.
     //
-    symbolic::expression trace_primitive( variable lookup, const query_function_t& query )
+    symbolic::expression trace_primitive( variable lookup, const trace_function_t& tracer )
     {
         using namespace logger;
 
@@ -253,9 +254,9 @@ namespace vtil::optimizer
             //
             if ( op.is_register() )
             {
-                // Redirect the query.
+                // Trace the source register.
                 //
-                auto result = query( { lookup.at, op.reg() } );
+                auto result = tracer( { lookup.at, op.reg() } );
 
                 // If stack pointer, add the current virtual offset.
                 //
@@ -285,10 +286,10 @@ namespace vtil::optimizer
             //
             while ( true )
             {
-                // If we reached the beginning without any modifications, redirect to query helper.
+                // If we reached the beginning without any modifications, redirect to the helper passed.
                 //
                 if ( lookup.at.is_begin() )
-                    return query( lookup );
+                    return tracer( lookup );
 
                 // Decrement iterator.
                 //
@@ -304,14 +305,14 @@ namespace vtil::optimizer
                     if ( write_at.bit_offset != reg.bit_offset ||
                          write_at.bit_count != reg.bit_count )
                     {
-                        // Define sub-query helper.
+                        // Define partial tracer.
                         //
                         variable tmp = { std::next( lookup.at ), reg };
-                        auto subquery = [ & ] ( bitcnt_t bit_offset, bitcnt_t bit_count )
+                        auto ptrace = [ & ] ( bitcnt_t bit_offset, bitcnt_t bit_count )
                         {
                             tmp.reg().bit_offset = bit_offset;
                             tmp.reg().bit_count = bit_count;
-                            return query( tmp );
+                            return tracer( tmp );
                         };
 
                         // Redirect to partial resolver.
@@ -319,7 +320,7 @@ namespace vtil::optimizer
                         return resolve_partial(
                             write_at.bit_offset, reg.bit_offset,
                             write_at.bit_count, reg.bit_count,
-                            subquery
+                            ptrace
                         );
                     }
                     break;
@@ -342,10 +343,10 @@ namespace vtil::optimizer
                 //
                 auto [base, offset] = lookup.at->get_mem_loc();
                 variable::memory_t mem(
-                    query( { lookup.at, base } ) + offset,
+                    tracer( { lookup.at, base } ) + offset,
                     ( reg.bit_count + 7 ) / 8
                 );
-                symbolic::expression exp = query( variable( lookup.at, mem ) );
+                symbolic::expression exp = tracer( variable( lookup.at, mem ) );
 
                 // Return after resizing if valid or return invalid as memory queries can fail.
                 //
@@ -420,10 +421,10 @@ namespace vtil::optimizer
             //
             while ( true )
             {
-                // If we reached the beginning without any modifications, redirect to query helper.
+                // If we reached the beginning without any modifications, redirect to the helper passed.
                 //
                 if ( lookup.at.is_begin() )
-                    return query( lookup );
+                    return tracer( lookup );
 
                 // Decrement iterator.
                 //
@@ -437,7 +438,7 @@ namespace vtil::optimizer
                 // Generate an expression for the pointer.
                 //
                 auto [write_base, write_offset] = lookup.at->get_mem_loc();
-                auto ptr2 = query( { lookup.at, write_base } ) + write_offset;
+                auto ptr2 = tracer( { lookup.at, write_base } ) + write_offset;
 
                 // If displacement can be expressed as a constant:
                 //
@@ -459,15 +460,15 @@ namespace vtil::optimizer
                     //
                     if ( *disp != 0 || lookup.at->access_size() != mem.size )
                     {
-                        // Define sub-query helper.
+                        // Define partial tracer.
                         //
                         variable tmp = { std::next( lookup.at ), mem };
-                        auto subquery = [ & ] ( bitcnt_t bit_offset, bitcnt_t bit_count )
+                        auto ptrace = [ & ] ( bitcnt_t bit_offset, bitcnt_t bit_count )
                         {
                             fassert( !( ( bit_offset | bit_count ) & 7 ) );
                             tmp.mem().pointer = mem.pointer + bit_offset / 8;
                             tmp.mem().size = bit_count / 8;
-                            return query( tmp );
+                            return tracer( tmp );
                         };
 
                         // Redirect to partial resolver.
@@ -475,7 +476,7 @@ namespace vtil::optimizer
                         return resolve_partial(
                             *disp * 8, 0,
                             lookup.at->access_size() * 8, mem.size * 8,
-                            subquery
+                            ptrace
                         );
                     }
                     break;
@@ -553,15 +554,17 @@ namespace vtil::optimizer
         }
     }
 
-    // Traces a variable recursively across all possible paths.
+    // Traces a variable across the entire routine and generates a symbolic expression that describes 
+    // it's value at the bound point. Will invoke the passed tracer for any additional tracing it requires. 
+    // Takes an optional path history used internally to recurse in a controlled fashion.
     //
-    symbolic::expression rtrace_primitive( const variable& lookup, const path_history_t& history )
+    symbolic::expression rtrace_primitive( const variable& lookup, const trace_function_t& tracer, const path_history_t& history )
     {
         using namespace logger;
 
         // Trace through the current block first.
         //
-        symbolic::expression result = trace_basic( lookup );
+        symbolic::expression result = tracer( lookup );
 
         // If result has any variables:
         //
@@ -618,7 +621,7 @@ namespace vtil::optimizer
                     //
                     symbolic::expression exp = propagate( default_result, it, [ & ] ( auto& var ) 
                     { 
-                        return rtrace_primitive( var, history_local );
+                        return rtrace_primitive( var, tracer, history_local );
                     } );
 
 #if VTIL_OPT_TRACE_VERBOSE
@@ -638,7 +641,7 @@ namespace vtil::optimizer
 #if VTIL_OPT_TRACE_VERBOSE
                         // Log decision.
                         //
-                        log<CON_RED>( "Cancelling query as it was not deterministic.\n" );
+                        log<CON_RED>( "Halting tracer as it was not deterministic.\n" );
 #endif
                         // If result was null, return lookup.
                         //
@@ -672,12 +675,14 @@ namespace vtil::optimizer
 
 	// Simple wrappers around primitive trace and rtrace to return in packed format.
 	//
-	symbolic::expression trace( const variable& lookup ) 
+	symbolic::expression trace( const variable& lookup, bool pack = true )
     { 
-        return variable::pack_all( trace_basic( lookup ) ); 
+        symbolic::expression&& result = trace_basic( lookup );
+        return pack ? variable::pack_all( result ) : result;
     }
-    symbolic::expression rtrace( const variable& lookup ) 
-    { 
-        return variable::pack_all( rtrace_primitive( lookup ) ); 
+    symbolic::expression rtrace( const variable& lookup, bool pack = true )
+    {
+        symbolic::expression&& result = rtrace_primitive( lookup, trace_basic );
+        return pack ? variable::pack_all( result ) : result;
     }
 };

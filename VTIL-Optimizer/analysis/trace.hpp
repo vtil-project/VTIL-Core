@@ -45,23 +45,23 @@ namespace vtil::optimizer
 {
     // Some convinience typedefs.
     //
-    using query_function_t =    std::function<symbolic::expression( const variable& lookup )>;
+    using trace_function_t =    std::function<symbolic::expression( const variable& lookup )>;
     using path_history_t =      std::map<std::pair<const basic_block*, const basic_block*>, uint32_t>;
 
     // Traces a variable across the basic block it belongs to and generates a symbolic expression 
-    // that describes it's value at the bound point. Will invoke the passed query function for any 
-    // subqueries it generates.
+    // that describes it's value at the bound point. Will invoke the passed tracer for any additional 
+    // tracing it requires.
     //
-    symbolic::expression trace_primitive( variable lookup, const query_function_t& query );
+    symbolic::expression trace_primitive( variable lookup, const trace_function_t& tracer );
     
     // Traces a variable across the entire routine and generates a symbolic expression that describes 
-    // it's value at the bound point. Takes an optional path history used internally to recurse in
-    // a controlled fashion.
+    // it's value at the bound point. Will invoke the passed tracer for any additional tracing it requires. 
+    // Takes an optional path history used internally to recurse in a controlled fashion.
     //
-    symbolic::expression rtrace_primitive( const variable& lookup, const path_history_t& history = {} );
+    symbolic::expression rtrace_primitive( const variable& lookup, const trace_function_t& tracer, const path_history_t& history = {} );
 
-    // Simple wrappers around primitive trace and rtrace to return in packed format.
+    // Simple wrappers around primitive trace and rtrace with optional packing of the variables.
     //
-    symbolic::expression trace( const variable& lookup );
-    symbolic::expression rtrace( const variable& lookup );
+    symbolic::expression trace( const variable& lookup, bool pack = true );
+    symbolic::expression rtrace( const variable& lookup, bool pack = true );
 };

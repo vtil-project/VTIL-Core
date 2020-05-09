@@ -128,7 +128,7 @@ namespace vtil::optimizer
 
         // Declare reduction.
         //
-        auto reduce() { return reference_as_tuple( descriptor, at.is_valid() ? at.container->entry_vip : invalid_vip, dereference_if( !at.is_end(), at ), is_branch_dependant ); }
+        auto reduce() { return reference_as_tuple( dereference_if( !at.is_end(), at ), at.is_valid() ? at.container->entry_vip : invalid_vip, descriptor, is_branch_dependant ); }
 
         // Packs all the variables in the expression where it'd be optimal.
         //
