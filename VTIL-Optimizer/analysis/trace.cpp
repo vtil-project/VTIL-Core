@@ -675,12 +675,12 @@ namespace vtil::optimizer
 
 	// Simple wrappers around primitive trace and rtrace to return in packed format.
 	//
-	symbolic::expression trace( const variable& lookup, bool pack = true )
+	symbolic::expression trace( const variable& lookup, bool pack )
     { 
         symbolic::expression&& result = trace_basic( lookup );
         return pack ? variable::pack_all( result ) : result;
     }
-    symbolic::expression rtrace( const variable& lookup, bool pack = true )
+    symbolic::expression rtrace( const variable& lookup, bool pack )
     {
         symbolic::expression&& result = rtrace_primitive( lookup, trace_basic );
         return pack ? variable::pack_all( result ) : result;
