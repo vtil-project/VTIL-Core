@@ -221,6 +221,11 @@ namespace vtil::symbolic
 		boxed_expression& operator=( boxed_expression&& o ) = default;
 		boxed_expression& operator=( const boxed_expression& o ) = default;
 
+		// Explicit function to decay back to expression type.
+		//
+		expression& decay() { return *this; }
+		const expression& decay() const { return *this; }
+
 		// Implement comparison operators.
 		//
 		bool operator==( const boxed_expression& o ) const { return is_identical( o ); }
