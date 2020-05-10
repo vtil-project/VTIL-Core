@@ -177,7 +177,7 @@ namespace vtil
 				return output;
 			}
 		};
-		using iterator = riterator_base<basic_block, std::list<instruction>::iterator>;
+		using iterator =       riterator_base<basic_block, std::list<instruction>::iterator>;
 		using const_iterator = riterator_base<const basic_block, std::list<instruction>::const_iterator>;
 
 		// Routine that this basic block belongs to.
@@ -363,10 +363,9 @@ namespace vtil
 		hash_t hash() const;
 	};
 
-	// Export iterator type for the sake of convinience.
-	// - It's called stream here because these iterators 
-	//   are recursive range iterators.
+	// Escape basic block namespace for the iterator type 
+	// for the sake of convinience.
 	//
-	using ilstream_iterator = basic_block::iterator;
-	using ilstream_const_iterator = basic_block::const_iterator;
+	using il_iterator =       basic_block::iterator;
+	using il_const_iterator = basic_block::const_iterator;
 };

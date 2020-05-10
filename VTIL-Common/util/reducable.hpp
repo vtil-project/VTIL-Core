@@ -38,6 +38,9 @@
 //
 // - auto reduce() { return vtil::reference_as_tuple( ... ); }
 //
+// - Note: Ideally unique elements that are faster to compare should 
+//         come first to speed up the equality comparisons.
+//
 #pragma warning(push)
 #pragma warning(disable: 4305)
 namespace vtil

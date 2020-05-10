@@ -32,10 +32,15 @@
 
 namespace vtil
 {
+    // Instructions have two general restrictions:
+    // - They may only perform a single write operation whether that is 
+    //   a register or a memory location.
+    // - They cannot access more than one memory location.
+    //
     namespace ins
     {
         using op = math::operator_id;
-        using a = operand_access;
+        using o = operand_type;
 
         //  -- Data/Memory instructions
         //
@@ -46,10 +51,10 @@ namespace vtil
         //
         /*------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
         /*                                          [Name]        [Operands...]                                     [ASizeOp]   [Volatile]  [Operator]               [BranchOps] [MemOps]     */
-        static const instruction_desc mov =        { "mov",       { a::write,    a::read_any                   },   2,          false,      {},                      {},         {}           };
-        static const instruction_desc movr =       { "movr",      { a::write,    a::read_imm                   },   2,          false,      {},                      {},         {}           };
-        static const instruction_desc str =        { "str",       { a::read_reg, a::read_imm,     a::read_any  },   3,          false,      {},                      {},         { 1, true }  };
-        static const instruction_desc ldd =        { "ldd",       { a::write,    a::read_reg,     a::read_imm  },   1,          false,      {},                      {},         { 2, false } };
+        static const instruction_desc mov =        { "mov",       { o::write,    o::read_any                   },   2,          false,      {},                      {},         {}           };
+        static const instruction_desc movr =       { "movr",      { o::write,    o::read_imm                   },   2,          false,      {},                      {},         {}           };
+        static const instruction_desc str =        { "str",       { o::read_reg, o::read_imm,     o::read_any  },   3,          false,      {},                      {},         { 1, true }  };
+        static const instruction_desc ldd =        { "ldd",       { o::write,    o::read_reg,     o::read_imm  },   1,          false,      {},                      {},         { 2, false } };
         /*------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
 
         //    -- Arithmetic instructions
@@ -68,17 +73,17 @@ namespace vtil
         //
         /*------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
         /*                                          [Name]        [Operands...]                                     [ASizeOp]   [Volatile]  [Operator]               [BranchOps] [MemOps]     */
-        static const instruction_desc neg =        { "neg",       { a::readwrite                                 }, 1,            false,    op::negate,              {},         {}           };
-        static const instruction_desc add =        { "add",       { a::readwrite,  a::read_any                   }, 1,            false,    op::add,                 {},         {}           };
-        static const instruction_desc sub =        { "sub",       { a::readwrite,  a::read_any                   }, 1,            false,    op::subtract,            {},         {}           };
-        static const instruction_desc mul =        { "mul",       { a::readwrite,  a::read_any                   }, 1,            false,    op::umultiply,           {},         {}           };
-        static const instruction_desc imul =       { "imul",      { a::readwrite,  a::read_any                   }, 1,            false,    op::multiply,            {},         {}           };
-        static const instruction_desc mulhi =      { "mulhi",     { a::readwrite,  a::read_any                   }, 1,            false,    op::multiply_high,       {},         {}           };
-        static const instruction_desc imulhi =     { "imulhi",    { a::readwrite,  a::read_any                   }, 1,            false,    op::umultiply_high,      {},         {}           };
-        static const instruction_desc div =        { "div",       { a::readwrite,  a::read_any,     a::read_any  }, 1,            false,    op::udivide,             {},         {}           };
-        static const instruction_desc idiv =       { "idiv",      { a::readwrite,  a::read_any,     a::read_any  }, 1,            false,    op::divide,              {},         {}           };
-        static const instruction_desc rem =        { "rem",       { a::readwrite,  a::read_any,     a::read_any  }, 1,            false,    op::uremainder,          {},         {}           };
-        static const instruction_desc irem =       { "irem",      { a::readwrite,  a::read_any,     a::read_any  }, 1,            false,    op::remainder,           {},         {}           };
+        static const instruction_desc neg =        { "neg",       { o::readwrite                                 }, 1,            false,    op::negate,              {},         {}           };
+        static const instruction_desc add =        { "add",       { o::readwrite,  o::read_any                   }, 1,            false,    op::add,                 {},         {}           };
+        static const instruction_desc sub =        { "sub",       { o::readwrite,  o::read_any                   }, 1,            false,    op::subtract,            {},         {}           };
+        static const instruction_desc mul =        { "mul",       { o::readwrite,  o::read_any                   }, 1,            false,    op::umultiply,           {},         {}           };
+        static const instruction_desc imul =       { "imul",      { o::readwrite,  o::read_any                   }, 1,            false,    op::multiply,            {},         {}           };
+        static const instruction_desc mulhi =      { "mulhi",     { o::readwrite,  o::read_any                   }, 1,            false,    op::multiply_high,       {},         {}           };
+        static const instruction_desc imulhi =     { "imulhi",    { o::readwrite,  o::read_any                   }, 1,            false,    op::umultiply_high,      {},         {}           };
+        static const instruction_desc div =        { "div",       { o::readwrite,  o::read_any,     o::read_any  }, 1,            false,    op::udivide,             {},         {}           };
+        static const instruction_desc idiv =       { "idiv",      { o::readwrite,  o::read_any,     o::read_any  }, 1,            false,    op::divide,              {},         {}           };
+        static const instruction_desc rem =        { "rem",       { o::readwrite,  o::read_any,     o::read_any  }, 1,            false,    op::uremainder,          {},         {}           };
+        static const instruction_desc irem =       { "irem",      { o::readwrite,  o::read_any,     o::read_any  }, 1,            false,    op::remainder,           {},         {}           };
         /*------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
     
         //  -- Bitwise instructions
@@ -94,14 +99,14 @@ namespace vtil
         //
         /*------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
         /*                                          [Name]        [Operands...]                                     [ASizeOp]   [Volatile]  [Operator]               [BranchOps] [MemOps]     */
-        static const instruction_desc bnot =        { "not",      { a::readwrite                                 }, 1,          false,      op::bitwise_not,         {},          {}          };
-        static const instruction_desc bshr =        { "shr",      { a::readwrite,  a::read_any                   }, 1,          false,      op::shift_right,         {},          {}          };
-        static const instruction_desc bshl =        { "shl",      { a::readwrite,  a::read_any                   }, 1,          false,      op::shift_left,          {},          {}          };
-        static const instruction_desc bxor =        { "xor",      { a::readwrite,  a::read_any                   }, 1,          false,      op::bitwise_xor,         {},          {}          };
-        static const instruction_desc bor =         { "or",       { a::readwrite,  a::read_any                   }, 1,          false,      op::bitwise_or,          {},          {}          };
-        static const instruction_desc band =        { "and",      { a::readwrite,  a::read_any                   }, 1,          false,      op::bitwise_and,         {},          {}          };
-        static const instruction_desc bror =        { "ror",      { a::readwrite,  a::read_any                   }, 1,          false,      op::rotate_right,        {},          {}          };
-        static const instruction_desc brol =        { "rol",      { a::readwrite,  a::read_any                   }, 1,          false,      op::rotate_left,         {},          {}          };
+        static const instruction_desc bnot =        { "not",      { o::readwrite                                 }, 1,          false,      op::bitwise_not,         {},          {}          };
+        static const instruction_desc bshr =        { "shr",      { o::readwrite,  o::read_any                   }, 1,          false,      op::shift_right,         {},          {}          };
+        static const instruction_desc bshl =        { "shl",      { o::readwrite,  o::read_any                   }, 1,          false,      op::shift_left,          {},          {}          };
+        static const instruction_desc bxor =        { "xor",      { o::readwrite,  o::read_any                   }, 1,          false,      op::bitwise_xor,         {},          {}          };
+        static const instruction_desc bor =         { "or",       { o::readwrite,  o::read_any                   }, 1,          false,      op::bitwise_or,          {},          {}          };
+        static const instruction_desc band =        { "and",      { o::readwrite,  o::read_any                   }, 1,          false,      op::bitwise_and,         {},          {}          };
+        static const instruction_desc bror =        { "ror",      { o::readwrite,  o::read_any                   }, 1,          false,      op::rotate_right,        {},          {}          };
+        static const instruction_desc brol =        { "rol",      { o::readwrite,  o::read_any                   }, 1,          false,      op::rotate_left,         {},          {}          };
         /*------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
     
         //  -- Control flow instructions
@@ -113,17 +118,16 @@ namespace vtil
         //
         /*------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
         /*                                          [Name]        [Operands...]                                     [ASizeOp]   [Volatile]  [Operator]               [BranchOps] [MemOps]     */
-        static const instruction_desc js =         { "js",        { a::read_reg,   a::read_any,     a::read_any  }, 2,          true,        {},                     { 1, 2 },    {}          };
-        static const instruction_desc jmp =        { "jmp",       { a::read_any                                  }, 1,          true,        {},                     { 1 },       {}          };
-        static const instruction_desc vexit =      { "vexit",     { a::read_any                                  }, 1,          true,        {},                     { -1 },      {}          };
-        static const instruction_desc vxcall =     { "vxcall",    { a::read_any                                  }, 1,          true,        {},                     {},          {}          };
+        static const instruction_desc js =         { "js",        { o::read_reg,   o::read_any,     o::read_any  }, 2,          true,        {},                     { 1, 2 },    {}          };
+        static const instruction_desc jmp =        { "jmp",       { o::read_any                                  }, 1,          true,        {},                     { 1 },       {}          };
+        static const instruction_desc vexit =      { "vexit",     { o::read_any                                  }, 1,          true,        {},                     { -1 },      {}          };
+        static const instruction_desc vxcall =     { "vxcall",    { o::read_any                                  }, 1,          true,        {},                     {},          {}          };
         /*------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
 
         //    -- Special instructions
         //
         //    NOP                                                           | Placeholder
-        //    UPFLGW     Reg                                                | Indicates that flags were updated according to the previous instruction and written into OP1.
-        //    VSETCC     Reg,    Imm                                        | Emits SETcc on OP1 based on the [OP2]th bit of RFLAGS
+        //    UPFLG      Reg                                                | Indicates that flags were updated according to the previous instruction and written into OP1.
         //    VEMIT      Imm                                                | Emits the opcode as is to the final instruction stream.
         //    VPINR      Reg                                                | Pins the register for read
         //    VPINW      Reg                                                | Pins the register for write
@@ -133,13 +137,13 @@ namespace vtil
         /*------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
         /*                                          [Name]        [Operands...]                                     [ASizeOp]   [Volatile]  [Operator]               [BranchOps] [MemOps]     */
         static const instruction_desc nop =        { "nop",       {                                             },  0,          false,      {},                      {},         {}           };
-        static const instruction_desc upflg =      { "upflg",     { a::readwrite                                },  1,          false,      {},                      {},         {}           };
-        static const instruction_desc vsetcc =     { "vsetcc",    { a::write,      a::read_imm                  },  1,          false,      {},                      {},         {}           };
-        static const instruction_desc vemit =      { "vemit",     { a::read_imm                                 },  1,          true,       {},                      {},         {}           };
-        static const instruction_desc vpinr =      { "vpinr",     { a::read_reg                                 },  1,          true,       {},                      {},         {}           };
-        static const instruction_desc vpinw =      { "vpinw",     { a::write                                    },  1,          true,       {},                      {},         {}           };
-        static const instruction_desc vpinrm =     { "vpinrm",    { a::read_reg,   a::read_imm,                 },  1,          true,       {},                      {},         { 1, false } };
-        static const instruction_desc vpinwm =     { "vpinwm",    { a::read_reg,   a::read_imm                  },  1,          true,       {},                      {},         { 1, true }  };
+        static const instruction_desc upflg =      { "upflg",     { o::readwrite                                },  1,          false,      {},                      {},         {}           };
+        static const instruction_desc vsetcc =     { "vsetcc",    { o::write,      o::read_imm                  },  1,          false,      {},                      {},         {}           };
+        static const instruction_desc vemit =      { "vemit",     { o::read_imm                                 },  1,          true,       {},                      {},         {}           };
+        static const instruction_desc vpinr =      { "vpinr",     { o::read_reg                                 },  1,          true,       {},                      {},         {}           };
+        static const instruction_desc vpinw =      { "vpinw",     { o::write                                    },  1,          true,       {},                      {},         {}           };
+        static const instruction_desc vpinrm =     { "vpinrm",    { o::read_reg,   o::read_imm,                 },  1,          true,       {},                      {},         { 1, false } };
+        static const instruction_desc vpinwm =     { "vpinwm",    { o::read_reg,   o::read_imm                  },  1,          true,       {},                      {},         { 1, true }  };
         /*------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
     };
 
@@ -150,7 +154,7 @@ namespace vtil
         ins::mov, ins::movr, ins::str, ins::ldd, ins::neg, ins::add, ins::sub, ins::mul,
         ins::imul, ins::mulhi, ins::imulhi, ins::div, ins::idiv, ins::rem, ins::irem, ins::bnot,
         ins::bshr, ins::bshl, ins::bxor, ins::bor, ins::band, ins::bror, ins::brol, ins::upflg,
-        ins::js, ins::jmp, ins::vexit, ins::vxcall, ins::nop, ins::vsetcc, ins::vemit, 
-        ins::vpinr, ins::vpinw, ins::vpinrm, ins::vpinwm
+        ins::js, ins::jmp, ins::vexit, ins::vxcall, ins::nop, ins::vemit, ins::vpinr, ins::vpinw, 
+        ins::vpinrm, ins::vpinwm
     };
 };

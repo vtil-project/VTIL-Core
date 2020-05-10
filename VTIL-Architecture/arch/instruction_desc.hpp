@@ -42,15 +42,13 @@
 
 namespace vtil
 {
-    // Describes the way an instruction acceses it's operands and the
-    // constraints built around that, such as "immediate only" implied 
-    // by the "_imm" suffix.
+    // Describes the type of operand in relation to the instruction.
     //
-    enum class operand_access : uint8_t
+    enum class operand_type : uint8_t
     {
         // Note: 
-        // It still is valid to do != write for read and >= write for writes.
-        // this operand access type is illegal to use outside of function arguments.
+        // It still is valid to do [!= write] and [>= write] for easy read and write.
+        // checks respectively since this operand access type is illegal to use.
         //
         invalid = 0, 
 
@@ -79,9 +77,9 @@ namespace vtil
         //
         std::string name;
 
-        // List of the access types for each operand.
+        // List of the operand types.
         //
-        std::vector<operand_access> access_types;
+        std::vector<operand_type> operand_types;
 
         // Index of the operand that determines the instruction's 
         // access size property.
@@ -116,7 +114,7 @@ namespace vtil
         // Generic data-assignment constructor with certain validity checks.
         //
         instruction_desc( const std::string& name,
-                          const std::vector<operand_access>& access_types,
+                          const std::vector<operand_type>& operand_types,
                           int access_size_index,
                           bool is_volatile,
                           math::operator_id symbolic_operator,
@@ -125,7 +123,7 @@ namespace vtil
 
         // Number of operands this instruction has.
         //
-        size_t operand_count() const { return access_types.size(); }
+        size_t operand_count() const { return operand_types.size(); }
 
         // Whether the instruction branches for not.
         //
