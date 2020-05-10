@@ -155,8 +155,8 @@ namespace vtil
 		// If an iterator is provided, shift the stack pointer
 		// for every instruction that precedes it as well.
 		//
-		std::optional<uint32_t> sp_index_prev;
-		while ( !it.is_end() )
+		uint32_t shifted_spi = it.is_end() ? -1 : it->sp_index;
+		for ( ;!it.is_end() && it->sp_index == shifted_spi; it++ )
 		{
 			// Shift the stack offset accordingly.
 			//
@@ -170,28 +170,17 @@ namespace vtil
 				//
 				if ( it->base->accesses_memory() && it->operands[ it->base->memory_operand_index ].reg().is_stack_pointer() )
 				{
-					// Assert the offset operand is an immediate and 
-					// shift the offset as well.
+					// Assert the offset operand is an immediate and shift the offset as well.
 					//
 					fassert( it->operands[ it->base->memory_operand_index + 1 ].is_immediate() );
 					it->operands[ it->base->memory_operand_index + 1 ].imm().i64 += offset;
 				}
 			}
-
-			// If stack changed changed, return, else forward the iterator.
-			//
-			if ( sp_index_prev.value_or( it->sp_index ) != it->sp_index )
-				return this;
-			sp_index_prev = it->sp_index;
-			++it;
 		}
 
-		// Shift the stack pointer and continue as usual
-		// without emitting any sub or add instructions.
-		// Queued stack pointer changes will be processed
-		// in bulk at the end of the routine.
+		// If we've reached the end, shift the final block offset as well.
 		//
-		sp_offset += offset;
+		if( it.is_end() ) sp_offset += offset;
 		return this;
 	}
 
