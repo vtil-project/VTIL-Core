@@ -82,8 +82,8 @@ namespace vtil
 
 			// Simple position/validity checks.
 			//
-			bool is_end() const { return !container || operator==( { container, container->stream.end() } ); }
-			bool is_begin() const { return !container || operator==( { container, container->stream.begin() } ); }
+			bool is_end() const { return !container || ((const iterator_type&)*this)==container->stream.end(); }
+			bool is_begin() const { return !container || ((const iterator_type&)*this)==container->stream.begin(); }
 			bool is_valid() const { return !is_begin() || !is_end(); }
 
 			// Simple helper used to trace paths towards a container.

@@ -93,7 +93,7 @@ namespace vtil::optimizer
 		// mask it to experss the value of original register.
 		//
 		symbolic::expression&& tmp = variable{ at, register_desc{ src.flags, src.local_id, 64 } }.to_expression( false );
-		return ( tmp >> src.bit_offset ).resize( src.bit_count );
+		return ( src.bit_offset ? tmp >> src.bit_offset : tmp ).resize( src.bit_count );
 	}
 
 	// Conversion to human-readable format.
