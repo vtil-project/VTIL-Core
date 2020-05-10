@@ -1,3 +1,4 @@
 #pragma once
 #include "../../analysis/trace.hpp"
 #include "../../analysis/variable.hpp"
+#include "../../analysis/cached_tracer.hpp"

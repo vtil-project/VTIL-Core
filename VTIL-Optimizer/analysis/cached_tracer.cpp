@@ -29,12 +29,7 @@
 
 namespace vtil::optimizer
 {
-    static trace_function_t make_tracer( cached_tracer* cache )
-    {
-        return [ cache ] ( auto v ) { return cache->trace_basic_cached( v ); };
-    }
-
-    // Replicate trace_basic with the addition of a cache lookup.
+   // Replicate trace_basic with the addition of a cache lookup.
     //
     symbolic::expression cached_tracer::trace_basic_cached( const variable& lookup )
     {
@@ -126,7 +121,7 @@ namespace vtil::optimizer
         if ( it != cache.end() )
             result = symbolic::expression{ *it->second }.resize( lookup.bit_count() );
         else
-            result = trace_primitive( lookup, make_tracer( this ) );
+            result = trace_primitive( lookup, *this );
 
         // Insert a cache entry for the exact variable we're looking up and return.
         //
@@ -148,7 +143,7 @@ namespace vtil::optimizer
 	}
 	symbolic::expression cached_tracer::rtrace( const variable& lookup, bool pack )
 	{
-		symbolic::expression&& result = rtrace_primitive( lookup, make_tracer( this ) );
+		symbolic::expression&& result = rtrace_primitive( lookup, *this );
 		return pack ? variable::pack_all( result ) : result;
 	}
 }

@@ -53,5 +53,9 @@ namespace vtil::optimizer
         //
         symbolic::expression trace( const variable& lookup, bool pack = true );
         symbolic::expression rtrace( const variable& lookup, bool pack = true );
+
+        // Implicit casting to a trace function.
+        //
+        operator trace_function_t() { return [ this ] ( auto v ) { return trace_basic_cached( v ); }; }
 	};
 };
