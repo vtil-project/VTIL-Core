@@ -70,13 +70,13 @@ namespace vtil::optimizer
 
         // The iterator at which this variable is read at.
         //
-        ilstream_const_iterator at = {};
+        il_const_iterator at = {};
 
         // Variant descriptor that holds either one of the variable types.
         //
         using descriptor_t = std::variant<register_t, memory_t>;
         descriptor_t descriptor;
-        
+
         // Since SSA constraints are violated if the block is looping,
         // we have to add a hint to declare it branch-dependant where
         // relevant.
@@ -89,7 +89,7 @@ namespace vtil::optimizer
 
         // Constructs by iterator and the variable descriptor itself.
         //
-        variable( const ilstream_const_iterator& it, descriptor_t desc ) :
+        variable( const il_const_iterator& it, descriptor_t desc ) :
             descriptor( std::move( desc ) ), at( it )
         {
             // If read-only register, remove the iterator.
@@ -117,6 +117,10 @@ namespace vtil::optimizer
         const memory_t& mem() const { return std::get<memory_t>( descriptor ); }
         register_t& reg() { return std::get<register_t>( descriptor ); }
         const register_t& reg() const { return std::get<register_t>( descriptor ); }
+
+        // Returns the size of the variable in bits.
+        //
+        bitcnt_t bit_count() const { return is_register() ? reg().bit_count : mem().size * 8; }
 
         // Conversion to symbolic expression.
         //

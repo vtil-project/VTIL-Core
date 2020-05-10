@@ -66,7 +66,7 @@ namespace vtil::optimizer
     // - Note: New iterator should be a connected block's end.
     //
     static symbolic::expression propagate( const symbolic::expression& ref,
-                                           const ilstream_const_iterator& it,
+                                           const il_const_iterator& it,
                                            const trace_function_t& tracer )
     {
         using namespace logger;
@@ -574,7 +574,7 @@ namespace vtil::optimizer
             //
             std::vector it_list = lookup.at.is_valid()
                 ? lookup.at.recurse( false )
-                : std::vector<ilstream_const_iterator>{};
+                : std::vector<il_const_iterator>{};
 
             // If there are paths take.
             //
