@@ -184,7 +184,7 @@ namespace vtil
 
 		// Declare reduction.
 		//
-		auto reduce() { return reference_as_tuple( local_id, flags, bit_count, bit_offset ); }
+		auto reduce() { return reference_as_tuple( bit_count, local_id, flags, bit_offset ); }
 	};
 
 	// Should be overriden by the user to describe conversion of the

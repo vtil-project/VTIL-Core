@@ -32,13 +32,13 @@ namespace vtil
 	// Generic data-assignment constructor with certain validity checks.
 	//
 	instruction_desc::instruction_desc( const std::string& name, 
-										const std::vector<operand_access>& access_types, 
+										const std::vector<operand_type>& operand_types,
 										int access_size_index, 
 										bool is_volatile, 
 										math::operator_id symbolic_operator,
 										std::vector<int> branch_operands, 
 										const std::pair<int, bool>& memory_operands ) :
-		name( name ), access_types( access_types ), access_size_index( access_size_index - 1 ),
+		name( name ), operand_types( operand_types ), access_size_index( access_size_index - 1 ),
 		is_volatile( is_volatile ), symbolic_operator( symbolic_operator ),
 		memory_operand_index( memory_operands.first - 1 ), memory_write( memory_operands.second )
 	{

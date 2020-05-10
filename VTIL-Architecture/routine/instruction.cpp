@@ -32,7 +32,7 @@ namespace vtil
 {
 	// Returns whether the instruction is valid or not.
 	//
-	bool vtil::instruction::is_valid() const
+	bool instruction::is_valid() const
 	{
 		// Instruction must have a base descriptor assigned.
 		//
@@ -44,15 +44,15 @@ namespace vtil
 		if ( operands.size() != base->operand_count() )
 			return false;
 
-		// Validate operand types against the base access type.
+		// Validate operand types against the expected type.
 		//
-		for ( int i = 0; i < base->access_types.size(); i++ )
+		for ( int i = 0; i < base->operand_types.size(); i++ )
 		{
 			if ( !operands[ i ].is_valid() )
 				return false;
-			if ( base->access_types[ i ] == operand_access::read_imm && !operands[ i ].is_immediate() )
+			if ( base->operand_types[ i ] == operand_type::read_imm && !operands[ i ].is_immediate() )
 				return false;
-			if ( base->access_types[ i ] == operand_access::read_reg && !operands[ i ].is_register() )
+			if ( base->operand_types[ i ] == operand_type::read_reg && !operands[ i ].is_register() )
 				return false;
 		}
 
@@ -81,57 +81,50 @@ namespace vtil
 		return true;
 	}
 
-	// Returns all memory accesses matching the criteria.
+	// Returns the memory address this instruction references.
 	//
-	std::pair<register_desc, int64_t> instruction::get_mem_loc( operand_access access ) const
+	std::pair<register_desc, int64_t> instruction::get_mem_loc() const
 	{
-		// Validate arguments.
+		// Assert that instruction does access memory.
 		//
-		fassert( access == operand_access::invalid || access == operand_access::read || access == operand_access::write );
+		fassert( base->accesses_memory() );
 
-		// If instruction does access memory:
+		// Reference the pair of operands used to create the pointer and return them.
 		//
-		if ( base->accesses_memory() )
-		{
-			// Fetch and validate memory operands pair.
-			//
-			const register_desc& mem_base = operands[ base->memory_operand_index ].reg();
-			const operand& mem_offset = operands[ base->memory_operand_index + 1 ];
-
-			if ( !base->memory_write && ( access == operand_access::read || access == operand_access::invalid ) )
-				return { mem_base, mem_offset.imm().i64 };
-			else if ( base->memory_write && ( access == operand_access::write || access == operand_access::invalid ) )
-				return { mem_base, mem_offset.imm().i64 };
-		}
-		return {};
+		const operand& mem_base = operands[ base->memory_operand_index ];
+		const operand& mem_offset = operands[ base->memory_operand_index + 1 ];
+		return { mem_base.reg(), mem_offset.imm().i64 };
 	}
 
-	// Checks whether the instruction reads from the given register or not.
+	// Checks whether the instruction reads from the given register or not, and
+	// returns [operand index + 1] if a match is found and zero otherwise.
 	//
 	int instruction::reads_from( const register_desc& rw ) const
 	{
-		for ( int i = 0; i < base->access_types.size(); i++ )
-			if ( base->access_types[ i ] != operand_access::write && operands[ i ].reg().overlaps( rw ) )
+		for ( int i = 0; i < base->operand_types.size(); i++ )
+			if ( base->operand_types[ i ] != operand_type::write && operands[ i ].reg().overlaps( rw ) )
 				return i + 1;
 		return 0;
 	}
 
-	// Checks whether the instruction writes to the given register or not.
+	// Checks whether the instruction reads from the given register or not, and
+	// returns [operand index + 1] if a match is found and zero otherwise.
 	//
 	int instruction::writes_to( const register_desc& rw ) const
 	{
-		for ( int i = 0; i < base->access_types.size(); i++ )
-			if ( base->access_types[ i ] >= operand_access::write && operands[ i ].reg().overlaps( rw ) )
+		for ( int i = 0; i < base->operand_types.size(); i++ )
+			if ( base->operand_types[ i ] >= operand_type::write && operands[ i ].reg().overlaps( rw ) )
 				return i + 1;
 		return 0;
 	}
 
-	// Checks whether the instruction overwrites the given register or not.
+	// Checks whether the instruction reads from the given register or not, and
+	// returns [operand index + 1] if a match is found and zero otherwise.
 	//
 	int instruction::overwrites( const register_desc& rw ) const
 	{
-		for ( int i = 0; i < base->access_types.size(); i++ )
-			if ( base->access_types[ i ] == operand_access::write && operands[ i ].reg().overlaps( rw ) )
+		for ( int i = 0; i < base->operand_types.size(); i++ )
+			if ( base->operand_types[ i ] == operand_type::write && operands[ i ].reg().overlaps( rw ) )
 				return i + 1;
 		return 0;
 	}

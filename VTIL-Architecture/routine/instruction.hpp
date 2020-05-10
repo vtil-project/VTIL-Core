@@ -108,19 +108,22 @@ namespace vtil
 		//
 		size_t access_size() const { return operands.empty() ? 0 : operands[ base->access_size_index ].size(); }
 
-		// Returns all memory accesses matching the criteria.
+		// Returns the memory address this instruction references.
 		//
-		std::pair<register_desc, int64_t> get_mem_loc( operand_access access = operand_access::invalid ) const;
+		std::pair<register_desc, int64_t> get_mem_loc() const;
 
-		// Checks whether the instruction reads from the given register or not.
+		// Checks whether the instruction reads from the given register or not, and
+		// returns [operand index + 1] if a match is found and zero otherwise.
 		//
 		int reads_from( const register_desc& rw ) const;
 
-		// Checks whether the instruction writes to the given register or not.
+		// Checks whether the instruction reads from the given register or not, and
+		// returns [operand index + 1] if a match is found and zero otherwise.
 		//
 		int writes_to( const register_desc& rw ) const;
 
-		// Checks whether the instruction overwrites the given register or not.
+		// Checks whether the instruction reads from the given register or not, and
+		// returns [operand index + 1] if a match is found and zero otherwise.
 		//
 		int overwrites( const register_desc& rw ) const;
 
@@ -130,6 +133,6 @@ namespace vtil
 
 		// Declare reduction.
 		//
-		auto reduce() { return reference_as_tuple( base->name, vip, operands, sp_offset, sp_index, sp_reset, explicit_volatile ); }
+		auto reduce() { return reference_as_tuple( vip, sp_offset, operands, base->name, sp_index, sp_reset, explicit_volatile ); }
 	};
 };

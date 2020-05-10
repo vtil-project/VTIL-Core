@@ -288,6 +288,6 @@ namespace vtil::math
         // - Note: Relative comparison operators should not be used for actual comparison 
         //         but are there for the use of sorted containers.
         //
-        auto reduce() { return reference_as_tuple( bit_count, known_bits, unknown_bits ); }
+        auto reduce() { return reference_as_tuple( unknown_bits, known_bits, bit_count ); }
     };
 };
