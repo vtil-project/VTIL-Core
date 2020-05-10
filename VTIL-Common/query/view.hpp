@@ -350,8 +350,6 @@ namespace vtil::query
 		template<typename callback_type>
 		view_type& run( callback_type cb )
 		{
-			if ( !next ) return *this;
-
 			// Allow callbacks taking non-projected type if they take
 			// the base iterator type.
 			//
@@ -403,7 +401,7 @@ namespace vtil::query
 			}
 			else
 			{
-				std::vector<T> result;
+				std::vector<std::conditional_t<std::is_same_v<T, void>, int, T>> result;
 				while ( query.forward() == 1 )
 					result.push_back( enumerator( prev() ) );
 				return result;
