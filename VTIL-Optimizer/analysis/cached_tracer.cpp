@@ -29,6 +29,11 @@
 
 namespace vtil::optimizer
 {
+    static trace_function_t make_tracer( cached_tracer* cache )
+    {
+        return [ cache ] ( auto v ) { return cache->trace_basic_cached( v ); };
+    }
+
     // Replicate trace_basic with the addition of a cache lookup.
     //
     symbolic::expression cached_tracer::trace_basic_cached( const variable& lookup )
@@ -37,12 +42,40 @@ namespace vtil::optimizer
         //
         using cache_entry = std::pair<variable, symbolic::expression::reference>;
         std::function<bool( const cache_entry& )> predicate;
+        using namespace logger;
+
+#if VTIL_OPT_TRACE_VERBOSE
+        // Log the beginning of the trace.
+        //
+        log<CON_BRG>( "CcTrace(%s)\n", lookup.to_string() );
+        scope_padding _p( 1 );
+#endif
+        // Handle base case.
+        //
+        if ( lookup.at.is_begin() )
+        {
+            symbolic::expression&& result = lookup.to_expression();
+#if VTIL_OPT_TRACE_VERBOSE
+            // Log result.
+            //
+            log<CON_BRG>( "= %s [Base case]\n", result.to_string() );
+#endif
+            return result;
+        }
 
         // Try lookup the exact variable in the map in a fast manner.
         //
         auto it = cache.find( lookup );
         if ( it != cache.end() )
-            return *it->second;
+        {
+            const symbolic::expression& result = *it->second;
+#if VTIL_OPT_TRACE_VERBOSE
+            // Log result.
+            //
+            log<CON_BLU>( "= %s [Cached result]\n", result.to_string() );
+#endif
+            return result;
+        }
 
         // If memory variable:
         //
@@ -93,11 +126,16 @@ namespace vtil::optimizer
         if ( it != cache.end() )
             result = symbolic::expression{ *it->second }.resize( lookup.bit_count() );
         else
-            result = optimizer::trace( lookup, false );
+            result = trace_primitive( lookup, make_tracer( this ) );
 
         // Insert a cache entry for the exact variable we're looking up and return.
         //
         cache.emplace( lookup, result );
+#if VTIL_OPT_TRACE_VERBOSE
+        // Log result.
+        //
+        log<CON_BRG>( "= %s\n", result.to_string() );
+#endif
         return result;
     }
 
@@ -110,10 +148,7 @@ namespace vtil::optimizer
 	}
 	symbolic::expression cached_tracer::rtrace( const variable& lookup, bool pack )
 	{
-		symbolic::expression&& result = rtrace_primitive( lookup, [ & ] ( auto v )
-		{
-			return trace_basic_cached( v );
-		} );
+		symbolic::expression&& result = rtrace_primitive( lookup, make_tracer( this ) );
 		return pack ? variable::pack_all( result ) : result;
 	}
 }
