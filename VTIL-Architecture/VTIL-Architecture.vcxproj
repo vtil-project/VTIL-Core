@@ -32,6 +32,9 @@
     <None Include="includes\vtil\arch" />
     <None Include="VTIL-Architecture.licenseheader" />
   </ItemGroup>
+  <ItemGroup>
+    <Text Include="CMakeLists.txt" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
     <ProjectGuid>{A79E2869-7626-4801-B09D-5C12F5163BA3}</ProjectGuid>

@@ -149,6 +149,9 @@
     <None Include="includes\vtil\vtil" />
     <None Include="VTIL-Common.licenseheader" />
   </ItemGroup>
+  <ItemGroup>
+    <Text Include="CMakeLists.txt" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
