@@ -43,7 +43,7 @@ namespace vtil::optimizer
         // Declare the lookup map for the cache mapping each variable to the
         // result of the primitive traver. Comparison between variables is much 
         // faster compared to the hasher, so we use a sorted map.
-        //   
+        //
         std::map<variable, symbolic::expression::reference> cache;
 
         // Replicate trace_basic with the addition of a cache lookup.

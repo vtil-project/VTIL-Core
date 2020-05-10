@@ -119,7 +119,7 @@ namespace vtil::optimizer
 #endif
                 // Fail if propagation fails.
                 //
-                if ( !( pointer = propagate( *pointer, it, trace_basic ) ) )
+                if ( !( pointer = propagate( pointer->decay(), it, trace_basic ) ) )
                     return {};
 
 #if VTIL_OPT_TRACE_VERBOSE
@@ -442,7 +442,7 @@ namespace vtil::optimizer
 
                 // If displacement can be expressed as a constant:
                 //
-                if ( auto disp = ( ptr2 - mem.pointer ).get<int64_t>() )
+                if ( auto disp = ( ptr2 - mem.pointer->decay() ).get<int64_t>() )
                 {
                     // Skip if out of boundary.
                     //
@@ -466,7 +466,7 @@ namespace vtil::optimizer
                         auto ptrace = [ & ] ( bitcnt_t bit_offset, bitcnt_t bit_count )
                         {
                             fassert( !( ( bit_offset | bit_count ) & 7 ) );
-                            tmp.mem().pointer = mem.pointer + bit_offset / 8;
+                            tmp.mem().pointer = mem.pointer->decay() + bit_offset / 8;
                             tmp.mem().size = bit_count / 8;
                             return tracer( tmp );
                         };

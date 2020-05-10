@@ -38,6 +38,12 @@ namespace vtil::optimizer
         using cache_entry = std::pair<variable, symbolic::expression::reference>;
         std::function<bool( const cache_entry& )> predicate;
 
+        // Try lookup the exact variable in the map in a fast manner.
+        //
+        auto it = cache.find( lookup );
+        if ( it != cache.end() )
+            return *it->second;
+
         // If memory variable:
         //
         if ( lookup.is_memory() )
@@ -53,8 +59,8 @@ namespace vtil::optimizer
                 //
                 auto& self = lookup.mem();
                 auto& other = pair.first.mem();
-                return self.pointer == other.pointer &&
-                    self.size >= other.size;
+                return self.pointer->equals( other.pointer->decay() ) &&
+                       self.size >= other.size;
             };
         }
         // If register variable:
@@ -74,23 +80,23 @@ namespace vtil::optimizer
                 auto& self = lookup.reg();
                 auto& other = pair.first.reg();
                 return self.flags == other.flags &&
-                    self.local_id == other.local_id &&
-                    self.bit_offset == other.bit_offset &&
-                    self.bit_count >= other.bit_count;
+                       self.local_id == other.local_id &&
+                       self.bit_offset == other.bit_offset &&
+                       self.bit_count >= other.bit_count;
             };
         }
 
-        // Search the map, if we find a matching entry return after resizing.
-        // - We search starting from the small entries to avoid the cost of
-        //   shrinking where it's feasable.
+        // Search the map, if we find a matching entry shrink and use as the result.
         //
-        auto it = std::find_if( cache.begin(), cache.end(), predicate );
+        symbolic::expression result;
+        it = std::find_if( cache.begin(), cache.end(), predicate );
         if ( it != cache.end() )
-            return symbolic::expression{ *it->second }.resize( lookup.bit_count() );
+            result = symbolic::expression{ *it->second }.resize( lookup.bit_count() );
+        else
+            result = optimizer::trace( lookup, false );
 
-        // Trace the variable, insert into the cache.
+        // Insert a cache entry for the exact variable we're looking up and return.
         //
-        symbolic::expression result = optimizer::trace( lookup, false );
         cache.emplace( lookup, result );
         return result;
     }

@@ -52,7 +52,7 @@ namespace vtil::optimizer
         {
             // Absolute pointer as calculated.
             //
-            symbolic::expression::reference pointer = {};
+            symbolic::boxed_expression::reference pointer = {};
 
             // Size of the variable in number of bytes.
             //
@@ -60,8 +60,8 @@ namespace vtil::optimizer
 
             // Construct from base offset and size.
             //
-            memory_t( symbolic::expression::reference pointer = {}, size_t size = 0 )
-                : pointer( pointer ), size( size ) {}
+            memory_t( symbolic::boxed_expression::reference pointer = {}, size_t size = 0 )
+                : pointer( std::move( pointer ) ), size( size ) {}
 
             // Declare reduction.
             //
