@@ -119,6 +119,11 @@ namespace vtil
 				//
 				if ( is_volatile() || is_read_only() || !is_physical() )
 					return false;
+
+				// Must have no local identifier.
+				//
+				if ( local_id != 0 )
+					return false;
 			}
 
 			// If register is physical, it can't be local.
