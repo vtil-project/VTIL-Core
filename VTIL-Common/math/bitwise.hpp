@@ -69,8 +69,21 @@ namespace vtil::math
     //
     static constexpr uint64_t fill( bitcnt_t bit_count, bitcnt_t bit_offset = 0 )
     {
+        // Shifting beyond the variable size cause unexpected (mod) behaviour
+        // on x64, check the shift count first.
+        //
         if ( bit_offset >= 64 ) return 0;
-        return ( ( ~0ull ) >> ( 64 - bit_count ) ) << bit_offset;
+
+        // Fill with [bit_count] x [1] starting from the lowest bit.
+        //
+        uint64_t value_absolute = ( ~0ull ) >> ( 64 - bit_count );
+        
+        // Shift accordingly.
+        //
+        if( bit_offset >= 0 ) 
+            return value_absolute << bit_offset;
+        else 
+            return value_absolute >> bit_offset;
     }
 
     // Fills the bits of the uint64_t type after the given offset with the sign bit.
