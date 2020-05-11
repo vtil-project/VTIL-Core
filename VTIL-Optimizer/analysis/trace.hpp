@@ -43,10 +43,10 @@
 
 namespace vtil::optimizer
 {
-    // Some convinience typedefs.
+    // Some convenience typedefs.
     //
-    using trace_function_t =    std::function<symbolic::expression( const variable& lookup )>;
     using path_history_t =      std::map<std::pair<const basic_block*, const basic_block*>, uint32_t>;
+    using trace_function_t =    std::function<symbolic::expression( const variable& lookup )>;
 
     // Traces a variable across the basic block it belongs to and generates a symbolic expression 
     // that describes it's value at the bound point. Will invoke the passed tracer for any additional 

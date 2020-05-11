@@ -33,10 +33,6 @@ namespace vtil::optimizer
     //
     symbolic::expression cached_tracer::trace_basic_cached( const variable& lookup )
     {
-        // Declare a predicate for the search of the variable in the cache.
-        //
-        using cache_entry = std::pair<variable, symbolic::expression::reference>;
-        std::function<bool( const cache_entry& )> predicate;
         using namespace logger;
 
 #if VTIL_OPT_TRACE_VERBOSE
@@ -71,6 +67,9 @@ namespace vtil::optimizer
 #endif
             return result;
         }
+        // Declare a predicate for the search of the variable in the cache.
+        //
+        std::function<bool( const cache_entry& )> predicate;
 
         // If memory variable:
         //
