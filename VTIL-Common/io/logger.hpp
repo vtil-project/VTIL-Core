@@ -29,6 +29,7 @@
 #include <iostream>
 #include <stdint.h>
 #include <cstring>
+#include <cstdlib>
 #include <string>
 #include <mutex>
 #include "formatting.hpp"
@@ -109,7 +110,7 @@ namespace vtil::logger
 	
 		// Used to mark functions noreturn.
 		//
-		inline static void noreturn_helper [[noreturn]] () { __debugbreak(); }
+		inline static void noreturn_helper [[noreturn]] () { __debugbreak(); abort(); }
 	};
 
 	// Main function used when logging.
@@ -182,13 +183,11 @@ namespace vtil::logger
 		// Print the erorr message.
 		//
 		log<CON_RED>( fmt, std::forward<params>( ps )... );
-
+		
 		// Break the program.
 		//
-#ifdef _DEBUG
-		__debugbreak();
-#else
-		exit( 1 );
+#ifndef _DEBUG
+		exit( EXIT_FAILURE );
 #endif
 		impl::noreturn_helper();
 	}
