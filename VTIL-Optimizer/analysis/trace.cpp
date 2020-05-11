@@ -26,6 +26,7 @@
 // POSSIBILITY OF SUCH DAMAGE.        
 //
 #include "trace.hpp"
+#include "variable_aux.hpp"
 
 namespace vtil::optimizer
 {
@@ -162,39 +163,39 @@ namespace vtil::optimizer
     // determine the calls we should make to complete the result in terms of
     // high and low bits, and the final size.
     //
-    static symbolic::expression resolve_partial( bitcnt_t write_offset, bitcnt_t read_offset,
-                                                 bitcnt_t write_size,   bitcnt_t read_size,
+    static symbolic::expression resolve_partial( const access_details& access,
+                                                 bitcnt_t bit_count,
                                                  const partial_tracer_t& ptracer )
     {
         using namespace logger;
 
         // Fetch the result of this operation.
         //
-        symbolic::expression base = ptracer( write_offset, write_size );
+        symbolic::expression base = ptracer( access.bit_offset, access.bit_count );
 
         // Trace a low part if we have to.
         //
-        if ( write_offset > read_offset )
+        if ( access.bit_offset > 0 )
         {
-            bitcnt_t low_bcnt = write_offset - read_offset;
-            auto res = ptracer( read_offset, low_bcnt );
+            bitcnt_t low_bcnt = access.bit_offset;
+            auto res = ptracer( 0, low_bcnt );
 #if VTIL_OPT_TRACE_VERBOSE
             // Log the low and middle bits.
             //
             log<CON_RED>( "dst[00..%02d] := %s\n", low_bcnt, res.to_string() );
-            log<CON_YLW>( "dst[%02d..%02d] := %s\n", write_offset - read_offset, write_offset + write_size - read_offset, base.to_string() );
+            log<CON_YLW>( "dst[%02d..%02d] := %s\n", access.bit_offset, access.bit_offset + access.bit_count, base.to_string() );
 #endif
-            base = res | ( base.resize( read_size ) << low_bcnt );
+            base = res | ( base.resize( bit_count ) << low_bcnt );
         }
         // Shift the result if we have to.
         //
-        else if ( write_offset < read_offset )
+        else if ( access.bit_offset < 0 )
         {
-            base = ( base >> ( read_offset - write_offset ) ).resize( read_size );
+            base = ( base >> access.bit_offset ).resize( bit_count );
 #if VTIL_OPT_TRACE_VERBOSE
             // Log the low bits after shifting.
             //
-            log<CON_YLW>( "dst[00..%02d] := %s\n", write_offset + write_size - read_offset, base.to_string() );
+            log<CON_YLW>( "dst[00..%02d] := %s\n", access.bit_offset + access.bit_count, base.to_string() );
 #endif
         }
         else
@@ -202,22 +203,22 @@ namespace vtil::optimizer
 #if VTIL_OPT_TRACE_VERBOSE
             // Log the low bits.
             //
-            log<CON_YLW>( "dst[00..%02d] := %s\n", write_offset + write_size - read_offset, base.to_string() );
+            log<CON_YLW>( "dst[00..%02d] := %s\n", access.bit_offset + access.bit_count, base.to_string() );
 #endif
         }
 
         // Trace a high part if we have to.
         //
-        if ( ( read_offset + read_size ) > ( write_offset + write_size ) )
+        if ( bit_count > ( access.bit_offset + access.bit_count ) )
         {
-            bitcnt_t high_bnct = ( read_offset + read_size ) - ( write_offset + write_size );
-            auto res = ptracer( write_offset + write_size, high_bnct );
+            bitcnt_t high_bnct = bit_count - ( access.bit_offset + access.bit_count );
+            auto res = ptracer( access.bit_offset + access.bit_count, high_bnct );
 #if VTIL_OPT_TRACE_VERBOSE
             // Log the high bits.
             //
-            log<CON_PRP>( "dst[%02d..%02d] := %s\n", write_offset + write_size - read_offset, read_offset + read_size, res.to_string() );
+            log<CON_PRP>( "dst[%02d..%02d] := %s\n", access.bit_offset + access.bit_count, bit_count, res.to_string() );
 #endif
-            base = base | ( res.resize( read_size ) << ( write_offset + write_size - read_offset ) );
+            base = base | ( res.resize( bit_count ) << ( access.bit_offset + access.bit_count ) );
         }
 
 #if VTIL_OPT_TRACE_VERBOSE
@@ -227,7 +228,7 @@ namespace vtil::optimizer
 #endif
         // Resize and return.
         //
-        return base.resize( read_size );
+        return base.resize( bit_count );
     }
 
     // Traces a variable across the basic block it belongs to and generates a symbolic expression 
@@ -276,64 +277,89 @@ namespace vtil::optimizer
             }
         };
 
+        // Fast forward until iterator writes to the lookup, if none found return as is.
+        //
+        access_details details = {};
+        while ( true )
+        {
+            // If we reached the beginning without any modifications, redirect to the helper passed.
+            //
+            if ( lookup.at.is_begin() )
+                return tracer( lookup );
+
+            // Decrement iterator.
+            //
+            --lookup.at;
+
+            // If variable is being written to, break.
+            //
+            if ( details = check_access( lookup.at, lookup.descriptor, access_type::write, tracer ) )
+                break;
+        }
+
+        // If fails due to offset/size mismatch, invoke partial tracer.
+        //
+        bitcnt_t result_bcnt = lookup.bit_count();
+        if ( !details.is_unknown() &&
+            ( details.bit_offset != 0 || details.bit_count != result_bcnt ) )
+        {
+            // Define partial tracer.
+            //
+            partial_tracer_t ptrace;
+            if ( lookup.is_register() )
+            {
+                ptrace = [ &, &reg = lookup.reg(), 
+                           it = std::next( lookup.at ) ] ( bitcnt_t bit_offset, bitcnt_t bit_count )
+                {
+                    variable::register_t tmp = {
+                        reg.flags,
+                        reg.local_id,
+                        bit_count,
+                        reg.bit_offset + bit_offset
+                    };
+                    return tracer( { it, tmp } );
+                };
+            }
+            else
+            {
+                ptrace = [ &, &mem = lookup.mem(), 
+                           it = std::next( lookup.at ) ] ( bitcnt_t bit_offset, bitcnt_t bit_count )
+                {
+                    fassert( !( ( bit_offset | bit_count ) & 7 ) );
+                    variable::memory_t tmp = {
+                        mem.pointer->decay() + bit_offset / 8,
+                        size_t( bit_count / 8 )
+                    };
+                    return tracer( { it, tmp } );
+                };
+            }
+
+            // Redirect to partial resolver.
+            //
+            return resolve_partial( details, result_bcnt, ptrace );
+        }
+
         // If register:
         //
         if ( lookup.is_register() )
         {
-            auto& reg = lookup.reg();
-
-            // Fast forward until iterator writes to the lookup, if none found return as is.
+            // If access details are unknown, long and fallthrough to fail.
             //
-            while ( true )
+            if ( details.is_unknown() )
             {
-                // If we reached the beginning without any modifications, redirect to the helper passed.
+#if VTIL_OPT_TRACE_VERBOSE
+                // Log the state.
                 //
-                if ( lookup.at.is_begin() )
-                    return tracer( lookup );
-
-                // Decrement iterator.
-                //
-                --lookup.at;
-
-                // If instruction writes into the register:
-                //
-                if ( int idx = lookup.at->writes_to( reg ) )
-                {
-                    // If size or offset does not mismatch:
-                    //
-                    auto& write_at = lookup.at->operands[ idx - 1 ].reg();
-                    if ( write_at.bit_offset != reg.bit_offset ||
-                         write_at.bit_count != reg.bit_count )
-                    {
-                        // Define partial tracer.
-                        //
-                        variable tmp = { std::next( lookup.at ), reg };
-                        auto ptrace = [ & ] ( bitcnt_t bit_offset, bitcnt_t bit_count )
-                        {
-                            tmp.reg().bit_offset = bit_offset;
-                            tmp.reg().bit_count = bit_count;
-                            return tracer( tmp );
-                        };
-
-                        // Redirect to partial resolver.
-                        //
-                        return resolve_partial(
-                            write_at.bit_offset, reg.bit_offset,
-                            write_at.bit_count, reg.bit_count,
-                            ptrace
-                        );
-                    }
-                    break;
-                }
+                log<CON_RED>( "[Unknown register state.]\n" );
+#endif
             }
-
             // If MOV:
             //
-            if ( *lookup.at->base == ins::mov )
+            else if ( *lookup.at->base == ins::mov )
             {
                 // Return source operand.
                 //
-                return cvt_operand( 1 ).resize( reg.bit_count );
+                return cvt_operand( 1 ).resize( result_bcnt );
             }
             // If LDD:
             //
@@ -344,13 +370,13 @@ namespace vtil::optimizer
                 auto [base, offset] = lookup.at->get_mem_loc();
                 variable::memory_t mem(
                     tracer( { lookup.at, base } ) + offset,
-                    ( reg.bit_count + 7 ) / 8
+                    ( result_bcnt + 7 ) / 8
                 );
                 symbolic::expression exp = tracer( variable( lookup.at, mem ) );
 
                 // Return after resizing if valid or return invalid as memory queries can fail.
                 //
-                return exp.is_valid() ? exp.resize( reg.bit_count ) : exp;
+                return exp.is_valid() ? exp.resize( result_bcnt ) : exp;
             }
             // If any symbolic operator:
             //
@@ -368,7 +394,7 @@ namespace vtil::optimizer
                 //
                 else if ( lookup.at->base->operand_count() == 2 )
                 {
-                    return symbolic::expression{ cvt_operand( 0 ), op_id, cvt_operand( 1 ) }.resize( reg.bit_count );
+                    return symbolic::expression{ cvt_operand( 0 ), op_id, cvt_operand( 1 ) }.resize( result_bcnt );
                 }
                 // If [X = F(Y:X, Z)]:
                 //
@@ -380,7 +406,7 @@ namespace vtil::optimizer
                     if ( ( op1_high == 0 ).get().value_or( false ) )
                     {
                         auto op1 = cvt_operand( 0 );
-                        return symbolic::expression{ op1, op_id, cvt_operand( 2 ) }.resize( reg.bit_count );
+                        return symbolic::expression{ op1, op_id, cvt_operand( 2 ) }.resize( result_bcnt );
                     }
                     // If high bits are set, but the operation bit-count is equal to or less than 64 bits.
                     //
@@ -388,7 +414,7 @@ namespace vtil::optimizer
                     {
                         auto op1_low = cvt_operand( 0 );
                         auto op1 = op1_low | ( op1_high.resize( op1_high.size() + op1_low.size() ) << op1_low.size() );
-                        return symbolic::expression{ op1, op_id, cvt_operand( 2 ) }.resize( reg.bit_count );
+                        return symbolic::expression{ op1, op_id, cvt_operand( 2 ) }.resize( result_bcnt );
                     }
                     // If operation is 65 bits or bigger:
                     //
@@ -410,141 +436,24 @@ namespace vtil::optimizer
         else
         {
             fassert( lookup.is_memory() );
-            auto& mem = lookup.mem();
 
-#if VTIL_OPT_TRACE_VERBOSE
-            // Log the lookup pointer.
+            // If access details are unknown, long and fallthrough to fail.
             //
-            log<CON_PRP>( "&Lookup:      %s\n", mem.pointer->to_string() );
-#endif
-            // Fast forward until iterator writes to the lookup, if none found return as is.
-            //
-            while ( true )
+            if ( details.is_unknown() )
             {
-                // If we reached the beginning without any modifications, redirect to the helper passed.
-                //
-                if ( lookup.at.is_begin() )
-                    return tracer( lookup );
-
-                // Decrement iterator.
-                //
-                --lookup.at;
-
-                // Skip if instruction does not write into memory:
-                //
-                if ( !lookup.at->base->writes_memory() )
-                    continue;
-
-                // Generate an expression for the pointer.
-                //
-                auto [write_base, write_offset] = lookup.at->get_mem_loc();
-                auto ptr2 = tracer( { lookup.at, write_base } ) + write_offset;
-
-                // If displacement can be expressed as a constant:
-                //
-                if ( auto disp = ( ptr2 - mem.pointer->decay() ).get<int64_t>() )
-                {
-                    // Skip if out of boundary.
-                    //
-                    if ( ( *disp + lookup.at->access_size() ) <= 0 )
-                        continue;
-                    if ( *disp >= mem.size )
-                        continue;
-
 #if VTIL_OPT_TRACE_VERBOSE
-                    // Log the destination pointer.
-                    //
-                    log<CON_CYN>( "&Destination: %s\n", ptr2.to_string() );
-#endif
-                    // If size or offset does not mismatch:
-                    //
-                    if ( *disp != 0 || lookup.at->access_size() != mem.size )
-                    {
-                        // Define partial tracer.
-                        //
-                        variable tmp = { std::next( lookup.at ), mem };
-                        auto ptrace = [ & ] ( bitcnt_t bit_offset, bitcnt_t bit_count )
-                        {
-                            fassert( !( ( bit_offset | bit_count ) & 7 ) );
-                            tmp.mem().pointer = mem.pointer->decay() + bit_offset / 8;
-                            tmp.mem().size = bit_count / 8;
-                            return tracer( tmp );
-                        };
-
-                        // Redirect to partial resolver.
-                        //
-                        return resolve_partial(
-                            *disp * 8, 0,
-                            lookup.at->access_size() * 8, mem.size * 8,
-                            ptrace
-                        );
-                    }
-                    break;
-                }
-                // Otherwise, fail if neither are restricted pointers.
+                // Log the state.
                 //
-                else
-                {
-                    // Check if lookup pointer contains $sp.
-                    //
-                    bool p1_sp = false;
-                    mem.pointer->enumerate( [ & ] ( const symbolic::expression& exp )
-                    {
-                        if ( exp.is_variable() )
-                        {
-                            auto& var = exp.uid.get<variable>();
-                            p1_sp |= var.is_register() && var.reg().is_stack_pointer();
-                        }
-                    } );
-                    // Check if written pointer contains $sp.
-                    //
-                    bool p2_sp = false;
-                    ptr2.enumerate( [ & ] ( const symbolic::expression& exp )
-                    {
-                        if ( exp.is_variable() )
-                        {
-                            auto& var = exp.uid.get<variable>();
-                            p2_sp |= var.is_register() && var.reg().is_stack_pointer();
-                        }
-                    } );
-
-                    // If only one contains $sp and is non-complex pointer, continue iteration.
-                    // - Since $sp is a __restrict qualified pointer, we can assume
-                    //   that none of the registers will be pointing at it.
-                    //
-                    if ( ( p1_sp && !p2_sp && mem.pointer->depth <= 1 ) ||
-                        ( p2_sp && !p1_sp && ptr2.depth <= 1 ) )
-                    {
-#if VTIL_OPT_TRACE_VERBOSE
-                        // Log the decision.
-                        //
-                        log<CON_BLU>( "[Variable displacement over restricted pointer, skipped.]\n" );
+                log<CON_RED>( "[Non-constant displacement, unknown memory state.]\n" );
 #endif
-                        continue;
-                    }
-                    else
-                    {
-#if VTIL_OPT_TRACE_VERBOSE
-                        // Log the decision.
-                        //
-                        log<CON_RED>( "[Variable displacement, unknown memory state.]\n" );
-#endif
-                    }
-
-                    // Otherwise return as unknown.
-                    //
-                    ++lookup.at;
-                    return lookup.to_expression();
-                }
             }
-
             // If STR:
             //
-            if ( *lookup.at->base == ins::str )
+            else if ( *lookup.at->base == ins::str )
             {
                 // Return source operand.
                 //
-                return cvt_operand( 2 ).resize( mem.size * 8 );
+                return cvt_operand( 2 ).resize( result_bcnt );
             }
 
             // If we could not describe the behaviour, increment iterator and return.
