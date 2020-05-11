@@ -88,7 +88,87 @@ namespace vtil
 		return result;
 	}
 
-	// Helpers for the allocation of unique temporary registers
+	// Drops const qualifier from iterator after asserting iterator
+	// belongs to this basic block.
+	//
+	basic_block::iterator basic_block::acquire( const const_iterator& it )
+	{
+		// This is only valid for iterators belonging to current container.
+		//
+		fassert( this == it.container );
+
+		// Cast away the qualifier using erase and create a non-const qualified iterator.
+		//
+		return { this, this->stream.erase( it, it ) };
+	}
+
+	// Wrap std::list<>::insert with stack state-keeping.
+	//
+	basic_block::iterator basic_block::insert( const const_iterator& it_const, instruction&& ins )
+	{
+		// Drop const qualifier of the iterator, since we are in a non-const 
+		// qualified member function, this qualifier is unnecessary.
+		//
+		iterator it = acquire( it_const );
+
+		// Instructions cannot be appended after a branching instruction was hit.
+		//
+		if ( it.is_end() && !it.is_begin() )
+			fassert( !std::prev( it )->base->is_branching() );
+
+		// If inserting at end, inherit stack properties from the container.
+		//
+		if ( it.is_end() )
+		{
+			ins.sp_offset = sp_offset;
+			ins.sp_index = sp_index;
+		}
+		// If inserting at the beginning, assume clean stack state.
+		//
+		else if ( it.is_begin() )
+		{
+			ins.sp_offset = 0;
+			ins.sp_index = 0;
+		}
+		// If inserting in the middle of the stream:
+		//
+		else
+		{
+			auto prev = std::prev( it );
+
+			// If previous instruction resets stack, use clean state of next index.
+			//
+			if ( prev->sp_reset )
+			{
+				ins.sp_index = prev->sp_index + 1;
+				ins.sp_offset = 0;
+			}
+			// Otherwise inherit the state as is.
+			//
+			else
+			{
+				ins.sp_index = prev->sp_index;
+				ins.sp_offset = prev->sp_offset;
+			}
+		}
+
+		// If instruction writes to SP, reset the queued stack pointer.
+		//
+		if ( ins.writes_to( REG_SP ) )
+		{
+			shift_sp( -ins.sp_offset, false, it );
+			for ( auto it2 = it; !it2.is_end(); it2++ )
+				it2->sp_index++;
+			sp_index++;
+			ins.sp_reset = true;
+		}
+
+		// Append the instruction to the stream.
+		//
+		return { this, stream.emplace( it, std::move( ins ) ) };
+	}
+
+	// Helpers for the allocation of unique temporary registers.
 	//
 	register_desc basic_block::tmp( uint8_t size )
 	{
@@ -100,37 +180,15 @@ namespace vtil
 		};
 	}
 
-	// Instruction pre-processor
-	//
-	void basic_block::append_instruction( instruction&& ins )
-	{
-		// Instructions cannot be appended after a branching instruction was hit.
-		//
-		fassert( !is_complete() );
-
-		// Write the stack pointer details.
-		//
-		ins.sp_offset = sp_offset;
-		ins.sp_index = sp_index;
-
-		// If instruction writes to SP, reset the queued stack pointer.
-		//
-		if ( ins.writes_to( REG_SP ) )
-		{
-			sp_offset = 0;
-			sp_index++;
-			ins.sp_reset = true;
-		}
-
-		// Append the instruction to the stream.
-		//
-		stream.push_back( std::move( ins ) );
-	}
-
 	// Queues a stack shift.
 	//
-	basic_block* basic_block::shift_sp( int64_t offset, bool merge_instance, iterator it )
+	basic_block* basic_block::shift_sp( int64_t offset, bool merge_instance, const const_iterator& it_const )
 	{
+		// Drop const qualifier of the iterator, since we are in a non-const 
+		// qualified member function, this qualifier is unnecessary.
+		//
+		iterator it = acquire( it_const );
+
 		// If requested, shift the stack index first.
 		//
 		if ( merge_instance )

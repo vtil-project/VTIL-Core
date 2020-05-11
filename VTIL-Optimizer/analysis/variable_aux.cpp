@@ -38,8 +38,8 @@ namespace vtil::optimizer
 
 		// Generate an expression for the pointer.
 		//
-		auto [write_base, write_offset] = it->get_mem_loc();
-		symbolic::expression ptr = tracer( { it, write_base } ) + write_offset;
+		auto [base, offset] = it->get_mem_loc();
+		symbolic::expression ptr = tracer( { it, base } ) + offset;
 
 		// Create the variable type.
 		//

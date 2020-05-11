@@ -226,6 +226,20 @@ namespace vtil
 		const_iterator end() const { return { this, stream.end() }; }
 		const_iterator begin() const { return { this, stream.begin() }; }
 
+		// Drops const qualifier from iterator after asserting iterator
+		// belongs to this basic block.
+		//
+		iterator acquire( const const_iterator& it );
+
+		// Wrap std::list<>::insert with stack state-keeping.
+		//
+		iterator insert( const const_iterator& it, instruction&& ins );
+
+		// Wrap std::list<>::push_back
+		//
+		void push_back( instruction&& ins ) { ( void ) insert( end(), std::move( ins ) ); }
+		void push_back( const instruction& ins ) { ( void ) insert( end(), instruction{ ins } ); }
+
 		// Returns whether or not block is complete, a complete
 		// block ends with a branching instruction.
 		//
@@ -237,7 +251,7 @@ namespace vtil
 		static basic_block* begin( vip_t entry_vip );
 		basic_block* fork( vip_t entry_vip );
 
-		// Helpers for the allocation of unique temporary registers
+		// Helpers for the allocation of unique temporary registers.
 		//
 		register_desc tmp( uint8_t size );
 		template<typename... params>
@@ -245,11 +259,6 @@ namespace vtil
 		{
 			return std::make_tuple( tmp( size_0 ), tmp( size_n )... );
 		}
-
-		// Instruction pre-processor
-		//
-		void append_instruction( instruction&& ins );
-		void append_instruction( const instruction& ins ) { append_instruction( instruction{ ins } ); }
 
 		// Lazy wrappers for every instruction
 		//
@@ -272,7 +281,7 @@ namespace vtil
 		template<typename... Ts>																								                \
 		basic_block* x ( Ts&&... operands )																						                \
 		{																														                \
-			append_instruction( instruction{ &ins:: x, std::vector<operand>( { prepare_operand(std::forward<Ts>(operands))... } ) } );			\
+			push_back( instruction{ &ins:: x, std::vector<operand>( { prepare_operand(std::forward<Ts>(operands))... } ) } );			\
 			return this;																										                \
 		}
 		WRAP_LAZY( mov );
@@ -312,7 +321,7 @@ namespace vtil
 
 		// Queues a stack shift.
 		//
-		basic_block* shift_sp( int64_t offset, bool merge_instance = false, iterator it = {} );
+		basic_block* shift_sp( int64_t offset, bool merge_instance = false, const const_iterator& it = {} );
 
 		// Pushes current flags value up the stack queueing the
 		// shift in stack pointer.
