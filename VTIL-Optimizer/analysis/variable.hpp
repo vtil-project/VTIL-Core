@@ -54,18 +54,18 @@ namespace vtil::optimizer
             //
             symbolic::boxed_expression::reference pointer = {};
 
-            // Size of the variable in number of bytes.
+            // Size of the variable in bits.
             //
-            size_t size;
+            bitcnt_t bit_count;
 
             // Construct from base offset and size.
             //
-            memory_t( symbolic::boxed_expression::reference pointer = {}, size_t size = 0 )
-                : pointer( std::move( pointer ) ), size( size ) {}
+            memory_t( symbolic::boxed_expression::reference pointer = {}, bitcnt_t bit_count = 0 )
+                : pointer( std::move( pointer ) ), bit_count( bit_count ) {}
 
             // Declare reduction.
             //
-            auto reduce() { return reference_as_tuple( size, *pointer ); }
+            auto reduce() { return reference_as_tuple( bit_count, *pointer ); }
 
             // TODO: Remove me.
             //  Let modern compilers know that we use these operators as is,
@@ -99,18 +99,7 @@ namespace vtil::optimizer
 
         // Constructs by iterator and the variable descriptor itself.
         //
-        variable( const il_const_iterator& it, descriptor_t desc ) :
-            descriptor( std::move( desc ) ), at( it )
-        {
-            // If read-only register, remove the iterator.
-            //
-            if ( is_register() && reg().is_read_only() )
-                at = {};
-
-            // Validate the variable.
-            //
-            fassert( is_valid() );
-        }
+        variable( const il_const_iterator& it, descriptor_t desc );
 
         // Returns whether the variable is valid or not.
         //
@@ -130,7 +119,7 @@ namespace vtil::optimizer
 
         // Returns the size of the variable in bits.
         //
-        bitcnt_t bit_count() const { return is_register() ? reg().bit_count : mem().size * 8; }
+        bitcnt_t bit_count() const { return std::visit( [ ] ( auto&& desc ) { return desc.bit_count; }, descriptor ); }
 
         // Conversion to symbolic expression.
         //

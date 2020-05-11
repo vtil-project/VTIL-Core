@@ -28,11 +28,16 @@
 #pragma once
 #include <vtil/arch>
 #include <vtil/symex>
+#include <vtil/io>
 #include "trace.hpp"
 #include "variable.hpp"
 
 namespace vtil::optimizer
 {
+    // Callback typedefs.
+    //
+    using partial_tracer_t = std::function<symbolic::expression( bitcnt_t offset, bitcnt_t size )>;
+    
     // Enumeration used to describe the type of access to a variable.
     //
     enum class access_type
@@ -72,8 +77,8 @@ namespace vtil::optimizer
     // Makes a memory variable from the given instruction's src/dst, uses the tracer
     // passed to resolve the absolute pointer.
     //
-    variable make_memory( const il_const_iterator& it,
-                          const trace_function_t& tracer = [ ] ( auto x ) { return trace( x ); } );
+    variable reference_memory( const il_const_iterator& it,
+                               const trace_function_t& tracer = [ ] ( auto x ) { return trace( x ); } );
 
     // Checks whether the two given pointers are restrict qualified against each other
     // meaning if the delta could not be resolved as a constant, if they are guaranteed
@@ -85,8 +90,15 @@ namespace vtil::optimizer
     // Checks if the instruction given accesses the variable, optionally filtering to the
     // access type specified, tracer passed will be used to generate pointers when needed.
     //
-    access_details check_access( const il_const_iterator& it,
-                                 const variable::descriptor_t& var,
-                                 access_type type = access_type::none,
-                                 const trace_function_t& tracer = [ ] ( auto x ) { return trace( x ); } );
+    access_details test_access( const il_const_iterator& it,
+                                const variable::descriptor_t& var,
+                                access_type type = access_type::none,
+                                const trace_function_t& tracer = [ ] ( auto x ) { return trace( x ); } );
+
+    // Given a partial tracer, this routine will determine the full value of the variable
+    // at the given position where a partial write was found.
+    //
+    symbolic::expression resolve_partial( const access_details& access,
+                                          bitcnt_t bit_count,
+                                          const partial_tracer_t& ptracer );
 };

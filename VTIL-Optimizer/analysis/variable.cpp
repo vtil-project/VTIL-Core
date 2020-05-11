@@ -29,6 +29,21 @@
 
 namespace vtil::optimizer
 {
+	// Constructs by iterator and the variable descriptor itself.
+	//
+	variable::variable( const il_const_iterator& it, descriptor_t desc ) :
+		descriptor( std::move( desc ) ), at( it )
+	{
+		// If read-only register, remove the iterator.
+		//
+		if ( is_register() && reg().is_read_only() )
+			at = {};
+
+		// Validate the variable.
+		//
+		fassert( is_valid() );
+	}
+	
 	// Returns whether the variable is valid or not.
 	//
 	bool variable::is_valid() const
@@ -62,9 +77,11 @@ namespace vtil::optimizer
 			if ( !mem.pointer || mem.pointer->size() != 64 )
 				return false;
 
-			// Size should be within (0, 8].
+			// Bit count should be within (0, 64] and byte-addressable.
 			//
-			return 0 < mem.size && mem.size <= 8;
+			return 0 < mem.bit_count && 
+				   mem.bit_count <= 64 && 
+				   ( mem.bit_count & 7 ) == 0;
 		}
 	}
 
@@ -76,7 +93,7 @@ namespace vtil::optimizer
 		// If memory, return as is.
 		//
 		if ( is_memory() )
-			return { *this, bitcnt_t( mem().size * 8 ) };
+			return { *this, mem().bit_count };
 
 		// If not register (so invalid), return null.
 		//
@@ -119,17 +136,14 @@ namespace vtil::optimizer
 
 			// Prefix with read size:
 			//
-			switch ( mem->size )
+			switch ( mem->bit_count )
 			{
-				case 1:  base = "byte"  + base; break;
-				case 2:  base = "word"  + base; break;
-				case 3:  base = "b3"    + base; break;
-				case 4:  base = "dword" + base; break;
-				case 5:  base = "b5"    + base; break;
-				case 6:  base = "fword" + base; break;
-				case 7:  base = "b7"    + base; break;
-				case 8:  base = "qword" + base; break;
-				default: unreachable();
+				case 1*8:  base = "byte"  + base; break;
+				case 2*8:  base = "word"  + base; break;
+				case 4*8:  base = "dword" + base; break;
+				case 6*8:  base = "fword" + base; break;
+				case 8*8:  base = "qword" + base; break;
+				default:   base = "u" + std::to_string( mem->bit_count ) + base; break;
 			}
 		}
 		// If register:

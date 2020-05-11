@@ -32,7 +32,7 @@ namespace vtil::optimizer
 	// Makes a memory variable from the given instruction's src/dst, uses the tracer
 	// passed to resolve the absolute pointer.
 	//
-	variable make_memory( const il_const_iterator& it, const trace_function_t& tracer )
+	variable reference_memory( const il_const_iterator& it, const trace_function_t& tracer )
 	{
 		fassert( it->base->accesses_memory() );
 
@@ -45,7 +45,7 @@ namespace vtil::optimizer
 		//
 		return {
 			it,
-			variable::memory_t{ ptr, it->access_size() },
+			variable::memory_t{ ptr, bitcnt_t( it->access_size() * 8 ) },
 		};
 	}
 
@@ -92,7 +92,7 @@ namespace vtil::optimizer
 	// Checks if the instruction given accesses the variable, optionally filtering to the
 	// access type specified, tracer passed will be used to generate pointers when needed.
 	//
-	access_details check_access( const il_const_iterator& it, const variable::descriptor_t& var, access_type type, const trace_function_t& tracer )
+	access_details test_access( const il_const_iterator& it, const variable::descriptor_t& var, access_type type, const trace_function_t& tracer )
 	{
 		// If variable is of register type:
 		//
@@ -197,7 +197,7 @@ namespace vtil::optimizer
 
 				// Generate a pointer and calculate displacement.
 				//
-				auto ref_mem = make_memory( it, tracer ).mem();
+				auto ref_mem = reference_memory( it, tracer ).mem();
 				auto disp_exp = ref_mem.pointer->decay() - mem->pointer->decay();
 
 				// If it can be expressed as a constant:
@@ -208,7 +208,7 @@ namespace vtil::optimizer
 					//
 					int64_t low_offset = *disp;
 					int64_t high_offset = low_offset + it->access_size();
-					if ( low_offset < mem->size && high_offset > 0 )
+					if ( low_offset < ( mem->bit_count / 8 ) && high_offset > 0 )
 					{
 						// Can safely multiply by 8 and shrink to bitcnt_t type from int64_t 
 						// since variables are of maximum 64-bit size which means both offset
@@ -233,5 +233,74 @@ namespace vtil::optimizer
 		// No access case.
 		//
 		return { access_type::none };
+	}
+
+	// Given a partial tracer, this routine will determine the full value of the variable
+	// at the given position where a partial write was found.
+	//
+	symbolic::expression resolve_partial( const access_details& access, bitcnt_t bit_count, const partial_tracer_t& ptracer )
+	{
+		using namespace logger;
+
+		// Fetch the result of this operation.
+		//
+		symbolic::expression base = ptracer( access.bit_offset, access.bit_count );
+
+		// Trace a low part if we have to.
+		//
+		if ( access.bit_offset > 0 )
+		{
+			bitcnt_t low_bcnt = access.bit_offset;
+			auto res = ptracer( 0, low_bcnt );
+#if VTIL_OPT_TRACE_VERBOSE
+			// Log the low and middle bits.
+			//
+			log<CON_RED>( "dst[00..%02d] := %s\n", low_bcnt, res.to_string() );
+			log<CON_YLW>( "dst[%02d..%02d] := %s\n", access.bit_offset, access.bit_offset + access.bit_count, base.to_string() );
+#endif
+			base = res | ( base.resize( bit_count ) << low_bcnt );
+		}
+		// Shift the result if we have to.
+		//
+		else if ( access.bit_offset < 0 )
+		{
+			base = ( base >> access.bit_offset ).resize( bit_count );
+#if VTIL_OPT_TRACE_VERBOSE
+			// Log the low bits after shifting.
+			//
+			log<CON_YLW>( "dst[00..%02d] := %s\n", access.bit_offset + access.bit_count, base.to_string() );
+#endif
+		}
+		else
+		{
+#if VTIL_OPT_TRACE_VERBOSE
+			// Log the low bits.
+			//
+			log<CON_YLW>( "dst[00..%02d] := %s\n", access.bit_offset + access.bit_count, base.to_string() );
+#endif
+		}
+
+		// Trace a high part if we have to.
+		//
+		if ( bit_count > ( access.bit_offset + access.bit_count ) )
+		{
+			bitcnt_t high_bnct = bit_count - ( access.bit_offset + access.bit_count );
+			auto res = ptracer( access.bit_offset + access.bit_count, high_bnct );
+#if VTIL_OPT_TRACE_VERBOSE
+			// Log the high bits.
+			//
+			log<CON_PRP>( "dst[%02d..%02d] := %s\n", access.bit_offset + access.bit_count, bit_count, res.to_string() );
+#endif
+			base = base | ( res.resize( bit_count ) << ( access.bit_offset + access.bit_count ) );
+		}
+
+#if VTIL_OPT_TRACE_VERBOSE
+		// Log the final result.
+		//
+		log<CON_GRN>( "dst         := %s\n", base.to_string() );
+#endif
+		// Resize and return.
+		//
+		return base.resize( bit_count );
 	}
 };

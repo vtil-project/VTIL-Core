@@ -88,7 +88,7 @@ namespace vtil::optimizer
                 auto& self = lookup.mem();
                 auto& other = pair.first.mem();
                 return self.pointer->equals( other.pointer->decay() ) &&
-                       self.size >= other.size;
+                       self.bit_count >= other.bit_count;
             };
         }
         // If register variable:

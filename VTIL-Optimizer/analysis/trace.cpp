@@ -30,10 +30,6 @@
 
 namespace vtil::optimizer
 {
-    // Internal typedefs.
-    //
-    using partial_tracer_t = std::function<symbolic::expression( bitcnt_t offset, bitcnt_t size )>;
-
     // Basic tracer with the trace_function_t signature implemented using primitive tracer.
     //
     static symbolic::expression trace_basic( const variable& lookup )
@@ -159,78 +155,6 @@ namespace vtil::optimizer
         return exp;
     }
 
-    // If a parital write was hit while tracing value, this routine is used to 
-    // determine the calls we should make to complete the result in terms of
-    // high and low bits, and the final size.
-    //
-    static symbolic::expression resolve_partial( const access_details& access,
-                                                 bitcnt_t bit_count,
-                                                 const partial_tracer_t& ptracer )
-    {
-        using namespace logger;
-
-        // Fetch the result of this operation.
-        //
-        symbolic::expression base = ptracer( access.bit_offset, access.bit_count );
-
-        // Trace a low part if we have to.
-        //
-        if ( access.bit_offset > 0 )
-        {
-            bitcnt_t low_bcnt = access.bit_offset;
-            auto res = ptracer( 0, low_bcnt );
-#if VTIL_OPT_TRACE_VERBOSE
-            // Log the low and middle bits.
-            //
-            log<CON_RED>( "dst[00..%02d] := %s\n", low_bcnt, res.to_string() );
-            log<CON_YLW>( "dst[%02d..%02d] := %s\n", access.bit_offset, access.bit_offset + access.bit_count, base.to_string() );
-#endif
-            base = res | ( base.resize( bit_count ) << low_bcnt );
-        }
-        // Shift the result if we have to.
-        //
-        else if ( access.bit_offset < 0 )
-        {
-            base = ( base >> access.bit_offset ).resize( bit_count );
-#if VTIL_OPT_TRACE_VERBOSE
-            // Log the low bits after shifting.
-            //
-            log<CON_YLW>( "dst[00..%02d] := %s\n", access.bit_offset + access.bit_count, base.to_string() );
-#endif
-        }
-        else
-        {
-#if VTIL_OPT_TRACE_VERBOSE
-            // Log the low bits.
-            //
-            log<CON_YLW>( "dst[00..%02d] := %s\n", access.bit_offset + access.bit_count, base.to_string() );
-#endif
-        }
-
-        // Trace a high part if we have to.
-        //
-        if ( bit_count > ( access.bit_offset + access.bit_count ) )
-        {
-            bitcnt_t high_bnct = bit_count - ( access.bit_offset + access.bit_count );
-            auto res = ptracer( access.bit_offset + access.bit_count, high_bnct );
-#if VTIL_OPT_TRACE_VERBOSE
-            // Log the high bits.
-            //
-            log<CON_PRP>( "dst[%02d..%02d] := %s\n", access.bit_offset + access.bit_count, bit_count, res.to_string() );
-#endif
-            base = base | ( res.resize( bit_count ) << ( access.bit_offset + access.bit_count ) );
-        }
-
-#if VTIL_OPT_TRACE_VERBOSE
-        // Log the final result.
-        //
-        log<CON_GRN>( "dst         := %s\n", base.to_string() );
-#endif
-        // Resize and return.
-        //
-        return base.resize( bit_count );
-    }
-
     // Traces a variable across the basic block it belongs to and generates a symbolic expression 
     // that describes it's value at the bound point. Will invoke the passed tracer for any additional 
     // tracing it requires.
@@ -293,7 +217,7 @@ namespace vtil::optimizer
 
             // If variable is being written to, break.
             //
-            if ( details = check_access( lookup.at, lookup.descriptor, access_type::write, tracer ) )
+            if ( details = test_access( lookup.at, lookup.descriptor, access_type::write, tracer ) )
                 break;
         }
 
@@ -328,7 +252,7 @@ namespace vtil::optimizer
                     fassert( !( ( bit_offset | bit_count ) & 7 ) );
                     variable::memory_t tmp = {
                         mem.pointer->decay() + bit_offset / 8,
-                        size_t( bit_count / 8 )
+                        bit_count
                     };
                     return tracer( { it, tmp } );
                 };
@@ -370,7 +294,7 @@ namespace vtil::optimizer
                 auto [base, offset] = lookup.at->get_mem_loc();
                 variable::memory_t mem(
                     tracer( { lookup.at, base } ) + offset,
-                    ( result_bcnt + 7 ) / 8
+                    ( result_bcnt + 7 ) & ~7
                 );
                 symbolic::expression exp = tracer( variable( lookup.at, mem ) );
 
