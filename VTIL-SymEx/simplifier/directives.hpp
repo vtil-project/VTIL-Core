@@ -179,9 +179,9 @@ namespace vtil::symbolic::directive
 
         // AND:
         //
-        { A&(B|C),                                            !(A&B)|!(A&C) },
+        { A&(B|C),                                            s(!(A&B)|!(A&C)) },
         { A&(B|C),                                            A&s(!(A&B)|C) },
-        { A&(B&C),                                            !(A&B)&!(A&C) },
+        { A&(B&C),                                            s(!(A&B)&!(A&C)) },
         { A&(B&C),                                            !(A&B)&__or(!(A&C),C) },
         { A&(B^C),                                            s(!(A&B)^!(A&C)) },
         { A&(B^C),                                            A&s(!(A&B)^C) },
@@ -193,9 +193,9 @@ namespace vtil::symbolic::directive
 
         // OR:
         //
-        { A|(B|C),                                            !(A|B)|!(A|C) },
+        { A|(B|C),                                            s(!(A|B)|!(A|C)) },
         { A|(B|C),                                            !(A|B)|__or(!(A|C), C) },
-        { A|(B&C),                                            !(A|B)&!(A|C) },
+        { A|(B&C),                                            s(!(A|B)&!(A|C)) },
         { A|(B&C),                                            A|(!(A|B)&C) },
         { A|(B^C),                                            A|s(!(B&s(~A))^s(C&(~A))) },
         { A|(B<<U),                                           !(!(A>>U)|B)<<U|s(A&((1<<U)-1)) },
