@@ -69,21 +69,26 @@ namespace vtil::math
     //
     static constexpr uint64_t fill( bitcnt_t bit_count, bitcnt_t bit_offset = 0 )
     {
+        // Determine shift direction and magnitude.
+        // - Could have used calculated [sgn] instead of second comparison but
+        //   this makes it easier for the compiler to optimize into cmovcc.
+        //
+        bool is_shr = sgn( bit_offset );
+        bitcnt_t abs_shift = ( bit_offset >= 0 ) ? bit_offset : -bit_offset;
+
         // Shifting beyond the variable size cause unexpected (mod) behaviour
         // on x64, check the shift count first.
         //
-        if ( bit_offset >= 64 ) return 0;
+        if ( abs_shift >= 64 ) return 0;
 
         // Fill with [bit_count] x [1] starting from the lowest bit.
         //
-        uint64_t value_absolute = ( ~0ull ) >> ( 64 - bit_count );
+        uint64_t abs_value = ( ~0ull ) >> ( 64 - bit_count );
         
         // Shift accordingly.
         //
-        if( bit_offset >= 0 ) 
-            return value_absolute << bit_offset;
-        else 
-            return value_absolute >> bit_offset;
+        if( is_shr ) return abs_value >> abs_shift;
+        else         return abs_value << abs_shift;
     }
 
     // Fills the bits of the uint64_t type after the given offset with the sign bit.
