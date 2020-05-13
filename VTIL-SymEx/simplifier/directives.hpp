@@ -64,6 +64,7 @@ namespace vtil::symbolic::directive
         { A^A,                                                0 },
         { A&(~A),                                             0 },
         { A|-1,                                              -1 },
+        { A+(~A),                                            -1 },
         { A^(~A),                                            -1 },
         { A|(~A),                                            -1 },
         { __rotl(A,0),                                        A },
@@ -145,7 +146,7 @@ namespace vtil::symbolic::directive
         //   and unless we add this rule to try simplifying after penetrating it
         //   it cannot escape the cast and simplify with the newly added shift.
         //
-        { __ucast(A,B)<<U,                                   __iff(__bcnt(A)>B,    __ucast(!(A<<U), B) ) }
+        { __ucast(A,B)<<U,                                   __iff(__bcnt(A)>B,    __ucast(!(A<<U), B) ) },
     };
 
     // Describes the way operands of two operators join each other.
@@ -179,11 +180,11 @@ namespace vtil::symbolic::directive
 
         // AND:
         //
-        { A&(B|C),                                            s(!(A&B)|!(A&C)) },
+        { A&(B|C),                                            !(A&B)|!(A&C) },
         { A&(B|C),                                            A&s(!(A&B)|C) },
-        { A&(B&C),                                            s(!(A&B)&!(A&C)) },
+        { A&(B&C),                                            !(A&B)&!(A&C) },
         { A&(B&C),                                            !(A&B)&__or(!(A&C),C) },
-        { A&(B^C),                                            s(!(A&B)^!(A&C)) },
+        { A&(B^C),                                            !(A&B)^!(A&C) },
         { A&(B^C),                                            A&s(!(A&B)^C) },
         { A&(B<<U),                                           !(!(A>>U)&B)<<U },
         { A&(B>>U),                                           !(!(A<<U)&B)>>U },
@@ -193,9 +194,9 @@ namespace vtil::symbolic::directive
 
         // OR:
         //
-        { A|(B|C),                                            s(!(A|B)|!(A|C)) },
+        { A|(B|C),                                            !(A|B)|!(A|C) },
         { A|(B|C),                                            !(A|B)|__or(!(A|C), C) },
-        { A|(B&C),                                            s(!(A|B)&!(A|C)) },
+        { A|(B&C),                                            !(A|B)&!(A|C) },
         { A|(B&C),                                            A|(!(A|B)&C) },
         { A|(B^C),                                            A|s(!(B&s(~A))^s(C&(~A))) },
         { A|(B<<U),                                           !(!(A>>U)|B)<<U|s(A&((1<<U)-1)) },
@@ -206,47 +207,47 @@ namespace vtil::symbolic::directive
 
         // SHL:
         //
-        { (A|B)<<C,                                           s(!(A<<C)|s(B<<C)) },
-        { (A&B)<<C,                                           s(!(A<<C)&s(B<<C)) },
-        { (A^B)<<C,                                           s(!(A<<C)^s(B<<C)) },
+        { (A|B)<<C,                                           !(A<<C)|s(B<<C) },
+        { (A&B)<<C,                                           !(A<<C)&s(B<<C) },
+        { (A^B)<<C,                                           !(A<<C)^s(B<<C) },
         { (A<<B)<<C,                                          A<<!(B+C) },
-        { (A>>B)<<C,                                          __iff(B>=C, s(!((-1>>B)<<C)&(A>>!(B-C)))) },
-        { (A>>C)<<B,                                          __iff(B>=C, s(!((-1>>C)<<B)&(A<<!(B-C)))) },
+        { (A>>B)<<C,                                          __iff(B>=C, !((-1>>B)<<C)&(A>>!(B-C))) },
+        { (A>>C)<<B,                                          __iff(B>=C, !((-1>>C)<<B)&(A<<!(B-C))) },
         // Missing: __rotl, __rotr
-        { (~A)<<U,                                            s((~(A<<U))&(-1<<U)) },
+        { (~A)<<U,                                            (~(A<<U))&(-1<<U) },
 
         // SHR:
         //
-        { (A|B)>>C,                                           s(!(A>>C)|s(B>>C)) },
-        { (A&B)>>C,                                           s(!(A>>C)&s(B>>C)) },
-        { (A^B)>>C,                                           s(!(A>>C)^s(B>>C)) },
-        { (A<<C)>>B,                                          __iff(B>=C, s(!((-1<<C)>>B)&(A>>!(B-C)))) },
-        { (A<<B)>>C,                                          __iff(B>=C, s(!((-1<<B)>>C)&(A<<!(B-C)))) },
+        { (A|B)>>C,                                           !(A>>C)|s(B>>C) },
+        { (A&B)>>C,                                           !(A>>C)&s(B>>C) },
+        { (A^B)>>C,                                           !(A>>C)^s(B>>C) },
+        { (A<<C)>>B,                                          __iff(B>=C, !((-1<<C)>>B)&(A>>!(B-C))) },
+        { (A<<B)>>C,                                          __iff(B>=C, !((-1<<B)>>C)&(A<<!(B-C))) },
         { (A>>B)>>C,                                          A>>!(B+C) },
         // Missing: __rotl, __rotr
-        { (~A)>>U,                                            s((~(A>>U))&(-1>>U)) },
+        { (~A)>>U,                                            (~(A>>U))&(-1>>U) },
 
         // ROL:
         //
-        { __rotl(A|B,C),                                      s(__rotl(A,C)|__rotl(B,C)) },
-        { __rotl(A&B,C),                                      s(__rotl(A,C)&__rotl(B,C)) },
-        { __rotl(A^B,C),                                      s(__rotl(A,C)^__rotl(B,C)) },
+        { __rotl(A|B,C),                                      __rotl(A,C)|__rotl(B,C) },
+        { __rotl(A&B,C),                                      __rotl(A,C)&__rotl(B,C) },
+        { __rotl(A^B,C),                                      __rotl(A,C)^__rotl(B,C) },
         // Missing: shl, shr
         { __rotl(__rotl(A,B),C),                              __rotl(A,!(B+C)) },
         { __rotl(__rotr(A,B),C),                              __iff(B>=C, __rotr(A,!(B-C))) },
         { __rotl(__rotr(A,C),B),                              __iff(B>=C, __rotl(A,!(B-C))) },
-        { __rotl(~A,C),                                       s(~__rotl(A,C)) },
+        { __rotl(~A,C),                                       ~__rotl(A,C) },
 
         // ROR:
         //
-        { __rotr(A|B,C),                                      s(__rotr(A,C)|__rotr(B,C)) },
-        { __rotr(A&B,C),                                      s(__rotr(A,C)&__rotr(B,C)) },
-        { __rotr(A^B,C),                                      s(__rotr(A,C)^__rotr(B,C)) },
+        { __rotr(A|B,C),                                      __rotr(A,C)|__rotr(B,C) },
+        { __rotr(A&B,C),                                      __rotr(A,C)&__rotr(B,C) },
+        { __rotr(A^B,C),                                      __rotr(A,C)^__rotr(B,C) },
         // Missing: shl, shr
         { __rotr(__rotl(A,B),C),                              __iff(B>=C, __rotl(A,(B-C))) },
         { __rotr(__rotl(A,C),B),                              __iff(B>=C, __rotr(A,(B-C))) },
         { __rotr(__rotr(A,B),C),                              __rotr(A,(B+C)) },
-        { __rotr(~A,C),                                       s(~__rotr(A,C)) },
+        { __rotr(~A,C),                                       ~__rotr(A,C) },
     };
 
     // Grouping of simple representations into more complex directives.

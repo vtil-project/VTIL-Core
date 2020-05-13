@@ -240,7 +240,7 @@ namespace vtil::symbolic::directive
 
     // Operable-like directive operators.
     //
-    static instance s( const instance& a ) { return { tagged<directive_op_desc::try_simplify>, a }; }
+    static instance s( const instance& a, bool l = false ) { return { a, tagged<directive_op_desc::try_simplify>, l }; }
     static instance operator!( const instance& a ) { return { tagged<directive_op_desc::simplify>, a }; }
     static instance __iff( const instance& a, const instance& b ) { return { a, tagged<directive_op_desc::iff>, b }; }
     static instance __or( const instance& a, const instance& b ) { return { a, tagged<directive_op_desc::or_also>, b }; }

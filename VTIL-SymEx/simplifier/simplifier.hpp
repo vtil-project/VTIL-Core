@@ -44,7 +44,7 @@ namespace vtil::symbolic
 	// Attempts to simplify the expression given, returns whether the simplification
 	// succeeded or not.
 	//
-	bool simplify_expression( expression::reference& exp, bool pretty = false );
+	bool simplify_expression( expression::reference& exp, bool pretty = false, bool limit = false );
 
 	// Purges/references the current thread's simplifier cache.
 	//
