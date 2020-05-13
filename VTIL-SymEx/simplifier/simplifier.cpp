@@ -88,7 +88,7 @@ namespace vtil::symbolic
 	// Attempts to simplify the expression given, returns whether the simplification
 	// succeeded or not.
 	//
-	bool simplify_expression( expression::reference& exp, bool pretty )
+	bool simplify_expression( expression::reference& exp, bool pretty, bool limit )
 	{
 		using namespace logger;
 
@@ -168,9 +168,12 @@ namespace vtil::symbolic
 				// Recurse, and indicate success.
 				//
 				simplify_expression( exp, pretty );
-				exp_new->simplify_hint = true;
-				cache_entry = *exp;
-				success_flag = true;
+				if ( !limit )
+				{
+					exp_new->simplify_hint = true;
+					cache_entry = *exp;
+					success_flag = true;
+				}
 				return true;
 			}
 		}
@@ -210,13 +213,21 @@ namespace vtil::symbolic
 				// Recurse, set the hint and return the simplified instance.
 				//
 				simplify_expression( exp_new, pretty );
-				( +exp_new )->simplify_hint = true;
-				cache_entry = exp_new;
-				success_flag = true;
+				if ( !limit )
+				{
+					( +exp_new )->simplify_hint = true;
+					cache_entry = exp_new;
+					success_flag = true;
+				}
 				exp = exp_new;
 				return success_flag;
 			}
 		}
+
+		// Do not execute the rest if limited.
+		//
+		if( limit )
+			return false;
 
 		// Enumerate each join descriptor:
 		//
@@ -225,7 +236,7 @@ namespace vtil::symbolic
 			// If we can transform the expression by the directive set:
 			//
 			if ( auto exp_new = transform( exp, dir_src, dir_dst, 
-				 [ & ] ( auto& exp_new ) { return exp_new->complexity < exp->complexity; } ) )
+				 [ & ] ( auto& exp_new ) { simplify_expression( exp_new, false, true ); return exp_new->complexity < exp->complexity; } ) )
 			{
 #if VTIL_SYMEX_SIMPLIFY_VERBOSE
 				log<CON_GRN>( "[Join] %s => %s\n", dir_src->to_string(), dir_dst->to_string() );
