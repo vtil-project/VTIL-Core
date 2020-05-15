@@ -162,7 +162,7 @@ namespace vtil::symbolic::directive
         //
         { A|B,                                                __iff((__mask_knw1(A)&__mask_unk(B))!=0, A|!(B&!(~__mask_knw1(A))))},
         { A&B,                                                __iff((__mask_knw0(A)&~__mask_knw0(B))!=0, A&!(B&!(~__mask_knw0(A))))},
-
+        
         // ADD:
         //
         { A+(B+C),                                            !(A+B)+C },
@@ -178,6 +178,19 @@ namespace vtil::symbolic::directive
         { (B-C)-A,                                            !B-(A+C) },
         { (B-C)-A,                                            !(B-A)-C },
 
+        // OR:
+        //
+        { A|(B|C),                                            !(A|B)|!(A|C) },
+        { A|(B|C),                                            !(A|B)|__or(!(A|C), C) },
+        { A|(B&C),                                            !(A|B)&!(A|C) },
+        { A|(B&C),                                            A|(!(A|B)&C) },
+        { A|(B^C),                                            A|s(!(B&s(~A))^s(C&(~A))) },
+        { A|(B<<U),                                           !(!(A>>U)|B)<<U|s(A&((1<<U)-1)) },
+        { A|(B>>U),                                           !(!(A<<U)|B)>>U|s(A&(~(-1<<U))) },
+        { A|(__rotl(B,C)),                                    __rotl(!(B|s(__rotr(A,C))), C) },
+        { A|(__rotr(B,C)),                                    __rotr(!(B|s(__rotl(A,C))), C) },
+        { A|~B,                                               ~!(B&s(~A)) },
+
         // AND:
         //
         { A&(B|C),                                            !(A&B)|!(A&C) },
@@ -192,18 +205,14 @@ namespace vtil::symbolic::directive
         { A&(__rotr(B,C)),                                    __rotr(!(B&s(__rotl(A,C))), C) },
         { A&~B,                                               ~!(B|s(~A)) },
 
-        // OR:
+        // XOR:
         //
-        { A|(B|C),                                            !(A|B)|!(A|C) },
-        { A|(B|C),                                            !(A|B)|__or(!(A|C), C) },
-        { A|(B&C),                                            !(A|B)&!(A|C) },
-        { A|(B&C),                                            A|(!(A|B)&C) },
-        { A|(B^C),                                            A|s(!(B&s(~A))^s(C&(~A))) },
-        { A|(B<<U),                                           !(!(A>>U)|B)<<U|s(A&((1<<U)-1)) },
-        { A|(B>>U),                                           !(!(A<<U)|B)>>U|s(A&(~(-1<<U))) },
-        { A|(__rotl(B,C)),                                    __rotl(!(B|s(__rotr(A,C))), C) },
-        { A|(__rotr(B,C)),                                    __rotr(!(B|s(__rotl(A,C))), C) },
-        { A|~B,                                               ~!(B&s(~A)) },
+        { A^(B^C),                                            B^!(A^C) },
+        { A^(B<<U),                                           !(!(A>>U)^B)<<U|s(A&((1<<U)-1)) },
+        { A^(B>>U),                                           !(!(A<<U)^B)>>U|s(A&(~(-1<<U))) },
+        { A^(__rotl(B,C)),                                    __rotl(!(B^s(__rotr(A,C))), C) },
+        { A^(__rotr(B,C)),                                    __rotr(!(B^s(__rotl(A,C))), C) },
+        { A^~B,                                               !(~A)^B },
 
         // SHL:
         //
@@ -248,6 +257,15 @@ namespace vtil::symbolic::directive
         { __rotr(__rotl(A,C),B),                              __iff(B>=C, __rotr(A,(B-C))) },
         { __rotr(__rotr(A,B),C),                              __rotr(A,(B+C)) },
         { __rotr(~A,C),                                       ~__rotr(A,C) },
+
+        // NOT:
+        //
+        { ~(A|B),                                             !(~A)&s(~B)  },
+        { ~(A&B),                                             !(~A)|s(~B)  },
+        { ~(A^B),  !(~A)^B  },
+        // Missing: shl, shr
+        { ~__rotl(A,C),                                       __rotl(!~A,C) },
+        { ~__rotr(A,C),                                       __rotr(!~A,C) },
     };
 
     // Grouping of simple representations into more complex directives.

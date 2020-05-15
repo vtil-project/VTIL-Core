@@ -42,12 +42,14 @@ namespace vtil::symbolic
 	expression::reference translate( const directive::symbol_table_t& sym,
 									 const directive::instance::reference& dir,
 									 bitcnt_t bit_cnt,
-									 bool speculative_condition = false );
+									 bool speculative_condition,
+									 int64_t max_depth );
 
 	// Attempts to transform the expression in form A to form B as indicated by the directives, 
 	// and returns the first instance that matches query.
 	//
 	expression::reference transform( const expression::reference& exp, 
 									 const directive::instance::reference& from, const directive::instance::reference& to,
-									 const expression_filter_t& filter = {} );
+									 const expression_filter_t& filter,
+									 int64_t max_depth );
 };
