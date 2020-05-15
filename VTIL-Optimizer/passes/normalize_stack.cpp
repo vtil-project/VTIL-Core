@@ -25,7 +25,7 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE  
 // POSSIBILITY OF SUCH DAMAGE.        
 //
-#include "stack_normalization.hpp"
+#include "normalize_stack.hpp"
 #include <vector>
 #include <vtil/query>
 #include <vtil/symex>
@@ -201,11 +201,12 @@ namespace vtil::optimizer
 					if ( !var.is_register() )
 						return;
 					register_desc reg = var.reg();
+					il_iterator access_point = block->acquire( var.at );
 
 					// Determine if the value is still alive.
 					//
 					bool is_alive = !reg.is_volatile();
-					for ( auto it2 = block->acquire( var.at ); !it2.is_end() && is_alive && it2 != it; it2++ )
+					for ( auto it2 = access_point; !it2.is_end() && is_alive && it2 != it; it2++ )
 						is_alive &= !test_access( it2, var.descriptor, access_type::write );
 
 					// If not, try hijacking the value declaration.
@@ -214,17 +215,14 @@ namespace vtil::optimizer
 					{
 						// If valid iterator and is of type STR:
 						//
-						if ( var.at.is_valid() && *var.at->base == ins::str )
+						if ( access_point.is_valid() && *access_point->base == ins::str )
 						{
-							// Insert a move-to-temporary before this instruction.
+							// Insert a move-to-temporary before this instruction 
+							// and swap the source operand with the temporary.
 							//
 							register_desc reg_new = block->tmp( reg.bit_count );
-							auto ins_new = block->insert( var.at, { &ins::mov, { reg_new, reg } } );
-
-							// Drop const qualifier of the iterator and swap the source operand.
-							//
-							auto& ins = ( instruction& ) *var.at;
-							ins.operands[ 2 ] = reg_new;
+							block->insert( access_point, { &ins::mov, { reg_new, reg } } );
+							access_point->operands[ 2 ] = reg_new;
 
 							// Replace source register and declare alive.
 							//
