@@ -93,6 +93,10 @@ namespace vtil
 	//
 	basic_block::iterator basic_block::acquire( const const_iterator& it )
 	{
+		// If invalid return as is.
+		//
+		if ( !it.is_valid() ) return {};
+
 		// This is only valid for iterators belonging to current container.
 		//
 		fassert( this == it.container );

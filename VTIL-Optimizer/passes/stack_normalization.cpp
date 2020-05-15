@@ -205,7 +205,7 @@ namespace vtil::optimizer
 					// Determine if the value is still alive.
 					//
 					bool is_alive = !reg.is_volatile();
-					for ( auto it2 = var.at; !it2.is_end() && is_alive && it2 != it; it2++ )
+					for ( auto it2 = block->acquire( var.at ); !it2.is_end() && is_alive && it2 != it; it2++ )
 						is_alive &= !test_access( it2, var.descriptor, access_type::write );
 
 					// If not, try hijacking the value declaration.
@@ -314,8 +314,9 @@ namespace vtil::optimizer
 
 					// If stack offset is above data pointer, reset relevant bits.
 					//
-					if ( it2->sp_offset > offset )
-						mask &= ~math::fill( std::min( 64ll, it2->sp_offset - offset ) );
+					int64_t reset_count = it2->sp_offset - offset;
+					if ( reset_count >= 8 )     mask = 0;
+					else if ( reset_count > 0 ) mask &= ~math::fill( reset_count * 8 );
 				}
 
 				// If not dead, fail.
