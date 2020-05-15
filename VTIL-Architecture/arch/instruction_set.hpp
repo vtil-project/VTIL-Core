@@ -138,7 +138,6 @@ namespace vtil
         /*                                          [Name]        [Operands...]                                     [ASizeOp]   [Volatile]  [Operator]               [BranchOps] [MemOps]     */
         static const instruction_desc nop =        { "nop",       {                                             },  0,          false,      {},                      {},         {}           };
         static const instruction_desc upflg =      { "upflg",     { o::readwrite                                },  1,          false,      {},                      {},         {}           };
-        static const instruction_desc vsetcc =     { "vsetcc",    { o::write,      o::read_imm                  },  1,          false,      {},                      {},         {}           };
         static const instruction_desc vemit =      { "vemit",     { o::read_imm                                 },  1,          true,       {},                      {},         {}           };
         static const instruction_desc vpinr =      { "vpinr",     { o::read_reg                                 },  1,          true,       {},                      {},         {}           };
         static const instruction_desc vpinw =      { "vpinw",     { o::write                                    },  1,          true,       {},                      {},         {}           };
