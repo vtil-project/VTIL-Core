@@ -113,7 +113,7 @@ namespace vtil
 		// Drop const qualifier of the iterator, since we are in a non-const 
 		// qualified member function, this qualifier is unnecessary.
 		//
-		iterator it = acquire( it_const );
+		iterator it = it_const.is_valid() ? acquire( it_const ) : iterator{ this, stream.end() };
 
 		// Instructions cannot be appended after a branching instruction was hit.
 		//
