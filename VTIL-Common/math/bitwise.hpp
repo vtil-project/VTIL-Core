@@ -206,7 +206,7 @@ namespace vtil::math
         // Constructs a bit-vector where bits are partially known.											                                
         //																									                                
         bit_vector( uint64_t known_bits, uint64_t unknown_bits, bitcnt_t bit_count ) :   
-            bit_count( bit_count ),     unknown_bits( unknown_bits & fill( bit_count ) ),   known_bits( known_bits & ~( unknown_bits & fill( bit_count ) ) ) {}
+            bit_count( bit_count ),     unknown_bits( unknown_bits & fill( bit_count ) ),   known_bits( known_bits & ( ~unknown_bits ) & fill( bit_count ) ) {}
 
         // Some helpers to access the internal state.
         //
