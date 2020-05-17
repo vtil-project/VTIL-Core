@@ -80,15 +80,6 @@ namespace vtil::optimizer
 				if ( keep_virtual && reg.is_virtual() ) return false;
 			}
 
-			// If next is upflg, result is not dead.
-			//
-			if ( !ins.is_end() )
-			{
-				auto next = std::next( ins );
-				if ( *next->base == ins::upflg )
-					return false;
-			}
-
 			// Result is dead, break out of the loop.
 			//
 			break;
@@ -108,14 +99,17 @@ namespace vtil::optimizer
 
 		// Keep virtual registers if not branching to real.
 		//
-		auto last_instruction = std::prev( block->end() );
-		bool keep_virtual = !last_instruction->base->is_branching_real();
+		auto it = std::prev( block->end() );
+		bool keep_virtual = !it->base->is_branching_real();
 
 		// Remove dead instructions starting from the back.
 		//
-		for ( auto it = last_instruction; !it.is_begin(); it-- )
+		do
+		{
 			if ( is_dead( it, keep_virtual ) )
 				it = { block, block->stream.erase( it ) };
+		}
+		while ( !it.is_begin() && ( --it, true ) );
 	}
 	void eliminate_dead( routine* rtn )
 	{
