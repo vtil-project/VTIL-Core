@@ -124,14 +124,30 @@ namespace vtil
 	template<typename T, std::enable_if_t<impl::is_std_container_v<T>, int> = 0>
 	static void serialize( std::ostream& ss, const T& v )
 	{
+		using value_type = typename T::value_type;
+
 		// Serialize the number of entries.
 		//
-		serialize<clength_t>( ss, v.size() );
+		clength_t n = v.size();
+		serialize<clength_t>( ss, n );
 
-		// Serialize each entry.
+		// If container stores data linearly and trivial data is stored:
 		//
-		for( auto& entry : v ) 
-			serialize( ss, entry );
+		if constexpr ( impl::is_linear_container_v<T>&& std::is_trivial<value_type>::value )
+		{
+			// Resize the container to expected size and read all entries at once.
+			//
+			ss.write( ( char* ) v.data(), n * sizeof( value_type ) );
+		}
+		// Otherwise, default back to per-element invokation.
+		//
+		else
+		{
+			// Serialize each entry.
+			//
+			for ( auto& entry : v )
+				serialize( ss, entry );
+		}
 	}
 	template<typename T, std::enable_if_t<impl::is_std_container_v<T>, int> = 0>
 	static void deserialize( std::istream& ss, T& v )
@@ -145,26 +161,29 @@ namespace vtil
 
 		// If container stores data linearly and trivial data is stored:
 		//
-		if constexpr ( impl::is_linear_container_v<T> && std::is_trivial<T>::value )
+		if constexpr ( impl::is_linear_container_v<T> && std::is_trivial<value_type>::value )
 		{
 			// Resize the container to expected size and read all entries at once.
 			//
 			v.resize( n );
 			ss.read( ( char* ) v.data(), n * sizeof( value_type ) );
-			return;
 		}
-		
-		// Clear the container just in-case.
+		// Otherwise, default back to per-element invokation.
 		//
-		v.clear();
-
-		// Until counter reaches zero, deserialize an entry and then insert it at the end.
-		//
-		while ( n-- > 0 )
+		else
 		{
-			value_type value;
-			deserialize( ss, value );
-			impl::move_back( v, std::move( value ) );
+			// Clear the container just in-case.
+			//
+			v.clear();
+
+			// Until counter reaches zero, deserialize an entry and then insert it at the end.
+			//
+			while ( n-- > 0 )
+			{
+				value_type value;
+				deserialize( ss, value );
+				impl::move_back( v, std::move( value ) );
+			}
 		}
 	}
 
