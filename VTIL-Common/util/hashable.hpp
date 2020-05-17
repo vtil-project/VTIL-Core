@@ -33,6 +33,7 @@
 #include "lt_typeid.hpp"
 #include "../io/formatting.hpp"
 
+// [Configuration]
 // Determine the size of vtil::hash_t.
 //
 #ifndef VTIL_HASH_SIZE
