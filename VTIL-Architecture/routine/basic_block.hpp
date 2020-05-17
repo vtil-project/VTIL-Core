@@ -235,7 +235,7 @@ namespace vtil
 		//
 		iterator insert( const const_iterator& it, instruction&& ins );
 
-		// Wrap std::list<>::push_back
+		// Wrap std::list<>::push_back.
 		//
 		void push_back( instruction&& ins ) { ( void ) insert( end(), std::move( ins ) ); }
 		void push_back( const instruction& ins ) { ( void ) insert( end(), instruction{ ins } ); }
@@ -260,7 +260,7 @@ namespace vtil
 			return std::make_tuple( tmp( size_0 ), tmp( size_n )... );
 		}
 
-		// Lazy wrappers for every instruction
+		// Lazy wrappers for every instruction.
 		//
 		template<typename _T>
 		auto prepare_operand( _T&& value )
