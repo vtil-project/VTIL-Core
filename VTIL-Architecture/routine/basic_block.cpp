@@ -96,10 +96,14 @@ namespace vtil
 		// If invalid return as is.
 		//
 		if ( !it.is_valid() ) return {};
-
+		
 		// This is only valid for iterators belonging to current container.
 		//
 		fassert( this == it.container );
+
+		// If end return end.
+		//
+		if ( it.is_end() ) return end();
 
 		// Cast away the qualifier using erase and create a non-const qualified iterator.
 		//
@@ -113,7 +117,7 @@ namespace vtil
 		// Drop const qualifier of the iterator, since we are in a non-const 
 		// qualified member function, this qualifier is unnecessary.
 		//
-		iterator it = it_const.is_valid() ? acquire( it_const ) : iterator{ this, stream.end() };
+		iterator it = it_const.is_end() ? end() : acquire( it_const );
 
 		// Instructions cannot be appended after a branching instruction was hit.
 		//
@@ -257,14 +261,6 @@ namespace vtil
 		//
 		if( it.is_end() ) sp_offset += offset;
 		return this;
-	}
-
-	// Pushes current flags value up the stack queueing the
-	// shift in stack pointer.
-	//
-	basic_block* basic_block::pushf()
-	{
-		return push( REG_FLAGS );
 	}
 
 	// Emits an entire instruction using series of VEMITs.
