@@ -32,6 +32,16 @@
 #include <type_traits>
 #include "query_descriptor.hpp"
 
+// To improve the readability of queries, each directive can be
+// notated using the following guide using single-line comments.
+//   => notates the beginning of a query.
+//   >> notates skipping of a class / general directives on iteration [forwards]
+//   << notates skipping of a class / general directives on iteration [backwards]
+//   |  notates selection of a class
+//   @  notates execution of a helper
+//   := notates projection
+//   <= notates collection (when return value is important)
+//
 namespace vtil::query
 {
 	// Query views provide the user with an interface interact

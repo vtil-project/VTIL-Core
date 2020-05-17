@@ -102,8 +102,12 @@ namespace vtil
 	int instruction::reads_from( const register_desc& rw ) const
 	{
 		for ( int i = 0; i < base->operand_types.size(); i++ )
-			if ( base->operand_types[ i ] != operand_type::write && operands[ i ].reg().overlaps( rw ) )
+		{
+			if ( base->operand_types[ i ] != operand_type::write &&
+				 operands[ i ].is_register() &&
+				 operands[ i ].reg().overlaps( rw ) )
 				return i + 1;
+		}
 		return 0;
 	}
 
@@ -113,8 +117,12 @@ namespace vtil
 	int instruction::writes_to( const register_desc& rw ) const
 	{
 		for ( int i = 0; i < base->operand_types.size(); i++ )
-			if ( base->operand_types[ i ] >= operand_type::write && operands[ i ].reg().overlaps( rw ) )
+		{
+			if ( base->operand_types[ i ] >= operand_type::write && 
+				 operands[ i ].is_register() && 
+				 operands[ i ].reg().overlaps( rw ) )
 				return i + 1;
+		}
 		return 0;
 	}
 
@@ -124,8 +132,12 @@ namespace vtil
 	int instruction::overwrites( const register_desc& rw ) const
 	{
 		for ( int i = 0; i < base->operand_types.size(); i++ )
-			if ( base->operand_types[ i ] == operand_type::write && operands[ i ].reg().overlaps( rw ) )
+		{
+			if ( base->operand_types[ i ] == operand_type::write && 
+				 operands[ i ].is_register() && 
+				 operands[ i ].reg().overlaps( rw ) )
 				return i + 1;
+		}
 		return 0;
 	}
 

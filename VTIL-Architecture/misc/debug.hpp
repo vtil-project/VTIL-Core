@@ -41,6 +41,11 @@ namespace vtil::debug
 		
 		// Print stack pointer offset
 		//
+		if ( ins.sp_index )
+			log<CON_YLW>( "[%d] ", ins.sp_index );
+		else
+			log( "    " );
+
 		if ( ins.sp_reset )
 			log<CON_PRP>( ">%c0x%-4x ", ins.sp_offset >= 0 ? '+' : '-', abs( ins.sp_offset ) );
 		else if ( ( prev ? prev->sp_offset : 0 ) == ins.sp_offset )

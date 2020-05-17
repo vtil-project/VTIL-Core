@@ -1,0 +1,8 @@
+#pragma once
+#include "../../analysis/trace.hpp"
+#include "../../analysis/variable.hpp"
+#include "../../analysis/variable_aux.hpp"
+#include "../../analysis/cached_tracer.hpp"
+#include "../../passes/eliminate_dead.hpp"
+#include "../../passes/normalize_stack.hpp"
+#include "../../passes/apply_all.hpp"

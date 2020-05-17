@@ -45,14 +45,12 @@ namespace vtil
         //  -- Data/Memory instructions
         //
         //    MOV        Reg,    Reg/Imm                                     | OP1 = OP2
-        //    MOVR       Reg,    Imm                                         | OP1 = Relocate(OP2)
         //    STR        Reg,    Imm,    Reg/Imm                             | [OP1+OP2] <= OP3
         //    LDD        Reg,    Reg,    Imm                                 | OP1 <= [OP2+OP3]
         //
         /*------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
         /*                                          [Name]        [Operands...]                                     [ASizeOp]   [Volatile]  [Operator]               [BranchOps] [MemOps]     */
         static const instruction_desc mov =        { "mov",       { o::write,    o::read_any                   },   2,          false,      {},                      {},         {}           };
-        static const instruction_desc movr =       { "movr",      { o::write,    o::read_imm                   },   2,          false,      {},                      {},         {}           };
         static const instruction_desc str =        { "str",       { o::read_reg, o::read_imm,     o::read_any  },   3,          false,      {},                      {},         { 1, true }  };
         static const instruction_desc ldd =        { "ldd",       { o::write,    o::read_reg,     o::read_imm  },   1,          false,      {},                      {},         { 2, false } };
         /*------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
@@ -127,7 +125,6 @@ namespace vtil
         //    -- Special instructions
         //
         //    NOP                                                           | Placeholder
-        //    UPFLG      Reg                                                | Indicates that flags were updated according to the previous instruction and written into OP1.
         //    VEMIT      Imm                                                | Emits the opcode as is to the final instruction stream.
         //    VPINR      Reg                                                | Pins the register for read
         //    VPINW      Reg                                                | Pins the register for write
@@ -137,7 +134,6 @@ namespace vtil
         /*------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
         /*                                          [Name]        [Operands...]                                     [ASizeOp]   [Volatile]  [Operator]               [BranchOps] [MemOps]     */
         static const instruction_desc nop =        { "nop",       {                                             },  0,          false,      {},                      {},         {}           };
-        static const instruction_desc upflg =      { "upflg",     { o::readwrite                                },  1,          false,      {},                      {},         {}           };
         static const instruction_desc vemit =      { "vemit",     { o::read_imm                                 },  1,          true,       {},                      {},         {}           };
         static const instruction_desc vpinr =      { "vpinr",     { o::read_reg                                 },  1,          true,       {},                      {},         {}           };
         static const instruction_desc vpinw =      { "vpinw",     { o::write                                    },  1,          true,       {},                      {},         {}           };
@@ -150,10 +146,9 @@ namespace vtil
     //
     static const instruction_desc instruction_list[] = 
     {
-        ins::mov, ins::movr, ins::str, ins::ldd, ins::neg, ins::add, ins::sub, ins::mul,
-        ins::imul, ins::mulhi, ins::imulhi, ins::div, ins::idiv, ins::rem, ins::irem, ins::bnot,
-        ins::bshr, ins::bshl, ins::bxor, ins::bor, ins::band, ins::bror, ins::brol, ins::upflg,
-        ins::js, ins::jmp, ins::vexit, ins::vxcall, ins::nop, ins::vemit, ins::vpinr, ins::vpinw, 
-        ins::vpinrm, ins::vpinwm
+        ins::mov, ins::str, ins::ldd, ins::neg, ins::add, ins::sub, ins::mul, ins::imul, ins::mulhi, 
+        ins::imulhi, ins::div, ins::idiv, ins::rem, ins::irem, ins::bnot, ins::bshr, ins::bshl, 
+        ins::bxor, ins::bor, ins::band, ins::bror, ins::brol, ins::js, ins::jmp, ins::vexit, 
+        ins::vxcall, ins::nop, ins::vemit, ins::vpinr, ins::vpinw, ins::vpinrm, ins::vpinwm
     };
 };

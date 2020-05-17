@@ -1,0 +1,66 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="analysis\variable.cpp">
+      <Filter>Analysis</Filter>
+    </ClCompile>
+    <ClCompile Include="analysis\trace.cpp">
+      <Filter>Analysis</Filter>
+    </ClCompile>
+    <ClCompile Include="analysis\cached_tracer.cpp">
+      <Filter>Analysis</Filter>
+    </ClCompile>
+    <ClCompile Include="analysis\variable_aux.cpp">
+      <Filter>Analysis</Filter>
+    </ClCompile>
+    <ClCompile Include="passes\eliminate_dead.cpp">
+      <Filter>Optimizer Passes</Filter>
+    </ClCompile>
+    <ClCompile Include="passes\normalize_stack.cpp">
+      <Filter>Optimizer Passes</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Analysis">
+      <UniqueIdentifier>{fe08b6d0-ab00-4df7-806f-bdda313cc39a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Includes">
+      <UniqueIdentifier>{6307ebe6-d515-4f15-a927-44dacb7a337c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Optimizer Passes">
+      <UniqueIdentifier>{93550fd4-29f0-496a-ba4a-c90fcf11efb1}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="analysis\variable.hpp">
+      <Filter>Analysis</Filter>
+    </ClInclude>
+    <ClInclude Include="analysis\trace.hpp">
+      <Filter>Analysis</Filter>
+    </ClInclude>
+    <ClInclude Include="analysis\cached_tracer.hpp">
+      <Filter>Analysis</Filter>
+    </ClInclude>
+    <ClInclude Include="analysis\variable_aux.hpp">
+      <Filter>Analysis</Filter>
+    </ClInclude>
+    <ClInclude Include="passes\apply_all.hpp">
+      <Filter>Optimizer Passes</Filter>
+    </ClInclude>
+    <ClInclude Include="passes\eliminate_dead.hpp">
+      <Filter>Optimizer Passes</Filter>
+    </ClInclude>
+    <ClInclude Include="passes\normalize_stack.hpp">
+      <Filter>Optimizer Passes</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="includes\vtil\optimizer">
+      <Filter>Includes</Filter>
+    </None>
+    <None Include="VTIL-Optimizer.licenseheader" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="CMakeLists.txt" />
+  </ItemGroup>
+</Project>

@@ -88,7 +88,95 @@ namespace vtil
 		return result;
 	}
 
-	// Helpers for the allocation of unique temporary registers
+	// Drops const qualifier from iterator after asserting iterator
+	// belongs to this basic block.
+	//
+	basic_block::iterator basic_block::acquire( const const_iterator& it )
+	{
+		// If invalid return as is.
+		//
+		if ( !it.is_valid() ) return {};
+		
+		// This is only valid for iterators belonging to current container.
+		//
+		fassert( this == it.container );
+
+		// If end return end.
+		//
+		if ( it.is_end() ) return end();
+
+		// Cast away the qualifier using erase and create a non-const qualified iterator.
+		//
+		return { this, this->stream.erase( it, it ) };
+	}
+
+	// Wrap std::list<>::insert with stack state-keeping.
+	//
+	basic_block::iterator basic_block::insert( const const_iterator& it_const, instruction&& ins )
+	{
+		// Drop const qualifier of the iterator, since we are in a non-const 
+		// qualified member function, this qualifier is unnecessary.
+		//
+		iterator it = it_const.is_end() ? end() : acquire( it_const );
+
+		// Instructions cannot be appended after a branching instruction was hit.
+		//
+		if ( it.is_end() && !it.is_begin() )
+			fassert( !std::prev( it )->base->is_branching() );
+
+		// If inserting at end, inherit stack properties from the container.
+		//
+		if ( it.is_end() )
+		{
+			ins.sp_offset = sp_offset;
+			ins.sp_index = sp_index;
+		}
+		// If inserting at the beginning, assume clean stack state.
+		//
+		else if ( it.is_begin() )
+		{
+			ins.sp_offset = 0;
+			ins.sp_index = 0;
+		}
+		// If inserting in the middle of the stream:
+		//
+		else
+		{
+			auto prev = std::prev( it );
+
+			// If previous instruction resets stack, use clean state of next index.
+			//
+			if ( prev->sp_reset )
+			{
+				ins.sp_index = prev->sp_index + 1;
+				ins.sp_offset = 0;
+			}
+			// Otherwise inherit the state as is.
+			//
+			else
+			{
+				ins.sp_index = prev->sp_index;
+				ins.sp_offset = prev->sp_offset;
+			}
+		}
+
+		// If instruction writes to SP, reset the queued stack pointer.
+		//
+		if ( ins.writes_to( REG_SP ) )
+		{
+			shift_sp( -ins.sp_offset, false, it );
+			for ( auto it2 = it; !it2.is_end(); it2++ )
+				it2->sp_index++;
+			sp_index++;
+			ins.sp_reset = true;
+		}
+
+		// Append the instruction to the stream.
+		//
+		return { this, stream.emplace( it, std::move( ins ) ) };
+	}
+
+	// Helpers for the allocation of unique temporary registers.
 	//
 	register_desc basic_block::tmp( uint8_t size )
 	{
@@ -100,37 +188,15 @@ namespace vtil
 		};
 	}
 
-	// Instruction pre-processor
-	//
-	void basic_block::append_instruction( instruction&& ins )
-	{
-		// Instructions cannot be appended after a branching instruction was hit.
-		//
-		fassert( !is_complete() );
-
-		// Write the stack pointer details.
-		//
-		ins.sp_offset = sp_offset;
-		ins.sp_index = sp_index;
-
-		// If instruction writes to SP, reset the queued stack pointer.
-		//
-		if ( ins.writes_to( REG_SP ) )
-		{
-			sp_offset = 0;
-			sp_index++;
-			ins.sp_reset = true;
-		}
-
-		// Append the instruction to the stream.
-		//
-		stream.push_back( std::move( ins ) );
-	}
-
 	// Queues a stack shift.
 	//
-	basic_block* basic_block::shift_sp( int64_t offset, bool merge_instance, iterator it )
+	basic_block* basic_block::shift_sp( int64_t offset, bool merge_instance, const const_iterator& it_const )
 	{
+		// Drop const qualifier of the iterator, since we are in a non-const 
+		// qualified member function, this qualifier is unnecessary.
+		//
+		iterator it = acquire( it_const );
+
 		// If requested, shift the stack index first.
 		//
 		if ( merge_instance )
@@ -155,8 +221,8 @@ namespace vtil
 		// If an iterator is provided, shift the stack pointer
 		// for every instruction that precedes it as well.
 		//
-		std::optional<uint32_t> sp_index_prev;
-		while ( !it.is_end() )
+		uint32_t shifted_spi = it.is_end() ? -1 : it->sp_index;
+		for ( ;!it.is_end() && it->sp_index == shifted_spi; it++ )
 		{
 			// Shift the stack offset accordingly.
 			//
@@ -170,37 +236,18 @@ namespace vtil
 				//
 				if ( it->base->accesses_memory() && it->operands[ it->base->memory_operand_index ].reg().is_stack_pointer() )
 				{
-					// Assert the offset operand is an immediate and 
-					// shift the offset as well.
+					// Assert the offset operand is an immediate and shift the offset as well.
 					//
 					fassert( it->operands[ it->base->memory_operand_index + 1 ].is_immediate() );
 					it->operands[ it->base->memory_operand_index + 1 ].imm().i64 += offset;
 				}
 			}
-
-			// If stack changed changed, return, else forward the iterator.
-			//
-			if ( sp_index_prev.value_or( it->sp_index ) != it->sp_index )
-				return this;
-			sp_index_prev = it->sp_index;
-			++it;
 		}
 
-		// Shift the stack pointer and continue as usual
-		// without emitting any sub or add instructions.
-		// Queued stack pointer changes will be processed
-		// in bulk at the end of the routine.
+		// If we've reached the end, shift the final block offset as well.
 		//
-		sp_offset += offset;
+		if( it.is_end() ) sp_offset += offset;
 		return this;
-	}
-
-	// Pushes current flags value up the stack queueing the
-	// shift in stack pointer.
-	//
-	basic_block* basic_block::pushf()
-	{
-		return push( REG_FLAGS );
 	}
 
 	// Emits an entire instruction using series of VEMITs.

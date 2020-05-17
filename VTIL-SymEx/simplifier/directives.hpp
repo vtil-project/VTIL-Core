@@ -273,6 +273,7 @@ namespace vtil::symbolic::directive
     static const std::pair<instance::reference, instance::reference> pack_descriptors[] =
     {
         { (A>>B)&1,                                           __bt(A,B) },
+        { (A&B)>>C,                                           __iff((B>>C)==1, __bt(A,C)) },
         { __if(A<=B,A)|__if(A>B,B),                           __min(A,B) },
         { __if(A<=B,A)+__if(A>B,B),                           __min(A,B) },
         { __if(A>=B,A)|__if(A<B,B),                           __max(A,B) },

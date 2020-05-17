@@ -60,4 +60,7 @@
   <ItemGroup>
     <None Include="VTIL-SymEx.licenseheader" />
   </ItemGroup>
+  <ItemGroup>
+    <Text Include="CMakeLists.txt" />
+  </ItemGroup>
 </Project>

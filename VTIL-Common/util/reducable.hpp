@@ -28,7 +28,6 @@
 #pragma once
 #include <tuple>
 #include "hashable.hpp"
-#include "optional_reference.hpp"
 
 // Reducable types essentially let us do member-type reflection
 // which we use to auto generate useful but repetetive methods 
@@ -45,6 +44,11 @@
 #pragma warning(disable: 4305)
 namespace vtil
 {
+    // Forward decleration for optional reference type.
+    //
+    template<typename T>
+    struct optional_reference;
+
     namespace impl
     {
         // Applies type modifier over each element in pair/tuple.
@@ -128,17 +132,17 @@ namespace vtil
         // Define basic comparison operators using std::tuple.
         //
         template<std::enable_if_t<flags&reducable_equ, int> = 0>
-        auto operator==( const T& other ) const { return reduce_proxy( ( T& ) *this ) == reduce_proxy( other ); }
+        auto operator==( const T& other ) const { return &other == this || reduce_proxy( ( T& ) *this ) == reduce_proxy( other ); }
         template<std::enable_if_t<flags&reducable_nequ, int> = 0>
-        auto operator!=( const T& other ) const { return reduce_proxy( ( T& ) *this ) != reduce_proxy( other ); }
+        auto operator!=( const T& other ) const { return &other != this && reduce_proxy( ( T& ) *this ) != reduce_proxy( other ); }
         template<std::enable_if_t<flags&reducable_leq, int> = 0>
-        auto operator<=( const T& other ) const { return reduce_proxy( ( T& ) *this ) <= reduce_proxy( other ); }
+        auto operator<=( const T& other ) const { return &other == this || reduce_proxy( ( T& ) *this ) <= reduce_proxy( other ); }
         template<std::enable_if_t<flags&reducable_greq, int> = 0>
-        auto operator>=( const T& other ) const { return reduce_proxy( ( T& ) *this ) >= reduce_proxy( other ); }
+        auto operator>=( const T& other ) const { return &other == this || reduce_proxy( ( T& ) *this ) >= reduce_proxy( other ); }
         template<std::enable_if_t<flags&reducable_less, int> = 0>
-        auto operator< ( const T& other ) const { return reduce_proxy( ( T& ) *this ) <  reduce_proxy( other ); }
+        auto operator< ( const T& other ) const { return &other != this && reduce_proxy( ( T& ) *this ) <  reduce_proxy( other ); }
         template<std::enable_if_t<flags&reducable_greater, int> = 0>
-        auto operator> ( const T& other ) const { return reduce_proxy( ( T& ) *this ) >  reduce_proxy( other ); }
+        auto operator> ( const T& other ) const { return &other != this && reduce_proxy( ( T& ) *this ) >  reduce_proxy( other ); }
 
         // Define VTIL hash using a simple VTIL tuple hasher.
         //

@@ -82,8 +82,8 @@ namespace vtil
 
 			// Simple position/validity checks.
 			//
-			bool is_end() const { return !container || operator==( { container, container->stream.end() } ); }
-			bool is_begin() const { return !container || operator==( { container, container->stream.begin() } ); }
+			bool is_end() const { return !container || ((const iterator_type&)*this)==container->stream.end(); }
+			bool is_begin() const { return !container || ((const iterator_type&)*this)==container->stream.begin(); }
 			bool is_valid() const { return !is_begin() || !is_end(); }
 
 			// Simple helper used to trace paths towards a container.
@@ -226,6 +226,20 @@ namespace vtil
 		const_iterator end() const { return { this, stream.end() }; }
 		const_iterator begin() const { return { this, stream.begin() }; }
 
+		// Drops const qualifier from iterator after asserting iterator
+		// belongs to this basic block.
+		//
+		iterator acquire( const const_iterator& it );
+
+		// Wrap std::list<>::insert with stack state-keeping.
+		//
+		iterator insert( const const_iterator& it, instruction&& ins );
+
+		// Wrap std::list<>::push_back.
+		//
+		void push_back( instruction&& ins ) { ( void ) insert( end(), std::move( ins ) ); }
+		void push_back( const instruction& ins ) { ( void ) insert( end(), instruction{ ins } ); }
+
 		// Returns whether or not block is complete, a complete
 		// block ends with a branching instruction.
 		//
@@ -237,7 +251,7 @@ namespace vtil
 		static basic_block* begin( vip_t entry_vip );
 		basic_block* fork( vip_t entry_vip );
 
-		// Helpers for the allocation of unique temporary registers
+		// Helpers for the allocation of unique temporary registers.
 		//
 		register_desc tmp( uint8_t size );
 		template<typename... params>
@@ -246,12 +260,7 @@ namespace vtil
 			return std::make_tuple( tmp( size_0 ), tmp( size_n )... );
 		}
 
-		// Instruction pre-processor
-		//
-		void append_instruction( instruction&& ins );
-		void append_instruction( const instruction& ins ) { append_instruction( instruction{ ins } ); }
-
-		// Lazy wrappers for every instruction
+		// Lazy wrappers for every instruction.
 		//
 		template<typename _T>
 		auto prepare_operand( _T&& value )
@@ -272,7 +281,7 @@ namespace vtil
 		template<typename... Ts>																								                \
 		basic_block* x ( Ts&&... operands )																						                \
 		{																														                \
-			append_instruction( instruction{ &ins:: x, std::vector<operand>( { prepare_operand(std::forward<Ts>(operands))... } ) } );			\
+			push_back( instruction{ &ins:: x, std::vector<operand>( { prepare_operand(std::forward<Ts>(operands))... } ) } );			\
 			return this;																										                \
 		}
 		WRAP_LAZY( mov );
@@ -297,7 +306,6 @@ namespace vtil
 		WRAP_LAZY( band );
 		WRAP_LAZY( bror );
 		WRAP_LAZY( brol );
-		WRAP_LAZY( upflg );
 		WRAP_LAZY( js );
 		WRAP_LAZY( jmp );
 		WRAP_LAZY( vexit );
@@ -312,16 +320,17 @@ namespace vtil
 
 		// Queues a stack shift.
 		//
-		basic_block* shift_sp( int64_t offset, bool merge_instance = false, iterator it = {} );
-
-		// Pushes current flags value up the stack queueing the
-		// shift in stack pointer.
-		//
-		basic_block* pushf();
+		basic_block* shift_sp( int64_t offset, bool merge_instance = false, const const_iterator& it = {} );
 
 		// Emits an entire instruction using series of VEMITs.
 		//
 		basic_block* vemits( const std::string& assembly );
+
+		// Pushes/pops current flags value up the stack queueing 
+		// the shift in stack pointer.
+		//
+		basic_block* pushf() { return push( REG_FLAGS ); }
+		basic_block* popf() { return pop( REG_FLAGS ); }
 
 		// Pushes an operand up the stack queueing the
 		// shift in stack pointer.
