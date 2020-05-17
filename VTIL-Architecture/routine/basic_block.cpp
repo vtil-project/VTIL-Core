@@ -250,14 +250,6 @@ namespace vtil
 		return this;
 	}
 
-	// Pushes current flags value up the stack queueing the
-	// shift in stack pointer.
-	//
-	basic_block* basic_block::pushf()
-	{
-		return push( REG_FLAGS );
-	}
-
 	// Emits an entire instruction using series of VEMITs.
 	//
 	basic_block* basic_block::vemits( const std::string& assembly )

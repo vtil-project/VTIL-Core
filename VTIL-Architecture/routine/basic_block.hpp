@@ -322,14 +322,15 @@ namespace vtil
 		//
 		basic_block* shift_sp( int64_t offset, bool merge_instance = false, const const_iterator& it = {} );
 
-		// Pushes current flags value up the stack queueing the
-		// shift in stack pointer.
-		//
-		basic_block* pushf();
-
 		// Emits an entire instruction using series of VEMITs.
 		//
 		basic_block* vemits( const std::string& assembly );
+
+		// Pushes/pops current flags value up the stack queueing 
+		// the shift in stack pointer.
+		//
+		basic_block* pushf() { return push( REG_FLAGS ); }
+		basic_block* popf() { return pop( REG_FLAGS ); }
 
 		// Pushes an operand up the stack queueing the
 		// shift in stack pointer.
