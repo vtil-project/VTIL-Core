@@ -167,6 +167,19 @@ namespace vtil
 			ins.sp_reset = true;
 		}
 
+		// Can't emplace after end()
+		//
+		if (it.is_end())
+		{
+			// Emplace back so we don't attempt to insert anything after end() 
+			//
+			stream.emplace_back(std::move(ins));
+
+			// Return the newly-inserted last element in the stream
+			//
+			return { this, --stream.end() };
+		}
+
 		// Append the instruction to the stream.
 		//
 		return { this, stream.emplace( it, std::move( ins ) ) };
