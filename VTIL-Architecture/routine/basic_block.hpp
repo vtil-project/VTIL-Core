@@ -306,7 +306,6 @@ namespace vtil
 		WRAP_LAZY( band );
 		WRAP_LAZY( bror );
 		WRAP_LAZY( brol );
-		WRAP_LAZY( upflg );
 		WRAP_LAZY( js );
 		WRAP_LAZY( jmp );
 		WRAP_LAZY( vexit );

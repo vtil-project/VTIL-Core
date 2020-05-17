@@ -35,7 +35,7 @@ namespace vtil
 {
 	// Flags that describe the properties of the register.
 	//
-	enum register_flag : uint8_t
+	enum register_flag : uint32_t
 	{
 		// Default value if no flags set, R/W pure virtual register that is not a stack pointer or flags.
 		// - (!) Do not use as a flag, this is just here as a syntax sugar.
@@ -58,10 +58,20 @@ namespace vtil
 		//
 		register_stack_pointer =    1 << 3,
 
+		// Indicates that it is an alias to the image base.
+		//
+		register_image_base =       1 << 4,
+
+		// Combined mask of all special registers.
+		//
+		register_special =          register_flags | 
+		                            register_stack_pointer | 
+		                            register_image_base,
+
 		// Indicates that it can change spontanously. (Say, IA32_TIME_STAMP_COUNTER.)
 		//
-		register_volatile =         1 << 4,
-		register_readonly =         1 << 5,
+		register_volatile =         1 << 5,
+		register_readonly =         1 << 6,
 	};
 
 	// This type describes any register instance.
@@ -70,7 +80,7 @@ namespace vtil
 	{
 		// Flags of the current register, as described in "enum register_flag".
 		//
-		uint8_t flags;
+		uint32_t flags;
 
 		// Arbitrary identifier, is intentionally not universally unique to let ids of user registers make use
 		// of the full 64-bit range as otherwise we'd have to reserve some magic numbers for flags and stack pointer. 
@@ -96,7 +106,7 @@ namespace vtil
 
 		// Construct a fully formed register.
 		//
-		register_desc( uint8_t flags, size_t id, bitcnt_t bit_count, bitcnt_t bit_offset = 0 ) 
+		register_desc( uint32_t flags, size_t id, bitcnt_t bit_count, bitcnt_t bit_offset = 0 )
 			: flags( flags ), local_id( id ), bit_count( bit_count ), bit_offset( bit_offset ) 
 		{ 
 			fassert( is_valid() ); 
@@ -111,9 +121,14 @@ namespace vtil
 			if ( bit_count == 0 || ( bit_count + bit_offset ) > 64 )
 				return false;
 
+			// Handle special registers:
+			//
+			uint32_t special_flags = flags & register_special;
+
 			// If register holds flags or the stack pointer:
 			//
-			if ( is_stack_pointer() || is_flags() )
+			if ( special_flags == register_stack_pointer ||
+				 special_flags == register_flags )
 			{
 				// Should be physical and not volatile nor read-only.
 				//
@@ -124,6 +139,26 @@ namespace vtil
 				//
 				if ( local_id != 0 )
 					return false;
+			}
+			// If register holds image base:
+			//
+			else if ( special_flags == register_image_base )
+			{
+				// Should be virtual and read only.
+				//
+				if ( !is_virtual() || !is_read_only() )
+					return false;
+
+				// Must have no local identifier.
+				//
+				if ( local_id != 0 )
+					return false;
+			}
+			// Otherwise must have no special flags.
+			//
+			else if( special_flags != 0 )
+			{
+				return false;
 			}
 
 			// If register is physical, it can't be local.
@@ -141,6 +176,8 @@ namespace vtil
 		bool is_volatile() const { return flags & register_volatile; }
 		bool is_read_only() const { return flags & register_readonly; }
 		bool is_stack_pointer() const { return flags & register_stack_pointer; }
+		bool is_image_base() const { return flags & register_image_base; }
+		bool is_special() const { return flags & register_special; }
 
 		// Returns the mask for the bits that this register's value would occupy in a 64-bit register.
 		//
@@ -176,6 +213,7 @@ namespace vtil
 			//
 			if ( flags & register_flags )         return prefix + "$flags" + suffix;
 			if ( flags & register_stack_pointer ) return prefix + "$sp" + suffix;
+			if ( flags & register_image_base )    return prefix + "base" + suffix;
 			if ( flags & register_local )         return prefix + "t" + std::to_string( local_id ) + suffix;
 
 			// Otherwise use the default naming.
@@ -224,6 +262,7 @@ namespace vtil
 
 	// VTIL special registers.
 	//
-	static const register_desc REG_FLAGS = register_desc{ register_physical | register_flags,         0, 64, 0 };
-	static const register_desc REG_SP =    register_desc{ register_physical | register_stack_pointer, 0, 64, 0 };
+	static const register_desc REG_IMGBASE = { register_readonly | register_image_base,    0, 64, 0 };
+	static const register_desc REG_FLAGS =   { register_physical | register_flags,         0, 64, 0 };
+	static const register_desc REG_SP =      { register_physical | register_stack_pointer, 0, 64, 0 };
 };
