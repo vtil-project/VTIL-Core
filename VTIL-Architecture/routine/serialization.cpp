@@ -49,10 +49,13 @@ namespace vtil
 
 		// Write the entry VIP of each block reference instead of the pointer. 
 		//
-		serialize<clength_t>( out, in->prev.size() );
-		std::transform( in->prev.begin(), in->prev.end(), std::ostream_iterator<vip_t>( out ), [ ] ( auto it ) { return it->entry_vip; } );
-		serialize<clength_t>( out, in->next.size() );
-		std::transform( in->next.begin(), in->next.end(), std::ostream_iterator<vip_t>( out ), [ ] ( auto it ) { return it->entry_vip; } );
+		std::vector<vip_t> prev;
+		std::vector<vip_t> next;
+		auto ref_make = [ ] ( auto blk ) { return blk->entry_vip; };
+		std::transform( in->prev.begin(), in->prev.end(), std::back_inserter( prev ), ref_make );
+		std::transform( in->next.begin(), in->next.end(), std::back_inserter( next ), ref_make );
+		serialize( out, prev );
+		serialize( out, next );
 	}
 	void deserialize( std::istream& in, routine* rtn, basic_block*& blk )
 	{
