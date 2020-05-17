@@ -169,11 +169,11 @@ namespace vtil
 
 		// Can't emplace after end()
 		//
-		if (it.is_end())
+		if ( it.is_end() )
 		{
 			// Emplace back so we don't attempt to insert anything after end() 
 			//
-			stream.emplace_back(std::move(ins));
+			stream.emplace_back( std::move( ins ) );
 
 			// Return the newly-inserted last element in the stream
 			//
