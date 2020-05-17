@@ -125,10 +125,9 @@ namespace vtil
 			//
 			uint32_t special_flags = flags & register_special;
 
-			// If register holds flags or the stack pointer:
+			// If register holds the stack pointer:
 			//
-			if ( special_flags == register_stack_pointer ||
-				 special_flags == register_flags )
+			if ( special_flags == register_stack_pointer )
 			{
 				// Should be physical and not volatile nor read-only.
 				//
@@ -140,13 +139,27 @@ namespace vtil
 				if ( local_id != 0 )
 					return false;
 			}
-			// If register holds image base:
+			// If register holds the flags:
+			//
+			else if ( special_flags == register_flags )
+			{
+				// Should be virtual, volatile and not read-only.
+				//
+				if ( !is_volatile() || is_read_only() || is_physical() )
+					return false;
+
+				// Must have no local identifier.
+				//
+				if ( local_id != 0 )
+					return false;
+			}
+			// If register holds the image base:
 			//
 			else if ( special_flags == register_image_base )
 			{
-				// Should be virtual and read only.
+				// Should be virtual, not volatile and read only.
 				//
-				if ( !is_virtual() || !is_read_only() )
+				if ( is_volatile() || !is_virtual() || !is_read_only() )
 					return false;
 
 				// Must have no local identifier.
@@ -263,6 +276,6 @@ namespace vtil
 	// VTIL special registers.
 	//
 	static const register_desc REG_IMGBASE = { register_readonly | register_image_base,    0, 64, 0 };
-	static const register_desc REG_FLAGS =   { register_physical | register_flags,         0, 64, 0 };
+	static const register_desc REG_FLAGS =   { register_volatile | register_flags,         0, 64, 0 };
 	static const register_desc REG_SP =      { register_physical | register_stack_pointer, 0, 64, 0 };
 };
