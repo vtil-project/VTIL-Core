@@ -188,6 +188,8 @@ DEFINE_OPERATION( operator<=( T1&& a, T2&& b )       { return { std::forward<T1>
 DEFINE_OPERATION( operator<( T1&& a, T2&& b )        { return { std::forward<T1>( a ), vtil::math::operator_id::less, std::forward<T2>( b ) }; }              );
 DEFINE_OPERATION( __ugreat( T1&& a, T2&& b )         { return { std::forward<T1>( a ), vtil::math::operator_id::ugreater, std::forward<T2>( b ) }; }          );
 DEFINE_OPERATION( __ugreat_eq( T1&& a, T2&& b )      { return { std::forward<T1>( a ), vtil::math::operator_id::ugreater_eq, std::forward<T2>( b ) }; }       );
+DEFINE_OPERATION( __uequal( T1&& a, T2&& b )         { return { std::forward<T1>( a ), vtil::math::operator_id::uequal, std::forward<T2>( b ) }; }            );
+DEFINE_OPERATION( __unot_equal( T1&& a, T2&& b )     { return { std::forward<T1>( a ), vtil::math::operator_id::unot_equal, std::forward<T2>( b ) }; }        );
 DEFINE_OPERATION( __uless_eq( T1&& a, T2&& b )       { return { std::forward<T1>( a ), vtil::math::operator_id::uless_eq, std::forward<T2>( b ) }; }          );
 DEFINE_OPERATION( __uless( T1&& a, T2&& b )          { return { std::forward<T1>( a ), vtil::math::operator_id::uless, std::forward<T2>( b ) }; }             );
 #undef DEFINE_OPERATION

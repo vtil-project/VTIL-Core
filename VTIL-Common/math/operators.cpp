@@ -156,8 +156,10 @@ namespace vtil::math
             //
             case operator_id::greater:          result = ilhs > irhs;                                               break;
             case operator_id::greater_eq:       result = ilhs >= irhs;                                              break;
-            case operator_id::equal:            result = lhs == rhs;                                                break;
-            case operator_id::not_equal:        result = lhs != rhs;                                                break;
+            case operator_id::equal:            result = ilhs == irhs;                                              break;
+            case operator_id::not_equal:        result = ilhs != irhs;                                              break;
+            case operator_id::uequal:           result = lhs == rhs;                                                break;
+            case operator_id::unot_equal:       result = lhs != rhs;                                                break;
             case operator_id::less_eq:          result = ilhs <= irhs;                                              break;
             case operator_id::less:             result = ilhs < irhs;                                               break;
             case operator_id::ugreater:         result = lhs > rhs;                                                 break;
@@ -525,15 +527,15 @@ namespace vtil::math
                 bit_state lhs_sign = lhs[ lhs.size() - 1 ];
                 if ( lhs_sign == bit_state::unknown )  return bit_vector( 1 );
 
-                // If LHS is negative and RHS is positive, <, <= and != wins.
+                // If LHS is negative and RHS is positive, <, <= wins.
                 //
                 if ( lhs_sign == bit_state::one && rhs_sign == bit_state::zero )
-                    return bit_vector( op == operator_id::less || op == operator_id::less_eq || op == operator_id::not_equal, 1 );
+                    return bit_vector( op == operator_id::less || op == operator_id::less_eq, 1 );
 
-                // If RHS is negative and LHS is positive, >, >= and != wins.
+                // If RHS is negative and LHS is positive, >, >= wins.
                 //
                 if ( rhs_sign == bit_state::one && lhs_sign == bit_state::zero )
-                    return bit_vector( op == operator_id::greater || op == operator_id::greater_eq || op == operator_id::not_equal, 1 );
+                    return bit_vector( op == operator_id::greater || op == operator_id::greater_eq, 1 );
 
                 // For each bit index we should compare:
                 //
@@ -564,24 +566,44 @@ namespace vtil::math
             }
             
             //
-            // Unsigned equality checks:
+            // Equality checks:
             //
             // ####################################################################################################################################
             case operator_id::equal:
             case operator_id::not_equal:
+            {
+                // Fail if sign bits are not known
+                //
+                bit_state rhs_sign = rhs[ rhs.size() - 1 ];
+                if ( rhs_sign == bit_state::unknown )  return bit_vector( 1 );
+                bit_state lhs_sign = lhs[ lhs.size() - 1 ];
+                if ( lhs_sign == bit_state::unknown )  return bit_vector( 1 );
+
+                // If signs do not match, != wins.
+                //
+                if ( lhs_sign != rhs_sign )
+                    return bit_vector( op == operator_id::not_equal, 1 );
+
+                // Sign extend both.
+                //
+                bitcnt_t cmp_size = std::max( lhs.size(), rhs.size() );
+                bit_vector lhs_sx = bit_vector{ lhs }.resize( cmp_size, true );
+                bit_vector rhs_sx = bit_vector{ rhs }.resize( cmp_size, true );
+
                 // If known zero of one side maps to known one of other and vice versa, != wins.
                 //
-                if ( ( lhs.known_zero() & rhs.known_one() ) || ( lhs.known_one() & rhs.known_zero() ) )
+                if ( ( lhs_sx.known_zero() & rhs_sx.known_one() ) || ( lhs_sx.known_one() & rhs_sx.known_zero() ) )
                     return bit_vector( op == operator_id::not_equal, 1 );
 
                 // If any of the bits are unknown, result is unknown.
                 //
-                if ( lhs.unknown_mask() | rhs.unknown_mask() )
+                if ( lhs_sx.unknown_mask() | rhs_sx.unknown_mask() )
                     return bit_vector( 1 );
 
                 // Simply compare all bits and adjust to the operator result.
                 //
-                return bit_vector( ( op == operator_id::not_equal ) ^ ( lhs.known_one() == rhs.known_one() ), 1 );
+                return bit_vector( ( op == operator_id::not_equal ) ^ ( lhs_sx.known_one() == rhs_sx.known_one() ), 1 );
+            }
                 
             //
             // Unsigned comparisons:
@@ -600,20 +622,40 @@ namespace vtil::math
                     if ( lhs[ i ] == bit_state::unknown || rhs[ i ] == bit_state::unknown ) 
                         return bit_vector( 1 );
 
-                    // If LHS is one and RHS is zero, >, >= and != wins.
+                    // If LHS is one and RHS is zero, >, >= wins.
                     //
                     if ( lhs[ i ] == bit_state::one && rhs[ i ] == bit_state::zero ) 
-                        return bit_vector( op == operator_id::ugreater || op == operator_id::ugreater_eq || op == operator_id::not_equal, 1 );
+                        return bit_vector( op == operator_id::ugreater || op == operator_id::ugreater_eq, 1 );
 
-                    // If RHS is one and LHS is zero, <, <= and != wins.
+                    // If RHS is one and LHS is zero, <, <= wins.
                     //
                     if ( rhs[ i ] == bit_state::one && lhs[ i ] == bit_state::zero ) 
-                        return bit_vector( op == operator_id::uless || op == operator_id::uless_eq || op == operator_id::not_equal, 1 );
+                        return bit_vector( op == operator_id::uless || op == operator_id::uless_eq, 1 );
                 }
 
                 // If completely equivalent (when zero extended), <=, >= wins.
                 //
                 return bit_vector( op == operator_id::uless_eq || op == operator_id::ugreater_eq, 1 );
+            
+            //
+            // Unsigned equality checks:
+            //
+            // ####################################################################################################################################
+            case operator_id::uequal:
+            case operator_id::unot_equal:
+                // If known zero of one side maps to known one of other and vice versa, != wins.
+                //
+                if ( ( lhs.known_zero() & rhs.known_one() ) || ( lhs.known_one() & rhs.known_zero() ) )
+                    return bit_vector( op == operator_id::unot_equal, 1 );
+
+                // If any of the bits are unknown, result is unknown.
+                //
+                if ( lhs.unknown_mask() | rhs.unknown_mask() )
+                    return bit_vector( 1 );
+
+                // Simply compare all bits and adjust to the operator result.
+                //
+                return bit_vector( ( op == operator_id::unot_equal ) ^ ( lhs.known_one() == rhs.known_one() ), 1 );
         }
         unreachable();
     }

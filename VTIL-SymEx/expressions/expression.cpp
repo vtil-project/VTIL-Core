@@ -455,6 +455,42 @@ namespace vtil::symbolic
 					case math::operator_id::min_value:
 						if ( lhs->size() != value.size() ) ( +lhs )->resize( value.size(), true );
 						if ( rhs->size() != value.size() ) ( +rhs )->resize( value.size(), true );
+						break;
+					case math::operator_id::ugreater:
+					case math::operator_id::ugreater_eq:
+					case math::operator_id::uless_eq:
+					case math::operator_id::uless:
+					{
+						bitcnt_t op_size = std::max( lhs->size(), rhs->size() );
+						if ( lhs->size() != op_size ) ( +lhs )->resize( op_size, false );
+						if ( rhs->size() != op_size ) ( +rhs )->resize( op_size, false );
+						break;
+					}
+					case math::operator_id::greater:
+					case math::operator_id::greater_eq:
+					case math::operator_id::less_eq:
+					case math::operator_id::less:
+					case math::operator_id::equal:
+					case math::operator_id::not_equal:
+					{
+						bitcnt_t op_size = std::max( lhs->size(), rhs->size() );
+						if ( lhs->size() != op_size ) ( +lhs )->resize( op_size, true );
+						if ( rhs->size() != op_size ) ( +rhs )->resize( op_size, true );
+						break;
+					}
+
+					// Convert unsigned compare to signed compare.
+					//
+					case math::operator_id::uequal:
+					case math::operator_id::unot_equal:
+					{
+						bitcnt_t op_size = std::max( lhs->size(), rhs->size() );
+						if ( lhs->size() != op_size ) ( +lhs )->resize( op_size, false );
+						if ( rhs->size() != op_size ) ( +rhs )->resize( op_size, false );
+						op = op == math::operator_id::uequal ? math::operator_id::equal
+							                                 : math::operator_id::not_equal;
+						break;
+					}
 					default:
 						break;
 				}
