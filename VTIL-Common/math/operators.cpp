@@ -152,7 +152,7 @@ namespace vtil::math
             case operator_id::min_value:        result = std::min( ilhs, irhs );                                    break;
             case operator_id::max_value:        result = std::max( ilhs, irhs );                                    break;
 
-                // - Comparison operators
+            // - Comparison operators
             //
             case operator_id::greater:          result = ilhs > irhs;                                               break;
             case operator_id::greater_eq:       result = ilhs >= irhs;                                              break;

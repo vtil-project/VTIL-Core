@@ -55,6 +55,8 @@ namespace vtil::symbolic::directive
         { A&A,                                                A },
         { A^0,                                                A },
         { A&-1,                                               A },
+        { A==1,                                               __iff(__bcnt(A)==1, A) },
+        { A!=0,                                               __iff(__bcnt(A)==1, A) },
 
         // Constant result.
         //
@@ -85,9 +87,43 @@ namespace vtil::symbolic::directive
         { ~(A-1),                                             -A },
         { 0-A,                                                -A },
 
+        // Invert comparison.
+        //
+        { ~(A>B),                                             A<=B },
+        { ~(A>=B),                                            A<B },
+        { ~(A==B),                                            A!=B },
+        { ~(A!=B),                                            A==B },
+        { ~(A<=B),                                            A>B },
+        { ~(A<B),                                             A>=B },
+        { ~__ugreat(A,B),                                     __uless_eq(A,B) },
+        { ~__ugreat_eq(A,B),                                  __uless(A,B) },
+        { ~__uless(A,B),                                      __ugreat_eq(A,B) },
+        { ~__uless_eq(A,B),                                   __ugreat(A,B) },
+
+        // Evaluate partial comparison.
+        //
+        { A>=B,                                               __iff(A==B, 1) },
+        { A>=B,                                               __iff(A!=B, A>B) },
+        { A<=B,                                               __iff(A==B, 1) },
+        { A<=B,                                               __iff(A!=B, A<B) },
+        { __ugreat_eq(A,B),                                   __iff(A==B, 1) },
+        { __ugreat_eq(A,B),                                   __iff(A!=B, __ugreat(A,B)) },
+        { __uless_eq(A,B),                                    __iff(A==B, 1) },
+        { __uless_eq(A,B),                                    __iff(A!=B, __uless(A,B)) },
+
+        // Evaluate based on equality.
+        //
+        { A>B,                                                __iff(A==B, 0) },
+        { A<B,                                                __iff(A==B, 0) },
+        { __ugreat(A,B),                                      __iff(A==B, 0) },
+        { __uless(A,B),                                       __iff(A==B, 0) },
+
         // NOT conversion.
         //
         { A^-1,                                               ~A },
+        { A==0,                                               __iff(__bcnt(A)==1, ~A) },
+        { A!=1,                                               __iff(__bcnt(A)==1, ~A) },
+        { -A,                                                 __iff(__bcnt(A)==1, ~A) },
 
         // XOR conversion.
         //
@@ -167,7 +203,6 @@ namespace vtil::symbolic::directive
         //
         { A+B,                                                __iff( ((__mask_knw1(A)|__mask_unk(A))&(__mask_knw1(B)|__mask_unk(B)))==0, A|B)},
 
-        
         // ADD:
         //
         { A+(B+C),                                            !(A+B)+C },
@@ -271,6 +306,30 @@ namespace vtil::symbolic::directive
         // Missing: shl, shr
         { ~__rotl(A,C),                                       __rotl(!~A,C) },
         { ~__rotr(A,C),                                       __rotr(!~A,C) },
+
+        // Comparison simplifiers: [TODO: Complete]
+        //
+        { (A+B)>C,                                            A>!(C-B) },
+        { (A-B)>C,                                            A>!(C+B) },
+        { (A+B)>=C,                                           A>=!(C-B) },
+        { (A-B)>=C,                                           A>=!(C+B) },
+        { (A+B)==C,                                           A==!(C-B) },
+        { (A-B)==C,                                           A==!(C+B) },
+        { (A+B)!=C,                                           A!=!(C-B) },
+        { (A-B)!=C,                                           A!=!(C+B) },
+        { (A+B)<=C,                                           A<=!(C-B) },
+        { (A-B)<=C,                                           A<=!(C+B) },
+        { (A+B)<C,                                            A<!(C-B) },
+        { (A-B)<C,                                            A<!(C+B) },
+        { A==B,                                               !(A-B)==0 },
+        { A==B,                                               !(A^B)==0 },
+        { A!=B,                                               !(A-B)!=0 },
+        { A!=B,                                               !(A^B)!=0 },
+        { (A^B)==C,                                           !(C^B)==A },
+        { (A<<B)==C,                                          s((A<<B)>>B)==s(C>>B) },
+        { (A>>B)==C,                                          s((A>>B)<<B)==s(C<<B) },
+        { __ucast(A,B)==C,                                    __iff(__bcnt(A)<=__bcnt(C), __iff(C==__ucast(C,__bcnt(A)), A==s(__ucast(C,__bcnt(A))))) },
+        { __ucast(A,B)==C,                                    __iff(__bcnt(A)<=__bcnt(C), __iff(C!=__ucast(C,__bcnt(A)), 0)) },
     };
 
     // Grouping of simple representations into more complex directives.
@@ -299,9 +358,7 @@ namespace vtil::symbolic::directive
     {
         { __bt(A,B),                                          (A>>B)&1 },
         { __min(A,B),                                         __if(A<=B,A)|__if(A>B,B) },
-        { __min(A,B),                                         __if(A<=B,A)+__if(A>B,B) },
         { __max(A,B),                                         __if(A>=B,A)|__if(A<B,B) },
-        { __max(A,B),                                         __if(A>=B,A)+__if(A<B,B) },
         { __umin(A,B),                                        __if(__uless_eq(A,B),A)|__if(__ugreat(A,B),B) },
         { __umax(A,B),                                        __if(__ugreat_eq(A,B),A)|__if(__uless(A,B),B) },
         { __if(~A,B),                                         (((__ucast(A,__bcnt(B))&1)-1))&B },
