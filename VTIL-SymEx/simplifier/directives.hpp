@@ -162,6 +162,11 @@ namespace vtil::symbolic::directive
         //
         { A|B,                                                __iff((__mask_knw1(A)&__mask_unk(B))!=0, A|!(B&!(~__mask_knw1(A))))},
         { A&B,                                                __iff((__mask_knw0(A)&~__mask_knw0(B))!=0, A&!(B&!(~__mask_knw0(A))))},
+
+        // -- Special OR substitute to ADD:
+        //
+        { A+B,                                                __iff( ((__mask_knw1(A)|__mask_unk(A))&(__mask_knw1(B)|__mask_unk(B)))==0, A|B)},
+
         
         // ADD:
         //
