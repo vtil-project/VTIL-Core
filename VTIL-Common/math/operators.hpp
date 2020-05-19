@@ -81,8 +81,8 @@ namespace vtil::math
         uremainder,     // 
 
         // ----------------- Special Operators ----------------- //
-        ucast,          // uintRHS_t(LHS, RHS)
-        cast,           // intRHS_t(LHS, RHS)
+        ucast,          // uintRHS_t(LHS)
+        cast,           // intRHS_t(LHS)
         popcnt,         // POPCNT(RHS)
         bit_test,       // [LHS>>RHS]&1
         mask,           // RHS.mask()

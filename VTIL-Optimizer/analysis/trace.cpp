@@ -277,13 +277,14 @@ namespace vtil::optimizer
                 log<CON_RED>( "[Unknown register state.]\n" );
 #endif
             }
-            // If MOV:
+            // If MOV/MOVSX:
             //
-            else if ( *lookup.at->base == ins::mov )
+            else if ( bool cast_signed = *lookup.at->base == ins::movsx; 
+                      *lookup.at->base == ins::mov || cast_signed )
             {
                 // Return source operand.
                 //
-                return cvt_operand( 1 ).resize( result_bcnt );
+                return cvt_operand( 1 ).resize( result_bcnt, cast_signed );
             }
             // If LDD:
             //
@@ -319,6 +320,12 @@ namespace vtil::optimizer
                 else if ( lookup.at->base->operand_count() == 2 )
                 {
                     return symbolic::expression{ cvt_operand( 0 ), op_id, cvt_operand( 1 ) }.resize( result_bcnt );
+                }
+                // If [X = F(Y, Z)]:
+                //
+                else if ( lookup.at->base->operand_count() == 3 && lookup.at->base->operand_types[ 0 ] == operand_type::write )
+                {
+                    return symbolic::expression{ cvt_operand( 1 ), op_id, cvt_operand( 2 ) }.resize( result_bcnt );
                 }
                 // If [X = F(Y:X, Z)]:
                 //

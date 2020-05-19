@@ -289,6 +289,7 @@ namespace vtil
 			return this;																										                \
 		}
 		WRAP_LAZY( mov );
+		WRAP_LAZY( movsx );
 		WRAP_LAZY( str );
 		WRAP_LAZY( ldd );
 		WRAP_LAZY( neg );
@@ -302,6 +303,7 @@ namespace vtil
 		WRAP_LAZY( imulhi );
 		WRAP_LAZY( rem );
 		WRAP_LAZY( irem );
+		WRAP_LAZY( popcnt );
 		WRAP_LAZY( bnot );
 		WRAP_LAZY( bshr );
 		WRAP_LAZY( bshl );
@@ -310,6 +312,17 @@ namespace vtil
 		WRAP_LAZY( band );
 		WRAP_LAZY( bror );
 		WRAP_LAZY( brol );
+		WRAP_LAZY( tb );  
+		WRAP_LAZY( tg );  
+		WRAP_LAZY( tge ); 
+		WRAP_LAZY( te );  
+		WRAP_LAZY( tne ); 
+		WRAP_LAZY( tle ); 
+		WRAP_LAZY( tl );  
+		WRAP_LAZY( tug ); 
+		WRAP_LAZY( tuge );
+		WRAP_LAZY( tule );
+		WRAP_LAZY( tul ); 
 		WRAP_LAZY( js );
 		WRAP_LAZY( jmp );
 		WRAP_LAZY( vexit );
