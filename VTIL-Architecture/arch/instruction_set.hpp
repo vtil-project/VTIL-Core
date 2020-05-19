@@ -76,8 +76,8 @@ namespace vtil
         static const instruction_desc sub =        { "sub",       { o::readwrite,  o::read_any                   }, 1,            false,    op::subtract,            {},         {}           };
         static const instruction_desc mul =        { "mul",       { o::readwrite,  o::read_any                   }, 1,            false,    op::umultiply,           {},         {}           };
         static const instruction_desc imul =       { "imul",      { o::readwrite,  o::read_any                   }, 1,            false,    op::multiply,            {},         {}           };
-        static const instruction_desc mulhi =      { "mulhi",     { o::readwrite,  o::read_any                   }, 1,            false,    op::multiply_high,       {},         {}           };
-        static const instruction_desc imulhi =     { "imulhi",    { o::readwrite,  o::read_any                   }, 1,            false,    op::umultiply_high,      {},         {}           };
+        static const instruction_desc mulhi =      { "mulhi",     { o::readwrite,  o::read_any                   }, 1,            false,    op::umultiply_high,      {},         {}           };
+        static const instruction_desc imulhi =     { "imulhi",    { o::readwrite,  o::read_any                   }, 1,            false,    op::multiply_high,       {},         {}           };
         static const instruction_desc div =        { "div",       { o::readwrite,  o::read_any,     o::read_any  }, 1,            false,    op::udivide,             {},         {}           };
         static const instruction_desc idiv =       { "idiv",      { o::readwrite,  o::read_any,     o::read_any  }, 1,            false,    op::divide,              {},         {}           };
         static const instruction_desc rem =        { "rem",       { o::readwrite,  o::read_any,     o::read_any  }, 1,            false,    op::uremainder,          {},         {}           };
@@ -119,7 +119,7 @@ namespace vtil
         static const instruction_desc js =         { "js",        { o::read_reg,   o::read_any,     o::read_any  }, 2,          true,        {},                     { 1, 2 },    {}          };
         static const instruction_desc jmp =        { "jmp",       { o::read_any                                  }, 1,          true,        {},                     { 1 },       {}          };
         static const instruction_desc vexit =      { "vexit",     { o::read_any                                  }, 1,          true,        {},                     { -1 },      {}          };
-        static const instruction_desc vxcall =     { "vxcall",    { o::read_any                                  }, 1,          true,        {},                     {},          {}          };
+        static const instruction_desc vxcall =     { "vxcall",    { o::read_any                                  }, 1,          true,        {},                     { -1 },      {}          };
         /*------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
 
         //    -- Special instructions
