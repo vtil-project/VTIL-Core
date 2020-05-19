@@ -64,6 +64,7 @@
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <CCppSupport>
       </CCppSupport>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -83,6 +84,7 @@
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <CCppSupport>
       </CCppSupport>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>

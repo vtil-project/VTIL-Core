@@ -67,6 +67,7 @@
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <CCppSupport>
       </CCppSupport>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -89,6 +90,7 @@
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <CCppSupport>
       </CCppSupport>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
