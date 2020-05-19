@@ -60,5 +60,17 @@ namespace vtil
 			else
 				branch_operands_rip.push_back( -op - 1 );
 		}
+
+		// Validate operand types.
+		//
+		bool written = false;
+		for ( operand_type type : operand_types )
+		{
+			if ( type >= operand_type::write )
+			{
+				fassert( !written );
+				written = true;
+			}
+		}
 	}
 };
