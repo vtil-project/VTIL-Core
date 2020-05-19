@@ -372,9 +372,9 @@ namespace vtil::math
             }
 
             case operator_id::negate:
-                // -A = ~(A-1)
+                // -A = 0-A
                 //
-                return evaluate_partial( operator_id::add, { ~rhs.known_one(), rhs.unknown_mask(), rhs.size() }, { ~0ull, rhs.size() } );
+                return evaluate_partial( operator_id::subtract, { 0, rhs.size() }, rhs );
                 
                 /*a = mask( rhs.size() ) & -__sx64( ( rhs.unknown_mask() | rhs.known_one() ), rhs.size() );
                 b = mask( rhs.size() ) & -__sx64( ( rhs.known_one() ),                      rhs.size() );
