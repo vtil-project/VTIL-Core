@@ -110,7 +110,14 @@ namespace vtil
 		return { this, this->stream.erase( it, it ) };
 	}
 
-	// Wrap std::list<>::insert with stack state-keeping.
+	// Wrap std::list::erase.
+	//
+	basic_block::iterator basic_block::erase( const const_iterator& it )
+	{
+		return { this, stream.erase( it ) };
+	}
+
+	// Wrap std::list::insert with stack state-keeping.
 	//
 	basic_block::iterator basic_block::insert( const const_iterator& it_const, instruction&& ins )
 	{

@@ -90,12 +90,12 @@ namespace vtil::optimizer
 	// Eliminates all instructions where the result is not used by the
 	// next block or the exited routine.
 	//
-	void eliminate_dead( basic_block* block )
+	size_t eliminate_dead( basic_block* block )
 	{
 		// Skip if the block is empty.
 		//
 		if ( !block->size() )
-			return;
+			return 0;
 
 		// Keep virtual registers if not branching to real.
 		//
@@ -104,15 +104,19 @@ namespace vtil::optimizer
 
 		// Remove dead instructions starting from the back.
 		//
+		size_t counter = 0;
 		do
 		{
 			if ( is_dead( it, keep_virtual ) )
-				it = { block, block->stream.erase( it ) };
+				counter++, it = block->erase( it );
 		}
 		while ( !it.is_begin() && ( --it, true ) );
+		return counter;
 	}
-	void eliminate_dead( routine* rtn )
+	size_t eliminate_dead( routine* rtn )
 	{
-		rtn->for_each( [ ] ( auto block ) { eliminate_dead( block ); } );
+		size_t counter = 0;
+		rtn->for_each( [ & ] ( auto block ) { counter += eliminate_dead( block ); } );
+		return counter;
 	}
 }

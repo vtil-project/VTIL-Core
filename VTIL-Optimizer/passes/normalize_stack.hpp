@@ -35,6 +35,6 @@ namespace vtil::optimizer
 	// SP+C where possible and converts local variables in virtual
 	// stack into explicit temporaries if applicable.
 	//
-	void normalize_stack( basic_block* block );
-	void normalize_stack( routine* rtn );
+	size_t normalize_stack( basic_block* block );
+	size_t normalize_stack( routine* rtn );
 };

@@ -231,11 +231,15 @@ namespace vtil
 		//
 		iterator acquire( const const_iterator& it );
 
-		// Wrap std::list<>::insert with stack state-keeping.
+		// Wrap std::list::erase.
+		//
+		iterator erase( const const_iterator& it );
+
+		// Wrap std::list::insert with stack state-keeping.
 		//
 		iterator insert( const const_iterator& it, instruction&& ins );
 
-		// Wrap std::list<>::push_back.
+		// Wrap std::list::push_back.
 		//
 		void push_back( instruction&& ins ) { ( void ) insert( end(), std::move( ins ) ); }
 		void push_back( const instruction& ins ) { ( void ) insert( end(), instruction{ ins } ); }
