@@ -312,7 +312,6 @@ namespace vtil
 		WRAP_LAZY( band );
 		WRAP_LAZY( bror );
 		WRAP_LAZY( brol );
-		WRAP_LAZY( tb );  
 		WRAP_LAZY( tg );  
 		WRAP_LAZY( tge ); 
 		WRAP_LAZY( te );  

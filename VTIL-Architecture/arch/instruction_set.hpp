@@ -113,7 +113,6 @@ namespace vtil
     
         //  -- Conditional instructions
         //
-        //    TB         Reg,    Reg,        Reg/Imm                         | OP1 = (OP2>>OP3)&1
         //    TG         Reg,    Reg,        Reg/Imm                         | OP1 = OP2   >    OP3
         //    TGE        Reg,    Reg,        Reg/Imm                         | OP1 = OP2   >=   OP3
         //    TE         Reg,    Reg,        Reg/Imm                         | OP1 = OP2   ==   OP3
@@ -127,7 +126,6 @@ namespace vtil
         //
         /*------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
         /*                                          [Name]        [Operands...]                                     [ASizeOp]   [Volatile]  [Operator]               [BranchOps] [MemOps]     */
-        static const instruction_desc tb =          { "tb",       { o::write,      o::read_reg,     o::read_any  }, 1,          false,      op::bit_test,            {},          {}          };
         static const instruction_desc tg =          { "tg",       { o::write,      o::read_reg,     o::read_any  }, 1,          false,      op::greater,             {},          {}          };
         static const instruction_desc tge =         { "tge",      { o::write,      o::read_reg,     o::read_any  }, 1,          false,      op::greater_eq,          {},          {}          };
         static const instruction_desc te =          { "te",       { o::write,      o::read_reg,     o::read_any  }, 1,          false,      op::equal,               {},          {}          };
@@ -181,7 +179,7 @@ namespace vtil
     {
         ins::mov, ins::movsx, ins::str, ins::ldd, ins::neg, ins::add, ins::sub, ins::mul, ins::imul, 
         ins::mulhi, ins::imulhi, ins::div, ins::idiv, ins::rem, ins::irem, ins::popcnt, ins::bnot, 
-        ins::bshr, ins::bshl,ins::bxor, ins::bor, ins::band, ins::bror, ins::brol, ins::tb,ins::tg, 
+        ins::bshr, ins::bshl,ins::bxor, ins::bor, ins::band, ins::bror, ins::brol, ins::tg, 
         ins::tge, ins::te, ins::tne, ins::tle, ins::tl, ins::tug, ins::tuge, ins::tule, ins::tul, ins::js, 
         ins::jmp, ins::vexit, ins::vxcall, ins::nop, ins::vemit, ins::vpinr, ins::vpinw, ins::vpinrm,
         ins::vpinwm

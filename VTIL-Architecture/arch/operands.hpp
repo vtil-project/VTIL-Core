@@ -131,8 +131,12 @@ namespace vtil
 				// Bit offset and bit count must be both byte-aligned
 				// with the exception of bit count == 1 for boolean registers.
 				//
-				return !( reg().bit_offset & 7 ) &&
-					 ( !( reg().bit_count & 7  ) || reg().bit_count == 1 );
+				if ( reg().bit_count != 1 )
+				{
+					return !( reg().bit_offset & 7 ) &&
+						   !( reg().bit_count & 7 );
+				}
+				return true;
 			}
 
 			// Otherwise must be a valid immediate.
