@@ -37,7 +37,7 @@ namespace vtil::optimizer
 	// This routine tries to pin the stack pointer within the basic block by
 	// attempting to eradicate instructons writing into the stack pointer.
 	//
-	static void pin_stack_pointer( basic_block* block, size_t* counter )
+	static void pin_stack_pointer( basic_block* block, size_t& counter )
 	{
 		cached_tracer ctrace = {};
 
@@ -72,7 +72,7 @@ namespace vtil::optimizer
 					block->shift_sp( *shift_offset, true, it );
 					ctrace.flush();
 					fassert( it->is_valid() );
-					*counter++;
+					counter++;
 				}
 			} );
 	}
@@ -80,7 +80,7 @@ namespace vtil::optimizer
 	// This routine tries to replace any instruction that reads or writes
 	// to a non-sp based pointer into one that references stack with an offset.
 	//
-	static void simplify_stack_references( basic_block* block, size_t* counter )
+	static void simplify_stack_references( basic_block* block, size_t& counter )
 	{
 		cached_tracer ctrace = {};
 
@@ -112,7 +112,7 @@ namespace vtil::optimizer
 					it->operands[ it->base->memory_operand_index ] = { REG_SP };
 					it->operands[ it->base->memory_operand_index + 1 ].imm().i64 += *stack_offset;
 					fassert( it->is_valid() );
-					*counter++;
+					counter++;
 				}
 			} );
 	}
@@ -120,7 +120,7 @@ namespace vtil::optimizer
 	// This routine tries to replace as many load instructions it can 
 	// with move equivalents in preperation of stack eviction attempt.
 	//
-	static void propagate_load_from_stack( basic_block* block, size_t* counter )
+	static void propagate_load_from_stack( basic_block* block, size_t& counter )
 	{
 		// Wrap cached tracer with a filter that returns a constant pseudo-variable for each
 		// register query representing $sp and rejects queries of registers.
@@ -190,7 +190,7 @@ namespace vtil::optimizer
 					it->base = &ins::mov;
 					it->operands = { it->operands[ 0 ], operand{ *imm, exp.size() } };
 					fassert( it->is_valid() );
-					*counter++;
+					counter++;
 				}
 				// Otherwise, try to replace with [mov reg, reg].
 				//
@@ -244,7 +244,7 @@ namespace vtil::optimizer
 					it->base = &ins::mov;
 					it->operands = { it->operands[ 0 ], reg };
 					fassert( it->is_valid() );
-					*counter++;
+					++counter;
 				}
 			});
 	}
@@ -252,7 +252,7 @@ namespace vtil::optimizer
 	// This routine tries to kick as many local variables out of the 
 	// stack as possible.
 	//
-	static void evict_from_stack( basic_block* block, size_t* counter )
+	static void evict_from_stack( basic_block* block, size_t& counter )
 	{
 		// => Begin a foward iterating query.
 		//
@@ -330,7 +330,7 @@ namespace vtil::optimizer
 				//
 				it->base = &ins::nop;
 				it->operands = {};
-				*counter++;
+				++counter;
 			});
 	}
 
@@ -344,10 +344,10 @@ namespace vtil::optimizer
 		// Apply each routine.
 		//
 		size_t counter = 0;
-		pin_stack_pointer( block, &counter );
-		simplify_stack_references( block, &counter );
-		propagate_load_from_stack( block, &counter );
-		evict_from_stack( block, &counter );
+		pin_stack_pointer( block, counter );
+		simplify_stack_references( block, counter );
+		propagate_load_from_stack( block, counter );
+		evict_from_stack( block, counter );
 
 		// Clean up the instruction stream.
 		//
