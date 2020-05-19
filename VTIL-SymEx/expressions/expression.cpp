@@ -310,7 +310,7 @@ namespace vtil::symbolic
 				( +rhs )->resize( new_size, false );
 				break;
 
-			// Boolean operators will ignore resizing requests.
+			/*// Boolean operators will ignore resizing requests.
 			//
 			case math::operator_id::bit_test:
 			case math::operator_id::greater:
@@ -324,7 +324,7 @@ namespace vtil::symbolic
 			case math::operator_id::uless_eq:
 			case math::operator_id::uless:
 				value.resize( new_size, false );
-				break;
+				break;*/
 
 			// If no handler found:
 			//
