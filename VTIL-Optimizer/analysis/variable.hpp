@@ -100,6 +100,10 @@ namespace vtil::optimizer
         // Constructs by iterator and the variable descriptor itself.
         //
         variable( const il_const_iterator& it, descriptor_t desc );
+        variable( const il_const_iterator& it, const register_t& desc ) 
+            : variable( it, descriptor_t{ desc } ) {}
+        variable( const il_const_iterator& it, const memory_t& desc )
+            : variable( it, descriptor_t{ desc } ) {}
 
         // Returns whether the variable is valid or not.
         //
