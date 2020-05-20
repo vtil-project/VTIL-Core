@@ -260,17 +260,17 @@ namespace vtil::optimizer
 				if ( !var.is_register() )
 					break;
 
-				// Break if not normalized register.
+				// Break if cannot be fit.
 				//
 				const register_desc& reg = var.reg();
-				if ( reg.bit_count != 64 || reg.bit_offset != 0 )
+				if ( reg.bit_count < it->first )
 					break;
 
 				// Found a match, rewrite the expression and stop iterating.
 				//
 				variable var_new = var;
 				var_new.reg().bit_count = it->first;
-				var_new.reg().bit_offset = it->second;
+				var_new.reg().bit_offset += it->second;
 				exp = symbolic::expression{ var_new, it->first }.resize( exp.size() );
 				break;
 			}
