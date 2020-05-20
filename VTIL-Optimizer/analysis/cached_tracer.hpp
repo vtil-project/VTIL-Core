@@ -52,7 +52,7 @@ namespace vtil::optimizer
 
         // Replicate trace_basic with the addition of a cache lookup.
         //
-        symbolic::expression trace_basic_cached( const variable& lookup );
+        symbolic::expression trace_basic_cached( const variable& lookup, const trace_function_t& tracer = {} );
 
         // Wrappers of trace and rtrace with cached basic tracer.
         //

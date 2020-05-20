@@ -31,7 +31,7 @@ namespace vtil::optimizer
 {
    // Replicate trace_basic with the addition of a cache lookup.
     //
-    symbolic::expression cached_tracer::trace_basic_cached( const variable& lookup )
+    symbolic::expression cached_tracer::trace_basic_cached( const variable& lookup, const trace_function_t& tracer )
     {
         using namespace logger;
 
@@ -120,7 +120,7 @@ namespace vtil::optimizer
         if ( it != cache.end() )
             result = symbolic::expression{ *it->second }.resize( lookup.bit_count() );
         else
-            result = trace_primitive( lookup, *this );
+            result = trace_primitive( lookup, tracer ? tracer : *this );
 
         // Insert a cache entry for the exact variable we're looking up and return.
         //
