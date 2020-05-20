@@ -351,7 +351,7 @@ namespace vtil
 		// Pushes an operand up the stack queueing the
 		// shift in stack pointer.
 		//
-		template<typename T, uint8_t stack_alignment = 2>
+		template<typename T, size_t stack_alignment = 2>
 		basic_block* push( const T& _op )
 		{
 			operand op = prepare_operand( _op );
@@ -365,7 +365,20 @@ namespace vtil
 				return mov( t0, op )->push( t0 );
 			}
 
-			shift_sp( op.size() < stack_alignment ? -stack_alignment : -int64_t( op.size() ) );
+			// If operand size is not aligned:
+			//
+			if ( size_t misalignment = op.size() % stack_alignment )
+			{
+				// Adjust for misalignment and zero the padding.
+				//
+				int64_t padding_size = stack_alignment - misalignment;
+				shift_sp( -padding_size );
+				str( REG_SP, sp_offset, operand( 0, padding_size * 8 ) );
+			}
+
+			// Shift and write the operand.
+			//
+			shift_sp( -int64_t( op.size() ) );
 			str( REG_SP, sp_offset, op );
 			return this;
 		}
@@ -373,12 +386,27 @@ namespace vtil
 		// Pops an operand from the stack queueing the
 		// shift in stack pointer.
 		//
-		template<typename T, uint8_t stack_alignment = 2>
+		template<typename T, size_t stack_alignment = 2>
 		basic_block* pop( const T& _op )
 		{
 			operand op = prepare_operand( _op );
+			
+			// Save the pre-shift offset.
+			//
 			int64_t offset = sp_offset;
-			shift_sp( op.size() < stack_alignment ? stack_alignment : op.size() );
+
+			// If operand size is not aligned:
+			//
+			if ( size_t misalignment = op.size() % stack_alignment )
+			{
+				// Adjust for misalignment.
+				//
+				shift_sp( stack_alignment - misalignment );
+			}
+
+			// Shift and read to the operand.
+			//
+			shift_sp( op.size() );
 			ldd( op, REG_SP, offset );
 			return this;
 		}
