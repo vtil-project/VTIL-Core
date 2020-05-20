@@ -151,7 +151,7 @@ namespace vtil::optimizer
 
 			// Fallback to default tracer.
 			//
-			return ctrace.trace_basic_cached( lookup );
+			return ctrace.trace_basic_cached( lookup, lazy_tracer );
 		};
 
 		// => Begin a foward iterating query.
@@ -170,24 +170,46 @@ namespace vtil::optimizer
 			// @ For each:
 			.for_each( [ & ] ( const il_iterator& it )
 			{
+				auto* new_instruction = &ins::mov;
+			
 				// Lazy-trace the value.
 				//
 				symbolic::expression exp = trace_primitive( reference_memory( it, lazy_tracer ), lazy_tracer );
 
-				// Resize accordingly and pack variables.
+				// Resize and pack variables.
 				//
 				exp = variable::pack_all( exp.resize( it->operands[ 0 ].size() * 8 ) );
 
-				// If result is an expression, skip.
+				// If result is an expression:
 				//
 				if ( exp.is_expression() )
-					return;
+				{
+					// If __ucast(V, N):
+					//
+					if ( exp.op == math::operator_id::ucast && exp.lhs->is_variable() )
+					{
+						exp = symbolic::expression{ *exp.lhs };
+					}
+					// If __cast(V, N):
+					//
+					else if ( exp.op == math::operator_id::cast && exp.lhs->is_variable() )
+					{
+						exp = symbolic::expression{ *exp.lhs };
+						new_instruction = &ins::movsx;
+					}
+					// Otherwise skip.
+					//
+					else
+					{
+						return;
+					}
+				}
 
 				// If constant, replace with [mov reg, imm].
 				//
 				if ( auto imm = exp.get() )
 				{
-					it->base = &ins::mov;
+					it->base = new_instruction;
 					it->operands = { it->operands[ 0 ], operand{ *imm, exp.size() } };
 					fassert( it->is_valid() );
 					counter++;
@@ -241,7 +263,7 @@ namespace vtil::optimizer
 
 					// Replace with a mov.
 					//
-					it->base = &ins::mov;
+					it->base = new_instruction;
 					it->operands = { it->operands[ 0 ], reg };
 					fassert( it->is_valid() );
 					++counter;
