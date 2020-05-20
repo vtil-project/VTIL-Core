@@ -55,8 +55,8 @@ namespace vtil::symbolic::directive
         { A&A,                                                A },
         { A^0,                                                A },
         { A&-1,                                               A },
-        { A==1,                                               __iff(__bcnt(A)==1, A) },
-        { A!=0,                                               __iff(__bcnt(A)==1, A) },
+        { A==1,                                               __iff(__bcnt(A)==1u, A) },
+        { A!=0,                                               __iff(__bcnt(A)==1u, A) },
 
         // Constant result.
         //
@@ -121,9 +121,9 @@ namespace vtil::symbolic::directive
         // NOT conversion.
         //
         { A^-1,                                               ~A },
-        { A==0,                                               __iff(__bcnt(A)==1, ~A) },
-        { A!=1,                                               __iff(__bcnt(A)==1, ~A) },
-        { -A,                                                 __iff(__bcnt(A)==1, ~A) },
+        { A==0,                                               __iff((__mask_knw1(A)|__mask_unk(A))==1u, ~__ucast(A,1)) },
+        { A!=1,                                               __iff((__mask_knw1(A)|__mask_unk(A))==1u, ~__ucast(A,1)) },
+        { -A,                                                 __iff((__mask_knw1(A)|__mask_unk(A))==1u, ~__ucast(A,1)) },
 
         // XOR conversion.
         //
@@ -172,9 +172,9 @@ namespace vtil::symbolic::directive
         // -- Special AND OR directives to reduce unknown:
         //
         { U|B,                                                __iff(U==(__mask_knw1(B)), B) },
-        { U|B,                                                __iff(((~__mask_knw0(B))&(~U))==0,  U) },
+        { U|B,                                                __iff(((~__mask_knw0(B))&(~U))==0u,  U) },
         { U&B,                                                __iff(U==(__mask_unk(B)|__mask_knw1(B)), B) },
-        { U&B,                                                __iff(((~__mask_knw0(B))&U)==0,  0) },
+        { U&B,                                                __iff(((~__mask_knw0(B))&U)==0u,  0) },
 
         // Penetrate shrinked expression with shift left.
         // - This is an exceptional case and has to be addressed due to the fact
@@ -182,7 +182,13 @@ namespace vtil::symbolic::directive
         //   and unless we add this rule to try simplifying after penetrating it
         //   it cannot escape the cast and simplify with the newly added shift.
         //
-        { __ucast(A,B)<<U,                                   __iff(__bcnt(A)>B,    __ucast(!(A<<U), B) ) },
+        { __ucast(A,B)<<U,                                    __iff(__bcnt(A)>B,    __ucast(!(A<<U), B) ) },
+
+        // Merge ucast combinations.
+        //
+        { __ucast(A,U)|__ucast(B,U),                          __iff(__bcnt(A)>=__bcnt(B), __ucast(!(A|B),U)) },
+        { __ucast(A,U)&__ucast(B,U),                          __iff(__bcnt(A)>=__bcnt(B), __ucast(!(A&B),U)) },
+        { __ucast(A,U)^__ucast(B,U),                          __iff(__bcnt(A)>=__bcnt(B), __ucast(!(A^B),U)) },
     };
 
     // Describes the way operands of two operators join each other.
@@ -196,12 +202,12 @@ namespace vtil::symbolic::directive
 
         // -- Special AND OR directives to reduce unknown:
         //
-        { A|B,                                                __iff((__mask_knw1(A)&__mask_unk(B))!=0, A|!(B&!(~__mask_knw1(A))))},
-        { A&B,                                                __iff((__mask_knw0(A)&~__mask_knw0(B))!=0, A&!(B&!(~__mask_knw0(A))))},
+        { A|B,                                                __iff((__mask_knw1(A)&__mask_unk(B))!=0u, A|!(B&!(~__mask_knw1(A))))},
+        { A&B,                                                __iff((__mask_knw0(A)&~__mask_knw0(B))!=0u, A&!(B&!(~__mask_knw0(A))))},
 
         // -- Special OR substitute to ADD:
         //
-        { A+B,                                                __iff( ((__mask_knw1(A)|__mask_unk(A))&(__mask_knw1(B)|__mask_unk(B)))==0, A|B)},
+        { A+B,                                                __iff( ((__mask_knw1(A)|__mask_unk(A))&(__mask_knw1(B)|__mask_unk(B)))==0u, A|B)},
 
         // ADD:
         //
@@ -330,21 +336,14 @@ namespace vtil::symbolic::directive
         { __uless(A+B, C),                                   __ugreat(A,!(C-B)) },
         { __uless(A-B, C),                                   __ugreat(A,!(C+B)) },
 
-        { A==B,                                               !(A-B)==0 },
-        { A==B,                                               !(A^B)==0 },
-        { A!=B,                                               !(A-B)!=0 },
-        { A!=B,                                               !(A^B)!=0 },
+        { A==B,                                               !(A-B)==0u },
+        { A==B,                                               !(A^B)==0u },
+        { A!=B,                                               !(A-B)!=0u },
+        { A!=B,                                               !(A^B)!=0u },
 
         { (A^B)==C,                                           !(C^B)==A },
         { (A<<B)==C,                                          s((A<<B)>>B)==s(C>>B) },
         { (A>>B)==C,                                          s((A>>B)<<B)==s(C<<B) },
-            
-        { A>B,                                                !(-A)<s(-B) },
-        { A>=B,                                               !(-A)<=s(-B) },
-        { A==B,                                               !(-A)==s(-B) },
-        { A!=B,                                               !(-A)!=s(-B) },
-        { A<=B,                                               !(-A)>=s(-B) },
-        { A<B,                                                !(-A)>s(-B) },
             
         { A>B,                                                !(~A)<s(~B) },
         { A>=B,                                               !(~A)<=s(~B) },
@@ -356,7 +355,18 @@ namespace vtil::symbolic::directive
         { __uless(A,B),                                       __ugreat(!(~A),s(~B)) },
         { A<=B,                                               !(~A)>=s(~B) },
         { A<B,                                                !(~A)<s(~B) },
+            
+        { A>B,                                                !(-A)<s(-B) },
+        { A>=B,                                               !(-A)<=s(-B) },
+        { A==B,                                               !(-A)==s(-B) },
+        { A!=B,                                               !(-A)!=s(-B) },
+        { A<=B,                                               !(-A)>=s(-B) },
+        { A<B,                                                !(-A)>s(-B) },
 
+
+
+        { ((A<<B)|C)==0,                                      __iff(A==((A<<B)>>B), (A|C)==0u ) },
+        { (A|B)==0,                                           s(A==0) & s(B==0) },
         { __ucast(A,B)==C,                                    __iff(__bcnt(A)<=__bcnt(C), __iff(C==__ucast(C,__bcnt(A)), A==s(__ucast(C,__bcnt(A))))) },
         { __ucast(A,B)==C,                                    __iff(__bcnt(A)<=__bcnt(C), __iff(C!=__ucast(C,__bcnt(A)), 0)) },
     };
@@ -366,7 +376,7 @@ namespace vtil::symbolic::directive
     static const std::pair<instance::reference, instance::reference> pack_descriptors[] =
     {
         { (A>>B)&1,                                           __bt(A,B) },
-        { (A&B)>>C,                                           __iff((B>>C)==1, __bt(A,C)) },
+        { (A&B)>>C,                                           __iff((B>>C)==1u, __bt(A,C)) },
         { __if(A<=B,A)|__if(A>B,B),                           __min(A,B) },
         { __if(A<=B,A)+__if(A>B,B),                           __min(A,B) },
         { __if(A>=B,A)|__if(A<B,B),                           __max(A,B) },
@@ -375,10 +385,10 @@ namespace vtil::symbolic::directive
         { __if(__uless_eq(A,B),A)+__if(__ugreat(A,B),B),      __umin(A,B) },
         { __if(__ugreat_eq(A,B),A)|__if(__uless(A,B),B),      __umax(A,B) },
         { __if(__ugreat_eq(A,B),A)+__if(__uless(A,B),B),      __umax(A,B) },
-        { (~(A+(-1)))&B,                                      __iff((__mask_unk(A)|__mask_knw1(A))==1, __if(s(__ucast(A,1)),B)) },
-        { (~(A-1))&B,                                         __iff((__mask_unk(A)|__mask_knw1(A))==1, __if(s(__ucast(A,1)),B)) },
-        { ((A+(-1)))&B,                                       __iff((__mask_unk(A)|__mask_knw1(A))==1, __if(s(__ucast(~A,1)),B)) },
-        { ((A-1))&B,                                          __iff((__mask_unk(A)|__mask_knw1(A))==1, __if(s(__ucast(~A,1)),B)) },
+        { (~(A+(-1)))&B,                                      __iff((__mask_unk(A)|__mask_knw1(A))==1u, __if(s(__ucast(A,1)),B)) },
+        { (~(A-1))&B,                                         __iff((__mask_unk(A)|__mask_knw1(A))==1u, __if(s(__ucast(A,1)),B)) },
+        { ((A+(-1)))&B,                                       __iff((__mask_unk(A)|__mask_knw1(A))==1u, __if(s(__ucast(~A,1)),B)) },
+        { ((A-1))&B,                                          __iff((__mask_unk(A)|__mask_knw1(A))==1u, __if(s(__ucast(~A,1)),B)) },
     };
 
     // Conversion from more complex directives into simple representations.

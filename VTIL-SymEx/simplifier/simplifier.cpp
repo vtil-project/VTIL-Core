@@ -151,7 +151,8 @@ namespace vtil::symbolic
 
 		// Otherwise create a new cache entry with {invalid, false} by default.
 		//
-		auto& [cache_entry, success_flag] = simplifier_cache[ ( boxed_expression& ) *exp ];
+		cache_it = simplifier_cache.insert( { ( boxed_expression& ) *exp, { {}, false } } ).first;
+		auto& [cache_entry, success_flag] = cache_it->second;
 
 		// Simplify operands first if not done already.
 		//
@@ -250,7 +251,7 @@ namespace vtil::symbolic
 
 					// Save current cache iterator.
 					//
-					auto cache_it = simplifier_cache.end();
+					auto it0 = simplifier_cache.end();
 					
 					// Try simplifying with maximum depth set as expression's
 					// depth times two and pass if complexity was reduced.
@@ -265,7 +266,7 @@ namespace vtil::symbolic
 					//
 					catch ( join_depth_exception& )
 					{
-						simplifier_cache.erase( cache_it, simplifier_cache.end() );
+						simplifier_cache.erase( it0, simplifier_cache.end() );
 						return false;
 					}
 				};
@@ -296,6 +297,7 @@ namespace vtil::symbolic
 #if VTIL_SYMEX_SIMPLIFY_VERBOSE
 				log<CON_GRN>( "[Join] %s => %s\n", dir_src->to_string(), dir_dst->to_string() );
 				log<CON_GRN>( "= %s [By join directive]\n", exp_new->to_string() );
+				log<CON_YLW>( "Complexity: %lf => %lf\n", exp->complexity, exp_new->complexity );
 #endif
 
 				// Recurse, set the hint and return the simplified instance.
