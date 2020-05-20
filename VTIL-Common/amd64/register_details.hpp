@@ -40,7 +40,7 @@
 #include <map>
 #include <tuple>
 #include <string>
-#include "disassembly.hpp"
+#include "disassembler.hpp"
 #include "../io/asserts.hpp"
 
 namespace vtil::amd64

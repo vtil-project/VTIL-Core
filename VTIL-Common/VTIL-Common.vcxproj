@@ -104,7 +104,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="amd64\assembler.hpp" />
-    <ClInclude Include="amd64\disassembly.hpp" />
+    <ClInclude Include="amd64\disassembler.hpp" />
     <ClInclude Include="amd64\register_details.hpp" />
     <ClInclude Include="includes\vtil\common" />
     <ClInclude Include="includes\vtil\io" />
@@ -140,7 +140,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="amd64\assembler.cpp" />
-    <ClCompile Include="amd64\disassembly.cpp" />
+    <ClCompile Include="amd64\disassembler.cpp" />
     <ClCompile Include="amd64\register_details.cpp" />
     <ClCompile Include="io\logger.cpp" />
     <ClCompile Include="math\operators.cpp" />

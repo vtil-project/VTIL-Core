@@ -31,9 +31,6 @@
     <ClInclude Include="amd64\assembler.hpp">
       <Filter>amd64\Core</Filter>
     </ClInclude>
-    <ClInclude Include="amd64\disassembly.hpp">
-      <Filter>amd64\Core</Filter>
-    </ClInclude>
     <ClInclude Include="io\asserts.hpp">
       <Filter>I/O</Filter>
     </ClInclude>
@@ -127,15 +124,15 @@
     <ClInclude Include="util\lt_typeid.hpp">
       <Filter>Utility</Filter>
     </ClInclude>
+    <ClInclude Include="amd64\disassembler.hpp">
+      <Filter>amd64\Core</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="amd64\register_details.cpp">
       <Filter>amd64</Filter>
     </ClCompile>
     <ClCompile Include="amd64\assembler.cpp">
-      <Filter>amd64\Core</Filter>
-    </ClCompile>
-    <ClCompile Include="amd64\disassembly.cpp">
       <Filter>amd64\Core</Filter>
     </ClCompile>
     <ClCompile Include="io\logger.cpp">
@@ -149,6 +146,9 @@
     </ClCompile>
     <ClCompile Include="util\variant.cpp">
       <Filter>Utility</Filter>
+    </ClCompile>
+    <ClCompile Include="amd64\disassembler.cpp">
+      <Filter>amd64\Core</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

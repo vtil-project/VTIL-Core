@@ -2,7 +2,7 @@
 #
 
 set(common_SOURCES amd64/assembler.cpp
-    amd64/disassembly.cpp
+    amd64/disassembler.cpp
     amd64/register_details.cpp
     io/logger.cpp
     math/operators.cpp

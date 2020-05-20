@@ -1,4 +1,4 @@
 #pragma once
 #include "../../amd64/assembler.hpp"
-#include "../../amd64/disassembly.hpp"
+#include "../../amd64/disassembler.hpp"
 #include "../../amd64/register_details.hpp"
