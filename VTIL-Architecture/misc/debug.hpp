@@ -29,6 +29,7 @@
 #include <string>
 #include <set>
 #include <vtil/io>
+#include <vtil/amd64>
 #include "../arch/instruction_set.hpp"
 #include "../routine/basic_block.hpp"
 #include "../routine/instruction.hpp"
@@ -130,8 +131,36 @@ namespace vtil::debug
 		// Print each instruction
 		//
 		int ins_idx = 0;
+		bool no_disasm = false;
 		for ( auto it = blk->begin(); it != blk->end(); it++, ins_idx++ )
 		{
+			// If vemit, try to disassmble if not done already.
+			//
+			if ( it->base->name == "vemit" )
+			{
+				if ( !no_disasm )
+				{
+					std::vector<uint8_t> bytes;
+					for ( auto it2 = it; it2 != blk->end(); it2++ )
+					{
+						if ( it2->base->name == "vemit" )
+						{
+							uint8_t* bs = ( uint8_t* ) &it2->operands[ 0 ].imm().u64;
+							bytes.insert( bytes.end(), bs, bs + it2->operands[ 0 ].size() );
+						}
+					}
+
+					auto dasm = capstone::disasm( bytes.data(), it->vip == invalid_vip ? 0 : it->vip, bytes.size() );
+					for ( auto& ins : dasm )
+						log<CON_YLW>( "; %s\n", ins.to_string() );
+					no_disasm = true;
+				}
+			}
+			else
+			{
+				no_disasm = false;
+			}
+
 			log<CON_BLU>( "%04d: ", ins_idx );
 			if ( it->vip == invalid_vip )
 				log<CON_DEF>( "[PSEUDO] " );
