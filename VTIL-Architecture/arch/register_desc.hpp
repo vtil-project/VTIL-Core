@@ -62,6 +62,11 @@ namespace vtil
 		//
 		register_image_base =       1 << 4,
 
+		// Indicates that it is a internal-use register that should be 
+		// treated like any other virtual register.
+		//
+		register_internal =         register_virtual | ( 1 << 5 ),
+
 		// Combined mask of all special registers.
 		//
 		register_special =          register_flags | 
@@ -70,8 +75,8 @@ namespace vtil
 
 		// Indicates that it can change spontanously. (Say, IA32_TIME_STAMP_COUNTER.)
 		//
-		register_volatile =         1 << 5,
-		register_readonly =         1 << 6,
+		register_volatile =         1 << 6,
+		register_readonly =         1 << 7,
 	};
 
 	// This type describes any register instance.
@@ -191,6 +196,7 @@ namespace vtil
 		bool is_stack_pointer() const { return flags & register_stack_pointer; }
 		bool is_image_base() const { return flags & register_image_base; }
 		bool is_special() const { return flags & register_special; }
+		bool is_internal() const { return ( flags & register_internal ) == register_internal; }
 
 		// Returns the mask for the bits that this register's value would occupy in a 64-bit register.
 		//
@@ -224,6 +230,7 @@ namespace vtil
 
 			// If special/local, use a fixed convention.
 			//
+			if ( is_internal() )                  return prefix + "sr" + std::to_string( local_id ) + suffix;
 			if ( flags & register_flags )         return prefix + "$flags" + suffix;
 			if ( flags & register_stack_pointer ) return prefix + "$sp" + suffix;
 			if ( flags & register_image_base )    return prefix + "base" + suffix;
