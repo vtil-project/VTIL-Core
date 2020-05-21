@@ -217,7 +217,7 @@ namespace vtil::optimizer
 
 			// Clone and resize the expression.
 			//
-			auto exp_resized = symbolic::expression{ exp }.resize( it->first );
+			auto exp_resized = exp.clone().resize( it->first );
 
 			// If top node is not __ucast, skip.
 			//

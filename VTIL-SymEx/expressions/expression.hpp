@@ -224,6 +224,10 @@ namespace vtil::symbolic
 			}
 			return *this;
 		}
+
+		// Simple way to invoke copy constructor using a pointer.
+		//
+		expression clone() const { return *this; }
 	};
 
 	// Boxed expression solves the aforementioned problem by creating a type that can be 

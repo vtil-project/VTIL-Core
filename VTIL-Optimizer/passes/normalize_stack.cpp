@@ -188,13 +188,13 @@ namespace vtil::optimizer
 					//
 					if ( exp.op == math::operator_id::ucast && exp.lhs->is_variable() )
 					{
-						exp = symbolic::expression{ *exp.lhs };
+						exp = exp.lhs->clone();
 					}
 					// If __cast(V, N):
 					//
 					else if ( exp.op == math::operator_id::cast && exp.lhs->is_variable() )
 					{
-						exp = symbolic::expression{ *exp.lhs };
+						exp = exp.lhs->clone();
 						new_instruction = &ins::movsx;
 					}
 					// Otherwise skip.
