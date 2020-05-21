@@ -184,24 +184,44 @@ namespace vtil::symbolic
 		// Enumerates the whole tree.
 		//
 		template<typename T>
-		const expression& enumerate( const T& fn ) const
+		const expression& enumerate( const T& fn, bool bottom = false ) const
 		{
-			fn( *this );
-			if ( lhs ) lhs->enumerate( fn );
-			if ( rhs ) rhs->enumerate( fn );
+			if ( bottom )
+			{
+				if ( lhs ) lhs->enumerate( fn, bottom );
+				if ( rhs ) rhs->enumerate( fn, bottom );
+				fn( *this );
+			}
+			else
+			{
+				fn( *this );
+				if ( lhs ) lhs->enumerate( fn, bottom );
+				if ( rhs ) rhs->enumerate( fn, bottom );
+			}
 			return *this;
 		}
 
-		// Transforms the whole tree according to the 
-		// functor starting from the bottom.
+		// Transforms the whole tree according to the functor.
 		//
 		template<typename T>
-		expression& transform( const T& fn, bool auto_simplify = true )
+		expression& transform( const T& fn, bool bottom = true, bool auto_simplify = true )
 		{
-			if ( rhs ) ( +rhs )->transform( fn, auto_simplify );
-			if ( lhs ) ( +lhs )->transform( fn, auto_simplify );
-			fn( *this );
-			update( auto_simplify );
+			if ( bottom )
+			{
+				if ( rhs ) ( +rhs )->transform( fn, bottom, auto_simplify );
+				if ( lhs ) ( +lhs )->transform( fn, bottom, auto_simplify );
+				update( auto_simplify );
+				fn( *this );
+				update( auto_simplify );
+			}
+			else
+			{
+				fn( *this );
+				update( auto_simplify );
+				if ( rhs ) ( +rhs )->transform( fn, bottom, auto_simplify );
+				if ( lhs ) ( +lhs )->transform( fn, bottom, auto_simplify );
+				update( auto_simplify );
+			}
 			return *this;
 		}
 	};
