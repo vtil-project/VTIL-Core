@@ -45,7 +45,7 @@ namespace vtil::optimizer
         //
         if ( lookup.at.is_begin() )
         {
-            symbolic::expression&& result = lookup.to_expression();
+            symbolic::expression result = lookup.to_expression();
 #if VTIL_OPT_TRACE_VERBOSE
             // Log result.
             //
