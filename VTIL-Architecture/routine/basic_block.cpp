@@ -185,7 +185,7 @@ namespace vtil
 
 	// Helpers for the allocation of unique temporary registers.
 	//
-	register_desc basic_block::tmp( uint8_t size )
+	register_desc basic_block::tmp( bitcnt_t size )
 	{
 		return register_desc
 		{

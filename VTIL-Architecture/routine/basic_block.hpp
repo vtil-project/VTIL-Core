@@ -257,9 +257,9 @@ namespace vtil
 
 		// Helpers for the allocation of unique temporary registers.
 		//
-		register_desc tmp( uint8_t size );
+		register_desc tmp( bitcnt_t size );
 		template<typename... params>
-		auto tmp( uint8_t size_0, params... size_n )
+		auto tmp( bitcnt_t size_0, params... size_n )
 		{
 			return std::make_tuple( tmp( size_0 ), tmp( size_n )... );
 		}
