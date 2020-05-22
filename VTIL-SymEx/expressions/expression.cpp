@@ -612,6 +612,41 @@ namespace vtil::symbolic
 			       ( a - b ).get().value_or( -1 ) == 0;
 	}
 
+	// Evaluates the expression invoking the callback passed for unknown variables,
+	// this avoids copying of the entire tree and any simplifier calls so is preferred
+	// over *transform(...).get().
+	//
+	math::bit_vector expression::evaluate( const eval_lookup_helper_t& lookup ) const
+	{
+		// If value is known, return as is.
+		//
+		if ( value.is_known() ) 
+			return value;
+		
+		// If variable:
+		//
+		if ( is_variable() )
+		{
+			// If lookup helper passed and succesfully finds the value, use as is.
+			//
+			if ( auto res = lookup ? lookup( uid ) : std::nullopt; res.has_value() )
+				return { *res, size() };
+			
+			// Otherwise return unknown.
+			//
+			return value;
+		}
+
+		// Try to evaluate the result and return.
+		//
+		math::bit_vector result = {};
+		if ( is_unary() )
+			result = math::evaluate_partial( op, {},                      rhs->evaluate( lookup ) );
+		else if ( is_binary() )
+			result = math::evaluate_partial( op, lhs->evaluate( lookup ), rhs->evaluate( lookup ) );
+		return result;
+	}
+
 	// Returns whether the given expression is identical to the current instance.
 	//
 	bool expression::is_identical( const expression& other ) const

@@ -181,6 +181,20 @@ namespace vtil::symbolic
 		//
 		bool equals( const expression& other ) const;
 
+		// Evaluates the expression invoking the callback passed for unknown variables,
+		// this avoids copying of the entire tree and any simplifier calls so is preferred
+		// over *transform(...).get().
+		//
+		using eval_lookup_helper_t = std::function<std::optional<uint64_t>( const unique_identifier& )>;
+		math::bit_vector evaluate( const eval_lookup_helper_t& lookup = {} ) const;
+		
+		// Implement math::operable::get with evaluator.
+		//
+		template<typename type>
+		std::optional<type> get( const eval_lookup_helper_t& lookup = {} ) const { return evaluate( lookup ).get<type>(); }
+		template<bool as_signed = false, typename type = std::conditional_t<as_signed, int64_t, uint64_t>>
+		std::optional<type> get( const eval_lookup_helper_t& lookup = {} ) const { return evaluate( lookup ).get<type>(); }
+
 		// Enumerates the whole tree.
 		//
 		template<typename T>
