@@ -4,7 +4,7 @@
 
 namespace vtil
 {
-	// This class generates unique 64-bit hash for each type at link time 
+	// This class generates a unique 64-bit hash for each type at link time 
 	// with no dependency on compiler features such as RTTI.
 	//
 	template<typename T>
@@ -14,16 +14,16 @@ namespace vtil
 		//
 		static size_t calculate()
 		{
-			// Calculate the distance between the static identifier we store 
-			// and the function and apply an aribtrary hash function over it. 
-			// This should match for all identical binaries regardless of 
-			// any relocation where relevant.
-			//
-			intptr_t reloc_delta = ( intptr_t ) &calculate - ( intptr_t ) &value;
-
-			// Apply an arbitrary hash function to the relocation delta.
-			//
-			return ( 0x47C63F4156E0EA7F ^ reloc_delta ) * ( reloc_delta | 3 );
+			if constexpr ( !std::is_same_v<T, void> )
+			{
+				// Calculate the distance between the reference point of this type
+				// and of void and apply an aribtrary hash function over it. This 
+				// should match for all identical binaries regardless of relocations.
+				//
+				intptr_t reloc_delta = ( intptr_t ) &value - ( intptr_t ) &lt_typeid<void>::value;
+				return ( 0x47C63F4156E0EA7F ^ reloc_delta ) * ( sizeof( T ) + reloc_delta | 3 );
+			}
+			return -1;
 		}
 	public:
 		// Stores the computed hash at process initialization time.
