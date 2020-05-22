@@ -180,9 +180,24 @@ namespace vtil::math
     //
     bit_vector evaluate_partial( operator_id op, const bit_vector& lhs, const bit_vector& rhs )
     {
-        // If no unknown bits, redirect to more efficient math::evaluate()
+        // If invalid operation, return invalid.
         //
-        if ( !lhs.unknown_mask() && !rhs.unknown_mask() )
+        auto* desc = descriptor_of( op );
+        switch ( desc ? desc->operand_count : 0 )
+        {
+            case 1:
+                if ( rhs.is_valid() )
+                    break;
+            case 2:
+                if ( rhs.is_valid() && lhs.is_valid() )
+                    break;
+            default:
+                return {};
+        }
+
+        // If no unknown bits, redirect to more efficient math::evaluate().
+        //
+        if ( lhs.is_known() && rhs.is_known() )
         {
             auto [val, size] = evaluate( op, lhs.size(), lhs.known_one(), rhs.size(), rhs.known_one() );
             return { val, size };
