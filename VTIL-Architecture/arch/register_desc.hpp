@@ -62,21 +62,26 @@ namespace vtil
 		//
 		register_image_base =       1 << 4,
 
+		// Indicates that it can change spontanously. (Say, IA32_TIME_STAMP_COUNTER.)
+		//
+		register_volatile =         1 << 5,
+		register_readonly =         1 << 6,
+
+		// Indicates that it is the special "undefined" register.
+		//
+		register_undefined =        1 << 7,
+
 		// Indicates that it is a internal-use register that should be 
 		// treated like any other virtual register.
 		//
-		register_internal =         register_virtual | ( 1 << 5 ),
+		register_internal =         register_virtual |  ( 1 << 8 ),
 
 		// Combined mask of all special registers.
 		//
 		register_special =          register_flags | 
 		                            register_stack_pointer | 
-		                            register_image_base,
-
-		// Indicates that it can change spontanously. (Say, IA32_TIME_STAMP_COUNTER.)
-		//
-		register_volatile =         1 << 6,
-		register_readonly =         1 << 7,
+		                            register_image_base |
+		                            register_undefined,
 	};
 
 	// This type describes any register instance.
@@ -172,6 +177,20 @@ namespace vtil
 				if ( local_id != 0 )
 					return false;
 			}
+			// If register holds the [undefined] special:
+			//
+			else if ( special_flags == register_undefined )
+			{
+				// Should be virtual, volatile and non-read-only.
+				//
+				if ( !is_volatile() || !is_virtual() || is_read_only() )
+					return false;
+
+				// Must have no local identifier.
+				//
+				if ( local_id != 0 )
+					return false;
+			}
 			// Otherwise must have no special flags.
 			//
 			else if( special_flags != 0 )
@@ -187,6 +206,7 @@ namespace vtil
 		// Simple helpers to determine some properties.
 		// 
 		bool is_flags() const { return flags & register_flags; }
+		bool is_undefined() const { return flags & register_undefined; }
 		bool is_local() const { return flags & register_local; }
 		bool is_global() const { return ( ~flags ) & register_local; }
 		bool is_virtual() const { return ( ~flags ) & register_physical; }
@@ -231,6 +251,7 @@ namespace vtil
 			// If special/local, use a fixed convention.
 			//
 			if ( is_internal() )                  return prefix + "sr" + std::to_string( local_id ) + suffix;
+			if ( flags & register_undefined )     return prefix + "UD" + suffix;
 			if ( flags & register_flags )         return prefix + "$flags" + suffix;
 			if ( flags & register_stack_pointer ) return prefix + "$sp" + suffix;
 			if ( flags & register_image_base )    return prefix + "base" + suffix;
@@ -282,7 +303,8 @@ namespace vtil
 
 	// VTIL special registers.
 	//
-	static const register_desc REG_IMGBASE = { register_readonly | register_image_base,    0, 64, 0 };
-	static const register_desc REG_FLAGS =   { register_physical | register_flags,         0, 64, 0 };
-	static const register_desc REG_SP =      { register_physical | register_stack_pointer, 0, 64, 0 };
+	static const register_desc UNDEFINED =   { register_volatile | register_undefined,     0, 64 };
+	static const register_desc REG_IMGBASE = { register_readonly | register_image_base,    0, 64 };
+	static const register_desc REG_FLAGS =   { register_physical | register_flags,         0, 64 };
+	static const register_desc REG_SP =      { register_physical | register_stack_pointer, 0, 64 };
 };
