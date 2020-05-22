@@ -58,6 +58,12 @@ namespace vtil
 		//
 		if ( src.has_value() )
 		{
+			// Inherit the copy/destruction traits from source.
+			//
+			is_trivial_copy = src.is_trivial_copy;
+			copy_fn = src.copy_fn;
+			destroy_fn = src.destroy_fn;
+
 			// If source is trivially copyable, invoke memcpy.
 			//
 			if ( src.is_trivial_copy )
@@ -66,13 +72,7 @@ namespace vtil
 			// Otherwise invoke the  copy constructor
 			//
 			else
-				src.copy_fn( src, *this );
-
-			// Inherit the copy/destruction traits from source.
-			//
-			is_trivial_copy = src.is_trivial_copy;
-			copy_fn = src.copy_fn;
-			destroy_fn = src.destroy_fn;
+				copy_fn( src, *this );
 
 			// If debug mode, inherit type name.
 			//
