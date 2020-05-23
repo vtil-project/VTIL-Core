@@ -176,19 +176,27 @@ namespace vtil::logger
 	template<typename... params>
 	static void error [[noreturn]] ( const char* fmt, params&&... ps )
 	{
+		// Format error message.
+		//
+		std::string message = format::str(
+			fmt,
+			format::fix_parameter<params>( std::forward<params>( ps ) )...
+		);
+
 		// Error will stop any execution so feel free to ignore any locks.
 		//
 		new ( &log_cs ) critical_section();
 
-		// Throw a logic error.
+		// Reset padding and print error message.
 		//
-		throw std::logic_error( format::str(
-			fmt, 
-			format::fix_parameter<params>( std::forward<params>( ps ) )...
-		) );
+		log_padding = 0;
+		log<CON_RED>( "\n%s\n", message.data() );
 
-		// Make unreachable.
-		//
+		// Break the program. 
+		// 
+#ifndef _DEBUG 
+		exit( EXIT_FAILURE );
+#endif 
 		impl::noreturn_helper();
 	}
 };

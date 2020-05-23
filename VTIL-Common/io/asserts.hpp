@@ -27,7 +27,6 @@
 //
 #pragma once
 #include <stdint.h>
-#include <stdexcept>
 #include "logger.hpp"
 
 namespace vtil::assert
