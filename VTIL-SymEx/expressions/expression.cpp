@@ -256,14 +256,14 @@ namespace vtil::symbolic
 				//
 				if ( lhs->size() > rhs->get().value() )
 				{
-					*this = ( lhs & expression{ math::fill( rhs->get<bitcnt_t>().value() ), lhs->size() } ).resize( new_size );
+					*this = ( lhs->clone() & expression{ math::fill( rhs->get<bitcnt_t>().value() ), lhs->size() } ).resize( new_size );
 					break;
 				}
 				// If sizes match, escape cast operator.
 				//
 				else if ( lhs->size() == new_size )
 				{
-					*this = *lhs;
+					*this = lhs->clone();
 				}
 				// Otherwise upgrade the parameter.
 				//
