@@ -120,12 +120,12 @@ namespace vtil
 	// Simple joint container creation from wrappers.
 	//
 	template <typename... Tx>
-	static auto join_iterators( Tx&... args ) -> joint_container<impl::optref_wrapper, Tx...> 
+	static auto zip_s( Tx&... args ) -> joint_container<impl::optref_wrapper, Tx...>
 	{ 
 		return { std::tie( args... ) }; 
 	}
 	template <typename... Tx>
-	static auto join_iterators_r( Tx&... args ) -> joint_container<impl::modref_wrapper, Tx...>
+	static auto zip( Tx&... args ) -> joint_container<impl::modref_wrapper, Tx...>
 	{
 		return { std::tie( args... ) };
 	}

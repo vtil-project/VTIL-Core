@@ -127,7 +127,7 @@
     <ClInclude Include="util\dynamic_size.hpp">
       <Filter>Utility</Filter>
     </ClInclude>
-    <ClInclude Include="util\joint_iterator.hpp">
+    <ClInclude Include="util\zip.hpp">
       <Filter>Utility</Filter>
     </ClInclude>
   </ItemGroup>
