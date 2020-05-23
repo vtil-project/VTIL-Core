@@ -269,16 +269,7 @@ namespace vtil
 		// Declare reduction.
 		//
 		auto reduce() { return reference_as_tuple( bit_count, local_id, flags, bit_offset ); }
-
-		// TODO: Remove me.
-		//  Let modern compilers know that we use these operators as is,
-		//  implementation considering all candidates would be preferred
-		//  but since not all of our target compilers implement complete
-		//  ISO C++20, we have to go with this "patch".
-		//
-		using reducable::operator<;
-		using reducable::operator==;
-		using reducable::operator!=;
+		REDUCABLE_EXPLICIT_INHERIT_CXX20();
 	};
 
 	// Should be overriden by the user to describe conversion of the

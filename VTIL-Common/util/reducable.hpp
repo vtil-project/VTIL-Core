@@ -29,6 +29,17 @@
 #include <tuple>
 #include "hashable.hpp"
 
+// TODO: Remove me.
+//  Let modern compilers know that we use these operators as is,
+//  implementation considering all candidates would be preferred
+//  but since not all of our target compilers implement complete
+//  ISO C++20, we have to go with this "patch".
+//
+#define REDUCABLE_EXPLICIT_INHERIT_CXX20() \
+    using reducable::operator<;            \
+    using reducable::operator==;           \
+    using reducable::operator!=;     
+
 // Reducable types essentially let us do member-type reflection
 // which we use to auto generate useful but repetetive methods 
 // like ::hash() or comparison operators. Base type has to define

@@ -305,18 +305,6 @@ namespace vtil::math
         // Declare reduction.
         //
         auto reduce() { return reference_as_tuple( unknown_bits, known_bits, bit_count ); }
-
-        // TODO: Remove me.
-        //  Let modern compilers know that we use these operators as is,
-        //  implementation considering all candidates would be preferred
-        //  but since not all of our target compilers implement complete
-        //  ISO C++20, we have to go with this "patch".
-        //
-        // - Note: Relative comparison operators should not be used for actual comparison 
-        //         but are there for the use of sorted containers.
-        //
-        using reducable::operator<;
-        using reducable::operator==;
-        using reducable::operator!=;
+        REDUCABLE_EXPLICIT_INHERIT_CXX20();
     };
 };
