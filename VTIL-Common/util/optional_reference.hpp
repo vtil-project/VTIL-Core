@@ -32,17 +32,23 @@ namespace vtil
 		optional_reference( std::optional<T>& ref )
 			: pointer( ref.has_value() ? &ref.value() : nullptr ) {}
 
+		// Optional assignment to reference stored.
+		//
+		void assign_if( T&& value ) const { if ( pointer ) *pointer = value; }
+		void assign_if( const T& value ) const { if ( pointer ) *pointer = value; }
+
 		// Implement observers, mimicking std::optional<T>.
 		// -------------------------------------------------
 		// Accesses the contained value.
 		//
 		T& value() { return *pointer; }
-		const T& value() const { return *pointer; }
-		const T& value_or( const T& def ) const { return has_value() ? value() : def; }
+		T& value() const { return *pointer; }
+		T value_or( const T& def ) const { return has_value() ? value() : def; }
+		T& value_or( std::remove_const_t<T>& def ) const { return has_value() ? value() : def; }
 		T& operator*() { return value(); }
-		const T& operator*() const { return value(); }
+		T& operator*() const { return value(); }
 		T* operator->() { return pointer; }
-		const T* operator->() const { return pointer; }
+		T* operator->() const { return pointer; }
 
 		// Checks whether the object contains a value.
 		//
