@@ -180,15 +180,15 @@ namespace vtil::logger
 		//
 		new ( &log_cs ) critical_section();
 
-		// Print the erorr message.
+		// Throw a logic error.
 		//
-		log<CON_RED>( fmt, std::forward<params>( ps )... );
-		
-		// Break the program.
+		throw std::logic_error( format::str(
+			fmt, 
+			format::fix_parameter<params>( std::forward<params>( ps ) )...
+		) );
+
+		// Make unreachable.
 		//
-#ifndef _DEBUG
-		exit( EXIT_FAILURE );
-#endif
 		impl::noreturn_helper();
 	}
 };

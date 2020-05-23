@@ -27,6 +27,7 @@
 //
 #pragma once
 #include <stdint.h>
+#include <stdexcept>
 #include "logger.hpp"
 
 namespace vtil::assert
@@ -47,7 +48,8 @@ namespace vtil::assert
 #ifdef _DEBUG
 	#define fassert__stringify(x) #x
 	#define fassert(x) vtil::assert::or_die( (x), __FILE__, fassert__stringify(x), __LINE__ )
+	#define unreachable() vtil::assert::or_die( false, __FILE__, "Illegal control flow.", __LINE__ )
 #else
 	#define fassert(...)
+	#define unreachable() vtil::logger::impl::noreturn_helper()
 #endif
-#define unreachable() vtil::logger::impl::noreturn_helper()
