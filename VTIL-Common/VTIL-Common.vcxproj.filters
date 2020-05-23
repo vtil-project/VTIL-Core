@@ -11,9 +11,6 @@
     <Filter Include="amd64">
       <UniqueIdentifier>{cb6f5bfd-fdca-47fe-bbb7-e91d8e5ba642}</UniqueIdentifier>
     </Filter>
-    <Filter Include="amd64\Core">
-      <UniqueIdentifier>{dbf4733d-3814-4218-9474-cf4b4e3c5719}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Math">
       <UniqueIdentifier>{e5d9bf65-c2c0-4dcf-aa87-65a7059e4e90}</UniqueIdentifier>
     </Filter>
@@ -27,9 +24,6 @@
   <ItemGroup>
     <ClInclude Include="amd64\register_details.hpp">
       <Filter>amd64</Filter>
-    </ClInclude>
-    <ClInclude Include="amd64\assembler.hpp">
-      <Filter>amd64\Core</Filter>
     </ClInclude>
     <ClInclude Include="io\asserts.hpp">
       <Filter>I/O</Filter>
@@ -125,15 +119,21 @@
       <Filter>Utility</Filter>
     </ClInclude>
     <ClInclude Include="amd64\disassembler.hpp">
-      <Filter>amd64\Core</Filter>
+      <Filter>amd64</Filter>
+    </ClInclude>
+    <ClInclude Include="amd64\assembler.hpp">
+      <Filter>amd64</Filter>
+    </ClInclude>
+    <ClInclude Include="util\dynamic_size.hpp">
+      <Filter>Utility</Filter>
+    </ClInclude>
+    <ClInclude Include="util\joint_iterator.hpp">
+      <Filter>Utility</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="amd64\register_details.cpp">
       <Filter>amd64</Filter>
-    </ClCompile>
-    <ClCompile Include="amd64\assembler.cpp">
-      <Filter>amd64\Core</Filter>
     </ClCompile>
     <ClCompile Include="io\logger.cpp">
       <Filter>I/O</Filter>
@@ -147,8 +147,11 @@
     <ClCompile Include="util\variant.cpp">
       <Filter>Utility</Filter>
     </ClCompile>
+    <ClCompile Include="amd64\assembler.cpp">
+      <Filter>amd64</Filter>
+    </ClCompile>
     <ClCompile Include="amd64\disassembler.cpp">
-      <Filter>amd64\Core</Filter>
+      <Filter>amd64</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

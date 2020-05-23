@@ -255,7 +255,7 @@ namespace vtil
 
 		hash_t operator()( const std::tuple<Tx...>& obj ) const noexcept
 		{
-			return hash_all( obj, std::index_sequence_for<Tx...>{} );;
+			return hash_all( obj, std::index_sequence_for<Tx...>{} );
 		}
 	};
 

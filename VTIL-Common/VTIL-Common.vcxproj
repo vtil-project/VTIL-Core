@@ -127,6 +127,7 @@
     <ClInclude Include="util\concept.hpp" />
     <ClInclude Include="util\copy_on_write.hpp" />
     <ClInclude Include="util\critical_section.hpp" />
+    <ClInclude Include="util\dynamic_size.hpp" />
     <ClInclude Include="util\lt_typeid.hpp" />
     <ClInclude Include="util\fnv128.hpp" />
     <ClInclude Include="util\fnv64.hpp" />
@@ -136,6 +137,7 @@
     <ClInclude Include="util\priority_list.hpp" />
     <ClInclude Include="util\reducable.hpp" />
     <ClInclude Include="util\stack_container.hpp" />
+    <ClInclude Include="util\joint_iterator.hpp" />
     <ClInclude Include="util\variant.hpp" />
   </ItemGroup>
   <ItemGroup>
