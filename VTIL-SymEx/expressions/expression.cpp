@@ -260,7 +260,9 @@ namespace vtil::symbolic
 				//
 				if ( lhs->size() > rhs->get().value() )
 				{
-					*this = ( std::move( lhs ) & expression{ math::fill( rhs->get<bitcnt_t>().value() ), lhs->size() } ).resize( new_size );
+					auto lhs_v = std::move( lhs );
+					auto rhs_v = std::move( rhs );
+					*this = ( lhs_v & expression{ math::fill( rhs_v->get<bitcnt_t>().value() ), lhs_v->size() } ).resize( new_size );
 					break;
 				}
 				// If sizes match, escape cast operator.
@@ -273,7 +275,7 @@ namespace vtil::symbolic
 				//
 				else
 				{
-					rhs = new_size;
+					*+rhs = new_size;
 				}
 				break;
 
@@ -285,7 +287,9 @@ namespace vtil::symbolic
 				//
 				if ( lhs->size() > rhs->get().value() )
 				{
-					*this = ( std::move( lhs ) & expression{ math::fill( rhs->get<bitcnt_t>().value() ), lhs->size() } ).resize( new_size, true );
+					auto lhs_v = std::move( lhs );
+					auto rhs_v = std::move( rhs );
+					*this = ( lhs_v & expression{ math::fill( rhs_v->get<bitcnt_t>().value() ), lhs_v->size() } ).resize( new_size, true );
 					break;
 				}
 				// If sizes match, escape cast operator.
@@ -298,7 +302,7 @@ namespace vtil::symbolic
 				//
 				else if ( signed_cast )
 				{
-					rhs = new_size;
+					*+rhs = new_size;
 				}
 				// Else, convert to unsigned cast since top bits will be zero.
 				//
