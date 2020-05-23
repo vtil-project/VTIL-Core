@@ -38,6 +38,7 @@ namespace vtil
 		//
 		T& value() { return *pointer; }
 		const T& value() const { return *pointer; }
+		const T& value_or( const T& def ) const { return has_value() ? value() : def; }
 		T& operator*() { return value(); }
 		const T& operator*() const { return value(); }
 		T* operator->() { return pointer; }
@@ -103,6 +104,12 @@ namespace vtil
 	static auto dereference_if( bool condition, T ptr )
 	{
 		return condition ? optional_reference( *ptr ) : std::nullopt;
+	}
+
+	template<typename T>
+	static auto dereference_if_n( bool condition, T ptr, size_t idx )
+	{
+		return condition ? optional_reference{ *( ptr + idx ) } : std::nullopt;
 	}
 };
 
