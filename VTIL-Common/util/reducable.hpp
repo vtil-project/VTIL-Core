@@ -35,10 +35,20 @@
 //  but since not all of our target compilers implement complete
 //  ISO C++20, we have to go with this "patch".
 //
-#define REDUCABLE_EXPLICIT_INHERIT_CXX20() \
-    using reducable::operator<;            \
-    using reducable::operator==;           \
-    using reducable::operator!=;     
+#if defined(__clang__) || defined(__GNUC__) || defined(__GNUG__)
+    #define REDUCABLE_EXPLICIT_INHERIT_CXX20()                      \
+        using reducable::operator<;                                 \
+        using reducable::operator==;                                \
+        using reducable::operator!=;                                
+#elif defined(_MSC_VER)
+    #define REDUCABLE_EXPLICIT_INHERIT_CXX20()
+#endif
+
+// Reduction macro.
+//
+#define REDUCE_TO( ... )                                              \
+    auto reduce() { return vtil::reference_as_tuple( __VA_ARGS__ ); } \
+    REDUCABLE_EXPLICIT_INHERIT_CXX20()                          
 
 // Reducable types essentially let us do member-type reflection
 // which we use to auto generate useful but repetetive methods 
@@ -46,7 +56,7 @@
 // the following routine where [...] should be replaced by members
 // that should be contributing to the comparison/hash operations.
 //
-// - auto reduce() { return vtil::reference_as_tuple( ... ); }
+// - REDUCE_TO( ... );
 //
 // - Note: Ideally unique elements that are faster to compare should 
 //         come first to speed up the equality comparisons.

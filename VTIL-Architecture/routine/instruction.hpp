@@ -133,7 +133,6 @@ namespace vtil
 
 		// Declare reduction.
 		//
-		auto reduce() { return reference_as_tuple( vip, sp_offset, operands, base->name, sp_index, sp_reset, explicit_volatile ); }
-		REDUCABLE_EXPLICIT_INHERIT_CXX20();
+		REDUCE_TO( vip, sp_offset, operands, base->name, sp_index, sp_reset, explicit_volatile );
 	};
 };

@@ -304,7 +304,6 @@ namespace vtil::math
 
         // Declare reduction.
         //
-        auto reduce() { return reference_as_tuple( unknown_bits, known_bits, bit_count ); }
-        REDUCABLE_EXPLICIT_INHERIT_CXX20();
+        REDUCE_TO( unknown_bits, known_bits, bit_count );
     };
 };

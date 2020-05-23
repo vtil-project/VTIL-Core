@@ -68,8 +68,7 @@ namespace vtil
 
 			// Declare reduction.
 			//
-			auto reduce() { return reference_as_tuple( u64, bit_count ); }
-			REDUCABLE_EXPLICIT_INHERIT_CXX20();
+			REDUCE_TO( u64, bit_count );
 		};
 
 		// Descriptor of this operand.
@@ -137,7 +136,7 @@ namespace vtil
 
 		// Declare reduction.
 		//
-		auto reduce() { return reference_as_tuple( descriptor ); }
+		REDUCE_TO( descriptor );
 	};
 	#pragma pack(pop)
 };

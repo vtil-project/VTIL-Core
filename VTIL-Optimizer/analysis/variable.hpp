@@ -65,8 +65,7 @@ namespace vtil::optimizer
 
             // Declare reduction.
             //
-            auto reduce() { return reference_as_tuple( bit_count, *pointer ); }
-            REDUCABLE_EXPLICIT_INHERIT_CXX20();
+            REDUCE_TO( bit_count, *pointer );
         };
 
         // The iterator at which this variable is read at.
@@ -124,12 +123,12 @@ namespace vtil::optimizer
         //
         std::string to_string() const;
 
-        // Declare reduction.
-        //
-        auto reduce() { return reference_as_tuple( dereference_if( !at.is_end(), at ), at.is_valid() ? at.container->entry_vip : invalid_vip, descriptor, is_branch_dependant ); }
-
         // Packs all the variables in the expression where it'd be optimal.
         //
         static symbolic::expression pack_all( const symbolic::expression& exp );
+
+        // Declare reduction.
+        //
+        REDUCE_TO( dereference_if( !at.is_end(), at ), at.is_valid() ? at.container->entry_vip : invalid_vip, descriptor, is_branch_dependant );
     };
 };

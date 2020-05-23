@@ -268,8 +268,7 @@ namespace vtil
 
 		// Declare reduction.
 		//
-		auto reduce() { return reference_as_tuple( bit_count, local_id, flags, bit_offset ); }
-		REDUCABLE_EXPLICIT_INHERIT_CXX20();
+		REDUCE_TO( bit_count, local_id, flags, bit_offset );
 	};
 
 	// Should be overriden by the user to describe conversion of the
