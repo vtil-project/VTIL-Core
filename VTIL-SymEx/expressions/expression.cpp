@@ -140,7 +140,9 @@ namespace vtil::symbolic
 			case math::operator_id::rotate_left:
 				if ( rhs->is_constant() && rhs->known_one() != 0 && !signed_cast )
 				{
-					*this = ( ( lhs << rhs ).resize( new_size ) | ( lhs >> ( lhs->size() - rhs ) ).resize( new_size ) );
+					auto lhs_v = std::move( lhs );
+					auto rhs_v = std::move( rhs );
+					*this = ( ( lhs_v << rhs_v ).resize( new_size ) | ( lhs_v >> ( lhs_v->size() - rhs_v ) ).resize( new_size ) );
 				}
 				else
 				{
@@ -153,7 +155,9 @@ namespace vtil::symbolic
 			case math::operator_id::rotate_right:
 				if ( rhs->is_constant() && rhs->known_one() != 0 && !signed_cast )
 				{
-					*this = ( ( lhs >> rhs ).resize( new_size ) | ( lhs << ( lhs->size() - rhs ) ).resize( new_size ) );
+					auto lhs_v = std::move( lhs );
+					auto rhs_v = std::move( rhs );
+					*this = ( ( lhs_v >> rhs_v ).resize( new_size ) | ( lhs_v << ( lhs_v->size() - rhs_v ) ).resize( new_size ) );
 				}
 				else
 				{
@@ -256,14 +260,14 @@ namespace vtil::symbolic
 				//
 				if ( lhs->size() > rhs->get().value() )
 				{
-					*this = ( lhs->clone() & expression{ math::fill( rhs->get<bitcnt_t>().value() ), lhs->size() } ).resize( new_size );
+					*this = ( std::move( lhs ) & expression{ math::fill( rhs->get<bitcnt_t>().value() ), lhs->size() } ).resize( new_size );
 					break;
 				}
 				// If sizes match, escape cast operator.
 				//
 				else if ( lhs->size() == new_size )
 				{
-					*this = lhs->clone();
+					*this = *std::move( lhs );
 				}
 				// Otherwise upgrade the parameter.
 				//
@@ -281,14 +285,14 @@ namespace vtil::symbolic
 				//
 				if ( lhs->size() > rhs->get().value() )
 				{
-					*this = ( lhs & expression{ math::fill( rhs->get<bitcnt_t>().value() ), lhs->size() } ).resize( new_size, true );
+					*this = ( std::move( lhs ) & expression{ math::fill( rhs->get<bitcnt_t>().value() ), lhs->size() } ).resize( new_size, true );
 					break;
 				}
 				// If sizes match, escape cast operator.
 				//
 				else if ( lhs->size() == new_size )
 				{
-					*this = *lhs;
+					*this = *std::move( lhs );
 				}
 				// Otherwise, if both are signed upgrade the parameter.
 				//
