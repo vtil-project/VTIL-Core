@@ -2,9 +2,9 @@
 #include <map>
 #include <functional>
 #include <optional>
-#include "..\math\bitwise.hpp"
-#include "..\math\operable.hpp"
-#include "..\io\asserts.hpp"
+#include "../math/bitwise.hpp"
+#include "../math/operable.hpp"
+#include "../io/asserts.hpp"
 #include "optional_reference.hpp"
 
 namespace vtil
@@ -258,6 +258,17 @@ namespace vtil
 				return *ref = value;
 			else
 				return value_map.emplace( ptr, value ).first->second;
+		}
+
+		// Simple way to access combining read and write.
+		//
+		optional_reference<value_unit> operator()( const pointer_unit& ptr, bitcnt_t size )
+		{
+			// Same logic as write but default case this time calls default constrcutor.
+			//
+			if ( optional_reference ref = dereference<true>( ptr, ( size + 7 ) & ~7 ) )
+				return ref;
+			return value_map.emplace( ptr, default_constructor( ptr, size ) ).first->second;
 		}
 	};
 };
