@@ -9,36 +9,59 @@
 
 namespace vtil
 {
+	namespace impl
+	{
+		template<typename T>
+		struct mod_noop
+		{
+			T operator()( T&& p ) { return p; }
+			const T& operator()( const T& p ) { return p; }
+		};
+
+		template<typename T>
+		struct offset_by
+		{
+			T operator()( const T& a, int64_t d ) { return a + d; }
+		};
+
+		template<typename T>
+		struct def_substract
+		{
+			std::optional<int64_t> operator()( const T& a, const T& b ) { return a - b; }
+		};
+	};
+
 	// Value unit must implement:
 	// - bitcnt_t T::size()
 	// - void T::resize(bitcnt_t)
 	// - operators | & << >>
 	//
-	// Pointer unit must implement:
-	// - operators ==, !=, >, -, +
-	//   ^ are allowed to return optional values.
-	//
-	template<typename pointer_unit, typename value_unit>
+	template<typename pointer_unit, typename value_unit, 
+		     typename weaken_pointer = impl::mod_noop<pointer_unit>, 
+		     typename strong_predicate = std::less<pointer_unit>,
+		     typename offset_fn = impl::offset_by<pointer_unit>,
+	         typename distance_fn = impl::def_substract<pointer_unit>>
 	struct sinkhole
 	{
 		// Common typedefs.
 		//
-		using iterator =              typename std::map<pointer_unit, value_unit>::iterator;
-		using const_iterator =        typename std::map<pointer_unit, value_unit>::const_iterator;
-		using default_constructor_t = std::function<value_unit( const pointer_unit& ptr, bitcnt_t size )>;
+		using cache_type =               std::map<pointer_unit, value_unit, strong_predicate>;
+		using iterator =                 typename cache_type::iterator;
+		using const_iterator =           typename cache_type::const_iterator;
+		using default_constructor_type = std::function<value_unit( const pointer_unit& ptr, bitcnt_t size )>;
 
 		// The constructor for default symbolic value of pointer dereferation. 
 		// If none set, access to an unknown memory location will throw an exception.
 		// 
-		default_constructor_t default_constructor;
+		default_constructor_type default_constructor;
 
 		// The memory cache.
 		//
-		std::map<pointer_unit, value_unit> value_map;
+		cache_type value_map;
 
 		// Default constructor, optionally takes a default constructor.
 		//
-		sinkhole( default_constructor_t default_constructor = {} )
+		sinkhole( default_constructor_type default_constructor = {} )
 			: default_constructor( default_constructor ) {}
 
 		// Default copy/move.
@@ -105,11 +128,6 @@ namespace vtil
 			//
 			fassert( size <= 64 && !( size & 7 ));
 
-			// Find the iteration boundaries.
-			//
-			auto it_min = value_map.lower_bound( ptr - ( 64 / 8 ) );
-			auto it_max = value_map.upper_bound( ptr + ( size / 8 ) );
-
 			// Declare temporary result.
 			//
 			value_unit result = default_constructor( ptr, size );
@@ -118,18 +136,31 @@ namespace vtil
 			// reorganizing and a hint to see if the key already exists.
 			//
 			std::optional<iterator> key_entry = {};
-			stack_vector<iterator, 8> merge_list;
+			stack_vector<iterator> merge_list;
 
-			// For each iterator within the range:
+			// Iterace each entry in the range:
 			//
+			auto it_min = value_map.lower_bound( offset_fn{}( weaken_pointer{}( ptr ), 64 / 8 ) );
+			if ( it_min == value_map.end() ) return std::nullopt;
+			auto it_max = value_map.upper_bound( offset_fn{}( ptr, size / 8 ) );
 			for ( auto it = it_min; it != it_max; it++ )
 			{
 				// Calculate displacement, if unknown return unknown.
 				// = [RL - WL]
 				//
-				std::optional wl_b = it->first - ptr;
+			retry:
+				std::optional wl_b = distance_fn{}( it->first, ptr );
 				if ( !wl_b )
+				{
+					if ( discard_value )
+					{
+						it = value_map.erase( it );
+						if ( it == value_map.end() )
+							break;
+						goto retry;
+					}
 					return std::nullopt;
+				}
 
 				// Calculate all pointers.
 				//
@@ -150,9 +181,11 @@ namespace vtil
 					//
 					if ( wh >= rh )
 					{
-						// Acquire upper bytes and return as is.
+						// Acquire upper bytes and use as is.
 						//
-						return acquire( it, rl - wl, rh - rl )->second;
+						key_entry = acquire( it, rl - wl, rh - rl );
+						result = ( *key_entry )->second;
+						continue;
 					}
 
 					// If write misses our range, skip.
@@ -172,7 +205,7 @@ namespace vtil
 						result = result & ~math::fill( wh - rl );
 						result = result | it->second;
 					}
-					
+
 					// If displacement is zero, reference it as key hint, otherwise 
 					// push to the merge list.
 					// 
@@ -189,7 +222,7 @@ namespace vtil
 					// Calculate the size of the overlapping region.
 					//
 					int64_t overlap_cnt = std::min( rh, wh ) - wl;
-					
+
 					// If write misses our range, skip.
 					// RL  RH
 					//     WL  WH	    
@@ -246,6 +279,10 @@ namespace vtil
 			//
 			return dereference<>( ptr, size );
 		}
+		value_unit read_v( const pointer_unit& ptr, bitcnt_t size )
+		{
+			return read( ptr, size ).value_or( default_constructor( ptr, size ) );
+		}
 
 		// Writes the given value to the pointer.
 		//
@@ -258,17 +295,6 @@ namespace vtil
 				return *ref = value;
 			else
 				return value_map.emplace( ptr, value ).first->second;
-		}
-
-		// Simple way to access combining read and write.
-		//
-		optional_reference<value_unit> operator()( const pointer_unit& ptr, bitcnt_t size )
-		{
-			// Same logic as write but default case this time calls default constrcutor.
-			//
-			if ( optional_reference ref = dereference<true>( ptr, ( size + 7 ) & ~7 ) )
-				return ref;
-			return value_map.emplace( ptr, default_constructor( ptr, size ) ).first->second;
 		}
 	};
 };
