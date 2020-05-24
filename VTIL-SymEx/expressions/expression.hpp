@@ -134,7 +134,7 @@ namespace vtil::symbolic
 		bool is_unary() const { return is_expression() && get_op_desc()->operand_count == 1; }
 		bool is_binary() const { return is_expression() && get_op_desc()->operand_count == 2; }
 		bool is_valid() const { return is_expression() || is_variable() || is_constant(); }
-		operator bool() const { return is_valid(); }
+		explicit operator bool() const { return is_valid(); }
 
 		// Returns the cached hash value to abide the standard vtil::hashable.
 		//
