@@ -48,3 +48,7 @@ add_subdirectory(VTIL-Common)
 add_subdirectory(VTIL-SymEx)
 add_subdirectory(VTIL-Architecture)
 add_subdirectory(VTIL-Optimizer)
+
+# After all other targets are defined, include the VTIL interface target
+#
+add_subdirectory(VTIL)
