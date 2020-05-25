@@ -255,8 +255,8 @@ namespace vtil::optimizer
 #if VTIL_OPT_TRACE_VERBOSE
 			// Log the low and middle bits.
 			//
-			log<CON_RED>( "dst[00..%02d] := %s\n", low_bcnt, res.to_string() );
-			log<CON_YLW>( "dst[%02d..%02d] := %s\n", access.bit_offset, access.bit_offset + access.bit_count, base.to_string() );
+			log<CON_RED>( "dst[00..%02d] := %s\n", low_bcnt, res );
+			log<CON_YLW>( "dst[%02d..%02d] := %s\n", access.bit_offset, access.bit_offset + access.bit_count, base );
 #endif
 			base = res | ( base.resize( bit_count ) << low_bcnt );
 		}
@@ -268,7 +268,7 @@ namespace vtil::optimizer
 #if VTIL_OPT_TRACE_VERBOSE
 			// Log the low bits after shifting.
 			//
-			log<CON_YLW>( "dst[00..%02d] := %s\n", access.bit_offset + access.bit_count, base.to_string() );
+			log<CON_YLW>( "dst[00..%02d] := %s\n", access.bit_offset + access.bit_count, base );
 #endif
 		}
 		else
@@ -276,7 +276,7 @@ namespace vtil::optimizer
 #if VTIL_OPT_TRACE_VERBOSE
 			// Log the low bits.
 			//
-			log<CON_YLW>( "dst[00..%02d] := %s\n", access.bit_offset + access.bit_count, base.to_string() );
+			log<CON_YLW>( "dst[00..%02d] := %s\n", access.bit_offset + access.bit_count, base );
 #endif
 		}
 
@@ -289,7 +289,7 @@ namespace vtil::optimizer
 #if VTIL_OPT_TRACE_VERBOSE
 			// Log the high bits.
 			//
-			log<CON_PRP>( "dst[%02d..%02d] := %s\n", access.bit_offset + access.bit_count, bit_count, res.to_string() );
+			log<CON_PRP>( "dst[%02d..%02d] := %s\n", access.bit_offset + access.bit_count, bit_count, res );
 #endif
 			base = base | ( res.resize( bit_count ) << ( access.bit_offset + access.bit_count ) );
 		}
@@ -297,7 +297,7 @@ namespace vtil::optimizer
 #if VTIL_OPT_TRACE_VERBOSE
 		// Log the final result.
 		//
-		log<CON_GRN>( "dst         := %s\n", base.to_string() );
+		log<CON_GRN>( "dst         := %s\n", base );
 #endif
 		// Resize and return.
 		//

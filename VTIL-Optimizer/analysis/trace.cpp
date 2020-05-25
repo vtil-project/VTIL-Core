@@ -40,7 +40,7 @@ namespace vtil::optimizer
 #if VTIL_OPT_TRACE_VERBOSE
         // Log the beginning of the trace.
         //
-        log<CON_BRG>( "Trace(%s)\n", lookup.to_string() );
+        log<CON_BRG>( "Trace(%s)\n", lookup );
         scope_padding _p( 1 );
 #endif
 
@@ -54,7 +54,7 @@ namespace vtil::optimizer
 #if VTIL_OPT_TRACE_VERBOSE
         // Log result.
         //
-        log<CON_BRG>( "= %s\n", result.to_string() );
+        log<CON_BRG>( "= %s\n", result );
 #endif
         return result;
     };
@@ -98,7 +98,7 @@ namespace vtil::optimizer
                 // Make sure this is not the case.
                 //
                 if ( var.reg().flags & register_local )
-                    error( "Local variable %s is used before value assignment.\n", var.to_string() );
+                    error( "Local variable %s is used before value assignment.\n", var );
 
                 // If volatile iterator cannot be moved, skip.
                 //
@@ -375,7 +375,7 @@ namespace vtil::optimizer
 #if VTIL_OPT_TRACE_VERBOSE
                 // Log recursive tracing of the expression.
                 //
-                log<CON_GRN>( "Base case: %s\n", result.to_string() );
+                log<CON_GRN>( "Base case: %s\n", result );
 #endif
                 // Save current result as default result and clear it.
                 //
@@ -419,7 +419,7 @@ namespace vtil::optimizer
 #if VTIL_OPT_TRACE_VERBOSE
                     // Log result.
                     //
-                    log<CON_BLU>( "= %s\n", exp.to_string() );
+                    log<CON_BLU>( "= %s\n", exp );
 #endif
                     // If no result is set yet, assign the current expression.
                     //
@@ -460,7 +460,7 @@ namespace vtil::optimizer
 #if VTIL_OPT_TRACE_VERBOSE
         // Log result.
         //
-        log<CON_BRG>( "= %s\n", result.to_string() );
+        log<CON_BRG>( "= %s\n", result );
 #endif
         return result;
     }

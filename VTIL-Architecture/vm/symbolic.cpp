@@ -36,14 +36,14 @@ namespace vtil
 		using namespace vtil::logger;
 		for ( auto& [reg, exp] : register_state )
 		{
-			log<CON_BLU>( "%-16s     :=", reg.to_string() );
-			log<CON_GRN>( "%s\n", exp.to_string() );
+			log<CON_BLU>( "%-16s     :=", reg );
+			log<CON_GRN>( "%s\n", exp );
 		}
 
 		for ( auto& [ptr, exp] : memory_state )
 		{
-			log<CON_YLW>( "[%-16s]\n", ptr.to_string() );
-			log<CON_GRN>( "%s\n", exp.to_string() );
+			log<CON_YLW>( "[%-16s]\n", ptr );
+			log<CON_GRN>( "%s\n", exp );
 		}
 	}
 

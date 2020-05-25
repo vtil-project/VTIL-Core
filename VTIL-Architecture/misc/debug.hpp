@@ -70,11 +70,11 @@ namespace vtil::debug
 			if ( op.is_register() )
 			{
 				if ( op.reg().is_stack_pointer() )
-					log<CON_PRP>( VTIL_FMT_INS_OPR " ", op.reg().to_string() );						// Stack pointer
+					log<CON_PRP>( VTIL_FMT_INS_OPR " ", op.reg() );									// Stack pointer
 				else if ( op.reg().is_physical() )
-					log<CON_BLU>( VTIL_FMT_INS_OPR " ", op.reg().to_string() );						// Any hardware/special register
+					log<CON_BLU>( VTIL_FMT_INS_OPR " ", op.reg() );									// Any hardware/special register
 				else
-					log<CON_GRN>( VTIL_FMT_INS_OPR " ", op.reg().to_string() );						// Virtual register
+					log<CON_GRN>( VTIL_FMT_INS_OPR " ", op.reg() );									// Virtual register
 			}
 			else
 			{
@@ -152,7 +152,7 @@ namespace vtil::debug
 
 					auto dasm = capstone::disasm( bytes.data(), it->vip == invalid_vip ? 0 : it->vip, bytes.size() );
 					for ( auto& ins : dasm )
-						log<CON_YLW>( "; %s\n", ins.to_string() );
+						log<CON_YLW>( "; %s\n", ins );
 					no_disasm = true;
 				}
 			}

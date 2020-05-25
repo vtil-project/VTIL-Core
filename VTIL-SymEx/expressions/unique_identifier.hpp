@@ -30,30 +30,10 @@
 #include <vtil/utility>
 #include <functional>
 #include <stdlib.h>
+#include <vtil/io>
 
 namespace vtil::symbolic
 {
-	namespace impl
-	{
-		// Check if type is convertable to string using std::to_string.
-		//
-		template<typename... D>
-		struct std_to_string : concept_base<std_to_string, D...>
-		{
-			template<typename T>
-			static auto f( T v ) -> decltype( std::to_string( v ) );
-		};
-
-		// Check if type is convertable to string using T.to_string()
-		//
-		template<typename... D>
-		struct has_to_string : concept_base<has_to_string, D...>
-		{
-			template<typename T>
-			static auto f( T v ) -> decltype( v.to_string() );
-		};
-	};
-
 	// Unique identifier type to be used within symbolic expression context.
 	//
 	struct unique_identifier
@@ -120,29 +100,18 @@ namespace vtil::symbolic
 			{
 				string_cast = [ name ] ( auto& ) { return name; };
 			}
-			// Otherwise try to name the variable.
+			// Else, try to convert to string via ::to_string or std::to_string.
+			//
+			else if constexpr ( format::has_string_conversion_v<T> )
+			{
+				string_cast = [ ] ( const variant& v ) { return format::as_string( v.get<T>() ); };
+			}
+			// If all failed, assert we have a valid hasher.
 			//
 			else
 			{
-				// If has ::to_string(), redirect.
-				//
-				if constexpr ( impl::has_to_string<T>::apply() )
-				{
-					string_cast = [  ] ( const variant& v ) { return v.get<T>().to_string(); };
-				}
-				// If std::to_string is valid, redirect.
-				//
-				else if constexpr ( impl::std_to_string<T>::apply() )
-				{
-					string_cast = [  ] ( const variant& v ) { return std::to_string( v.get<T>() ); };
-				}
-				// Otherwise assert we have a valid hasher.
-				//
-				else
-				{
-					string_cast = [ ] ( const variant& v ) { return "[object]"; };
-					static_assert( !std::is_same_v<hasher_t, void>, "Unique identifier was not provided a hasher nor a way to acquire the name." );
-				}
+				string_cast = [ ] ( const variant& v ) { return "[object]"; };
+				static_assert( !std::is_same_v<hasher_t, void>, "Unique identifier was not provided a hasher nor a way to acquire the name." );
 			}
 
 			// Set comparison operator.

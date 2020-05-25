@@ -38,7 +38,7 @@ namespace vtil::optimizer
 #if VTIL_OPT_TRACE_VERBOSE
         // Log the beginning of the trace.
         //
-        log<CON_BRG>( "CcTrace(%s)\n", lookup.to_string() );
+        log<CON_BRG>( "CcTrace(%s)\n", lookup );
         scope_padding _p( 1 );
 #endif
         // Handle base case.
@@ -49,7 +49,7 @@ namespace vtil::optimizer
 #if VTIL_OPT_TRACE_VERBOSE
             // Log result.
             //
-            log<CON_BRG>( "= %s [Base case]\n", result.to_string() );
+            log<CON_BRG>( "= %s [Base case]\n", result );
 #endif
             return result;
         }
@@ -63,7 +63,7 @@ namespace vtil::optimizer
 #if VTIL_OPT_TRACE_VERBOSE
             // Log result.
             //
-            log<CON_BLU>( "= %s [Cached result]\n", result.to_string() );
+            log<CON_BLU>( "= %s [Cached result]\n", result );
 #endif
             return result;
         }
@@ -128,7 +128,7 @@ namespace vtil::optimizer
 #if VTIL_OPT_TRACE_VERBOSE
         // Log result.
         //
-        log<CON_BRG>( "= %s\n", result.to_string() );
+        log<CON_BRG>( "= %s\n", result );
 #endif
         return result;
     }
