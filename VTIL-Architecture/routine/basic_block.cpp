@@ -99,9 +99,9 @@ namespace vtil
 	basic_block* basic_block::label_end()
 	{
 		auto [n, vip] = label_stack.back();
-		std::for_each( std::next( stream.begin(), n ), stream.end(), [ = ] ( instruction& ins )
+		std::for_each( std::next( stream.begin(), n ), stream.end(), [ v = vip_t( vip ) ]( instruction& ins )
 		{
-			ins.vip = ins.vip == invalid_vip ? vip : ins.vip;
+			ins.vip = ins.vip == invalid_vip ? v : ins.vip;
 		} );
 		label_stack.pop_back();
 		return this;
