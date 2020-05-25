@@ -197,39 +197,6 @@ namespace vtil::optimizer
             lookup.mem().decay().enumerate( make_validator( lookup.at.container ) );
         }
 #endif
-
-        // Declare a helper to convert operands of current instruction into expressions.
-        //
-        auto cvt_operand = [ & ] ( int i ) -> symbolic::expression
-        {
-            const operand& op = lookup.at->operands[ i ];
-
-            // If operand is a register:
-            //
-            if ( op.is_register() )
-            {
-                // Trace the source register.
-                //
-                auto result = tracer( { lookup.at, op.reg() } );
-
-                // If stack pointer, add the current virtual offset.
-                //
-                if ( op.reg().is_stack_pointer() )
-                    result = result + lookup.at->sp_offset;
-
-                // Return the result.
-                //
-                return result;
-            }
-            // If it is an immediate, convert into constant expression and return.
-            //
-            else
-            {
-                fassert( op.is_immediate() );
-                return { op.imm().i64, op.imm().bit_count };
-            }
-        };
-
         // Fast forward until iterator writes to the lookup, if none found return as is.
         //
         access_details details = {};
