@@ -297,4 +297,13 @@ namespace vtil
 	static const register_desc REG_IMGBASE = { register_readonly | register_image_base,    0, 64 };
 	static const register_desc REG_FLAGS =   { register_physical | register_flags,         0, 64 };
 	static const register_desc REG_SP =      { register_physical | register_stack_pointer, 0, 64 };
+
+	// Helper to make undefined of N bits.
+	//
+	static const register_desc make_undefined( bitcnt_t sz )
+	{
+		register_desc copy = UNDEFINED;
+		copy.bit_count = sz;
+		return copy;
+	}
 };
