@@ -218,6 +218,23 @@ namespace vtil
 		//
 		uint32_t last_temporary_index = 0;
 
+		// Labels are a simple way to assign the same VIP for multiple 
+		// instructions that will be pushed after the call.
+		//
+		std::vector<std::pair<iterator, vip_t>> label_stack = {};
+		basic_block* begin_label( vip_t vip )
+		{
+			label_stack.emplace_back( end(), vip );
+			return this;
+		}
+		basic_block* end_label()
+		{
+			auto [it, vip] = label_stack.back();
+			std::for_each( it, end(), [ = ] ( instruction& ins ) { ins.vip = vip; } );
+			label_stack.pop_back();
+			return this;
+		}
+
 		// Wrap the std::list fundamentals.
 		//
 		auto size() const { return stream.size(); }
