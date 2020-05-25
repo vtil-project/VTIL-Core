@@ -41,8 +41,20 @@
 	#define __debugbreak() __asm__ volatile( "int $3" )
 #endif
 
+// [Configuration]
+// Determine which file stream we should use for logging.
+//
+#ifndef VTIL_LOGGER_DST
+	#define VTIL_LOGGER_DST stdout
+#endif
+
 namespace vtil::logger
 {
+	// Padding customization for logger.
+	//
+	static constexpr char log_padding_c = '|';
+	static constexpr int log_padding_step = 2;
+
 	// Console colors, only used on Windows platform.
 	//
 	enum console_color
@@ -57,17 +69,45 @@ namespace vtil::logger
 		CON_DEF = 7,
 	};
 
-	// State of the logging engine.
-	//
-	extern critical_section log_cs;
-	extern bool log_disable;
-	extern int log_padding;
-	extern int log_padding_carry;
+	namespace impl
+	{
+		// Used to mark functions noreturn.
+		//
+		static void noreturn_helper [[noreturn]] () { __debugbreak(); abort(); }
+	};
 
-	// Padding customization for logger.
+	// Describes the state of the logging engine.
 	//
-	static constexpr char log_padding_c = '|';
-	static constexpr uint32_t log_padding_step = 2;
+	struct state
+	{
+		// Lock of the stream.
+		//
+		critical_section lock;
+
+		// Whether prints are muted or not.
+		//
+		bool mute = false;
+
+		// Current padding level.
+		//
+		int padding = -1;
+
+		// Padding leftover from previous print.
+		//
+		int padding_carry = 0;
+
+		// Whether stdout was initialized or not.
+		//
+		bool initialized = false;
+
+		// Gets the global logger state.
+		//
+		static state* get();
+	};
+
+	// Changes color where possible.
+	//
+	void set_color( console_color color );
 
 	// RAII hack for incrementing the padding until routine ends.
 	// Can be used with the argument u=0 to act as a lock guard.
@@ -76,10 +116,22 @@ namespace vtil::logger
 	//
 	struct scope_padding
 	{
-		int prev = log_padding;
-		bool holds_lock = false;
-		scope_padding( unsigned u ) { log_cs.lock(); log_padding += u; holds_lock = true; }
-		void end() { if ( holds_lock ) { log_padding = prev; holds_lock = false; log_cs.unlock(); } }
+		int active;
+		int prev;
+
+		scope_padding( unsigned u )
+			: active( ( state::get()->lock.lock(), 1 ) ),
+			  prev( state::get()->padding )
+		{
+			state::get()->padding += u;
+		}
+
+		void end()
+		{
+			if ( active-- <= 0 ) return;
+			state::get()->padding = prev;
+			state::get()->lock.unlock();
+		}
 		~scope_padding() { end(); }
 	};
 
@@ -89,59 +141,52 @@ namespace vtil::logger
 	//
 	struct scope_verbosity
 	{
-		bool prev = log_disable;
-		bool holds_lock = false;
-		scope_verbosity( bool verbose_output ) { log_cs.lock(); log_disable |= !verbose_output; holds_lock = true; }
-		void end() { if ( holds_lock ) { log_disable = prev; holds_lock = false; log_cs.unlock(); } }
+		int active;
+		bool prev;
+
+		scope_verbosity( bool verbose_output )
+			: active( ( state::get()->lock.lock(), 1 ) ),
+			  prev( state::get()->mute )
+		{
+			state::get()->mute |= !verbose_output;
+		}
+
+		void end()
+		{
+			if ( active-- <= 0 ) return;
+			state::get()->mute = prev;
+			state::get()->lock.unlock();
+		}
 		~scope_verbosity() { end(); }
-	};
-
-	// Implementation details.
-	//
-	namespace impl
-	{
-		// Internally used to change the console if possible.
-		//
-		void set_color( console_color color );
-
-		// Internally used to initialize the logger.
-		//
-		void initialize();
-	
-		// Used to mark functions noreturn.
-		//
-		inline static void noreturn_helper [[noreturn]] () { __debugbreak(); abort(); }
 	};
 
 	// Main function used when logging.
 	//
-	template<console_color color = CON_DEF, typename... params>
-	static int log( const char* fmt, params&&... ps )
+	template<typename... params>
+	static int log( console_color color, const char* fmt, params&&... ps )
 	{
-		// Do not execute if logs are disabled.
-		//
-		if ( log_disable ) return 0;
+		auto state = state::get();
 
 		// Hold the lock for the critical section guarding ::log.
 		//
-		std::lock_guard g( log_cs );
+		std::lock_guard g( state->lock );
 
-		// Initialize logger if not done already.
+		// Do not execute if logs are disabled.
 		//
-		impl::initialize();
+		if ( state->mute ) return 0;
 
 		// Set to defualt color.
 		//
-		impl::set_color( CON_DEF );
+		set_color( CON_DEF );
 		int out_cnt = 0;
 
 		// If we should pad this output:
 		//
-		if ( log_padding > 0 )
+		if ( state->padding > 0 )
 		{
 			// If it was not carried from previous:
 			//
-			if( int pad_by = log_padding - log_padding_carry )
+			if ( int pad_by = state->padding - state->padding_carry )
 			{
 				for ( int i = 0; i < pad_by; i++ )
 				{
@@ -160,15 +205,26 @@ namespace vtil::logger
 			// Set or clear the carry for next.
 			//
 			if ( fmt[ strlen( fmt ) - 1 ] == '\n' )
-				log_padding_carry = 0;
+				state->padding_carry = 0;
 			else
-				log_padding_carry = log_padding;
+				state->padding_carry = state->padding;
 		}
 
 		// Set to requested color and redirect to printf.
 		//
-		impl::set_color( color );
-		return out_cnt + printf( fmt, format::fix_parameter<params>( std::forward<params>( ps ) )... );
+		set_color( color );
+
+		// If string literal with no parameters, use puts instead.
+		//
+		if ( sizeof...( ps ) == 0 )
+			return out_cnt + fputs( fmt, VTIL_LOGGER_DST );
+		else
+			return out_cnt + fprintf( VTIL_LOGGER_DST, fmt, format::fix_parameter<params>( std::forward<params>( ps ) )... );
+	}
+	template<console_color color = CON_DEF, typename... params>
+	static int log( const char* fmt, params&&... ps )
+	{
+		return log( color, fmt, std::forward<params>( ps )... );
 	}
 
 	// Prints an error message and breaks the execution.
@@ -185,11 +241,11 @@ namespace vtil::logger
 
 		// Error will stop any execution so feel free to ignore any locks.
 		//
-		new ( &log_cs ) critical_section();
+		new ( &state::get()->lock ) critical_section();
 
 		// Reset padding and print error message.
 		//
-		log_padding = 0;
+		state::get()->padding = 0;
 		log<CON_RED>( "\n%s\n", message.data() );
 
 		// Break the program. 

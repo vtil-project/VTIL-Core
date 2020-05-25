@@ -25,44 +25,40 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE  
 // POSSIBILITY OF SUCH DAMAGE.        
 //
-#include "logger.hpp"
-
 #if _WIN64
 	#define WIN32_LEAN_AND_MEAN
 	#define NOMINMAX
 	#include <Windows.h>
 #endif
+#include "logger.hpp"
 
 namespace vtil::logger
 {
-	// State of the logging engine.
+	// Global logger state.
 	//
-	critical_section log_cs;
-	bool log_disable = false;
-	int log_padding = -1;
-	int log_padding_carry = 0;
+	static state global_state = {};
 
-	namespace impl
+	// Gets the global logger state.
+	//
+	state* state::get()
 	{
-		// Internally used to change the console if possible.
-		//
-		void set_color( console_color color )
+		if ( !global_state.initialized )
 		{
-	#if _WIN64
-			SetConsoleTextAttribute( GetStdHandle( STD_OUTPUT_HANDLE ), color );
-	#endif
+#if _WIN64
+			SetConsoleOutputCP( CP_UTF8 );
+#endif
+			global_state.initialized = true;
 		}
 
-		// Internally used to initialize the logger.
-		//
-		void initialize()
-		{
-			static bool log_init = false;
-			if ( log_init ) return;
-	#if _WIN64
-			SetConsoleOutputCP( CP_UTF8 );
-	#endif
-			log_init = true;
-		}
-	};
+		return &global_state;
+	}
+
+	// Changes color where possible.
+	//
+	void set_color( console_color color )
+	{
+#if _WIN64
+		SetConsoleTextAttribute( GetStdHandle( STD_OUTPUT_HANDLE ), color );
+#endif
+	}
 };
