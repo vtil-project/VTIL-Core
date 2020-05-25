@@ -73,6 +73,26 @@ namespace vtil
 
     namespace impl
     {
+        // Applies type modifier over each element in pair/tuple.
+        //
+        template<template<typename> typename F, typename T>
+        struct apply_each { using type = F<T>; };
+        template<template<typename> typename F, typename... T>
+        struct apply_each<F, std::pair<T...>> { using type = std::pair<F<T>...>; };
+        template<template<typename> typename F, typename... T>
+        struct apply_each<F, std::tuple<T...>> { using type = std::tuple<F<T>...>; };
+
+        template<template<typename> typename F, typename T>
+        using apply_each_t = typename apply_each<F, T>::type;
+
+        // Appends a deep const qualifier to each referenced type.
+        //
+        template<typename T>
+        using add_dconst_t = typename std::conditional_t
+            <std::is_reference_v<T>,
+            std::add_lvalue_reference_t<std::add_const_t<std::remove_reference_t<T>>>,
+            std::add_const_t<T>>;
+
         // Checks if type is optional_reference<T>.
         //
         template <typename T> struct is_optional_reference : std::false_type {};
@@ -116,6 +136,12 @@ namespace vtil
         template<typename Tx>
         static auto reduce_proxy( Tx& p ) { return p.reduce(); }
 
+        template<typename Tx, typename F = decltype( std::declval<Tx>().reduce() )>
+        static auto reduce_proxy( const Tx& p )
+        {
+            return ( typename impl::apply_each_t<impl::add_dconst_t, F> ) reduce_proxy( ( Tx& ) p );
+        }
+
         // Only the base type can construct/copy/move this type.
         //
         reducable() = default;
@@ -144,6 +170,10 @@ namespace vtil
         //
         template<std::enable_if_t<flags&reducable_hash, int> = 0>
         hash_t hash() const { return make_hash( reduce_proxy( ( const T& ) *this ) ); }
+
+        // Define the [const T::reduce()] for the base type just for convinience.
+        //
+        auto reduce() const { return reduce_proxy( ( const T& ) *this ); }
     };
 
     // Helper used to create reduced tuples.
