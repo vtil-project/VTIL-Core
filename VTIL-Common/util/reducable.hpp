@@ -66,7 +66,7 @@
 #pragma warning(disable: 4305)
 namespace vtil
 {
-    // Forward decleration for optional reference type.
+    // Forward declaration for optional reference type.
     //
     template<typename T>
     struct optional_reference;
@@ -101,7 +101,7 @@ namespace vtil
         static constexpr bool is_optional_reference_v = is_optional_reference<std::remove_cvref_t<T>>::value;
     };
 
-    // Mask of requested reducable auto declerations.
+    // Mask of requested reducable auto declarations.
     //
     enum reducable_auto_decl_id : uint8_t
     {
