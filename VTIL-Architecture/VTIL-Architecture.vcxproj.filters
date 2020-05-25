@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <Filter Include="Architecture">
@@ -12,6 +12,9 @@
     </Filter>
     <Filter Include="Includes">
       <UniqueIdentifier>{da55a262-7d21-4ce0-b5ef-c2de31a52d12}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="SymEx Integration">
+      <UniqueIdentifier>{b070980d-a30d-421e-82c6-0298cfe01c0e}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -42,6 +45,15 @@
     <ClInclude Include="routine\serialization.hpp">
       <Filter>Instruction Stream</Filter>
     </ClInclude>
+    <ClInclude Include="symex\variable.hpp">
+      <Filter>SymEx Integration</Filter>
+    </ClInclude>
+    <ClInclude Include="symex\pointer.hpp">
+      <Filter>SymEx Integration</Filter>
+    </ClInclude>
+    <ClInclude Include="symex\memory.hpp">
+      <Filter>SymEx Integration</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="arch\instruction_desc.cpp">
@@ -58,6 +70,12 @@
     </ClCompile>
     <ClCompile Include="routine\routine.cpp">
       <Filter>Instruction Stream</Filter>
+    </ClCompile>
+    <ClCompile Include="symex\variable.cpp">
+      <Filter>SymEx Integration</Filter>
+    </ClCompile>
+    <ClCompile Include="symex\pointer.cpp">
+      <Filter>SymEx Integration</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

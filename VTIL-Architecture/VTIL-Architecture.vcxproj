@@ -20,6 +20,9 @@
     <ClInclude Include="routine\instruction.hpp" />
     <ClInclude Include="routine\routine.hpp" />
     <ClInclude Include="routine\serialization.hpp" />
+    <ClInclude Include="symex\memory.hpp" />
+    <ClInclude Include="symex\pointer.hpp" />
+    <ClInclude Include="symex\variable.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="arch\instruction_desc.cpp" />
@@ -27,6 +30,8 @@
     <ClCompile Include="routine\instruction.cpp" />
     <ClCompile Include="routine\routine.cpp" />
     <ClCompile Include="routine\serialization.cpp" />
+    <ClCompile Include="symex\pointer.cpp" />
+    <ClCompile Include="symex\variable.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="includes\vtil\arch" />
@@ -70,13 +75,13 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>$(ProjectDir)..\Capstone\include;$(ProjectDir)..\Keystone\include;$(ProjectDir)..\VTIL-Common\includes;$(IncludePath)</IncludePath>
-    <OutDir>$(ProjectDir)$(Platform)\$(Configuration)\</OutDir>
+    <IncludePath>$(ProjectDir)..\Capstone\include;$(ProjectDir)..\Keystone\include;$(ProjectDir)..\VTIL-SymEx\includes;$(ProjectDir)..\VTIL-Common\includes;$(IncludePath)</IncludePath>
+    <OutDir>$(ProjectDir)..\$(Platform)\$(Configuration)\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>$(ProjectDir)..\Capstone\include;$(ProjectDir)..\Keystone\include;$(ProjectDir)..\VTIL-Common\includes;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
-    <OutDir>$(ProjectDir)$(Platform)\$(Configuration)\</OutDir>
+    <IncludePath>$(ProjectDir)..\Capstone\include;$(ProjectDir)..\Keystone\include;$(ProjectDir)..\VTIL-SymEx\includes;$(ProjectDir)..\VTIL-Common\includes;$(VC_IncludePath);$(WindowsSDK_IncludePath)</IncludePath>
+    <OutDir>$(ProjectDir)..\$(Platform)\$(Configuration)\</OutDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
