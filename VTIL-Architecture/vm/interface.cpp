@@ -197,46 +197,74 @@ namespace vtil
 	// If an unknown instruction is hit, breaks the loop if specified so, ignores it and
 	// sets the affected registers and memory undefined instead otherwise.
 	//
-	il_const_iterator vm_interface::run( il_const_iterator it, bool exit_on_ud )
+	std::pair<il_const_iterator, vmexit_mask> vm_interface::run( il_const_iterator it, uint32_t exit_mask )
 	{
 		// Until the iterator points at the end of the block:
 		//
 		for ( ; !it.is_end(); it++ )
 		{
-			// If executed fine, continue.
+			// Check pre-exit conditions.
 			//
-			if ( execute( *it ) )
-				continue;
+			if ( it->is_volatile() && ( exit_mask & vmexit_volatile ) )
+				return { it, vmexit_volatile };
 
-			// Exit the loop if specified so.
-			//
-			if ( exit_on_ud )
-				return it;
-
-			// Make each register operand we write to undefined.
-			//
-			for ( int i = 0; i < it->base->operand_count(); i++ )
+			if ( exit_mask & vmexit_volatile_register )
 			{
-				if ( it->base->operand_types[ i ] >= operand_type::write )
+				for ( auto& op : it->operands )
+					if ( op.is_register() && op.reg().is_volatile() )
+						return { it, vmexit_volatile_register };
+			}
+
+			if ( exit_mask & vmexit_volatile_memory )
+			{
+				if ( it->base->accesses_memory() )
 				{
-					write_register(
-						it->operands[ i ].reg(),
-						symbolic::make_undefined_ex( it->operands[ i ].reg().bit_count )
-					);
+					auto [base, _] = it->get_mem_loc();
+					if ( !base.is_stack_pointer() &&
+						 !base.is_image_base() &&
+						 !read_register( base ).is_constant() )
+						return { it, vmexit_volatile_memory };
 				}
 			}
 
-			// If instruction writes to memory, mark the region pointed at undefined.
+			// Try to execute the instruction.
 			//
-			if ( it->base->writes_memory() )
+			bool success = execute( *it );
+
+			// Check post-exit conditions.
+			//
+			if ( !success && ( exit_mask & vmexit_undefined ) )
+				return { it, vmexit_undefined };
+
+			// If it was undefined:
+			//
+			if ( !success )
 			{
-				auto [base, offset] = it->get_mem_loc();
-				write_memory(
-					read_register( it->get_mem_loc().first ) + it->get_mem_loc().second,
-					symbolic::make_undefined_ex( it->access_size() ? it->access_size() * 8 : 64 )
-				);
+				// Make each register operand we write to undefined.
+				//
+				for ( int i = 0; i < it->base->operand_count(); i++ )
+				{
+					if ( it->base->operand_types[ i ] >= operand_type::write )
+					{
+						write_register(
+							it->operands[ i ].reg(),
+							symbolic::make_undefined_ex( it->operands[ i ].reg().bit_count )
+						);
+					}
+				}
+
+				// If instruction writes to memory, mark the region pointed at undefined.
+				//
+				if ( it->base->writes_memory() )
+				{
+					auto [base, offset] = it->get_mem_loc();
+					write_memory(
+						read_register( it->get_mem_loc().first ) + it->get_mem_loc().second,
+						symbolic::make_undefined_ex( it->access_size() ? it->access_size() * 8 : 64 )
+					);
+				}
 			}
 		}
-		return {};
+		return { it, vmexit_halt };
 	}
 };
