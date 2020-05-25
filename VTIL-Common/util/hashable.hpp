@@ -139,6 +139,14 @@ namespace vtil
 		struct hasher_default_tag_t {};
 	};
 
+	// Define a basic helper for the user-invoked combination hashes.
+	//
+	static hash_t combine_hash( hash_t a, const hash_t& b )
+	{
+		impl::combine_hash( a, b );
+		return a;
+	}
+
 	// Define basic hasher.
 	//
 	template<typename T = impl::hasher_default_tag_t>
