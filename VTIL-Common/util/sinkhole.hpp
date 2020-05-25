@@ -170,6 +170,7 @@ namespace vtil
 			auto it_min = value_map.lower_bound( offset_fn{}( weaken_pointer{}( ptr ), 64 / 8 ) );
 			if ( it_min == value_map.end() ) return std::nullopt;
 			auto it_max = value_map.upper_bound( offset_fn{}( ptr, size / 8 ) );
+			if ( it_min == it_max ) return std::nullopt;
 			for ( auto it = it_min; it != it_max; it++ )
 			{
 				// Calculate displacement, if unknown return unknown.
