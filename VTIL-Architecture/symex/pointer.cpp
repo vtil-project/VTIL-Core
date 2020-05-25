@@ -85,7 +85,7 @@ namespace vtil::symbolic
 		//
 		for ( auto [xptr, key] : zip( xpointer, xpointer_keys ) )
 		{
-			xptr = base.get( [ & ] ( const unique_identifier& uid )
+			xptr = base.get( [ key ] ( const unique_identifier& uid )
 			{
 				// Hash the identifier of the value with the current key and mask it.
 				//
