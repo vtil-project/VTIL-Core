@@ -66,6 +66,9 @@
     <ClInclude Include="includes\vtil\vm">
       <Filter>Includes</Filter>
     </ClInclude>
+    <ClInclude Include="vm\lambda.hpp">
+      <Filter>Virtual Machine</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="arch\instruction_desc.cpp">

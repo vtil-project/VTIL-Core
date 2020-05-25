@@ -65,6 +65,11 @@ namespace vtil::symbolic
             memory_t( pointer base = {}, bitcnt_t bit_count = 0 )
                 : base( std::move( base ) ), bit_count( bit_count ) {}
 
+            // Add a decay wrapper.
+            //
+            expression& decay() { return base.base.decay(); }
+            const expression& decay() const { return base.base.decay(); }
+
             // Declare reduction.
             //
             REDUCE_TO( bit_count, base );
