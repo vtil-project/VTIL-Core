@@ -93,13 +93,13 @@ namespace vtil
 	//
 	basic_block* basic_block::label_begin( vip_t vip )
 	{
-		label_stack.emplace_back( stream.end(), vip );
+		label_stack.emplace_back( stream.size(), vip );
 		return this;
 	}
 	basic_block* basic_block::label_end()
 	{
-		auto [it, vip] = label_stack.back();
-		std::for_each( it, stream.end(), [ = ] ( instruction& ins )
+		auto [n, vip] = label_stack.back();
+		std::for_each( std::next( stream.begin(), n ), stream.end(), [ = ] ( instruction& ins )
 		{
 			ins.vip = ins.vip == invalid_vip ? vip : ins.vip;
 		} );
