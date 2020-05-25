@@ -88,6 +88,25 @@ namespace vtil
 		return result;
 	}
 
+	// Labels are a simple way to assign the same VIP for multiple 
+	// instructions that will be pushed after the call.
+	//
+	basic_block* basic_block::label_begin( vip_t vip )
+	{
+		label_stack.emplace_back( stream.end(), vip );
+		return this;
+	}
+	basic_block* basic_block::label_end()
+	{
+		auto [it, vip] = label_stack.back();
+		std::for_each( it, stream.end(), [ = ] ( instruction& ins )
+		{
+			ins.vip = ins.vip == invalid_vip ? vip : ins.vip;
+		} );
+		label_stack.pop_back();
+		return this;
+	}
+
 	// Drops const qualifier from iterator after asserting iterator
 	// belongs to this basic block.
 	//

@@ -221,20 +221,9 @@ namespace vtil
 		// Labels are a simple way to assign the same VIP for multiple 
 		// instructions that will be pushed after the call.
 		//
-		std::pair<iterator, vip_t> label_state;
-		basic_block* label_begin( vip_t vip )
-		{
-			fassert( !label_state.first.is_valid() );
-			label_state = { end(), vip };
-			return this;
-		}
-		basic_block* label_end()
-		{
-			auto [it, vip] = label_state;
-			std::for_each( it, end(), [ = ] ( instruction& ins ) { ins.vip = vip; } );
-			label_state = {};
-			return this;
-		}
+		std::vector<std::pair<std::list<instruction>::iterator, vip_t>> label_stack = {};
+		basic_block* label_begin( vip_t vip );
+		basic_block* label_end();
 
 		// Wrap the std::list fundamentals.
 		//
