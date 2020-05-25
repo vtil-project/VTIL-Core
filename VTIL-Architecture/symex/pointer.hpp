@@ -58,17 +58,22 @@ namespace vtil::symbolic
 		// if resolved to an immediate value.
 		// 
 		boxed_expression base;
+
+		// Special flags of the registers the base contains.
+		//
 		uint64_t flags = 0;
 		
-		// Z-Pointer is an estimation of the actual virtual adresss 
+		// Strength of the pointer. -1 when it has unknowns, +1 on fully known value.
 		//
-		uint64_t zpointer;
 		int32_t strenght = 0;
+
+		// X-Pointers are N-64-bit estimations of the actual virtual adresss.
+		//
 		std::array<uint64_t, VTIL_SYM_PTR_XPTR_KEYS> xpointer;
 
 		// Construct null pointer.
 		//
-		pointer() : zpointer( 0 ) { xpointer.fill( 0 ); }
+		pointer() { xpointer.fill( 0 ); }
 		pointer( std::nullptr_t ) : pointer() {}
 
 		// Default copy/move.

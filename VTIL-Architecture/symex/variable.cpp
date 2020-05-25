@@ -155,7 +155,7 @@ namespace vtil::symbolic
 		{
 			// Indicate dereferencing of the pointer expression.
 			//
-			base = format::str( "[%s]", mem->base.to_string() );
+			base = format::str( "[%s]", mem->decay() );
 
 			// Prefix with read size:
 			//
