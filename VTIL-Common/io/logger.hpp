@@ -35,6 +35,8 @@
 #include "formatting.hpp"
 #include "../util/critical_section.hpp"
 
+// If inline assembly is supported use it, otherwise rely on intrinsics to emit INT3.
+//
 #ifdef _MSC_VER
 	#include <intrin.h>
 #else
@@ -192,12 +194,12 @@ namespace vtil::logger
 				{
 					if ( ( i + 1 ) == pad_by )
 					{
-						out_cnt += printf( "%*c", log_padding_step - 1, ' ' );
+						out_cnt += fprintf( VTIL_LOGGER_DST, "%*c", log_padding_step - 1, ' ' );
 						if ( fmt[ 0 ] == ' ' ) putchar( log_padding_c );
 					}
 					else
 					{
-						out_cnt += printf( "%*c%c", log_padding_step - 1, ' ', log_padding_c );
+						out_cnt += fprintf( VTIL_LOGGER_DST, "%*c%c", log_padding_step - 1, ' ', log_padding_c );
 					}
 				}
 			}
