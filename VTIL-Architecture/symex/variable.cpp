@@ -31,7 +31,7 @@ namespace vtil::symbolic
 {
 	// Dummy iterator to be used when variable is not being tracked within a block.
 	//
-    static const il_iterator free_form_iterator = ( [ ] ()
+    static const il_const_iterator free_form_iterator = ( [ ] ()
     {
         // Create a dummy invalid block with an invalid instruction and reference it.
         //
