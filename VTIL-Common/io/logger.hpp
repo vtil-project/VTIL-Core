@@ -60,9 +60,9 @@ namespace vtil::logger
 	// State of the logging engine.
 	//
 	extern critical_section log_cs;
-	extern volatile bool log_disable;
-	extern volatile int log_padding;
-	extern volatile int log_padding_carry;
+	extern bool log_disable;
+	extern int log_padding;
+	extern int log_padding_carry;
 
 	// Padding customization for logger.
 	//
@@ -78,8 +78,8 @@ namespace vtil::logger
 	{
 		int prev = log_padding;
 		bool holds_lock = false;
-		scope_padding( unsigned u ) { log_padding += u; log_cs.lock(); holds_lock = true; }
-		void end() { if ( holds_lock ) log_cs.unlock(), holds_lock = false; log_padding = prev; }
+		scope_padding( unsigned u ) { log_cs.lock(); log_padding += u; holds_lock = true; }
+		void end() { if ( holds_lock ) { log_padding = prev; holds_lock = false; log_cs.unlock(); } }
 		~scope_padding() { end(); }
 	};
 
@@ -91,8 +91,8 @@ namespace vtil::logger
 	{
 		bool prev = log_disable;
 		bool holds_lock = false;
-		scope_verbosity( bool verbose_output ) { log_disable |= !verbose_output; log_cs.lock(); holds_lock = true; }
-		void end() { if ( holds_lock ) log_cs.unlock(), holds_lock = false; log_disable = prev; }
+		scope_verbosity( bool verbose_output ) { log_cs.lock(); log_disable |= !verbose_output; holds_lock = true; }
+		void end() { if ( holds_lock ) { log_disable = prev; holds_lock = false; log_cs.unlock(); } }
 		~scope_verbosity() { end(); }
 	};
 

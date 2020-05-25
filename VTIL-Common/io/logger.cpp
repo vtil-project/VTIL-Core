@@ -38,9 +38,9 @@ namespace vtil::logger
 	// State of the logging engine.
 	//
 	critical_section log_cs;
-	volatile bool log_disable = false;
-	volatile int log_padding = -1;
-	volatile int log_padding_carry = 0;
+	bool log_disable = false;
+	int log_padding = -1;
+	int log_padding_carry = 0;
 
 	namespace impl
 	{
