@@ -25,6 +25,7 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE  
 // POSSIBILITY OF SUCH DAMAGE.        
 //
+#include <vtil/vm>
 #include "trace.hpp"
 #include "variable_aux.hpp"
 
@@ -32,7 +33,7 @@ namespace vtil::optimizer
 {
     // Basic tracer with the trace_function_t signature implemented using primitive tracer.
     //
-    static symbolic::expression trace_basic( const variable& lookup )
+    static symbolic::expression trace_basic( const symbolic::variable& lookup )
     {
         using namespace logger;
 
@@ -81,7 +82,7 @@ namespace vtil::optimizer
         {
             // Move the variable to reference the previous block.
             //
-            variable var = uid.get<variable>();
+            symbolic::variable var = uid.get<symbolic::variable>();
 
             // Skip if variable is position indepdendent or not at the beginning of the block.
             //
@@ -108,7 +109,7 @@ namespace vtil::optimizer
             //
             else if ( var.is_memory() )
             {
-                auto& pointer = var.mem().pointer;
+                auto& pointer = var.mem().decay();
 #if VTIL_OPT_TRACE_VERBOSE
                 // Log original pointer.
                 //
@@ -116,7 +117,7 @@ namespace vtil::optimizer
 #endif
                 // Fail if propagation fails.
                 //
-                if ( !( pointer = propagate( pointer->decay(), it, trace_basic ) ) )
+                if ( !( pointer = propagate( pointer, it, trace_basic ) ) )
                     return {};
 
 #if VTIL_OPT_TRACE_VERBOSE
@@ -159,7 +160,7 @@ namespace vtil::optimizer
     // that describes it's value at the bound point. Will invoke the passed tracer for any additional 
     // tracing it requires.
     //
-    symbolic::expression trace_primitive( variable lookup, const trace_function_t& tracer )
+    symbolic::expression trace_primitive( symbolic::variable lookup, const trace_function_t& tracer )
     {
         using namespace logger;
 
@@ -183,17 +184,17 @@ namespace vtil::optimizer
                     {
                         // Make sure it either has no iterator or belongs to the current container.
                         //
-                        auto& var = exp.uid.get<variable>();
+                        auto& var = exp.uid.get<symbolic::variable>();
                         fassert( !var.at.is_valid() || var.at.container == container );
 
                         // If memory variable, validate pointer as well.
                         //
                         if ( var.is_memory() )
-                            var.mem().pointer->enumerate( make_validator( container ) );
+                            var.mem().decay().enumerate( make_validator( container ) );
                     }
                 };
             };
-            lookup.mem().pointer->enumerate( make_validator( lookup.at.container ) );
+            lookup.mem().decay().enumerate( make_validator( lookup.at.container ) );
         }
 #endif
 
@@ -263,7 +264,7 @@ namespace vtil::optimizer
                 ptrace = [ &, &reg = lookup.reg(), 
                            it = std::next( lookup.at ) ] ( bitcnt_t bit_offset, bitcnt_t bit_count )
                 {
-                    variable::register_t tmp = {
+                    symbolic::variable::register_t tmp = {
                         reg.flags,
                         reg.local_id,
                         bit_count,
@@ -278,8 +279,8 @@ namespace vtil::optimizer
                            it = std::next( lookup.at ) ] ( bitcnt_t bit_offset, bitcnt_t bit_count )
                 {
                     fassert( !( ( bit_offset | bit_count ) & 7 ) );
-                    variable::memory_t tmp = {
-                        mem.pointer->decay() + bit_offset / 8,
+                    symbolic::variable::memory_t tmp = {
+                        mem.decay() + bit_offset / 8,
                         bit_count
                     };
                     return tracer( { it, tmp } );
@@ -291,142 +292,65 @@ namespace vtil::optimizer
             return resolve_partial( details, result_bcnt, ptrace );
         }
 
-        // If register:
+        // Create a lambda virtual machine and allocate a temporary result.
         //
-        if ( lookup.is_register() )
+        lambda_vm lvm;
+        symbolic::expression result = {};
+
+        lvm.hooks.read_register = [ & ] ( const register_desc& desc )
         {
-            // If access details are unknown, long and fallthrough to fail.
-            //
-            if ( details.is_unknown() )
-            {
-#if VTIL_OPT_TRACE_VERBOSE
-                // Log the state.
-                //
-                log<CON_RED>( "[Unknown register state.]\n" );
-#endif
-            }
-            // If MOV/MOVSX:
-            //
-            else if ( bool cast_signed = *lookup.at->base == ins::movsx; 
-                      *lookup.at->base == ins::mov || cast_signed )
-            {
-                // Return source operand.
-                //
-                return cvt_operand( 1 ).resize( result_bcnt, cast_signed );
-            }
-            // If LDD:
-            //
-            else if ( *lookup.at->base == ins::ldd )
-            {
-                // Redirect to source pointer.
-                //
-                auto [base, offset] = lookup.at->get_mem_loc();
-                variable::memory_t mem(
-                    tracer( { lookup.at, base } ) + offset,
-                    ( result_bcnt + 7 ) & ~7
-                );
-                symbolic::expression exp = tracer( variable( lookup.at, mem ) );
+            return tracer( { lookup.at, desc } );
+        };
+        lvm.hooks.read_memory = [ & ] ( const symbolic::expression& pointer, size_t byte_count )
+        {
+            auto exp = tracer( symbolic::variable{
+                lookup.at, { pointer, bitcnt_t( byte_count * 8 )  }
+            } );
+            return exp.is_valid() ? exp.resize( result_bcnt ) : exp;
+        };
+        lvm.hooks.write_register = [ & ] ( const register_desc& desc, symbolic::expression value )
+        {
+            if ( desc == lookup.reg() )
+                result = std::move( value );
+        };
 
-                // Return after resizing if valid or return invalid as memory queries can fail.
-                //
-                return exp.is_valid() ? exp.resize( result_bcnt ) : exp;
-            }
-            // If any symbolic operator:
-            //
-            else if ( lookup.at->base->symbolic_operator != math::operator_id::invalid )
-            {
-                math::operator_id op_id = lookup.at->base->symbolic_operator;
+        lvm.hooks.write_memory = [ & ] ( const symbolic::expression& pointer, symbolic::expression value )
+        {
+            if ( pointer.equals( lookup.mem().decay() ) )
+                result = std::move( value );
+        };
 
-                // If [X = F(X)]:
-                //
-                if ( lookup.at->base->operand_count() == 1 )
-                {
-                    return symbolic::expression{ op_id, cvt_operand( 0 ) };
-                }
-                // If [X = F(X, Y)]:
-                //
-                else if ( lookup.at->base->operand_count() == 2 )
-                {
-                    return symbolic::expression{ cvt_operand( 0 ), op_id, cvt_operand( 1 ) }.resize( result_bcnt );
-                }
-                // If [X = F(Y, Z)]:
-                //
-                else if ( lookup.at->base->operand_count() == 3 && lookup.at->base->operand_types[ 0 ] == operand_type::write )
-                {
-                    return symbolic::expression{ cvt_operand( 1 ), op_id, cvt_operand( 2 ) }.resize( result_bcnt );
-                }
-                // If [X = F(Y:X, Z)]:
-                //
-                else if ( lookup.at->base->operand_count() == 3 )
-                {
-                    // If high bits are zero:
-                    //
-                    auto op1_high = cvt_operand( 1 );
-                    if ( ( op1_high == 0 ).get().value_or( false ) )
-                    {
-                        auto op1 = cvt_operand( 0 );
-                        return symbolic::expression{ op1, op_id, cvt_operand( 2 ) }.resize( result_bcnt );
-                    }
-                    // If high bits are set, but the operation bit-count is equal to or less than 64 bits.
-                    //
-                    else if ( ( lookup.at->operands[ 0 ].size() + lookup.at->operands[ 1 ].size() ) <= 8 )
-                    {
-                        auto op1_low = cvt_operand( 0 );
-                        auto op1 = op1_low | ( op1_high.resize( op1_high.size() + op1_low.size() ) << op1_low.size() );
-                        return symbolic::expression{ op1, op_id, cvt_operand( 2 ) }.resize( result_bcnt );
-                    }
-                    // If operation is 65 bits or bigger:
-                    //
-                    else
-                    {
-                        // TODO: Implement later on.
-                        // -- Fall to unknown operation.
-                    }
-                }
-            }
-
-            // If we could not describe the behaviour, increment iterator and return.
+        // If access details are known:
+        //
+        if ( !details.is_unknown() )
+        {
+            // Step one instruction, if result was successfuly captured, return.
             //
-            ++lookup.at;
-            return lookup.to_expression();
+            if ( lvm.execute( *lookup.at ), result )
+                return result;
         }
-        // If memory:
+        // If they are unknown, fallthrough to fail.
         //
         else
         {
-            fassert( lookup.is_memory() );
-
-            // If access details are unknown, long and fallthrough to fail.
-            //
-            if ( details.is_unknown() )
-            {
 #if VTIL_OPT_TRACE_VERBOSE
-                // Log the state.
-                //
-                log<CON_RED>( "[Non-constant displacement, unknown memory state.]\n" );
+            // Log the state.
+            //
+            log<CON_RED>( "[Unknown symbolic state.]\n" );
 #endif
-            }
-            // If STR:
-            //
-            else if ( *lookup.at->base == ins::str )
-            {
-                // Return source operand.
-                //
-                return cvt_operand( 2 ).resize( result_bcnt );
-            }
-
-            // If we could not describe the behaviour, increment iterator and return.
-            //
-            ++lookup.at;
-            return  lookup.to_expression();
         }
+
+        // If we could not describe the behaviour, increment iterator and return.
+        //
+        ++lookup.at;
+        return lookup.to_expression();
     }
 
     // Traces a variable across the entire routine and generates a symbolic expression that describes 
     // it's value at the bound point. Will invoke the passed tracer for any additional tracing it requires. 
     // Takes an optional path history used internally to recurse in a controlled fashion.
     //
-    symbolic::expression rtrace_primitive( const variable& lookup, const trace_function_t& tracer, const path_history_t& history )
+    symbolic::expression rtrace_primitive( const symbolic::variable& lookup, const trace_function_t& tracer, const path_history_t& history )
     {
         using namespace logger;
 
@@ -525,7 +449,7 @@ namespace vtil::optimizer
                             result.transform( [ ] ( symbolic::expression& exp )
                             {
                                 if ( exp.is_variable() )
-                                    exp.uid.get<variable>().is_branch_dependant = true;
+                                    exp.uid.get<symbolic::variable>().is_branch_dependant = true;
                             }, false );
                         }
                         break;
@@ -543,14 +467,14 @@ namespace vtil::optimizer
 
 	// Simple wrappers around primitive trace and rtrace to return in packed format.
 	//
-	symbolic::expression trace( const variable& lookup, bool pack )
+	symbolic::expression trace( const symbolic::variable& lookup, bool pack )
     { 
         symbolic::expression&& result = trace_basic( lookup );
-        return pack ? variable::pack_all( result ) : result;
+        return pack ? symbolic::variable::pack_all( result ) : result;
     }
-    symbolic::expression rtrace( const variable& lookup, bool pack )
+    symbolic::expression rtrace( const symbolic::variable& lookup, bool pack )
     {
         symbolic::expression&& result = rtrace_primitive( lookup, trace_basic );
-        return pack ? variable::pack_all( result ) : result;
+        return pack ? symbolic::variable::pack_all( result ) : result;
     }
 };

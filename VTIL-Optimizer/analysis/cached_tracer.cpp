@@ -31,7 +31,7 @@ namespace vtil::optimizer
 {
    // Replicate trace_basic with the addition of a cache lookup.
     //
-    symbolic::expression cached_tracer::trace_basic_cached( const variable& lookup, const trace_function_t& tracer )
+    symbolic::expression cached_tracer::trace_basic_cached( const symbolic::variable& lookup, const trace_function_t& tracer )
     {
         using namespace logger;
 
@@ -86,7 +86,7 @@ namespace vtil::optimizer
                 //
                 auto& self = lookup.mem();
                 auto& other = pair.first.mem();
-                return self.pointer->equals( other.pointer->decay() ) &&
+                return self.decay().equals( other.decay() ) &&
                        self.bit_count >= other.bit_count;
             };
         }
@@ -135,14 +135,14 @@ namespace vtil::optimizer
 
     // Wrappers of trace and rtrace with cached basic tracer.
 	//
-	symbolic::expression cached_tracer::trace( const variable& lookup, bool pack )
+	symbolic::expression cached_tracer::trace( const symbolic::variable& lookup, bool pack )
 	{
 		symbolic::expression&& result = trace_basic_cached( lookup );
-		return pack ? variable::pack_all( result ) : result;
+		return pack ? symbolic::variable::pack_all( result ) : result;
 	}
-	symbolic::expression cached_tracer::rtrace( const variable& lookup, bool pack )
+	symbolic::expression cached_tracer::rtrace( const symbolic::variable& lookup, bool pack )
 	{
 		symbolic::expression&& result = rtrace_primitive( lookup, *this );
-		return pack ? variable::pack_all( result ) : result;
+		return pack ? symbolic::variable::pack_all( result ) : result;
 	}
 }

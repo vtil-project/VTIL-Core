@@ -126,7 +126,7 @@ namespace vtil::optimizer
 		// register query representing $sp and rejects queries of registers.
 		//
 		cached_tracer ctrace = {};
-		trace_function_t lazy_tracer = [ & ] ( const variable& lookup )
+		trace_function_t lazy_tracer = [ & ] ( const symbolic::variable& lookup )
 		{
 			// If register:
 			//
@@ -141,7 +141,7 @@ namespace vtil::optimizer
 						lookup.at->sp_index,
 						lookup.reg().bit_count
 					};
-					return variable{ lookup.at.container->begin(), desc }.to_expression();
+					return symbolic::variable{ lookup.at.container->begin(), desc }.to_expression();
 				}
 
 				// Otherwise, return without tracing.
@@ -178,7 +178,7 @@ namespace vtil::optimizer
 
 				// Resize and pack variables.
 				//
-				exp = variable::pack_all( exp.resize( it->operands[ 0 ].size() * 8 ) );
+				exp = symbolic::variable::pack_all( exp.resize( it->operands[ 0 ].size() * 8 ) );
 
 				// If result is an expression:
 				//
@@ -222,7 +222,7 @@ namespace vtil::optimizer
 					
 					// Skip if not a register.
 					//
-					variable& var = exp.uid.get<variable>();
+					symbolic::variable& var = exp.uid.get<symbolic::variable>();
 					if ( !var.is_register() )
 						return;
 					register_desc reg = var.reg();

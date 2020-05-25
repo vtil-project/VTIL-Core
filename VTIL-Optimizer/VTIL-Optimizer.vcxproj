@@ -95,26 +95,14 @@
   <ItemGroup>
     <ClCompile Include="analysis\cached_tracer.cpp" />
     <ClCompile Include="analysis\trace.cpp" />
-    <ClCompile Include="analysis\variable.cpp" />
     <ClCompile Include="analysis\variable_aux.cpp" />
     <ClCompile Include="passes\eliminate_dead.cpp" />
     <ClCompile Include="passes\normalize_stack.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\VTIL-Architecture\VTIL-Architecture.vcxproj">
-      <Project>{a79e2869-7626-4801-b09d-5c12f5163ba3}</Project>
-    </ProjectReference>
-    <ProjectReference Include="..\VTIL-Common\VTIL-Common.vcxproj">
-      <Project>{ec6b8f7f-730c-4086-b143-4664cc16df8f}</Project>
-    </ProjectReference>
-    <ProjectReference Include="..\VTIL-SymEx\VTIL-SymEx.vcxproj">
-      <Project>{fe3202ce-d05c-4e04-ae9b-d30305d8ce31}</Project>
-    </ProjectReference>
+    <ClCompile Include="passes\simplify_operations.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="analysis\cached_tracer.hpp" />
     <ClInclude Include="analysis\trace.hpp" />
-    <ClInclude Include="analysis\variable.hpp" />
     <ClInclude Include="analysis\variable_aux.hpp" />
     <ClInclude Include="passes\apply_all.hpp" />
     <ClInclude Include="passes\eliminate_dead.hpp" />

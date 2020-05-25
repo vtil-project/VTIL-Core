@@ -32,7 +32,7 @@ namespace vtil::optimizer
 	// Makes a memory variable from the given instruction's src/dst, uses the tracer
 	// passed to resolve the absolute pointer.
 	//
-	variable reference_memory( const il_const_iterator& it, const trace_function_t& tracer )
+	symbolic::variable reference_memory( const il_const_iterator& it, const trace_function_t& tracer )
 	{
 		fassert( it->base->accesses_memory() );
 
@@ -45,7 +45,7 @@ namespace vtil::optimizer
 		//
 		return {
 			it,
-			variable::memory_t{ ptr, bitcnt_t( it->access_size() * 8 ) },
+			{ ptr, bitcnt_t( it->access_size() * 8 ) },
 		};
 	}
 
@@ -62,7 +62,7 @@ namespace vtil::optimizer
 		{
 			if ( exp.is_variable() )
 			{
-				auto& var = exp.uid.get<variable>();
+				auto& var = exp.uid.get<symbolic::variable>();
 				p1_sp |= var.is_register() && var.reg().is_stack_pointer();
 			}
 		} );
@@ -74,7 +74,7 @@ namespace vtil::optimizer
 		{
 			if ( exp.is_variable() )
 			{
-				auto& var = exp.uid.get<variable>();
+				auto& var = exp.uid.get<symbolic::variable>();
 				p2_sp |= var.is_register() && var.reg().is_stack_pointer();
 			}
 		} );
@@ -92,11 +92,11 @@ namespace vtil::optimizer
 	// Checks if the instruction given accesses the variable, optionally filtering to the
 	// access type specified, tracer passed will be used to generate pointers when needed.
 	//
-	access_details test_access( const il_const_iterator& it, const variable::descriptor_t& var, access_type type, const trace_function_t& tracer )
+	access_details test_access( const il_const_iterator& it, const symbolic::variable::descriptor_t& var, access_type type, const trace_function_t& tracer )
 	{
 		// If variable is of register type:
 		//
-		if ( auto reg = std::get_if<variable::register_t>( &var ) )
+		if ( auto reg = std::get_if<symbolic::variable::register_t>( &var ) )
 		{
 			// Iterate each operand:
 			//
@@ -160,7 +160,7 @@ namespace vtil::optimizer
 		}
 		// If variable is of memory type:
 		//
-		else if( auto mem = std::get_if<variable::memory_t>( &var ) )
+		else if( auto mem = std::get_if<symbolic::variable::memory_t>( &var ) )
 		{
 			// If instruction accesses memory:
 			//
@@ -198,7 +198,7 @@ namespace vtil::optimizer
 				// Generate a pointer and calculate displacement.
 				//
 				auto ref_mem = reference_memory( it, tracer ).mem();
-				auto disp_exp = ref_mem.pointer->decay() - mem->pointer->decay();
+				auto disp_exp = ref_mem.decay() - mem->decay();
 
 				// If it can be expressed as a constant:
 				//
@@ -223,7 +223,7 @@ namespace vtil::optimizer
 				}
 				// Otherwise, return unknown if not restrict qualified.
 				//
-				else if ( !is_restrict_qf_against( ref_mem.pointer->decay(), mem->pointer->decay() ) )
+				else if ( !is_restrict_qf_against( ref_mem.decay(), mem->decay() ) )
 				{
 					return { type, 0, -1 };
 				}

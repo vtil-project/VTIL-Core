@@ -1,9 +1,6 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <ClCompile Include="analysis\variable.cpp">
-      <Filter>Analysis</Filter>
-    </ClCompile>
     <ClCompile Include="analysis\trace.cpp">
       <Filter>Analysis</Filter>
     </ClCompile>
@@ -32,9 +29,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="analysis\variable.hpp">
-      <Filter>Analysis</Filter>
-    </ClInclude>
     <ClInclude Include="analysis\trace.hpp">
       <Filter>Analysis</Filter>
     </ClInclude>

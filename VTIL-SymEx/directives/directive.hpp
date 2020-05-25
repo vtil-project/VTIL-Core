@@ -100,8 +100,7 @@ namespace vtil::symbolic::directive
             // - __warning(), indicates that this directive should generate a warning.
             warning,
         max,
-        };
-        const _tag value = min;
+        } value = min;
 
         // Default constructor / move / copy.
         //

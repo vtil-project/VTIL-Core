@@ -28,7 +28,7 @@
 #pragma once
 #include <functional>
 #include <map>
-#include "variable.hpp"
+#include <vtil/vm>
 #include "trace.hpp"
 
 namespace vtil::optimizer
@@ -42,7 +42,7 @@ namespace vtil::optimizer
 	{
         // Define the type of the cache.
         //
-        using cache_type =  std::unordered_map<variable, symbolic::expression::reference, hasher<>>;
+        using cache_type =  std::unordered_map<symbolic::variable, symbolic::expression::reference, hasher<>>;
         using cache_entry = cache_type::value_type;
 
         // Declare the lookup map for the cache mapping each variable to the
@@ -52,12 +52,12 @@ namespace vtil::optimizer
 
         // Replicate trace_basic with the addition of a cache lookup.
         //
-        symbolic::expression trace_basic_cached( const variable& lookup, const trace_function_t& tracer = {} );
+        symbolic::expression trace_basic_cached( const symbolic::variable& lookup, const trace_function_t& tracer = {} );
 
         // Wrappers of trace and rtrace with cached basic tracer.
         //
-        symbolic::expression trace( const variable& lookup, bool pack = true );
-        symbolic::expression rtrace( const variable& lookup, bool pack = true );
+        symbolic::expression trace( const symbolic::variable& lookup, bool pack = true );
+        symbolic::expression rtrace( const symbolic::variable& lookup, bool pack = true );
 
         // Flushes the cache.
         //

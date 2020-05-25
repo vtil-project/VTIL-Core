@@ -30,7 +30,7 @@
 #include <vtil/symex>
 #include <vtil/io>
 #include "trace.hpp"
-#include "variable.hpp"
+#include <vtil/vm>
 
 namespace vtil::optimizer
 {
@@ -77,8 +77,8 @@ namespace vtil::optimizer
     // Makes a memory variable from the given instruction's src/dst, uses the tracer
     // passed to resolve the absolute pointer.
     //
-    variable reference_memory( const il_const_iterator& it,
-                               const trace_function_t& tracer = [ ] ( auto x ) { return trace( x ); } );
+    symbolic::variable reference_memory( const il_const_iterator& it,
+                                         const trace_function_t& tracer = [ ] ( auto x ) { return trace( x ); } );
 
     // Checks whether the two given pointers are restrict qualified against each other
     // meaning if the delta could not be resolved as a constant, if they are guaranteed
@@ -91,7 +91,7 @@ namespace vtil::optimizer
     // access type specified, tracer passed will be used to generate pointers when needed.
     //
     access_details test_access( const il_const_iterator& it,
-                                const variable::descriptor_t& var,
+                                const symbolic::variable::descriptor_t& var,
                                 access_type type = access_type::none,
                                 const trace_function_t& tracer = [ ] ( auto x ) { return trace( x ); } );
 

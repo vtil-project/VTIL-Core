@@ -2,7 +2,6 @@
 #
 
 set(optimizer_SOURCES analysis/trace.cpp
-    analysis/variable.cpp
     analysis/cached_tracer.cpp
     analysis/variable_aux.cpp
     passes/normalize_stack.cpp
