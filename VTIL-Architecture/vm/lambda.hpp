@@ -47,7 +47,8 @@ namespace vtil
 	
 	// Declare a virtual machine where all calls are redirected to lambda callbacks.
 	//
-	struct lambda_vm : vm_interface
+	template<typename vm_base = vm_interface>
+	struct lambda_vm : vm_base
 	{
 		// Declare std::function instances based on the stripped signature for each function we hijack.
 		//
@@ -61,9 +62,29 @@ namespace vtil
 
 		// Declare the overrides redirecting to the callbacks.
 		//
-		symbolic::expression read_register( const register_desc& desc ) override { return hooks.read_register( desc ); }
-		symbolic::expression read_memory( const symbolic::expression& pointer, size_t byte_count ) override { return hooks.read_memory( pointer, byte_count ); }
-		void write_register( const register_desc& desc, symbolic::expression value ) override { return hooks.write_register( desc, std::move( value ) ); }
-		void write_memory( const symbolic::expression& pointer, symbolic::expression value ) override { return hooks.write_memory( pointer, std::move( value ) ); }
+		symbolic::expression read_register( const register_desc& desc ) override 
+		{ 
+			return hooks.read_register 
+				? hooks.read_register( desc ) 
+				: read_register( desc );
+		}
+		symbolic::expression read_memory( const symbolic::expression& pointer, size_t byte_count ) override 
+		{ 
+			return hooks.read_memory 
+				? hooks.read_memory( pointer, byte_count ) 
+				: read_memory( pointer, byte_count );
+		}
+		void write_register( const register_desc& desc, symbolic::expression value ) override 
+		{ 
+			return hooks.write_register 
+				? hooks.write_register( desc, std::move( value ) ) 
+				: write_register( desc, std::move( value ) );
+		}
+		void write_memory( const symbolic::expression& pointer, symbolic::expression value ) override 
+		{ 
+			return hooks.write_memory 
+				? hooks.write_memory( pointer, std::move( value ) ) 
+				: write_memory( pointer, std::move( value ) );
+		}
 	};
 };

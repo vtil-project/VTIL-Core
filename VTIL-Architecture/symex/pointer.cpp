@@ -79,7 +79,7 @@ namespace vtil::symbolic
 			// Otherwise fail evaluation.
 			//
 			return std::nullopt;
-		} ).is_unknown() ? -1 : 1;
+		} ).is_unknown() ? -1 : +1;
 
 		// Initialize X-Pointers.
 		//
