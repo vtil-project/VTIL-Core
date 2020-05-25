@@ -45,10 +45,6 @@ namespace vtil
 		symbolic_vm( symbolic::memory_type mem = symbolic::memory_type::free )
 			: memory_state( symbolic::create_memory( mem ) ) {}
 
-		// Dumps the current state of the virtual machine.
-		//
-		void dump_state() const;
-
 		// Reads from the register.
 		//
 		symbolic::expression read_register( const register_desc& desc ) override;

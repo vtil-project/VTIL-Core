@@ -29,24 +29,6 @@
 
 namespace vtil
 {
-	// Dumps the current state of the virtual machine.
-	//
-	void symbolic_vm::dump_state() const
-	{
-		using namespace vtil::logger;
-		for ( auto& [reg, exp] : register_state )
-		{
-			log<CON_BLU>( "%-16s     :=", reg );
-			log<CON_GRN>( "%s\n", exp );
-		}
-
-		for ( auto& [ptr, exp] : memory_state )
-		{
-			log<CON_YLW>( "[%-16s]\n", ptr );
-			log<CON_GRN>( "%s\n", exp );
-		}
-	}
-
 	// Reads from the register.
 	//
 	symbolic::expression symbolic_vm::read_register( const register_desc& desc )
