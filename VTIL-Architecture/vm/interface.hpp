@@ -31,65 +31,65 @@
 
 namespace vtil
 {
-    // Describes each reason virtual machine could have exited because of,
-    // also acts as a bitmask to suppress exits at ::run.
-    //
-    enum vmexit_mask : uint32_t
-    {
-        // Mask to supress all possible exits apart from halt.
-        //
-        vmexit_supress_all =         0,
-      
-        // Indicates that VM was exited because it halted,
-        // cannot be masked off.
-        //
-        vmexit_halt =                0,
-        
-        // Exits on undefined operations that cannot be executed.
-        //
-        vmexit_undefined =           1 << 0,
+	// Describes each reason virtual machine could have exited because of,
+	// also acts as a bitmask to suppress exits at ::run.
+	//
+	enum vmexit_mask : uint32_t
+	{
+		// Mask to supress all possible exits apart from halt.
+		//
+		vmexit_supress_all =         0,
+	  
+		// Indicates that VM was exited because it halted,
+		// cannot be masked off.
+		//
+		vmexit_halt =                0,
+		
+		// Exits on undefined operations that cannot be executed.
+		//
+		vmexit_undefined =           1 << 0,
 
-        // Exits on volatile instructions.
-        //
-        vmexit_volatile =            1 << 1,
+		// Exits on volatile instructions.
+		//
+		vmexit_volatile =            1 << 1,
 
-        // Exits when a volatile register is being accessed.
-        //
-        vmexit_volatile_register =   1 << 2,
+		// Exits when a volatile register is being accessed.
+		//
+		vmexit_volatile_register =   1 << 2,
 
-        // Exits when a volatile memory is being accessed.
-        //
-        vmexit_volatile_memory =     1 << 3,
-    };
+		// Exits when a volatile memory is being accessed.
+		//
+		vmexit_volatile_memory =     1 << 3,
+	};
 
-    // Basic virtual machine interface.
-    //
+	// Basic virtual machine interface.
+	//
 	struct vm_interface
 	{
-        // Reads from the register.
-        //
+		// Reads from the register.
+		//
 		virtual symbolic::expression read_register( const register_desc& desc ) = 0;
 		
-        // Reads the given number of bytes from the memory.
-        //
-        virtual symbolic::expression read_memory( const symbolic::expression& pointer, size_t byte_count ) = 0;
+		// Reads the given number of bytes from the memory.
+		//
+		virtual symbolic::expression read_memory( const symbolic::expression& pointer, size_t byte_count ) = 0;
 
-        // Writes to the register.
-        //
+		// Writes to the register.
+		//
 		virtual void write_register( const register_desc& desc, symbolic::expression value ) = 0;
 		
-        // Writes the given expression to the memory.
-        //
-        virtual void write_memory( const symbolic::expression& pointer, symbolic::expression value ) = 0;
+		// Writes the given expression to the memory.
+		//
+		virtual void write_memory( const symbolic::expression& pointer, symbolic::expression value ) = 0;
 
-        // Runs the given instruction, returns whether it was successful.
-        //
-        virtual bool execute( const instruction& ins );
+		// Runs the given instruction, returns whether it was successful.
+		//
+		virtual bool execute( const instruction& ins );
 
-        // Given an iterator from a basic block, runs until the end of the block is reached. 
-        // If an unknown instruction is hit, breaks the loop if specified so, ignores it and
-        // sets the affected registers and memory undefined instead otherwise.
-        //
-        std::pair<il_const_iterator, vmexit_mask> run( il_const_iterator it, uint32_t exit_mask = vmexit_supress_all );
+		// Given an iterator from a basic block, runs until the end of the block is reached. 
+		// If an unknown instruction is hit, breaks the loop if specified so, ignores it and
+		// sets the affected registers and memory undefined instead otherwise.
+		//
+		std::pair<il_const_iterator, vmexit_mask> run( il_const_iterator it, uint32_t exit_mask = vmexit_supress_all );
 	};
 };

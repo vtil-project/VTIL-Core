@@ -31,39 +31,39 @@
 
 namespace vtil
 {
-    namespace impl
-    {
-        // Strips the object that this function belongs to.
-        //
-        template<typename T>
-        struct strip_object { using type = std::function<T>; };
-        template<typename R, typename O, typename... A>
-        struct strip_object<R( O::* )( A... ) const> { using type = std::function<R( A... )>; };
-        template<typename R, typename O, typename... A>
-        struct strip_object<R( O::* )( A... )> { using type = std::function<R( A... )>; };
-        template<typename T>
-        using strip_object_t = typename strip_object<T>::type;
-    };
-    
-    // Declare a virtual machine where all calls are redirected to lambda callbacks.
-    //
-    struct lambda_vm : vm_interface
-    {
-        // Declare std::function instances based on the stripped signature for each function we hijack.
-        //
-        struct
-        {
-            impl::strip_object_t<decltype( &vm_interface::read_register )> read_register = {};
-            impl::strip_object_t<decltype( &vm_interface::read_memory )> read_memory = {};
-            impl::strip_object_t<decltype( &vm_interface::write_register )> write_register = {};
-            impl::strip_object_t<decltype( &vm_interface::write_memory )> write_memory = {};
-        } hooks;
+	namespace impl
+	{
+		// Strips the object that this function belongs to.
+		//
+		template<typename T>
+		struct strip_object { using type = std::function<T>; };
+		template<typename R, typename O, typename... A>
+		struct strip_object<R( O::* )( A... ) const> { using type = std::function<R( A... )>; };
+		template<typename R, typename O, typename... A>
+		struct strip_object<R( O::* )( A... )> { using type = std::function<R( A... )>; };
+		template<typename T>
+		using strip_object_t = typename strip_object<T>::type;
+	};
+	
+	// Declare a virtual machine where all calls are redirected to lambda callbacks.
+	//
+	struct lambda_vm : vm_interface
+	{
+		// Declare std::function instances based on the stripped signature for each function we hijack.
+		//
+		struct
+		{
+			impl::strip_object_t<decltype( &vm_interface::read_register )> read_register = {};
+			impl::strip_object_t<decltype( &vm_interface::read_memory )> read_memory = {};
+			impl::strip_object_t<decltype( &vm_interface::write_register )> write_register = {};
+			impl::strip_object_t<decltype( &vm_interface::write_memory )> write_memory = {};
+		} hooks;
 
-        // Declare the overrides redirecting to the callbacks.
-        //
-        symbolic::expression read_register( const register_desc& desc ) override { return hooks.read_register( desc ); }
-        symbolic::expression read_memory( const symbolic::expression& pointer, size_t byte_count ) override { return hooks.read_memory( pointer, byte_count ); }
-        void write_register( const register_desc& desc, symbolic::expression value ) override { return hooks.write_register( desc, std::move( value ) ); }
-        void write_memory( const symbolic::expression& pointer, symbolic::expression value ) override { return hooks.write_memory( pointer, std::move( value ) ); }
+		// Declare the overrides redirecting to the callbacks.
+		//
+		symbolic::expression read_register( const register_desc& desc ) override { return hooks.read_register( desc ); }
+		symbolic::expression read_memory( const symbolic::expression& pointer, size_t byte_count ) override { return hooks.read_memory( pointer, byte_count ); }
+		void write_register( const register_desc& desc, symbolic::expression value ) override { return hooks.write_register( desc, std::move( value ) ); }
+		void write_memory( const symbolic::expression& pointer, symbolic::expression value ) override { return hooks.write_memory( pointer, std::move( value ) ); }
 	};
 };

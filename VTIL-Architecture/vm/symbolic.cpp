@@ -29,64 +29,64 @@
 
 namespace vtil
 {
-    // Dumps the current state of the virtual machine.
-    //
-    void symbolic_vm::dump_state() const
-    {
-        using namespace vtil::logger;
-        for ( auto& [reg, exp] : register_state )
-        {
-            log<CON_BLU>( "%-16s     :=", reg.to_string() );
-            log<CON_GRN>( "%s\n", exp.to_string() );
-        }
+	// Dumps the current state of the virtual machine.
+	//
+	void symbolic_vm::dump_state() const
+	{
+		using namespace vtil::logger;
+		for ( auto& [reg, exp] : register_state )
+		{
+			log<CON_BLU>( "%-16s     :=", reg.to_string() );
+			log<CON_GRN>( "%s\n", exp.to_string() );
+		}
 
-        for ( auto& [ptr, exp] : memory_state )
-        {
-            log<CON_YLW>( "[%-16s]\n", ptr.to_string() );
-            log<CON_GRN>( "%s\n", exp.to_string() );
-        }
-    }
+		for ( auto& [ptr, exp] : memory_state )
+		{
+			log<CON_YLW>( "[%-16s]\n", ptr.to_string() );
+			log<CON_GRN>( "%s\n", exp.to_string() );
+		}
+	}
 
-    // Reads from the register.
-    //
-    symbolic::expression symbolic_vm::read_register( const register_desc& desc )
-    {
-        register_desc full = { desc.flags, desc.local_id, 64, 0 };
+	// Reads from the register.
+	//
+	symbolic::expression symbolic_vm::read_register( const register_desc& desc )
+	{
+		register_desc full = { desc.flags, desc.local_id, 64, 0 };
 
-        auto it = register_state.find( full );
-        if ( it == register_state.end() )
-            return symbolic::make_register_ex( desc );
-        else
-            return ( it->second >> desc.bit_offset ).resize( desc.bit_count );
-    }
+		auto it = register_state.find( full );
+		if ( it == register_state.end() )
+			return symbolic::make_register_ex( desc );
+		else
+			return ( it->second >> desc.bit_offset ).resize( desc.bit_count );
+	}
 
-    // Writes to the register.
-    //
-    void symbolic_vm::write_register( const register_desc& desc, symbolic::expression value )
-    {
-        if ( desc.bit_count == 64 && desc.bit_offset == 0 )
-        {
-            register_state.erase( desc );
-            register_state.emplace( desc, std::move( value ) );
-        }
-        else
-        {
-            register_desc full = { desc.flags, desc.local_id, 64, 0 };
-            auto& exp = register_state[ full ];
-            if ( !exp ) exp = { full, 64 };
-            exp = ( exp & ~desc.get_mask() ) | ( value.resize( desc.bit_count ).resize( 64 ) << desc.bit_offset );
-        }
-    }
+	// Writes to the register.
+	//
+	void symbolic_vm::write_register( const register_desc& desc, symbolic::expression value )
+	{
+		if ( desc.bit_count == 64 && desc.bit_offset == 0 )
+		{
+			register_state.erase( desc );
+			register_state.emplace( desc, std::move( value ) );
+		}
+		else
+		{
+			register_desc full = { desc.flags, desc.local_id, 64, 0 };
+			auto& exp = register_state[ full ];
+			if ( !exp ) exp = { full, 64 };
+			exp = ( exp & ~desc.get_mask() ) | ( value.resize( desc.bit_count ).resize( 64 ) << desc.bit_offset );
+		}
+	}
 
-    // Reads the given number of bytes from the memory.
-    //
-    symbolic::expression symbolic_vm::read_memory( const symbolic::expression& pointer, size_t byte_count )
-    {
-        bitcnt_t bcnt = byte_count * 8;
-        return memory_state.read( pointer, bcnt ).value_or( { symbolic::make_undefined_ex( bcnt ) } );
-    }
+	// Reads the given number of bytes from the memory.
+	//
+	symbolic::expression symbolic_vm::read_memory( const symbolic::expression& pointer, size_t byte_count )
+	{
+		bitcnt_t bcnt = byte_count * 8;
+		return memory_state.read( pointer, bcnt ).value_or( { symbolic::make_undefined_ex( bcnt ) } );
+	}
 
-    // Writes the given expression to the memory.
+	// Writes the given expression to the memory.
 	//
 	void symbolic_vm::write_memory( const symbolic::expression& pointer, symbolic::expression value )
 	{
