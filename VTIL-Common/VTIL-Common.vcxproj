@@ -47,13 +47,13 @@
     <LinkIncremental>true</LinkIncremental>
     <IncludePath>$(ProjectDir)..\Capstone\include;$(ProjectDir)..\Keystone\include;$(IncludePath)</IncludePath>
     <LibraryPath>$(ProjectDir)..\Keystone\llvm\lib\Debug;$(ProjectDir)..\Capstone\msvc\x64\Release;$(LibraryPath)</LibraryPath>
-    <OutDir>$(ProjectDir)$(Platform)\$(Configuration)\</OutDir>
+    <OutDir>$(ProjectDir)..\$(Platform)\$(Configuration)\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
     <IncludePath>$(ProjectDir)..\Capstone\include;$(ProjectDir)..\Keystone\include;$(IncludePath)</IncludePath>
     <LibraryPath>$(ProjectDir)..\Keystone\llvm\lib\Release;$(ProjectDir)..\Capstone\msvc\x64\Release;$(LibraryPath)</LibraryPath>
-    <OutDir>$(ProjectDir)$(Platform)\$(Configuration)\</OutDir>
+    <OutDir>$(ProjectDir)..\$(Platform)\$(Configuration)\</OutDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -125,6 +125,7 @@
     <ClInclude Include="query\recursive_view.hpp" />
     <ClInclude Include="query\view.hpp" />
     <ClInclude Include="util\concept.hpp" />
+    <ClInclude Include="util\constexpr_random.hpp" />
     <ClInclude Include="util\copy_on_write.hpp" />
     <ClInclude Include="util\critical_section.hpp" />
     <ClInclude Include="util\dynamic_size.hpp" />
@@ -151,7 +152,6 @@
     <ClCompile Include="util\variant.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="includes\vtil\vtil" />
     <None Include="VTIL-Common.licenseheader" />
   </ItemGroup>
   <ItemGroup>

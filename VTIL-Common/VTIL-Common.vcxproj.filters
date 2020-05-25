@@ -133,6 +133,9 @@
     <ClInclude Include="util\sinkhole.hpp">
       <Filter>Utility</Filter>
     </ClInclude>
+    <ClInclude Include="util\constexpr_random.hpp">
+      <Filter>Utility</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="amd64\register_details.cpp">
@@ -159,9 +162,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="VTIL-Common.licenseheader" />
-    <None Include="includes\vtil\vtil">
-      <Filter>Includes</Filter>
-    </None>
   </ItemGroup>
   <ItemGroup>
     <Text Include="CMakeLists.txt" />
