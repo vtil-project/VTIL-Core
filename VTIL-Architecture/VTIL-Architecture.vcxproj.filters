@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <Filter Include="Architecture">
@@ -12,6 +12,9 @@
     </Filter>
     <Filter Include="Includes">
       <UniqueIdentifier>{da55a262-7d21-4ce0-b5ef-c2de31a52d12}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Virtual Machine">
+      <UniqueIdentifier>{cb193006-280e-40d9-b9b6-04f154091580}</UniqueIdentifier>
     </Filter>
     <Filter Include="SymEx Integration">
       <UniqueIdentifier>{b070980d-a30d-421e-82c6-0298cfe01c0e}</UniqueIdentifier>
@@ -54,6 +57,15 @@
     <ClInclude Include="symex\memory.hpp">
       <Filter>SymEx Integration</Filter>
     </ClInclude>
+    <ClInclude Include="vm\interface.hpp">
+      <Filter>Virtual Machine</Filter>
+    </ClInclude>
+    <ClInclude Include="vm\symbolic.hpp">
+      <Filter>Virtual Machine</Filter>
+    </ClInclude>
+    <ClInclude Include="includes\vtil\vm">
+      <Filter>Includes</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="arch\instruction_desc.cpp">
@@ -76,6 +88,12 @@
     </ClCompile>
     <ClCompile Include="symex\pointer.cpp">
       <Filter>SymEx Integration</Filter>
+    </ClCompile>
+    <ClCompile Include="vm\interface.cpp">
+      <Filter>Virtual Machine</Filter>
+    </ClCompile>
+    <ClCompile Include="vm\symbolic.cpp">
+      <Filter>Virtual Machine</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

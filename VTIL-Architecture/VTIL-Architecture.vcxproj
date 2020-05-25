@@ -15,6 +15,7 @@
     <ClInclude Include="arch\instruction_set.hpp" />
     <ClInclude Include="arch\operands.hpp" />
     <ClInclude Include="arch\register_desc.hpp" />
+    <ClInclude Include="includes\vtil\vm" />
     <ClInclude Include="misc\debug.hpp" />
     <ClInclude Include="routine\basic_block.hpp" />
     <ClInclude Include="routine\instruction.hpp" />
@@ -23,6 +24,8 @@
     <ClInclude Include="symex\memory.hpp" />
     <ClInclude Include="symex\pointer.hpp" />
     <ClInclude Include="symex\variable.hpp" />
+    <ClInclude Include="vm\symbolic.hpp" />
+    <ClInclude Include="vm\interface.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="arch\instruction_desc.cpp" />
@@ -32,6 +35,8 @@
     <ClCompile Include="routine\serialization.cpp" />
     <ClCompile Include="symex\pointer.cpp" />
     <ClCompile Include="symex\variable.cpp" />
+    <ClCompile Include="vm\symbolic.cpp" />
+    <ClCompile Include="vm\interface.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="includes\vtil\arch" />
