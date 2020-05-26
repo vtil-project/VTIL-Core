@@ -28,6 +28,7 @@
 #pragma once
 #include "normalize_stack.hpp"
 #include "eliminate_dead.hpp"
+#include "simplify_operations.hpp"
 
 namespace vtil::optimizer
 {

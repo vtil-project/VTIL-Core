@@ -1,11 +1,9 @@
 # VTIL-Optimizer target
 #
 
-set(optimizer_SOURCES analysis/trace.cpp
-    analysis/cached_tracer.cpp
-    analysis/variable_aux.cpp
-    passes/normalize_stack.cpp
+set(optimizer_SOURCES passes/normalize_stack.cpp
     passes/eliminate_dead.cpp
+    passes/simplify_operations.cpp
 )
 
 add_library(optimizer STATIC ${optimizer_SOURCES})
