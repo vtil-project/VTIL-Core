@@ -26,16 +26,16 @@
 // POSSIBILITY OF SUCH DAMAGE.        
 //
 #pragma once
+#include <vtil/symex>
 #include <unordered_map>
-#include <vtil/utility>
 #include "tracer.hpp"
+#include "../symex/variable.hpp"
 
 namespace vtil
 {
     // Tracing is extremely costy and adding a simple cache reduces the cost 
-    // by ~100x fold, however we can't use a global cache since the optimizer 
-    // will change the instruction stream and all cache will be eventually 
-    // invalidated after each optimization pass so we use an instanced cache.
+    // by ~100x fold, so this class creates a local cache that gets looked 
+    // up before the actual trace operation is executed.
     //
 	struct cached_tracer : tracer
 	{
@@ -55,6 +55,6 @@ namespace vtil
 
         // Flushes the cache.
         //
-        auto flush() { cache.clear(); return *this; }
+        void flush() { cache.clear(); }
 	};
 };

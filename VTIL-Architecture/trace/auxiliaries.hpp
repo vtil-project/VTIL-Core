@@ -27,7 +27,6 @@
 //
 #pragma once
 #include <vtil/symex>
-#include <vtil/io>
 #include "tracer.hpp"
 #include "../routine/basic_block.hpp"
 #include "../symex/variable.hpp"
