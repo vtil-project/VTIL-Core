@@ -58,33 +58,40 @@ namespace vtil
 			impl::strip_object_t<decltype( &vm_interface::read_memory )> read_memory = {};
 			impl::strip_object_t<decltype( &vm_interface::write_register )> write_register = {};
 			impl::strip_object_t<decltype( &vm_interface::write_memory )> write_memory = {};
+			impl::strip_object_t<decltype( &vm_interface::execute )> execute = {};
 		} hooks;
 
 		// Declare the overrides redirecting to the callbacks.
 		//
 		symbolic::expression read_register( const register_desc& desc ) override 
-		{ 
+		{
 			return hooks.read_register 
 				? hooks.read_register( desc ) 
-				: read_register( desc );
+				: vm_base::read_register( desc );
 		}
 		symbolic::expression read_memory( const symbolic::expression& pointer, size_t byte_count ) override 
 		{ 
 			return hooks.read_memory 
 				? hooks.read_memory( pointer, byte_count ) 
-				: read_memory( pointer, byte_count );
+				: vm_base::read_memory( pointer, byte_count );
 		}
 		void write_register( const register_desc& desc, symbolic::expression value ) override 
 		{ 
 			return hooks.write_register 
 				? hooks.write_register( desc, std::move( value ) ) 
-				: write_register( desc, std::move( value ) );
+				: vm_base::write_register( desc, std::move( value ) );
 		}
-		void write_memory( const symbolic::expression& pointer, symbolic::expression value ) override 
-		{ 
-			return hooks.write_memory 
-				? hooks.write_memory( pointer, std::move( value ) ) 
-				: write_memory( pointer, std::move( value ) );
+		void write_memory( const symbolic::expression& pointer, symbolic::expression value ) override
+		{
+			return hooks.write_memory
+				? hooks.write_memory( pointer, std::move( value ) )
+				: vm_base::write_memory( pointer, std::move( value ) );
+		}
+		bool execute( const instruction& ins ) override
+		{
+			return hooks.execute
+				? hooks.execute( ins )
+				: vm_base::execute( ins );
 		}
 	};
 };
