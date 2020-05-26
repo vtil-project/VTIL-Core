@@ -8,6 +8,7 @@ set(architecture_SOURCES arch/instruction_desc.cpp
     routine/serialization.cpp
     symex/pointer.cpp
     symex/variable.cpp
+    symex/translation.cpp
     vm/interface.cpp
     vm/symbolic.cpp
     trace/auxiliaries.cpp
