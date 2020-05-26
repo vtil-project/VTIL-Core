@@ -113,29 +113,29 @@ namespace vtil
     
         //  -- Conditional instructions
         //
-        //    TG         Reg,    Reg,        Reg/Imm                         | OP1 = OP2   >    OP3
-        //    TGE        Reg,    Reg,        Reg/Imm                         | OP1 = OP2   >=   OP3
-        //    TE         Reg,    Reg,        Reg/Imm                         | OP1 = OP2   ==   OP3
-        //    TNE        Reg,    Reg,        Reg/Imm                         | OP1 = OP2   !=   OP3
-        //    TL         Reg,    Reg,        Reg/Imm                         | OP1 = OP2   <    OP3
-        //    TLE        Reg,    Reg,        Reg/Imm                         | OP1 = OP2   <=   OP3
-        //    TUG        Reg,    Reg,        Reg/Imm                         | OP1 = OP2   u>   OP3
-        //    TUGE       Reg,    Reg,        Reg/Imm                         | OP1 = OP2   u>=  OP3
-        //    TUL        Reg,    Reg,        Reg/Imm                         | OP1 = OP2   u<   OP3
-        //    TULE       Reg,    Reg,        Reg/Imm                         | OP1 = OP2   u<=  OP3
+        //    TG         Reg,    Reg/Imm,    Reg/Imm                         | OP1 = OP2   >    OP3
+        //    TGE        Reg,    Reg/Imm,    Reg/Imm                         | OP1 = OP2   >=   OP3
+        //    TE         Reg,    Reg/Imm,    Reg/Imm                         | OP1 = OP2   ==   OP3
+        //    TNE        Reg,    Reg/Imm,    Reg/Imm                         | OP1 = OP2   !=   OP3
+        //    TL         Reg,    Reg/Imm,    Reg/Imm                         | OP1 = OP2   <    OP3
+        //    TLE        Reg,    Reg/Imm,    Reg/Imm                         | OP1 = OP2   <=   OP3
+        //    TUG        Reg,    Reg/Imm,    Reg/Imm                         | OP1 = OP2   u>   OP3
+        //    TUGE       Reg,    Reg/Imm,    Reg/Imm                         | OP1 = OP2   u>=  OP3
+        //    TUL        Reg,    Reg/Imm,    Reg/Imm                         | OP1 = OP2   u<   OP3
+        //    TULE       Reg,    Reg/Imm,    Reg/Imm                         | OP1 = OP2   u<=  OP3
         //
         /*------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
         /*                                          [Name]        [Operands...]                                     [ASizeOp]   [Volatile]  [Operator]               [BranchOps] [MemOps]     */
-        static const instruction_desc tg =          { "tg",       { o::write,      o::read_reg,     o::read_any  }, 1,          false,      op::greater,             {},          {}          };
-        static const instruction_desc tge =         { "tge",      { o::write,      o::read_reg,     o::read_any  }, 1,          false,      op::greater_eq,          {},          {}          };
-        static const instruction_desc te =          { "te",       { o::write,      o::read_reg,     o::read_any  }, 1,          false,      op::equal,               {},          {}          };
-        static const instruction_desc tne =         { "tne",      { o::write,      o::read_reg,     o::read_any  }, 1,          false,      op::not_equal,           {},          {}          };
-        static const instruction_desc tle =         { "tle",      { o::write,      o::read_reg,     o::read_any  }, 1,          false,      op::less_eq,             {},          {}          };
-        static const instruction_desc tl =          { "tl",       { o::write,      o::read_reg,     o::read_any  }, 1,          false,      op::less,                {},          {}          };
-        static const instruction_desc tug =         { "tug",      { o::write,      o::read_reg,     o::read_any  }, 1,          false,      op::ugreater,            {},          {}          };
-        static const instruction_desc tuge =        { "tuge",     { o::write,      o::read_reg,     o::read_any  }, 1,          false,      op::ugreater_eq,         {},          {}          };
-        static const instruction_desc tule =        { "tule",     { o::write,      o::read_reg,     o::read_any  }, 1,          false,      op::uless_eq,            {},          {}          };
-        static const instruction_desc tul =         { "tul",      { o::write,      o::read_reg,     o::read_any  }, 1,          false,      op::uless,               {},          {}          };
+        static const instruction_desc tg =          { "tg",       { o::write,      o::read_any,     o::read_any  }, 1,          false,      op::greater,             {},          {}          };
+        static const instruction_desc tge =         { "tge",      { o::write,      o::read_any,     o::read_any  }, 1,          false,      op::greater_eq,          {},          {}          };
+        static const instruction_desc te =          { "te",       { o::write,      o::read_any,     o::read_any  }, 1,          false,      op::equal,               {},          {}          };
+        static const instruction_desc tne =         { "tne",      { o::write,      o::read_any,     o::read_any  }, 1,          false,      op::not_equal,           {},          {}          };
+        static const instruction_desc tle =         { "tle",      { o::write,      o::read_any,     o::read_any  }, 1,          false,      op::less_eq,             {},          {}          };
+        static const instruction_desc tl =          { "tl",       { o::write,      o::read_any,     o::read_any  }, 1,          false,      op::less,                {},          {}          };
+        static const instruction_desc tug =         { "tug",      { o::write,      o::read_any,     o::read_any  }, 1,          false,      op::ugreater,            {},          {}          };
+        static const instruction_desc tuge =        { "tuge",     { o::write,      o::read_any,     o::read_any  }, 1,          false,      op::ugreater_eq,         {},          {}          };
+        static const instruction_desc tule =        { "tule",     { o::write,      o::read_any,     o::read_any  }, 1,          false,      op::uless_eq,            {},          {}          };
+        static const instruction_desc tul =         { "tul",      { o::write,      o::read_any,     o::read_any  }, 1,          false,      op::uless,               {},          {}          };
         /*------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
     
         //  -- Control flow instructions
