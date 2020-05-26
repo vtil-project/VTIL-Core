@@ -22,9 +22,8 @@ namespace vtil
 		symbolic::expression trace_p( symbolic::variable lookup ) { return symbolic::variable::pack_all( trace( std::move( lookup ) ) ); }
 		symbolic::expression rtrace_p( symbolic::variable lookup ) { return symbolic::variable::pack_all( rtrace( std::move( lookup ) ) ); }
 
-		// Operator() wraps trace_p and [] wraps rtrace_p.
+		// Operator() wraps basic tracing with packing.
 		//
 		auto operator()( symbolic::variable lookup ) { return trace_p( std::move( lookup ) ); }
-		auto operator[]( symbolic::variable lookup ) { return rtrace_p( std::move( lookup ) ); }
 	};
 };
