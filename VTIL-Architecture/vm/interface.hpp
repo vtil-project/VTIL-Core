@@ -55,9 +55,9 @@ namespace vtil
 		//
 		virtual bool execute( const instruction& ins );
 
-		// Given an iterator from a basic block, runs until the end of the block is reached. 
-		// If an unknown instruction is hit, breaks the loop if specified so, ignores it and
-		// sets the affected registers and memory undefined instead otherwise.
+		// Given an iterator from a basic block, executes every instruction until the end of the block 
+		// is reached. If an unknown instruction is hit, breaks out of the loop if specified so, otherwise
+		// ignores it setting the affected registers and memory to undefined values.
 		//
 		il_const_iterator run( il_const_iterator it, bool exit_on_ud = true );
 	};

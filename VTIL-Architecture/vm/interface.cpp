@@ -78,6 +78,7 @@ namespace vtil
 				ins.operands[ 0 ].reg(),
 				cvt_operand( 1 ).resize( bitcnt_t( ins.operands[ 0 ].size() * 8 ), cast_signed )
 			);
+			return true;
 		}
 		// If LDD:
 		//
@@ -98,6 +99,7 @@ namespace vtil
 				ins.operands[ 0 ].reg(),
 				std::move( exp )
 			);
+			return true;
 		}
 		// If STR:
 		//
@@ -113,6 +115,7 @@ namespace vtil
 			//
 			auto [base, offset] = ins.get_mem_loc();
 			write_memory( read_register( base ) + offset, src );
+			return true;
 		}
 		// If any symbolic operator:
 		//
@@ -177,25 +180,25 @@ namespace vtil
 			// Operand 0 should always be the result for this class.
 			//
 			fassert( ins.base->operand_types[ 0 ] >= operand_type::write );
+			return true;
 		}
 		// If NOP:
 		//
 		else if ( *ins.base == ins::nop )
 		{
 			// No operation.
+			//
 			return true;
 		}
-		// If unknown instruction, fail.
+
+		// Unknown behaviour, fail.
 		//
-		else
-		{
-			return false;
-		}
-		return true;
+		return false;
 	}
-	// Given an iterator from a basic block, runs until the end of the block is reached. 
-	// If an unknown instruction is hit, breaks the loop if specified so, ignores it and
-	// sets the affected registers and memory undefined instead otherwise.
+
+	// Given an iterator from a basic block, executes every instruction until the end of the block 
+	// is reached. If an unknown instruction is hit, breaks out of the loop if specified so, otherwise
+	// ignores it setting the affected registers and memory to undefined values.
 	//
 	il_const_iterator vm_interface::run( il_const_iterator it, bool exit_on_ud )
 	{
@@ -203,19 +206,15 @@ namespace vtil
 		//
 		for ( ; !it.is_end(); it++ )
 		{
-			// Try to execute the instruction.
+			// If we could not virtualize the instruction:
 			//
-			bool success = execute( *it );
-
-			// Check post-exit conditions.
-			//
-			if ( !success && exit_on_ud )
-				return it;
-
-			// If it was undefined:
-			//
-			if ( !success )
+			if ( !execute( *it ) )
 			{
+				// Break out of the loop if specified so.
+				//
+				if ( exit_on_ud )
+					break;
+
 				// Make each register operand we write to undefined.
 				//
 				for ( int i = 0; i < it->base->operand_count(); i++ )
