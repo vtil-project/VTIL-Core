@@ -46,6 +46,7 @@ namespace vtil
 			: memory_state( symbolic::create_memory( mem ) ) {}
 
 		// Reads from the register.
+		// - Value will be unpacked.
 		//
 		symbolic::expression read_register( const register_desc& desc ) override;
 

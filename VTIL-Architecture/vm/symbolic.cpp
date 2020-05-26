@@ -37,7 +37,7 @@ namespace vtil
 
 		auto it = register_state.find( full );
 		if ( it == register_state.end() )
-			return symbolic::make_register_ex( desc );
+			return symbolic::make_register_ex( desc, true );
 		else
 			return ( it->second >> desc.bit_offset ).resize( desc.bit_count );
 	}
