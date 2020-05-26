@@ -35,8 +35,39 @@
 #include "../arch/register_desc.hpp"
 #include "../routine/basic_block.hpp"
 
+// Forward declare tracer type.
+//
+namespace vtil { struct tracer; };
+
 namespace vtil::symbolic
 {
+	// Structure describing how an instruction accesses a variable.
+	//
+	struct access_details
+	{
+		// Relative offset to the variable, in bits.
+		//
+		bitcnt_t bit_offset;
+
+		// Number of bits the instruction wrote at that offset.
+		// - Note: Not necessarily all have to be overlapping with the variable.
+		//
+		bitcnt_t bit_count;
+
+		// Type of access.
+		//
+		bool read;
+		bool write;
+
+		// Cast to bool to check if non-null access.
+		//
+		explicit operator bool() const { return bit_count != 0; }
+
+		// Check if details are unknown.
+		//
+		bool is_unknown() { return bit_offset == -1; }
+	};
+
 	// A pseudo single-static-assignment variable describing the state of a 
 	// memory location or a register at a given index into the instruction stream.
 	//
@@ -151,6 +182,15 @@ namespace vtil::symbolic
 		// Packs all the variables in the expression where it'd be optimal.
 		//
 		static expression pack_all( const expression& exp );
+
+		// Checks if the variable is read by / written by / accessed by the given instruction, 
+		// returns nullopt it could not be known at compile-time, otherwise the
+		// access details as described by access_details. Tracer is used for
+		// pointer resolving, if nullptr passed will use default tracer.
+		//
+		access_details read_by( const il_const_iterator& it, tracer* tr = nullptr );
+		access_details written_by( const il_const_iterator& it, tracer* tr = nullptr );
+		access_details accessed_by( const il_const_iterator& it, tracer* tr = nullptr );
 	};
 
 	// Wrappers for quick variable->expression creaton.

@@ -15,6 +15,5 @@
 #include "../../vm/interface.hpp"
 #include "../../vm/symbolic.hpp"
 #include "../../vm/lambda.hpp"
-#include "../../trace/auxiliaries.hpp"
 #include "../../trace/tracer.hpp"
 #include "../../trace/cached_tracer.hpp"

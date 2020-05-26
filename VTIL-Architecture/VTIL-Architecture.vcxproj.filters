@@ -72,9 +72,6 @@
     <ClInclude Include="trace\tracer.hpp">
       <Filter>Value Tracing</Filter>
     </ClInclude>
-    <ClInclude Include="trace\auxiliaries.hpp">
-      <Filter>Value Tracing</Filter>
-    </ClInclude>
     <ClInclude Include="trace\cached_tracer.hpp">
       <Filter>Value Tracing</Filter>
     </ClInclude>
@@ -111,9 +108,6 @@
       <Filter>Virtual Machine</Filter>
     </ClCompile>
     <ClCompile Include="trace\tracer.cpp">
-      <Filter>Value Tracing</Filter>
-    </ClCompile>
-    <ClCompile Include="trace\auxiliaries.cpp">
       <Filter>Value Tracing</Filter>
     </ClCompile>
     <ClCompile Include="trace\cached_tracer.cpp">

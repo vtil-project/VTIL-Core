@@ -28,7 +28,6 @@
 #include "tracer.hpp"
 #include <vtil/io>
 #include "../vm/lambda.hpp"
-#include "auxiliaries.hpp"
 
 namespace vtil
 {
@@ -40,7 +39,7 @@ namespace vtil
 	// Given a partial tracer, this routine will determine the full value of the variable
 	// at the given position where a partial write was found.
 	//
-	static symbolic::expression resolve_partial( const access_details& access, bitcnt_t bit_count, const partial_tracer_t& ptracer )
+	static symbolic::expression resolve_partial( const symbolic::access_details& access, bitcnt_t bit_count, const partial_tracer_t& ptracer )
 	{
 		using namespace logger;
 
@@ -358,7 +357,7 @@ namespace vtil
 
 		// Fast forward until iterator writes to the lookup, if none found return as is.
 		//
-		access_details details = {};
+		symbolic::access_details details = {};
 		while ( true )
 		{
 			// If we reached the beginning, return as is.
@@ -372,15 +371,27 @@ namespace vtil
 
 			// If variable is being written to, break.
 			//
-			if ( details = test_access( lookup.at, lookup.descriptor, this, access_type::write ) )
+			if ( details = lookup.written_by( lookup.at, this ) )
+			{
+				// If unknown access, return unknown.
+				//
+				if ( details.is_unknown() )
+				{
+#if VTIL_OPT_TRACE_VERBOSE
+					// Log the state.
+					//
+					log<CON_RED>( "[Unknown symbolic state.]\n" );
+#endif
+					return lookup.bind( std::next( lookup.at ) ).to_expression();
+				}
 				break;
+			}
 		}
 
 		// If fails due to offset/size mismatch, invoke partial tracer.
 		//
 		bitcnt_t result_bcnt = lookup.bit_count();
-		if ( !details.is_unknown() &&
-			( details.bit_offset != 0 || details.bit_count != result_bcnt ) )
+		if ( details.bit_offset != 0 || details.bit_count != result_bcnt )
 		{
 			// Define partial tracer.
 			//
@@ -446,30 +457,14 @@ namespace vtil
 				result = std::move( value );
 		};
 
-		// If access details are known:
+		// Step one instruction, if result was successfuly captured, return.
 		//
-		if ( !details.is_unknown() )
-		{
-			// Step one instruction, if result was successfuly captured, return.
-			//
-			if ( lvm.execute( *lookup.at ), result )
-				return result;
-		}
-		// If they are unknown, fallthrough to fail.
-		//
-		else
-		{
-	#if VTIL_OPT_TRACE_VERBOSE
-			// Log the state.
-			//
-			log<CON_RED>( "[Unknown symbolic state.]\n" );
-	#endif
-		}
+		if ( lvm.execute( *lookup.at ), result )
+			return result;
 
 		// If we could not describe the behaviour, increment iterator and return.
 		//
-		++lookup.at;
-		return lookup.to_expression();
+		return lookup.bind( std::next( lookup.at ) ).to_expression();
 	}
 
 	// Traces a variable across the entire routine and tries to generates a symbolic expression

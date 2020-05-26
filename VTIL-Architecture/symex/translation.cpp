@@ -30,7 +30,9 @@
 
 namespace vtil
 {
-	static const auto lookup_table = ( [ ] ()
+	// Fills a lookup table used to map math::operator_id -> const instruction_desc*
+	//
+	static const auto lookup_table = [ ] ()
 	{
 		std::array<const instruction_desc*, ( size_t ) math::operator_id::max> lookup_table;
 		lookup_table.fill( nullptr );
@@ -38,9 +40,8 @@ namespace vtil
 			if ( x.symbolic_operator != math::operator_id::invalid )
 				lookup_table[ ( size_t ) x.symbolic_operator ] = &x;
 		return lookup_table;
-	} )();
-
-	static const instruction_desc* find_instruction( math::operator_id op )
+	}( );
+	static const instruction_desc* map_operator( math::operator_id op )
 	{
 		fassert( lookup_table.size() > ( size_t ) op );
 		const instruction_desc* desc = lookup_table[ ( size_t ) op ];
@@ -182,7 +183,7 @@ namespace vtil
 
 				// Push [<INS> Reg1] and return Reg1.
 				//
-				block->push_back( { find_instruction( op ),{ tmp } } );
+				block->push_back( { map_operator( op ),{ tmp } } );
 				return tmp;
 			}
 			case math::operator_id::popcnt:
@@ -194,7 +195,7 @@ namespace vtil
 
 				// Push [<INS> Reg1] and return Reg1.
 				//
-				block->push_back( { find_instruction( op ),{ tmp } } );
+				block->push_back( { map_operator( op ),{ tmp } } );
 
 				// Validate size and return resized to 8 bits.
 				//
@@ -229,7 +230,7 @@ namespace vtil
 
 				// Push [<INS> Lhs Rhs] and return Lhs.
 				//
-				block->push_back( { find_instruction( op ),{ lhs, rhs } } );
+				block->push_back( { map_operator( op ),{ lhs, rhs } } );
 				return lhs;
 			}
 			case math::operator_id::divide:
@@ -244,7 +245,7 @@ namespace vtil
 
 				// Push [<INS> Lhs 0 Rhs] and return Lhs.
 				//
-				block->push_back( { find_instruction( op ),{ lhs, operand( 0, bitcnt_t( rhs.size() * 8 ) ), rhs } } );
+				block->push_back( { map_operator( op ),{ lhs, operand( 0, bitcnt_t( rhs.size() * 8 ) ), rhs } } );
 				return lhs;
 			}
 			case math::operator_id::value_if:
@@ -282,7 +283,7 @@ namespace vtil
 
 				// Push [<INS> Tmp Lhs Rhs] and return Tmp.
 				//
-				block->push_back( { find_instruction( op ),{ tmp, lhs, rhs } } );
+				block->push_back( { map_operator( op ),{ tmp, lhs, rhs } } );
 				return tmp;
 			}
 			default:

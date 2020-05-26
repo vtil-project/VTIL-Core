@@ -233,7 +233,7 @@ namespace vtil::optimizer
 					//
 					bool is_alive = !reg.is_volatile();
 					for ( auto it2 = access_point; !it2.is_end() && is_alive && it2 != it; it2++ )
-						is_alive &= !test_access( it2, var.descriptor, &tracer, access_type::write );
+						is_alive &= !var.written_by( it2, &tracer );
 
 					// If not, try hijacking the value declaration.
 					//

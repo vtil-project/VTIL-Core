@@ -11,7 +11,6 @@ set(architecture_SOURCES arch/instruction_desc.cpp
     symex/translation.cpp
     vm/interface.cpp
     vm/symbolic.cpp
-    trace/auxiliaries.cpp
     trace/cached_tracer.cpp
     trace/tracer.cpp
 )

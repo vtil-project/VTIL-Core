@@ -93,20 +93,15 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="analysis\cached_tracer.cpp" />
-    <ClCompile Include="analysis\trace.cpp" />
-    <ClCompile Include="analysis\variable_aux.cpp" />
     <ClCompile Include="passes\eliminate_dead.cpp" />
     <ClCompile Include="passes\normalize_stack.cpp" />
     <ClCompile Include="passes\simplify_operations.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="analysis\cached_tracer.hpp" />
-    <ClInclude Include="analysis\trace.hpp" />
-    <ClInclude Include="analysis\variable_aux.hpp" />
     <ClInclude Include="passes\apply_all.hpp" />
     <ClInclude Include="passes\eliminate_dead.hpp" />
     <ClInclude Include="passes\normalize_stack.hpp" />
+    <ClInclude Include="passes\simplify_operations.hpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="includes\vtil\optimizer" />

@@ -24,7 +24,6 @@
     <ClInclude Include="symex\pointer.hpp" />
     <ClInclude Include="symex\translation.hpp" />
     <ClInclude Include="symex\variable.hpp" />
-    <ClInclude Include="trace\auxiliaries.hpp" />
     <ClInclude Include="trace\cached_tracer.hpp" />
     <ClInclude Include="trace\tracer.hpp" />
     <ClInclude Include="vm\lambda.hpp" />
@@ -40,7 +39,6 @@
     <ClCompile Include="symex\pointer.cpp" />
     <ClCompile Include="symex\translation.cpp" />
     <ClCompile Include="symex\variable.cpp" />
-    <ClCompile Include="trace\auxiliaries.cpp" />
     <ClCompile Include="trace\cached_tracer.cpp" />
     <ClCompile Include="trace\tracer.cpp" />
     <ClCompile Include="vm\symbolic.cpp" />

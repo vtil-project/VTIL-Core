@@ -26,19 +26,122 @@
 // POSSIBILITY OF SUCH DAMAGE.        
 //
 #include "variable.hpp"
+#include "../trace/tracer.hpp"
 
 namespace vtil::symbolic
 {
 	// Dummy iterator to be used when variable is not being tracked within a block.
 	//
-	static const il_const_iterator free_form_iterator = ( [ ] ()
+	static const il_const_iterator free_form_iterator = [ ] ()
 	{
 		// Create a dummy invalid block with an invalid instruction and reference it.
 		//
 		static basic_block dummy_block;
 		dummy_block.stream.push_back( {} );
 		return dummy_block.begin();
-	}() );
+	}();
+
+	// Implement generic access check for ::read_by & ::written_by, write and read must not be both set to true.
+	//
+	static access_details test_access( const variable& var, const il_const_iterator& it, tracer* tracer, bool write, bool read )
+	{
+		fassert( !( write && read ) );
+
+		// If variable is of register type:
+		//
+		if ( auto reg = std::get_if<variable::register_t>( &var.descriptor ) )
+		{
+			// Iterate each operand:
+			//
+			for ( int i = 0; i < it->base->operand_count(); i++ )
+			{
+				// Skip if not register.
+				//
+				if ( !it->operands[ i ].is_register() )
+					continue;
+
+				// Skip if access type does not match.
+				//
+				if ( write && it->base->operand_types[ i ] < operand_type::write )
+					continue;
+				if ( read && it->base->operand_types[ i ] == operand_type::write )
+					continue;
+
+				// Skip if no overlap.
+				//
+				auto& ref_reg = it->operands[ i ].reg();
+				if ( !ref_reg.overlaps( *reg ) )
+					continue;
+
+				// Return access details.
+				//
+				return access_details{
+					.bit_offset = ref_reg.bit_offset - reg->bit_offset,
+					.bit_count = ref_reg.bit_count,
+					.read = it->base->operand_types[ i ] != operand_type::write,
+					.write = it->base->operand_types[ i ] >= operand_type::write
+				};
+			}
+		}
+		// If variable is of memory type:
+		//
+		else if ( auto mem = std::get_if<variable::memory_t>( &var.descriptor ) )
+		{
+			// If instruction accesses memory:
+			//
+			if ( it->base->accesses_memory() )
+			{
+				// If access type matches:
+				//
+				if ( ( write && it->base->writes_memory() ) ||
+					 ( read && !it->base->writes_memory() ) )
+				{
+					// Generate an expression for the pointer.
+					//
+					auto [base, offset] = it->get_mem_loc();
+					pointer ptr = { tracer->trace( { it, base } ) + offset };
+
+					// If the two pointers can overlap (not restrict qualified against each other):
+					//
+					if ( ptr.can_overlap( mem->base ) )
+					{
+						// If it can be expressed as a constant:
+						//
+						if ( auto disp = ( ptr - mem->base ) )
+						{
+							// Check if within boundaries:
+							//
+							int64_t low_offset = *disp;
+							int64_t high_offset = low_offset + it->access_size();
+							if ( low_offset < ( mem->bit_count / 8 ) && high_offset > 0 )
+							{
+								// Can safely multiply by 8 and shrink to bitcnt_t type from int64_t 
+								// since variables are of maximum 64-bit size which means both offset
+								// and size will be small numbers.
+								//
+								return access_details{
+									.bit_offset = bitcnt_t( low_offset * 8 ),
+									.bit_count = bitcnt_t( ( high_offset - low_offset ) * 8 ),
+									.read = !it->base->writes_memory(),
+									.write = it->base->writes_memory()
+								};
+							}
+						}
+						// Otherwise, return unknown.
+						//
+						else
+						{
+							return access_details{ .bit_offset = -1, .bit_count = -1 };
+						}
+					}
+				}
+			}
+		}
+
+		// No access case.
+		//
+		return access_details{ .bit_count = 0 };
+	}
 
 	// Constructs by iterator and the variable descriptor itself.
 	//
@@ -55,7 +158,6 @@ namespace vtil::symbolic
 		fassert( is_valid() );
 	}
 	
-
 	// Construct free-form with only the descriptor itself.
 	//
 	variable::variable( descriptor_t desc ) 
@@ -304,5 +406,29 @@ namespace vtil::symbolic
 			}
 		} );
 		return exp;
+	}
+
+	// Checks if the variable is read by / written by the given instruction, 
+	// returns nullopt it could not be known at compile-time, otherwise the
+	// access details as described by access_details. Tracer is used for
+	// pointer resolving, if nullptr passed will use default tracer.
+	//
+	access_details variable::read_by( const il_const_iterator& it, tracer* tr )
+	{
+		tracer default_tracer;
+		if ( !tr ) tr = &default_tracer;
+		return test_access( *this, it, tr ? tr : &default_tracer, false, true );
+	}
+	access_details variable::written_by( const il_const_iterator& it, tracer* tr )
+	{
+		tracer default_tracer;
+		if ( !tr ) tr = &default_tracer;
+		return test_access( *this, it, tr ? tr : &default_tracer, true, false );
+	}
+	access_details variable::accessed_by( const il_const_iterator& it, tracer* tr )
+	{
+		tracer default_tracer;
+		if ( !tr ) tr = &default_tracer;
+		return test_access( *this, it, tr ? tr : &default_tracer, false, false );
 	}
 };
