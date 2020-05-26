@@ -3,4 +3,3 @@
 #include <vtil/symex>
 #include <vtil/arch>
 #include <vtil/optimizer>
-#include <vtil/vm>

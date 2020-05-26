@@ -26,45 +26,54 @@
 // POSSIBILITY OF SUCH DAMAGE.        
 //
 #pragma once
-#include <functional>
-#include <map>
-#include <vtil/vm>
-#include "trace.hpp"
+#include <vtil/symex>
+#include <vtil/io>
+#include "tracer.hpp"
+#include "../routine/basic_block.hpp"
+#include "../symex/variable.hpp"
 
-namespace vtil::optimizer
+namespace vtil
 {
-    // Tracing is extremely costy and adding a simple cache reduces the cost 
-    // by ~100x fold, however we can't use a global cache since the optimizer 
-    // will change the instruction stream and all cache will be eventually 
-    // invalidated after each optimization pass so we use an instanced cache.
+    // Enumeration used to describe the type of access to a variable.
     //
-	struct cached_tracer
-	{
-        // Define the type of the cache.
-        //
-        using cache_type =  std::unordered_map<symbolic::variable, symbolic::expression::reference, hasher<>>;
-        using cache_entry = cache_type::value_type;
+    enum class access_type
+    {
+        none,
+        read,
+        write,
+        readwrite
+    };
 
-        // Declare the lookup map for the cache mapping each variable to the
-        // result of the primitive traver.
+    // Structure describing how an instruction accesses a variable.
+    //
+    struct access_details
+    {
+        // Type of access.
         //
-        cache_type cache;
+        access_type type = access_type::none;
+        
+        // Relative offset to the variable, in bits.
+        //
+        bitcnt_t bit_offset;
 
-        // Replicate trace_basic with the addition of a cache lookup.
+        // Number of bits the instruction wrote at that offset.
+        // - Note: Not necessarily all were overlapping with the variable.
         //
-        symbolic::expression trace_basic_cached( const symbolic::variable& lookup, const trace_function_t& tracer = {} );
+        bitcnt_t bit_count;
 
-        // Wrappers of trace and rtrace with cached basic tracer.
+        // Implicit cast to bool to check if non-null access.
         //
-        symbolic::expression trace( const symbolic::variable& lookup, bool pack = true );
-        symbolic::expression rtrace( const symbolic::variable& lookup, bool pack = true );
+        operator bool() const { return type != access_type::none; }
 
-        // Flushes the cache.
+        // Simple check to determine whether the details are known or not.
         //
-        auto flush() { cache.clear(); return *this; }
+        bool is_unknown() const { return bit_count == -1; }
+    };
 
-        // Implicit casting to a trace function.
-        //
-        operator trace_function_t() { return [ this ] ( auto v ) { return trace_basic_cached( v ); }; }
-	};
+    // Checks if the instruction given accesses the variable, optionally filtering to the
+    // access type specified, tracer passed will be used to generate pointers when needed.
+    //
+    access_details test_access( const il_const_iterator& it,
+                                const symbolic::variable::descriptor_t& var,
+                                tracer* tracer, access_type type = access_type::none );
 };

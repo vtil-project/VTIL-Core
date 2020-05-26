@@ -29,8 +29,6 @@
 #include <vector>
 #include <vtil/query>
 #include <vtil/symex>
-#include "../analysis/cached_tracer.hpp"
-#include "../analysis/variable_aux.hpp"
 
 namespace vtil::optimizer
 {
@@ -60,8 +58,8 @@ namespace vtil::optimizer
 				// Calculate the difference between current virtual stack pointer 
 				// and the next stack pointer instance.
 				//
-				auto sp_curr = ctrace.trace( { it, REG_SP } ) + it->sp_offset;
-				auto sp_next = ctrace.trace( { std::next( it ), REG_SP } );
+				auto sp_curr = ctrace( { it, REG_SP } ) + it->sp_offset;
+				auto sp_next = ctrace( { std::next( it ), REG_SP } );
 
 				// If it simplifies to a constant, replace with a stack shift.
 				//
@@ -102,8 +100,8 @@ namespace vtil::optimizer
 			{
 				// Try to simplify pointer to SP + C.
 				//
-				auto delta = ctrace.trace( { it, it->get_mem_loc().first } ) -
-							 ctrace.trace( { it, REG_SP } );
+				auto delta = ctrace( { it, it->get_mem_loc().first } ) -
+							 ctrace( { it, REG_SP } );
 
 				// If successful, replace the operands.
 				//
@@ -125,34 +123,36 @@ namespace vtil::optimizer
 		// Wrap cached tracer with a filter that returns a constant pseudo-variable for each
 		// register query representing $sp and rejects queries of registers.
 		//
-		cached_tracer ctrace = {};
-		trace_function_t lazy_tracer = [ & ] ( const symbolic::variable& lookup )
+		struct lazy_tracer : cached_tracer
 		{
-			// If register:
-			//
-			if ( lookup.is_register() )
+			symbolic::expression trace( symbolic::variable lookup ) override
 			{
-				// If stack pointer, return unique pseudo-register per stack instance.
+				// If register:
 				//
-				if ( lookup.reg().is_stack_pointer() )
+				if ( lookup.is_register() )
 				{
-					register_desc desc = {
-						register_local,
-						lookup.at->sp_index,
-						lookup.reg().bit_count
-					};
-					return symbolic::variable{ lookup.at.container->begin(), desc }.to_expression();
+					// If stack pointer, return unique pseudo-register per stack instance.
+					//
+					if ( lookup.reg().is_stack_pointer() )
+					{
+						register_desc desc = {
+							register_local,
+							lookup.at->sp_index,
+							lookup.reg().bit_count
+						};
+						return symbolic::variable{ lookup.at.container->begin(), desc }.to_expression();
+					}
+
+					// Otherwise, return without tracing.
+					//
+					return lookup.to_expression();
 				}
 
-				// Otherwise, return without tracing.
+				// Fallback to default tracer.
 				//
-				return lookup.to_expression();
+				return cached_tracer::trace( lookup );
 			}
-
-			// Fallback to default tracer.
-			//
-			return ctrace.trace_basic_cached( lookup, lazy_tracer );
-		};
+		} tracer = {};
 
 		// => Begin a foward iterating query.
 		//
@@ -174,7 +174,8 @@ namespace vtil::optimizer
 			
 				// Lazy-trace the value.
 				//
-				symbolic::expression exp = trace_primitive( reference_memory( it, lazy_tracer ), lazy_tracer );
+				symbolic::pointer ptr = { tracer( { it, REG_SP } ) + it->get_mem_loc().second };
+				symbolic::expression exp = tracer( { it, { ptr, bitcnt_t( it->access_size() * 8 ) } } );
 
 				// Resize and pack variables.
 				//
@@ -232,7 +233,7 @@ namespace vtil::optimizer
 					//
 					bool is_alive = !reg.is_volatile();
 					for ( auto it2 = access_point; !it2.is_end() && is_alive && it2 != it; it2++ )
-						is_alive &= !test_access( it2, var.descriptor, access_type::write );
+						is_alive &= !test_access( it2, var.descriptor, &tracer, access_type::write );
 
 					// If not, try hijacking the value declaration.
 					//

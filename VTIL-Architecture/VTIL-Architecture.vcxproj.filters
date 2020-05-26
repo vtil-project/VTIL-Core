@@ -19,6 +19,9 @@
     <Filter Include="SymEx Integration">
       <UniqueIdentifier>{b070980d-a30d-421e-82c6-0298cfe01c0e}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Value Tracing">
+      <UniqueIdentifier>{6ba6b482-58aa-46cd-ad58-c0eef36c9333}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="arch\operands.hpp">
@@ -63,11 +66,17 @@
     <ClInclude Include="vm\symbolic.hpp">
       <Filter>Virtual Machine</Filter>
     </ClInclude>
-    <ClInclude Include="includes\vtil\vm">
-      <Filter>Includes</Filter>
-    </ClInclude>
     <ClInclude Include="vm\lambda.hpp">
       <Filter>Virtual Machine</Filter>
+    </ClInclude>
+    <ClInclude Include="trace\tracer.hpp">
+      <Filter>Value Tracing</Filter>
+    </ClInclude>
+    <ClInclude Include="trace\auxiliaries.hpp">
+      <Filter>Value Tracing</Filter>
+    </ClInclude>
+    <ClInclude Include="trace\cached_tracer.hpp">
+      <Filter>Value Tracing</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -97,6 +106,15 @@
     </ClCompile>
     <ClCompile Include="vm\symbolic.cpp">
       <Filter>Virtual Machine</Filter>
+    </ClCompile>
+    <ClCompile Include="trace\tracer.cpp">
+      <Filter>Value Tracing</Filter>
+    </ClCompile>
+    <ClCompile Include="trace\auxiliaries.cpp">
+      <Filter>Value Tracing</Filter>
+    </ClCompile>
+    <ClCompile Include="trace\cached_tracer.cpp">
+      <Filter>Value Tracing</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

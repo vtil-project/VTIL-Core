@@ -15,7 +15,6 @@
     <ClInclude Include="arch\instruction_set.hpp" />
     <ClInclude Include="arch\operands.hpp" />
     <ClInclude Include="arch\register_desc.hpp" />
-    <ClInclude Include="includes\vtil\vm" />
     <ClInclude Include="misc\debug.hpp" />
     <ClInclude Include="routine\basic_block.hpp" />
     <ClInclude Include="routine\instruction.hpp" />
@@ -24,6 +23,9 @@
     <ClInclude Include="symex\memory.hpp" />
     <ClInclude Include="symex\pointer.hpp" />
     <ClInclude Include="symex\variable.hpp" />
+    <ClInclude Include="trace\auxiliaries.hpp" />
+    <ClInclude Include="trace\cached_tracer.hpp" />
+    <ClInclude Include="trace\tracer.hpp" />
     <ClInclude Include="vm\lambda.hpp" />
     <ClInclude Include="vm\symbolic.hpp" />
     <ClInclude Include="vm\interface.hpp" />
@@ -36,6 +38,9 @@
     <ClCompile Include="routine\serialization.cpp" />
     <ClCompile Include="symex\pointer.cpp" />
     <ClCompile Include="symex\variable.cpp" />
+    <ClCompile Include="trace\auxiliaries.cpp" />
+    <ClCompile Include="trace\cached_tracer.cpp" />
+    <ClCompile Include="trace\tracer.cpp" />
     <ClCompile Include="vm\symbolic.cpp" />
     <ClCompile Include="vm\interface.cpp" />
   </ItemGroup>
