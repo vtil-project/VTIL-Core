@@ -29,8 +29,10 @@
 #include <string>
 #include <optional>
 #include <array>
+#include <set>
 #include <vtil/symex>
 #include <vtil/utility>
+#include "../arch/register_desc.hpp"
 
 // [Configuration]
 // Determine whether we should use the simplification of (A-B) as the delta 
@@ -47,6 +49,11 @@ namespace vtil::symbolic
 	//
 	struct pointer : reducable<pointer>
 	{
+		// List of pointer bases we consider to be restricted, can be expanded by user
+		// but defaults to image base and stack pointer.
+		//
+		static std::set<register_desc> restricted_bases;
+
 		// Declares the symbolic pointer weak.
 		//
 		struct make_weak
@@ -96,6 +103,13 @@ namespace vtil::symbolic
 		// Calculates the distance between two pointers as an optional constant.
 		//
 		std::optional<int64_t> operator-( const pointer& o ) const;
+
+		// Checks whether the two pointers can overlap in terms of real destination, 
+		// note that it will consider [rsp+C1] and [rsp+C2] "overlapping" so you will
+		// need to check the displacement with the variable sizes considered if you 
+		// are checking "is overlapping" instead.
+		//
+		bool can_overlap( const pointer& o ) const;
 
 		// Conversion to human-readable format.
 		//

@@ -80,13 +80,6 @@ namespace vtil::optimizer
     symbolic::variable reference_memory( const il_const_iterator& it,
                                          const trace_function_t& tracer = [ ] ( auto x ) { return trace( x ); } );
 
-    // Checks whether the two given pointers are restrict qualified against each other
-    // meaning if the delta could not be resolved as a constant, if they are guaranteed
-    // not to overlap or not.
-    //
-	bool is_restrict_qf_against( const symbolic::expression& ptr1, 
-                                 const symbolic::expression& ptr2 );
-
     // Checks if the instruction given accesses the variable, optionally filtering to the
     // access type specified, tracer passed will be used to generate pointers when needed.
     //

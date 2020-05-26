@@ -33,6 +33,60 @@
 
 namespace vtil::symbolic
 {
+	// List of pointer bases we consider to be restricted, can be expanded by user
+	// but defaults to image base and stack pointer.
+	//
+	std::set<register_desc> pointer::restricted_bases = { REG_SP, REG_IMGBASE };
+
+	// Given a variable or an expression, checks if it is basing from a 
+	// known restricted pointer, if so returns the register it's based off of.
+	//
+	static std::optional<register_desc> get_restricted_base( const variable& var )
+	{
+		// If variable is not a register, return null.
+		//
+		if ( !var.is_register() )
+			return std::nullopt;
+
+		// Search for it in the restricted base list, if found return.
+		//
+		const register_desc& reg = var.reg();
+		return pointer::restricted_bases.contains( reg ) ? std::optional{ reg } : std::nullopt;
+	}
+	static std::optional<register_desc> get_restricted_base( const expression& e )
+	{
+		// If expression is a variable, check as is:
+		//
+		if ( e.is_variable() )
+			return get_restricted_base( e.uid.get<variable>() );
+
+		// Else apply a custom logic per operation:
+		//
+		switch ( e.op )
+		{
+			case math::operator_id::add:
+			{
+				auto lhs = get_restricted_base( *e.lhs );
+				auto rhs = get_restricted_base( *e.rhs );
+				if ( !rhs ) return lhs;
+				if ( !lhs ) return rhs;
+				return lhs == rhs ? rhs : std::nullopt;
+			}
+			case math::operator_id::bitwise_or:
+			case math::operator_id::bitwise_and:
+				if ( auto lhs = get_restricted_base( *e.lhs ) )
+					return lhs;
+				else
+					return get_restricted_base( *e.rhs );
+			case math::operator_id::subtract:
+				return get_restricted_base( *e.lhs );
+			case math::operator_id::value_if:
+				return get_restricted_base( *e.rhs );
+			default:
+				return {};
+		}
+	}
+
 	// Magic value substituting for invalid xpointers.
 	//
 	static constexpr uint64_t invalid_xpointer = make_crandom();
@@ -41,45 +95,34 @@ namespace vtil::symbolic
 	//
 	static constexpr std::array xpointer_keys = make_crandom_n<VTIL_SYM_PTR_XPTR_KEYS>( 1 );
 
-	// Pointer bases we explicitly declare restricted.
-	//
-	static constexpr register_flag restricted_pointers[] = {
-		register_stack_pointer,
-		register_image_base
-	};
-
 	// Construct from symbolic expression.
 	//
 	pointer::pointer( expression&& _base ) : base( std::move( _base ) )
 	{
-		// Determine pointer strength and the flags. Pointer is weak if it has unknowns 
-		// apart from the special restricted registers allowed.
+		// Determine pointer strength and the flags.
 		//
-		strenght = base.evaluate( [ & ] ( const unique_identifier& uid )
-								 -> std::optional<uint64_t>
+		strenght = +1;
+		base.evaluate( [ & ] ( const unique_identifier& uid )
 		{
-			// Fail evaluation if the variable is a memory destination.
+			// If variable is a register that is a restricted base pointer:
 			//
-			const variable& var = uid.get<variable>();
-			if ( !var.is_register() )
-				return std::nullopt;
-
-			// If register is a restricted pointer, append the flag
-			// to the current flags list and return zero.
-			//
-			for ( auto flag : restricted_pointers )
+			if ( auto base = get_restricted_base( uid.get<variable>() ) )
 			{
-				if ( ( var.reg().flags & flag ) == flag )
-				{
-					flags |= flag;
-					return 0;
-				}
+				// Set flags.
+				//
+				flags |= base->flags;
+			}
+			// Contains an unknown variable so make weak pointer.
+			//
+			else
+			{
+				strenght = -1;
 			}
 
-			// Otherwise fail evaluation.
+			// Return dummy result.
 			//
-			return std::nullopt;
-		} ).is_unknown() ? -1 : +1;
+			return 0ull;
+		} );
 
 		// Initialize X-Pointers.
 		//
@@ -134,5 +177,15 @@ namespace vtil::symbolic
 #else
 		return delta;
 #endif
+	}
+
+	// Checks whether the two pointers can overlap in terms of real destination, 
+	// note that it will consider [rsp+C1] and [rsp+C2] "overlapping" so you will
+	// need to check the displacement with the variable sizes considered if you 
+	// are checking "is overlapping" instead.
+	//
+	bool pointer::can_overlap( const pointer& o ) const
+	{
+		return ( flags & o.flags ) == o.flags;
 	}
 };

@@ -49,46 +49,6 @@ namespace vtil::optimizer
 		};
 	}
 
-	// Checks whether the two given pointers are restrict qualified against each other
-	// meaning if the delta could not be resolved as a constant, if they are guaranteed
-	// not to overlap or not.
-	//
-	bool is_restrict_qf_against( const symbolic::expression& ptr1, const symbolic::expression& ptr2 )
-	{
-		// Check if pointer 1 contains $sp.
-		//
-		bool p1_sp = false;
-		ptr1.enumerate( [ & ] ( const symbolic::expression& exp )
-		{
-			if ( exp.is_variable() )
-			{
-				auto& var = exp.uid.get<symbolic::variable>();
-				p1_sp |= var.is_register() && var.reg().is_stack_pointer();
-			}
-		} );
-
-		// Check if pointer 2 contains $sp.
-		//
-		bool p2_sp = false;
-		ptr2.enumerate( [ & ] ( const symbolic::expression& exp )
-		{
-			if ( exp.is_variable() )
-			{
-				auto& var = exp.uid.get<symbolic::variable>();
-				p2_sp |= var.is_register() && var.reg().is_stack_pointer();
-			}
-		} );
-
-		// If only one contains $sp and is non-complex pointer, it is restrict qualified,
-		// and guaranteed not to overlap.
-		//
-		// - Since $sp is a __restrict qualified pointer, we can assume
-		//   that none of the registers will be pointing at it.
-		//
-		return ( p1_sp && !p2_sp && ptr1.depth <= 1 ) ||
-			   ( p2_sp && !p1_sp && ptr2.depth <= 1 );
-	}
-
 	// Checks if the instruction given accesses the variable, optionally filtering to the
 	// access type specified, tracer passed will be used to generate pointers when needed.
 	//
@@ -195,37 +155,41 @@ namespace vtil::optimizer
 						break;
 				}
 
-				// Generate a pointer and calculate displacement.
+				// Generate a pointer.
 				//
 				auto ref_mem = reference_memory( it, tracer ).mem();
-				auto disp_exp = ref_mem.decay() - mem->decay();
 
-				// If it can be expressed as a constant:
+				// If the two pointers can overlap (not restrict qualified against each other):
 				//
-				if ( auto disp = disp_exp.get<int64_t>() )
+				if ( ref_mem.base.can_overlap( mem->base ) )
 				{
-					// Check if within boundaries:
+					// If it can be expressed as a constant:
 					//
-					int64_t low_offset = *disp;
-					int64_t high_offset = low_offset + it->access_size();
-					if ( low_offset < ( mem->bit_count / 8 ) && high_offset > 0 )
+					if ( auto disp = ( ref_mem.base - mem->base ) )
 					{
-						// Can safely multiply by 8 and shrink to bitcnt_t type from int64_t 
-						// since variables are of maximum 64-bit size which means both offset
-						// and size will be small numbers.
+						// Check if within boundaries:
 						//
-						return {
-							type,
-							bitcnt_t( low_offset * 8 ),
-							bitcnt_t( ( high_offset - low_offset ) * 8 )
-						};
+						int64_t low_offset = *disp;
+						int64_t high_offset = low_offset + it->access_size();
+						if ( low_offset < ( mem->bit_count / 8 ) && high_offset > 0 )
+						{
+							// Can safely multiply by 8 and shrink to bitcnt_t type from int64_t 
+							// since variables are of maximum 64-bit size which means both offset
+							// and size will be small numbers.
+							//
+							return {
+								type,
+								bitcnt_t( low_offset * 8 ),
+								bitcnt_t( ( high_offset - low_offset ) * 8 )
+							};
+						}
 					}
-				}
-				// Otherwise, return unknown if not restrict qualified.
-				//
-				else if ( !is_restrict_qf_against( ref_mem.decay(), mem->decay() ) )
-				{
-					return { type, 0, -1 };
+					// Otherwise, return unknown.
+					//
+					else
+					{
+						return { type, 0, -1 };
+					}
 				}
 			}
 		}
