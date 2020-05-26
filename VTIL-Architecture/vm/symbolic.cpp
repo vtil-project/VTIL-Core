@@ -55,7 +55,7 @@ namespace vtil
 		{
 			register_desc full = { desc.flags, desc.local_id, 64, 0 };
 			auto& exp = register_state[ full ];
-			if ( !exp ) exp = { full, 64 };
+			if ( !exp ) exp = symbolic::make_register_ex( full );
 			exp = ( exp & ~desc.get_mask() ) | ( value.resize( desc.bit_count ).resize( 64 ) << desc.bit_offset );
 		}
 	}
