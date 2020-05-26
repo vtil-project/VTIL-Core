@@ -136,6 +136,7 @@
     <ClInclude Include="util\mul128.hpp" />
     <ClInclude Include="util\optional_reference.hpp" />
     <ClInclude Include="util\priority_list.hpp" />
+    <ClInclude Include="util\range.hpp" />
     <ClInclude Include="util\reducable.hpp" />
     <ClInclude Include="util\sinkhole.hpp" />
     <ClInclude Include="util\stack_container.hpp" />
