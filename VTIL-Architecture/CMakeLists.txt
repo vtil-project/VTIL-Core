@@ -10,7 +10,7 @@ set(architecture_SOURCES arch/instruction_desc.cpp
     symex/variable.cpp
     vm/interface.cpp
     vm/symbolic.cpp
-    trace/auxilaries.cpp
+    trace/auxiliaries.cpp
     trace/cached_tracer.cpp
     trace/tracer.cpp
 )
