@@ -31,37 +31,6 @@
 
 namespace vtil
 {
-	// Describes each reason virtual machine could have exited because of,
-	// also acts as a bitmask to suppress exits at ::run.
-	//
-	enum vmexit_mask : uint32_t
-	{
-		// Mask to supress all possible exits apart from halt.
-		//
-		vmexit_supress_all =         0,
-	  
-		// Indicates that VM was exited because it halted,
-		// cannot be masked off.
-		//
-		vmexit_halt =                0,
-		
-		// Exits on undefined operations that cannot be executed.
-		//
-		vmexit_undefined =           1 << 0,
-
-		// Exits on volatile instructions.
-		//
-		vmexit_volatile =            1 << 1,
-
-		// Exits when a volatile register is being accessed.
-		//
-		vmexit_volatile_register =   1 << 2,
-
-		// Exits when a volatile memory is being accessed.
-		//
-		vmexit_volatile_memory =     1 << 3,
-	};
-
 	// Basic virtual machine interface.
 	//
 	struct vm_interface
@@ -90,6 +59,6 @@ namespace vtil
 		// If an unknown instruction is hit, breaks the loop if specified so, ignores it and
 		// sets the affected registers and memory undefined instead otherwise.
 		//
-		std::pair<il_const_iterator, vmexit_mask> run( il_const_iterator it, uint32_t exit_mask = vmexit_supress_all );
+		il_const_iterator run( il_const_iterator it, bool exit_on_ud = true );
 	};
 };
