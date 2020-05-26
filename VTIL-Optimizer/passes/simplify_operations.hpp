@@ -26,42 +26,12 @@
 // POSSIBILITY OF SUCH DAMAGE.        
 //
 #pragma once
-#include <functional>
-#include <algorithm>
-#include <vtil/io>
-#include <vtil/utility>
 #include <vtil/arch>
-#include <vtil/symex>
-#include <vtil/vm>
-
-// [Configuration]
-// Determine whether we should log the details of the variable tracing process.
-//
-#ifndef VTIL_OPT_TRACE_VERBOSE
-	#define VTIL_OPT_TRACE_VERBOSE 0
-#endif
 
 namespace vtil::optimizer
 {
-    // Some convenience typedefs.
-    //
-    using path_history_t =      std::map<std::pair<const basic_block*, const basic_block*>, uint32_t>;
-    using trace_function_t =    std::function<symbolic::expression( const symbolic::variable& lookup )>;
-
-    // Traces a variable across the basic block it belongs to and generates a symbolic expression 
-    // that describes it's value at the bound point. Will invoke the passed tracer for any additional 
-    // tracing it requires.
-    //
-    symbolic::expression trace_primitive( symbolic::variable lookup, const trace_function_t& tracer );
-    
-    // Traces a variable across the entire routine and generates a symbolic expression that describes 
-    // it's value at the bound point. Will invoke the passed tracer for any additional tracing it requires. 
-    // Takes an optional path history used internally to recurse in a controlled fashion.
-    //
-    symbolic::expression rtrace_primitive( const symbolic::variable& lookup, const trace_function_t& tracer, const path_history_t& history = {} );
-
-    // Simple wrappers around primitive trace and rtrace with optional packing of the variables.
-    //
-    symbolic::expression trace( const symbolic::variable& lookup, bool pack = true );
-    symbolic::expression rtrace( const symbolic::variable& lookup, bool pack = true );
+	// Converts chains of instructions into simpler versions where possible
+	//
+	size_t simplify_operations( basic_block* block );
+	size_t simplify_operations( routine* rtn );
 };
