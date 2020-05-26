@@ -336,19 +336,7 @@ namespace vtil::optimizer
 							mask &= ~mask_access;
 						}
 					}
-
-					// If stack offset is above data pointer, reset relevant bits.
-					//
-					int64_t reset_count = it2->sp_offset - offset;
-					if ( reset_count >= 8 )     mask = 0;
-					else if ( reset_count > 0 ) mask &= ~math::fill( reset_count * 8 );
 				}
-
-				// If stack offset is above data pointer, reset relevant bits.
-				//
-				int64_t reset_count = block->sp_offset - offset;
-				if ( reset_count >= 8 )     mask = 0;
-				else if ( reset_count > 0 ) mask &= ~math::fill( reset_count * 8 );
 
 				// If not dead, fail.
 				//
