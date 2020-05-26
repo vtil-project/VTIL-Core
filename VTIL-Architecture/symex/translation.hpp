@@ -28,6 +28,7 @@
 #pragma once
 #include <vtil/symex>
 #include "variable.hpp"
+#include "../arch/operands.hpp"
 #include "../routine/basic_block.hpp"
 
 namespace vtil

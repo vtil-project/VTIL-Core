@@ -34,12 +34,12 @@ namespace vtil
 	//
 	static const auto lookup_table = [ ] ()
 	{
-		std::array<const instruction_desc*, ( size_t ) math::operator_id::max> lookup_table;
-		lookup_table.fill( nullptr );
+		std::array<const instruction_desc*, ( size_t ) math::operator_id::max> tbl;
+		tbl.fill( nullptr );
 		for ( auto& x : instruction_list )
 			if ( x.symbolic_operator != math::operator_id::invalid )
-				lookup_table[ ( size_t ) x.symbolic_operator ] = &x;
-		return lookup_table;
+				tbl[ ( size_t ) x.symbolic_operator ] = &x;
+		return tbl;
 	}( );
 	static const instruction_desc* map_operator( math::operator_id op )
 	{

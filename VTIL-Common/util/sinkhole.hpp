@@ -107,6 +107,10 @@ namespace vtil
 		const_iterator end() const { return value_map.end(); }
 		iterator erase( const_iterator x ) { return value_map.erase( std::move( x ) ); }
 
+		// Reset entire state.
+		//
+		void reset() { value_map.clear(); }
+
 		// Given a cache entry's iterator, it strips N bits at the given offset
 		// from it and creates another cache entry.
 		//

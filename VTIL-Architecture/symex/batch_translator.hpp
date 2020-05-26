@@ -26,44 +26,37 @@
 // POSSIBILITY OF SUCH DAMAGE.        
 //
 #pragma once
-#include "interface.hpp"
-#include "../symex/memory.hpp"
+#include "translation.hpp"
 
 namespace vtil
 {
-	// A virtual machine implementation that executes in terms of symbolic expressions.
+	// Translation with a cache lookup to avoid dupliate calculations.
 	//
-	struct symbolic_vm : vm_interface
+	struct batch_translator
 	{
-		// State of the virtual machine.
+		// Block we are translating into.
 		//
-		symbolic::memory memory_state;
-		std::map<register_desc, symbolic::expression> register_state;
+		basic_block* block;
 
-		// Construct from memory type, defaults to free.
+		// The expression cache.
 		//
-		symbolic_vm( symbolic::memory_type mem = symbolic::memory_type::free )
-			: memory_state( symbolic::create_memory( mem ) ) {}
-
-		// Reads from the register.
-		// - Value will be unpacked.
-		//
-		symbolic::expression read_register( const register_desc& desc ) override;
-
-		// Writes to the register.
-		//
-		void write_register( const register_desc& desc, symbolic::expression value ) override;
-
-		// Reads the given number of bytes from the memory.
-		//
-		symbolic::expression read_memory( const symbolic::expression& pointer, size_t byte_count ) override;
+		std::map<symbolic::boxed_expression, operand> translation_cache;
 		
-		// Writes the given expression to the memory.
+		// Constructed by binding to a block.
 		//
-		void write_memory( const symbolic::expression& pointer, symbolic::expression value ) override;
+		batch_translator( basic_block* block ) : block( block ) {}
 
-		// Resets the virtual machine state.
+		// operator<< is used to translate expressions.
 		//
-		void reset() { memory_state.reset(); register_state.clear(); }
+		operand operator<<( const symbolic::expression& exp )
+		{
+			operand& op = translation_cache[ exp ];
+			if ( op.is_valid() ) return op;
+			return op = translate_expression(
+				exp,
+				block,
+				[ & ] ( auto& exp, auto* block ) { return *this << exp; }
+			);
+		}
 	};
 };

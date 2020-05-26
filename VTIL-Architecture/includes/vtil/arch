@@ -12,6 +12,7 @@
 #include "../../symex/pointer.hpp"
 #include "../../symex/variable.hpp"
 #include "../../symex/translation.hpp"
+#include "../../symex/batch_translator.hpp"
 #include "../../vm/interface.hpp"
 #include "../../vm/symbolic.hpp"
 #include "../../vm/lambda.hpp"

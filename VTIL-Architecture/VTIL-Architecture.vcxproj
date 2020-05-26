@@ -20,6 +20,7 @@
     <ClInclude Include="routine\instruction.hpp" />
     <ClInclude Include="routine\routine.hpp" />
     <ClInclude Include="routine\serialization.hpp" />
+    <ClInclude Include="symex\batch_translator.hpp" />
     <ClInclude Include="symex\memory.hpp" />
     <ClInclude Include="symex\pointer.hpp" />
     <ClInclude Include="symex\translation.hpp" />
