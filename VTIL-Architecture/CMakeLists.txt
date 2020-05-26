@@ -10,6 +10,9 @@ set(architecture_SOURCES arch/instruction_desc.cpp
     symex/variable.cpp
     vm/interface.cpp
     vm/symbolic.cpp
+    trace/auxilaries.cpp
+    trace/cached_tracer.cpp
+    trace/tracer.cpp
 )
 
 add_library(architecture STATIC ${architecture_SOURCES})
