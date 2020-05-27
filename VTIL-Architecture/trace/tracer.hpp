@@ -29,6 +29,13 @@
 #include <vtil/symex>
 #include "../symex/variable.hpp"
 
+// [Configuration]
+// Determine whether we should log the details of the variable tracing process.
+//
+#ifndef VTIL_OPT_TRACE_VERBOSE
+	#define VTIL_OPT_TRACE_VERBOSE 0
+#endif
+
 namespace vtil
 {
 	// Basic tracer implementation.

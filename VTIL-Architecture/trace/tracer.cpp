@@ -153,21 +153,22 @@ namespace vtil
             //
             else if ( var.is_memory() )
             {
-                auto& pointer = var.mem().decay();
+				auto& mem = var.mem();
+
 #if VTIL_OPT_TRACE_VERBOSE
                 // Log original pointer.
                 //
-                log<CON_PRP>( "Propagating pointer: %s\n", pointer->to_string() );
+                log<CON_PRP>( "Propagating pointer: %s\n", mem.decay() );
 #endif
                 // Fail if propagation fails.
                 //
-                if ( !( pointer = propagate( pointer, it, tracer, nullptr ) ) )
+				if ( !( mem = { propagate( mem.decay(), it, tracer, nullptr ), mem.bit_count } ).decay() )
                     return {};
 
 #if VTIL_OPT_TRACE_VERBOSE
                 // Log new pointer.
                 //
-                log<CON_PRP>( "Pointer' => %s\n", pointer->to_string() );
+                log<CON_PRP>( "Pointer' => %s\n", mem.decay() );
 #endif
             }
 

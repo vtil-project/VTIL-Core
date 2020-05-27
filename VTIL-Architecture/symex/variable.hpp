@@ -97,8 +97,9 @@ namespace vtil::symbolic
 				: base( std::move( base ) ), bit_count( bit_count ) {}
 
 			// Add a decay wrapper.
+			// - Always return constant since this value should not be modified 
+			//   without recomputation of the xpointers.
 			//
-			expression& decay() { return base.base.decay(); }
 			const expression& decay() const { return base.base.decay(); }
 
 			// Declare reduction.

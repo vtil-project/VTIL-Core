@@ -66,7 +66,7 @@ namespace vtil
 		//
 		register_desc frame_register = {};
 		
-		// Purges any writes to stack that will be below the current stack pointer.
+		// Purges any writes to stack that will be end up below the final stack pointer.
 		//
 		bool purge_stack = false;
 	};
