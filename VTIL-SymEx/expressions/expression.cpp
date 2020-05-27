@@ -365,10 +365,11 @@ namespace vtil::symbolic
 			//
 			if ( is_constant() )
 			{
-				// Punish for each set bit in [min_{popcnt x}(v, |v|)], in an exponentially decreasing rate.
+				// Punish for each set bit in [min_{msb x + popcnt x}(v, |v|)], in an exponentially decreasing rate.
 				//
 				int64_t cval = *value.get<true>();
-				complexity = sqrt( 1 + std::min( math::popcnt( cval ), math::popcnt( abs( cval ) ) ) );
+				complexity = sqrt( 1 + std::min( math::msb( cval ) + math::popcnt( cval ), 
+								                 math::msb( abs( cval ) ) + math::popcnt( abs( cval ) ) ) );
 
 				// Hash is made up of the bit vector masks and the number of bits.
 				//

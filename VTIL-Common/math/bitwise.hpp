@@ -52,7 +52,7 @@ namespace vtil::math
     template<typename T, std::enable_if_t<std::is_integral_v<T>, int> = 0>
     static constexpr bool sgn( T type ) { return bool( type >> ( bitcnt<T> - 1 ) ); }
 
-    // Implement platform-indepdenent popcnt.
+    // Implement platform-indepdenent popcnt/msb/lsb.
     //
     static constexpr bitcnt_t popcnt( uint64_t x )
     {
@@ -63,6 +63,28 @@ namespace vtil::math
         x = ( x + ( x >> 4 ) ) & 0x0f0f0f0f0f0f0f0f;
         x = ( x * 0x0101010101010101 ) >> 56;
         return bitcnt_t( x );
+    }
+    static constexpr bitcnt_t msb( uint64_t x )
+    {
+        // Return index + 1 on success:
+        //
+        for ( bitcnt_t i = 63; i >= 0; i-- )
+            if ( x & ( 1ull << i ) )
+                return i + 1;
+        // Zero otherwise.
+        //
+        return 0;
+    }
+    static constexpr bitcnt_t lsb( uint64_t x )
+    {
+        // Return index + 1 on success:
+        //
+        for ( bitcnt_t i = 0; i <= 63; i++ )
+            if ( x & ( 1ull << i ) )
+                return i + 1;
+        // Zero otherwise.
+        //
+        return 0;
     }
 
     // Generate a mask for the given variable size and offset.
