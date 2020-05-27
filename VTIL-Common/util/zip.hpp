@@ -78,8 +78,16 @@ namespace vtil
 		// Declare the iterator type.
 		//
 		struct iterator_end_tag_t {};
-		struct iterator : std::iterator<std::bidirectional_iterator_tag, value_type>
+		struct iterator
 		{
+			// Generic iterator typedefs.
+			//
+			using iterator_category = std::bidirectional_iterator_tag;
+			using value_type =        value_type;
+			using difference_type =   size_t;
+			using pointer =           value_type*;
+			using reference =         value_type&;
+
 			// Self reference.
 			//
 			const joint_container* container;

@@ -62,8 +62,14 @@ namespace vtil::optimizer
 	{
 		T1 t1 = {};
 		combine_pass<Tx...> t2 = {};
-		size_t pass( basic_block* blk, bool xblock = false ) override { return t1.pass( blk, xblock ) + t2.pass( blk, xblock ); }
-		size_t xpass( routine* rtn ) override { return t1.xpass( rtn ) + t2.xpass( rtn ); }
+		size_t pass( basic_block* blk, bool xblock = false ) override 
+		{ 
+			return t1.pass( blk, xblock ) + t2.pass( blk, xblock ); 
+		}
+		size_t xpass( routine* rtn ) override 
+		{ 
+			return t1.xpass( rtn ) + t2.xpass( rtn ); 
+		}
 	};
 
 	// Passes through each optimizer provided until the passes do not change the block.
@@ -82,6 +88,38 @@ namespace vtil::optimizer
 		{
 			size_t cnt = combine_pass<Tx...>::xpass( rtn );
 			return cnt ? cnt + exhaust_pass::xpass( rtn ) : 0;
+		}
+	};
+
+	// Specializes the pass logic depending on whether it's restricted or not.
+	//
+	template<typename opt_lblock, typename opt_xblock>
+	struct specialize_pass : pass_interface
+	{
+		opt_xblock cross_optimizer = {};
+		opt_lblock local_optimizer = {};
+		size_t pass( basic_block* blk, bool xblock = false ) override
+		{
+			return xblock ? cross_optimizer.pass( blk, true ) : local_optimizer.pass( blk, false );
+		}
+		size_t xpass( routine* rtn ) override
+		{
+			return cross_optimizer.xpass( rtn );
+		}
+	};
+
+	// No-op pass.
+	//
+	template<size_t reported_n = 0>
+	struct nop_pass : pass_interface
+	{
+		size_t pass( basic_block* blk, bool xblock = false ) override 
+		{ 
+			return reported_n; 
+		}
+		size_t xpass( routine* rtn ) override 
+		{ 
+			return reported_n; 
 		}
 	};
 };
