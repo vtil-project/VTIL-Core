@@ -33,6 +33,7 @@
 #include "routine.hpp"
 #include "basic_block.hpp"
 #include "instruction.hpp"
+#include "call_convention.hpp"
 
 #pragma warning(disable:4267)
 namespace vtil
@@ -186,6 +187,11 @@ namespace vtil
 			}
 		}
 	}
+
+	// Serialization of VTIL calling conventions.
+	//
+	void serialize( std::ostream& out, const call_convention& in );
+	void deserialize( std::istream& in, call_convention& out );
 
 	// Serialization of VTIL blocks.
 	//

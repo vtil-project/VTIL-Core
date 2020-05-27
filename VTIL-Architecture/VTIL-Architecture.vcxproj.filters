@@ -81,6 +81,9 @@
     <ClInclude Include="symex\batch_translator.hpp">
       <Filter>SymEx Integration</Filter>
     </ClInclude>
+    <ClInclude Include="routine\call_convention.hpp">
+      <Filter>Instruction Stream</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="arch\instruction_desc.cpp">

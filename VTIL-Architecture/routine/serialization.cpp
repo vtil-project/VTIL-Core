@@ -35,6 +35,25 @@ namespace vtil
 	using magic_t = uint32_t;
 	static constexpr magic_t vtil_magic = 'LITV';
 
+	// Serialization of VTIL calling conventions.
+	//
+	void serialize( std::ostream& out, const call_convention& in )
+	{
+		serialize( out, in.volatile_registers );
+		serialize( out, in.forbidden_registers );
+		serialize( out, in.retval_registers );
+		serialize( out, in.frame_register );
+		serialize( out, in.purge_stack );
+	}
+	void deserialize( std::istream& in, call_convention& out )
+	{
+		deserialize( in, out.volatile_registers );
+		deserialize( in, out.forbidden_registers );
+		deserialize( in, out.retval_registers );
+		deserialize( in, out.frame_register );
+		deserialize( in, out.purge_stack );
+	}
+
 	// Serialization of VTIL blocks.
 	//
 	void serialize( std::ostream& out, const basic_block* in )
@@ -111,6 +130,12 @@ namespace vtil
 		//
 		serialize( out, rtn->entry_point->entry_vip );
 
+		// Write the call conventions used.
+		//
+		serialize( out, rtn->routine_convention );
+		serialize( out, rtn->subroutine_convention );
+		serialize( out, rtn->spec_subroutine_conventions );
+
 		// Write the number of blocks we will serialize.
 		//
 		serialize<clength_t>( out, rtn->explored_blocks.size() );
@@ -137,6 +162,12 @@ namespace vtil
 		//
 		vip_t entry_vip;
 		deserialize( in, entry_vip );
+
+		// Read the call conventions used.
+		//
+		deserialize( in, rtn->routine_convention );
+		deserialize( in, rtn->subroutine_convention );
+		deserialize( in, rtn->spec_subroutine_conventions );
 
 		// Read the number of blocks serialized and invoke basic-block 
 		// deserialization until number of blocks read matches.

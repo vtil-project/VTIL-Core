@@ -31,6 +31,7 @@
 #include <type_traits>
 #include <functional>
 #include "instruction.hpp"
+#include "call_convention.hpp"
 
 namespace vtil
 {
@@ -54,6 +55,18 @@ namespace vtil
 		// - Can be accessed without acquiring the mutex as it will be assigned strictly once.
 		//
 		basic_block* entry_point = nullptr;
+
+		// Calling convention of the routine.
+		//
+		call_convention routine_convention = default_call_convention;
+
+		// Calling convention of a non-specialized VXCALL.
+		//
+		call_convention subroutine_convention = default_call_convention;
+
+		// Convention of specialized calls, maps the vip of the VXCALL instruction onto the convention used.
+		//
+		std::map<vip_t, call_convention> spec_subroutine_conventions;
 
 		// This structure cannot be copied.
 		//
