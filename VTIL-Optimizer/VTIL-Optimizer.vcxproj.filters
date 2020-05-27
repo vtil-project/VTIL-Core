@@ -7,9 +7,6 @@
     <ClCompile Include="passes\normalize_stack.cpp">
       <Filter>Optimizer Passes</Filter>
     </ClCompile>
-    <ClCompile Include="passes\simplify_operations.cpp">
-      <Filter>Optimizer Passes</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Includes">
@@ -29,7 +26,7 @@
     <ClInclude Include="passes\normalize_stack.hpp">
       <Filter>Optimizer Passes</Filter>
     </ClInclude>
-    <ClInclude Include="passes\simplify_operations.hpp">
+    <ClInclude Include="passes\interface.hpp">
       <Filter>Optimizer Passes</Filter>
     </ClInclude>
   </ItemGroup>

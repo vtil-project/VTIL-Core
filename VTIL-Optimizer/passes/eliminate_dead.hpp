@@ -27,12 +27,15 @@
 //
 #pragma once
 #include <vtil/arch>
+#include "interface.hpp"
 
 namespace vtil::optimizer
 {
 	// Eliminates all instructions where the result is not used by the
 	// next block or the exited routine.
 	//
-	size_t eliminate_dead( basic_block* block );
-	size_t eliminate_dead( routine* rtn );
+	struct dead_elimination_pass : pass_interface
+	{
+		size_t pass( basic_block* blk, bool xblock = false ) override;
+	};
 };

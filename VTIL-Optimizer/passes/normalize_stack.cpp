@@ -350,35 +350,29 @@ namespace vtil::optimizer
 				++counter;
 			});
 	}
-
+	
 	// Attempts to reduce the number of different stack instances used,
 	// resolves load and store operations using non-sp pointers into
 	// SP+C where possible and converts local variables in virtual
 	// stack into explicit temporaries if applicable.
 	//
-	size_t normalize_stack( basic_block* block )
+	size_t stack_normalization_pass::pass( basic_block* blk, bool xblock )
 	{
 		// Apply each routine.
 		//
 		size_t counter = 0;
-		pin_stack_pointer( block, counter );
-		simplify_stack_references( block, counter );
-		propagate_load_from_stack( block, counter );
-		evict_from_stack( block, counter );
+		pin_stack_pointer( blk, counter );
+		simplify_stack_references( blk, counter );
+		propagate_load_from_stack( blk, counter );
+		evict_from_stack( blk, counter );
 
 		// Clean up the instruction stream.
 		//
-		block->stream.remove_if( [ ] ( instruction& ins ) 
-		{ 
-			return !ins.explicit_volatile && *ins.base == ins::nop; 
+		blk->stream.remove_if( [ ] ( instruction& ins )
+		{
+			return !ins.explicit_volatile && *ins.base == ins::nop;
 		} );
 
-		return counter;
-	}
-	size_t normalize_stack( routine* rtn )
-	{
-		size_t counter = 0;
-		rtn->for_each( [ & ] ( auto block ) { counter += normalize_stack( block ); } );
 		return counter;
 	}
 };

@@ -27,6 +27,7 @@
 //
 #pragma once
 #include <vtil/arch>
+#include "interface.hpp"
 
 namespace vtil::optimizer
 {
@@ -35,6 +36,8 @@ namespace vtil::optimizer
 	// SP+C where possible and converts local variables in virtual
 	// stack into explicit temporaries if applicable.
 	//
-	size_t normalize_stack( basic_block* block );
-	size_t normalize_stack( routine* rtn );
+	struct stack_normalization_pass : pass_interface
+	{
+		size_t pass( basic_block* blk, bool xblock = false ) override;
+	};
 };

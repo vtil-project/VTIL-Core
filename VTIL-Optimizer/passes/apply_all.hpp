@@ -28,17 +28,13 @@
 #pragma once
 #include "normalize_stack.hpp"
 #include "eliminate_dead.hpp"
-#include "simplify_operations.hpp"
 
 namespace vtil::optimizer
 {
-	// Common routine to apply every pass, depending on the structure passed.
+	// TODO: Add a wrapping validation pass and validated_t<T> to nop | apply depending on _DEBUG.
 	//
-	template<typename T,
-		std::enable_if_t<std::is_same_v<T, basic_block> || std::is_same_v<T, routine>, int> = 0>
-		static void pass( T* ptr )
-	{
-		normalize_stack( ptr );
-		eliminate_dead( ptr );
-	}
+
+	// Combined pass for each optimization.
+	//
+	using combined_pass = combine_pass<stack_normalization_pass, dead_elimination_pass>;
 };
