@@ -49,6 +49,11 @@ namespace vtil::optimizer
 			rtn->for_each( [ & ] ( auto* blk ) { n += pass( blk, true ); } ); 
 			return n; 
 		}
+
+		// Overload operator().
+		//
+		size_t operator()( basic_block* blk, bool xblock = false ) { return pass( blk, xblock ); }
+		size_t operator()( routine* rtn ) { return xpass( rtn ); }
 	};
 
 	// Passes through each optimizer provided and returns the total number of optimizations applied.
@@ -121,5 +126,23 @@ namespace vtil::optimizer
 		{ 
 			return reported_n; 
 		}
+	};
+
+	// This wrapper spawns a new state of the given base type for each call
+	// into pass and xpass letting the calls be const-qualified, can be used
+	// for constexpr declarations.
+	//
+	template<typename T>
+	struct spawn_state
+	{
+		// Imitate pass interface.
+		//
+		size_t pass( basic_block* blk, bool xblock = false ) const { return T{}.pass( blk, xblock ); }
+		size_t xpass( routine* rtn ) const { return T{}.xpass( rtn ); }
+
+		// Overload operator().
+		//
+		size_t operator()( basic_block* blk, bool xblock = false ) const { return pass( blk, xblock ); }
+		size_t operator()( routine* rtn ) const { return xpass( rtn ); }
 	};
 };

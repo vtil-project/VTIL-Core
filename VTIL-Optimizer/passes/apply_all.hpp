@@ -36,5 +36,6 @@ namespace vtil::optimizer
 
 	// Combined pass for each optimization.
 	//
-	using combined_pass = combine_pass<stack_normalization_pass, dead_elimination_pass>;
+	using combined_pass_type = combine_pass<stack_normalization_pass, dead_elimination_pass>;
+	static constexpr spawn_state<combined_pass_type> apply_all = {};
 };

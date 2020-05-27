@@ -318,7 +318,10 @@ namespace vtil
 				return tmp;
 			}
 			default:
-				unreachable();
+				break;
 		}
+
+		unreachable();
+		return {};
 	}
 };

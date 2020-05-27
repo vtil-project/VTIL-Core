@@ -129,6 +129,11 @@ namespace vtil
 			//
 			{ register_physical, X86_REG_RDI, 64 }, { register_physical, X86_REG_RSI, 64 }, 
 			{ register_physical, X86_REG_R8,  64 }, { register_physical, X86_REG_R9,  64 },
+
+			// Every bit except the direction flag.
+			//
+			{ register_physical | register_flags, 0, 10, 0  },
+			{ register_physical | register_flags, 0, 53, 11 }
 		},
 		/*.forbidden_registers =*/ {},
 		/*.retval_registers =*/ { 
