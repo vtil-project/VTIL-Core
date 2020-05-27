@@ -45,7 +45,7 @@ namespace vtil
 	{
 		// Mutex guarding the whole structure, more information on thread-safety can be found at basic_block.hpp.
 		//
-		std::mutex mutex;
+		mutable critical_section mutex;
 
 		// Cache of explored blocks, mapping virtual instruction pointer to the basic block structure.
 		//
