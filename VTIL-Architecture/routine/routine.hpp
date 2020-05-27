@@ -58,7 +58,7 @@ namespace vtil
 
 		// Calling convention of the routine.
 		//
-		call_convention routine_convention = default_call_convention;
+		call_convention routine_convention = preserve_all_convention;
 
 		// Calling convention of a non-specialized VXCALL.
 		//

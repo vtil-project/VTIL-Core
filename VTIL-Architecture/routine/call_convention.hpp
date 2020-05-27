@@ -71,6 +71,32 @@ namespace vtil
 		bool purge_stack = false;
 	};
 
+#if VTIL_DEFAULT_CALL_CONV == VTIL_CCONV_AMD64_WINDOWS || VTIL_DEFAULT_CALL_CONV == VTIL_CCONV_AMD64_UNIX
+	// Define a convention preserving all changes.
+	//
+	static const call_convention preserve_all_convention = {
+		/*.volatile_registers =*/ {},
+		/*.forbidden_registers =*/ {},
+		/*.retval_registers =*/ { 
+			// Callee reads whole context.
+			//
+			{ register_physical, X86_REG_RAX, 64 }, { register_physical, X86_REG_RBX, 64 },
+			{ register_physical, X86_REG_RCX, 64 }, { register_physical, X86_REG_RDX, 64 },
+			{ register_physical, X86_REG_RSI, 64 }, { register_physical, X86_REG_RDI, 64 },
+			{ register_physical, X86_REG_RBP, 64 }, { register_physical, X86_REG_RSP, 64 },
+			{ register_physical, X86_REG_R8,  64 }, { register_physical, X86_REG_R9,  64 },
+			{ register_physical, X86_REG_R10, 64 }, { register_physical, X86_REG_R11, 64 },
+			{ register_physical, X86_REG_R12, 64 }, { register_physical, X86_REG_R13, 64 },
+			{ register_physical, X86_REG_R14, 64 }, { register_physical, X86_REG_R15, 64 },
+			REG_FLAGS,
+		},
+		{ register_physical, X86_REG_RBP, 64 },
+		/*.purge_stack =*/ true,
+	};
+#else
+	#error "Unknown call convention."
+#endif
+
 	// Define the default call convention.
 	//
 #if VTIL_DEFAULT_CALL_CONV == VTIL_CCONV_AMD64_WINDOWS
@@ -115,23 +141,6 @@ namespace vtil
 		/*.purge_stack =*/ true,
 	};
 #else
-	static const call_convention default_call_convention = {
-		/*.volatile_registers =*/ {},
-		/*.forbidden_registers =*/ {},
-		/*.retval_registers =*/ { 
-			// Callee reads whole context.
-			//
-			{ register_physical, X86_REG_RAX, 64 }, { register_physical, X86_REG_RBX, 64 },
-			{ register_physical, X86_REG_RCX, 64 }, { register_physical, X86_REG_RDX, 64 },
-			{ register_physical, X86_REG_RSI, 64 }, { register_physical, X86_REG_RDI, 64 },
-			{ register_physical, X86_REG_RBP, 64 }, { register_physical, X86_REG_RSP, 64 },
-			{ register_physical, X86_REG_R8,  64 }, { register_physical, X86_REG_R9,  64 },
-			{ register_physical, X86_REG_R10, 64 }, { register_physical, X86_REG_R11, 64 },
-			{ register_physical, X86_REG_R12, 64 }, { register_physical, X86_REG_R13, 64 },
-			{ register_physical, X86_REG_R14, 64 }, { register_physical, X86_REG_R15, 64 },
-			REG_FLAGS,
-		},
-		/*.purge_stack =*/ false,
-	};
+	#error "Unknown call convention."
 #endif
 };
