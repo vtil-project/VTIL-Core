@@ -232,7 +232,7 @@ namespace vtil::symbolic::directive
         { A|(B&C),                                            A|(!(A|B)&C) },
         { A|(B^C),                                            A|s(!(B&s(~A))^s(C&(~A))) },
         { A|(B<<U),                                           !(!(A>>U)|B)<<U|s(A&((1<<U)-1)) },
-        { A|(B>>U),                                           !(!(A<<U)|B)>>U|s(A&(~(-1<<U))) },
+        { A|(B>>U),                                           !(!(A<<U)|B)>>U|s(A&(~((-1<<U)>>U))) },
         { A|(__rotl(B,C)),                                    __rotl(!(B|s(__rotr(A,C))), C) },
         { A|(__rotr(B,C)),                                    __rotr(!(B|s(__rotl(A,C))), C) },
         { A|~B,                                               ~!(B&s(~A)) },
@@ -255,7 +255,7 @@ namespace vtil::symbolic::directive
         //
         { A^(B^C),                                            B^!(A^C) },
         { A^(B<<U),                                           !(!(A>>U)^B)<<U|s(A&((1<<U)-1)) },
-        { A^(B>>U),                                           !(!(A<<U)^B)>>U|s(A&(~(-1<<U))) },
+        { A^(B>>U),                                           !(!(A<<U)^B)>>U|s(A&(~((-1<<U)>>U))) },
         { A^(__rotl(B,C)),                                    __rotl(!(B^s(__rotr(A,C))), C) },
         { A^(__rotr(B,C)),                                    __rotr(!(B^s(__rotl(A,C))), C) },
         { A^~B,                                               !(~A)^B },

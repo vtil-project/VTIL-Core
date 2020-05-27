@@ -46,7 +46,7 @@ namespace vtil::symbolic
 		using namespace logger;
 #if VTIL_SYMEX_SIMPLIFY_VERBOSE
 		scope_padding _p( 1 );
-		log<CON_BLU>( "[%s].\n", dir );
+		log<CON_BLU>( "[%s].\n", *dir );
 #endif
 
 		// Dummy expression used just to indicate success if speculative_condition is used, if seen in
@@ -134,7 +134,7 @@ namespace vtil::symbolic
 						return e1;
 				}
 #if VTIL_SYMEX_SIMPLIFY_VERBOSE
-				log<CON_RED>( "Rejected, does not simplify.\n", dir->rhs );
+				log<CON_RED>( "Rejected, does not simplify.\n", *dir->rhs );
 #endif
 				break;
 			}
@@ -156,7 +156,7 @@ namespace vtil::symbolic
 			{
 #if VTIL_SYMEX_SIMPLIFY_VERBOSE
 				log<CON_BLU>( "Or directive hit %s.\n" );
-				log<CON_BLU>( "Trying [%s]...\n", dir->lhs );
+				log<CON_BLU>( "Trying [%s]...\n", *dir->lhs );
 #endif
 
 				// Unpack first expression, if translated successfully, return it as is.
@@ -165,7 +165,7 @@ namespace vtil::symbolic
 					return e1;
 
 #if VTIL_SYMEX_SIMPLIFY_VERBOSE
-				log<CON_BLU>( "Trying [%s]...\n", dir->rhs );
+				log<CON_BLU>( "Trying [%s]...\n", *dir->rhs );
 #endif
 
 				// Unpack second expression, if translated successfully, return it as is.
@@ -186,7 +186,7 @@ namespace vtil::symbolic
 				if ( !condition_status || !( +condition_status )->simplify().get().value_or( false ) )
 				{
 #if VTIL_SYMEX_SIMPLIFY_VERBOSE
-					log<CON_RED>( "Rejected %s, condition (%s) not met.\n", dir->rhs, dir->lhs );
+					log<CON_RED>( "Rejected %s, condition (%s) not met.\n", *dir->rhs, *dir->lhs );
 #endif
 					return {};
 				}
@@ -239,11 +239,9 @@ namespace vtil::symbolic
 			}
 			case directive_op_desc::warning:
 			{
-#if VTIL_SYMEX_SIMPLIFY_VERBOSE
 				// Print a warning.
 				//
-				log<CON_YLW>( "WARNING!\n" );
-#endif
+				log<CON_YLW>( "Directive-time warning!!\n" );
 
 				// Continue the translation from the right hand side.
 				//
@@ -284,10 +282,10 @@ namespace vtil::symbolic
 #if VTIL_SYMEX_SIMPLIFY_VERBOSE
 				// Log the translation.
 				//
-				log<CON_BLU>( "Translating [%s] => [%s]:\n", from, to );
+				log<CON_BLU>( "Translating [%s] => [%s]:\n", *from, *to );
 				from->enum_variables( [ & ] ( const instance& ins )
 				{
-					log<CON_BLU>( "            %s: %s\n", ins.id, match.translate( ins ) );
+					log<CON_BLU>( "            %s: %s\n", ins.id, *match.translate( ins ) );
 				} );
 #endif
 
@@ -344,10 +342,10 @@ namespace vtil::symbolic
 #if VTIL_SYMEX_SIMPLIFY_VERBOSE
 				// Log the translation.
 				//
-				log<CON_BLU>( "Translating [%s] => [%s]:\n", from, to );
+				log<CON_BLU>( "Translating [%s] => [%s]:\n", *from, *to );
 				from->enum_variables( [ & ] ( const instance& ins )
 				{
-					log<CON_BLU>( "            %s: %s\n", ins.id, match.translate( ins ) );
+					log<CON_BLU>( "            %s: %s\n", ins.id, *match.translate( ins ) );
 				} );
 #endif
 

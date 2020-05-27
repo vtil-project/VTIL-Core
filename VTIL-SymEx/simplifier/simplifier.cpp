@@ -35,7 +35,7 @@ namespace vtil::symbolic
 {
 	struct join_depth_exception : std::exception
 	{
-		const char* what() const throw( )
+		const char* what() const throw()
 		{
 			return "Reached the maximum join depth limit.";
 		}
@@ -55,7 +55,7 @@ namespace vtil::symbolic
 		using namespace logger;
 #if VTIL_SYMEX_SIMPLIFY_VERBOSE
 		scope_padding _p( 1 );
-		log<CON_CYN>( "[Prettify]  = %s\n", exp );
+		log<CON_CYN>( "[Prettify]  = %s\n", *exp );
 #endif
 
 		// Prettify each operand
@@ -80,8 +80,8 @@ namespace vtil::symbolic
 			if ( auto exp_new = transform( exp, dir_src, dir_dst, {}, -1 ) )
 			{
 #if VTIL_SYMEX_SIMPLIFY_VERBOSE
-				log<CON_PRP>( "[Pack] %s => %s\n", dir_src, dir_dst );
-				log<CON_GRN>( "= %s\n", exp );
+				log<CON_PRP>( "[Pack] %s => %s\n", *dir_src, *dir_dst );
+				log<CON_GRN>( "= %s\n", *exp );
 #endif
 				exp = exp_new;
 				return;
@@ -89,7 +89,7 @@ namespace vtil::symbolic
 		}
 
 #if VTIL_SYMEX_SIMPLIFY_VERBOSE
-		log<CON_YLW>( "= %s\n", exp );
+		log<CON_YLW>( "= %s\n", *exp );
 #endif
 	}
 
@@ -123,8 +123,8 @@ namespace vtil::symbolic
 		// Log the input.
 		//
 		scope_padding _p( 1 );
-		if ( !log_padding ) log( "\n" );
-		log( "[Input]  = %s ", exp );
+		if ( !state::get()->padding ) log( "\n" );
+		log( "[Input]  = %s ", *exp );
 		log( "(Hash: %s)\n", exp->hash() );
 #endif
 
@@ -138,7 +138,7 @@ namespace vtil::symbolic
 			if ( cache_it->second.first.is_valid() )
 			{
 #if VTIL_SYMEX_SIMPLIFY_VERBOSE
-				log<CON_YLW>( "= %s (From cache, Success: %d)\n", cache_it->second.first, cache_it->second.second );
+				log<CON_YLW>( "= %s (From cache, Success: %d)\n", *cache_it->second.first, cache_it->second.second );
 #endif
 				exp = cache_it->second.first;
 				return cache_it->second.second;
@@ -201,7 +201,7 @@ namespace vtil::symbolic
 			success_flag = true;
 			exp = cache_entry;
 #if VTIL_SYMEX_SIMPLIFY_VERBOSE
-			log<CON_CYN>( "= %s [By evaluation]\n", exp );
+			log<CON_CYN>( "= %s [By evaluation]\n", *exp );
 #endif
 			return success_flag;
 		}
@@ -215,8 +215,8 @@ namespace vtil::symbolic
 			if ( auto exp_new = transform( exp, dir_src, dir_dst, {}, max_depth ) )
 			{
 #if VTIL_SYMEX_SIMPLIFY_VERBOSE
-				log<CON_GRN>( "[Simplify] %s => %s\n", dir_src, dir_dst );
-				log<CON_GRN>( "= %s [By simplify directive]\n", exp_new );
+				log<CON_GRN>( "[Simplify] %s => %s\n", *dir_src, *dir_dst );
+				log<CON_GRN>( "= %s [By simplify directive]\n", *exp_new );
 #endif
 
 				// Recurse, set the hint and return the simplified instance.
@@ -295,8 +295,8 @@ namespace vtil::symbolic
 			if ( auto exp_new = transform( exp, dir_src, dir_dst, filter, max_depth ) )
 			{
 #if VTIL_SYMEX_SIMPLIFY_VERBOSE
-				log<CON_GRN>( "[Join] %s => %s\n", dir_src, dir_dst );
-				log<CON_GRN>( "= %s [By join directive]\n", exp_new );
+				log<CON_GRN>( "[Join] %s => %s\n", *dir_src, *dir_dst );
+				log<CON_GRN>( "= %s [By join directive]\n", *exp_new );
 				log<CON_YLW>( "Complexity: %lf => %lf\n", exp->complexity, exp_new->complexity );
 #endif
 
@@ -321,8 +321,8 @@ namespace vtil::symbolic
 				 [ & ] ( auto& exp_new ) { return simplify_expression( exp_new, pretty, max_depth - 1 ) && exp_new->complexity < exp->complexity; }, max_depth ) )
 			{
 #if VTIL_SYMEX_SIMPLIFY_VERBOSE
-				log<CON_YLW>( "[Unpack] %s => %s\n", dir_src, dir_dst );
-				log<CON_GRN>( "= %s [By unpack directive]\n", exp_new );
+				log<CON_YLW>( "[Unpack] %s => %s\n", *dir_src, *dir_dst );
+				log<CON_GRN>( "= %s [By unpack directive]\n", *exp_new );
 #endif
 
 				// Set the hint and return the simplified instance.
@@ -343,7 +343,7 @@ namespace vtil::symbolic
 #if VTIL_SYMEX_SIMPLIFY_VERBOSE
 		// Log the output.
 		//
-		log( "= %s\n\n", exp );
+		log( "= %s\n\n", *exp );
 #endif
 		return false;
 	}
