@@ -30,6 +30,7 @@
 #include <mutex>
 #include <type_traits>
 #include <functional>
+#include <vtil/utility>
 #include "instruction.hpp"
 #include "call_convention.hpp"
 
@@ -81,6 +82,24 @@ namespace vtil
 			std::lock_guard _g( mutex );
 			for ( auto& [vip, block] : explored_blocks )
 				enumerator( block );
+		}
+
+		// Gets the calling convention for the given VIP (that resolves into VXCALL.
+		//
+		call_convention get_cconv( vip_t vip ) const
+		{
+			std::lock_guard _g( mutex );
+			if ( auto it = spec_subroutine_conventions.find( vip ); it != spec_subroutine_conventions.end() )
+				return it->second;
+			return subroutine_convention;
+		}
+
+		// Sets the calling convention for the given VIP (that resolves into VXCALL.
+		//
+		void set_cconv( vip_t vip, const call_convention& cc )
+		{
+			std::lock_guard _g( mutex );
+			spec_subroutine_conventions[ vip ] = cc;
 		}
 
 		// Routine structures free all basic blocks they own upon their destruction.
