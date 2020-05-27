@@ -56,11 +56,11 @@ namespace vtil
 
 		// Number of times the mutex was acquired by this thread.
 		//
-		std::atomic<int32_t> lock_count;
+		std::atomic<int32_t> lock_count = 0;
 
 		// Identifier of the thread that currently owns this mutex.
 		//
-		std::atomic<tid_t> owner;
+		std::atomic<tid_t> owner = 0;
 
 		// Default constructor, copying or moving this object is not allowed.
 		//

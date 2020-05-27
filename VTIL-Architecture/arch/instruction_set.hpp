@@ -46,8 +46,9 @@ namespace vtil
         //
         //    MOV        Reg,    Reg/Imm                                     | OP1 = OP2
         //    MOVSX      Reg,    Reg/Imm                                     | OP1 = SX(OP2)
-        //    STR        Reg,    Imm,    Reg/Imm                             | [OP1+OP2] <= OP3
-        //    LDD        Reg,    Reg,    Imm                                 | OP1 <= [OP2+OP3]
+        //    STR        Reg,    Imm,      Reg/Imm                           | [OP1+OP2] <= OP3
+        //    LDD        Reg,    Reg,      Imm                               | OP1 <= [OP2+OP3]
+        //    IFS        Reg,    Reg/Imm,  Reg/Imm                           | OP1 = OP2 ? OP3 (: 0)
         //
         /*------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
         /*                                          [Name]        [Operands...]                                     [ASizeOp]   [Volatile]  [Operator]               [BranchOps] [MemOps]     */
@@ -55,6 +56,7 @@ namespace vtil
         static const instruction_desc movsx =      { "movsx",     { o::write,    o::read_any                   },   2,          false,      {},                      {},         {}           };
         static const instruction_desc str =        { "str",       { o::read_reg, o::read_imm,     o::read_any  },   3,          false,      {},                      {},         { 1, true }  };
         static const instruction_desc ldd =        { "ldd",       { o::write,    o::read_reg,     o::read_imm  },   1,          false,      {},                      {},         { 2, false } };
+        static const instruction_desc ifs =        { "ifs",       { o::write,    o::read_any,     o::read_any  },   3,          false,      op::value_if,            {},         {}           };
         /*------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
 
         //    -- Arithmetic instructions
@@ -177,7 +179,7 @@ namespace vtil
     //
     static const instruction_desc instruction_list[] = 
     {
-        ins::mov, ins::movsx, ins::str, ins::ldd, ins::neg, ins::add, ins::sub, ins::mul, ins::imul, 
+        ins::mov, ins::movsx, ins::str, ins::ldd, ins::ifs, ins::neg, ins::add, ins::sub, ins::mul, ins::imul,
         ins::mulhi, ins::imulhi, ins::div, ins::idiv, ins::rem, ins::irem, ins::popcnt, ins::bnot, 
         ins::bshr, ins::bshl,ins::bxor, ins::bor, ins::band, ins::bror, ins::brol, ins::tg, 
         ins::tge, ins::te, ins::tne, ins::tle, ins::tl, ins::tug, ins::tuge, ins::tule, ins::tul, ins::js, 

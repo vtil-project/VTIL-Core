@@ -299,6 +299,7 @@ namespace vtil
 		WRAP_LAZY( movsx );
 		WRAP_LAZY( str );
 		WRAP_LAZY( ldd );
+		WRAP_LAZY( ifs );
 		WRAP_LAZY( neg );
 		WRAP_LAZY( add );
 		WRAP_LAZY( sub );

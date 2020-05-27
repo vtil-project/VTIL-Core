@@ -233,6 +233,38 @@ namespace vtil
 				block->push_back( { map_operator( op ),{ lhs, rhs } } );
 				return lhs;
 			}
+			case math::operator_id::value_if:
+			{
+				// If Lhs is a register:
+				//
+				if ( operand lhs = cvt( *exp.lhs ); lhs.is_register() )
+				{
+					// Resize Lhs to a boolean.
+					//
+					lhs.reg().bit_count = 1;
+
+					// Allocate temporary.
+					//
+					operand tmp = block->tmp( exp.rhs->size() );
+
+					// Push [<INS> Tmp Lhs Rhs] and return Tmp.
+					//
+					block->push_back( { map_operator( op ), { tmp, lhs, cvt( *exp.rhs ) } } );
+					return tmp;
+				}
+				// If Lhs was [true], return Rhs:
+				//
+				else if( lhs.imm().u64 & 1 )
+				{
+					return cvt( *exp.rhs );
+				}
+				// Otherwise return 0.
+				//
+				else
+				{
+					return { 0, exp.rhs->size() };
+				}
+			}
 			case math::operator_id::divide:
 			case math::operator_id::remainder:
 			case math::operator_id::udivide:
@@ -248,7 +280,6 @@ namespace vtil
 				block->push_back( { map_operator( op ),{ lhs, operand( 0, bitcnt_t( rhs.size() * 8 ) ), rhs } } );
 				return lhs;
 			}
-			case math::operator_id::value_if:
 			case math::operator_id::max_value:
 			case math::operator_id::min_value:
 			case math::operator_id::umax_value:
