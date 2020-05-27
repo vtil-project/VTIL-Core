@@ -5,13 +5,13 @@
       <Filter>Directives</Filter>
     </ClCompile>
     <ClCompile Include="expressions\expression.cpp">
-      <Filter>Expression</Filter>
+      <Filter>Expressions</Filter>
     </ClCompile>
     <ClCompile Include="simplifier\simplifier.cpp">
       <Filter>Simplifier</Filter>
     </ClCompile>
     <ClCompile Include="expressions\unique_identifier.cpp">
-      <Filter>Expression</Filter>
+      <Filter>Expressions</Filter>
     </ClCompile>
     <ClCompile Include="directives\transformer.cpp">
       <Filter>Directives</Filter>
@@ -22,7 +22,7 @@
       <Filter>Directives</Filter>
     </ClInclude>
     <ClInclude Include="expressions\expression.hpp">
-      <Filter>Expression</Filter>
+      <Filter>Expressions</Filter>
     </ClInclude>
     <ClInclude Include="simplifier\directives.hpp">
       <Filter>Simplifier</Filter>
@@ -34,7 +34,7 @@
       <Filter>Includes</Filter>
     </ClInclude>
     <ClInclude Include="expressions\unique_identifier.hpp">
-      <Filter>Expression</Filter>
+      <Filter>Expressions</Filter>
     </ClInclude>
     <ClInclude Include="directives\fast_matcher.hpp">
       <Filter>Directives</Filter>
@@ -47,14 +47,14 @@
     <Filter Include="Directives">
       <UniqueIdentifier>{35c6ec1c-2ebb-4138-8d23-9e073fb1ffac}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Expression">
-      <UniqueIdentifier>{224688f8-aeaa-4c55-87a9-60f61607dadf}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Simplifier">
       <UniqueIdentifier>{d397ea38-13ca-41f4-abec-88292fa650d5}</UniqueIdentifier>
     </Filter>
     <Filter Include="Includes">
       <UniqueIdentifier>{4106c656-78ac-4d84-a633-3b5309fc1458}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Expressions">
+      <UniqueIdentifier>{224688f8-aeaa-4c55-87a9-60f61607dadf}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
