@@ -83,6 +83,18 @@ namespace vtil
 
 	// Returns the memory address this instruction references.
 	//
+	std::pair<register_desc&, int64_t&> instruction::ref_mem_loc()
+	{
+		// Assert that instruction does access memory.
+		//
+		fassert( base->accesses_memory() );
+
+		// Reference the pair of operands used to create the pointer and return them.
+		//
+		operand& mem_base = operands[ base->memory_operand_index ];
+		operand& mem_offset = operands[ base->memory_operand_index + 1 ];
+		return { mem_base.reg(), mem_offset.imm().i64 };
+	}
 	std::pair<register_desc, int64_t> instruction::get_mem_loc() const
 	{
 		// Assert that instruction does access memory.

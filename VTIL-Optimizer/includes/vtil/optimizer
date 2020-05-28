@@ -1,4 +1,5 @@
 #pragma once
+#include "../../passes/interface.hpp"
 #include "../../passes/eliminate_dead.hpp"
 #include "../../passes/normalize_stack.hpp"
 #include "../../passes/apply_all.hpp"

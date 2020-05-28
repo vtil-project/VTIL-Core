@@ -46,7 +46,7 @@ namespace vtil::optimizer
 			// >> Skip volatile instructions.
 			.where( [ ] ( instruction& ins ) { return !ins.is_volatile(); } )
 			
-			// | Filter to instructions that reset stack tracking.
+			// | Filter to instructions that changes stack instances.
 			.where( [ ] ( instruction& ins ) { return ins.sp_reset; } )
 
 			// := Project back to iterator type.

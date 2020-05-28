@@ -110,6 +110,7 @@ namespace vtil
 
 		// Returns the memory address this instruction references.
 		//
+		std::pair<register_desc&, int64_t&> ref_mem_loc();
 		std::pair<register_desc, int64_t> get_mem_loc() const;
 
 		// Checks whether the instruction reads from the given register or not, and

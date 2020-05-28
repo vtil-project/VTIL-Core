@@ -254,19 +254,15 @@ namespace vtil
 			//
 			it->sp_offset += offset;
 
-			// If instruction reads from SP:
+			// If memory operation:
 			//
-			if ( it->reads_from( REG_SP ) )
+			if ( it->base->accesses_memory() )
 			{
-				// If LDR|STR with memory base SP:
+				// If base is stack pointer, add the offset.
 				//
-				if ( it->base->accesses_memory() && it->operands[ it->base->memory_operand_index ].reg().is_stack_pointer() )
-				{
-					// Assert the offset operand is an immediate and shift the offset as well.
-					//
-					fassert( it->operands[ it->base->memory_operand_index + 1 ].is_immediate() );
-					it->operands[ it->base->memory_operand_index + 1 ].imm().i64 += offset;
-				}
+				auto [base, offset] = it->ref_mem_loc();
+				if ( base.is_stack_pointer() )
+					offset += offset;
 			}
 		}
 
