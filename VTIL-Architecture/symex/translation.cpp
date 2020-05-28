@@ -55,9 +55,9 @@ namespace vtil
 	{
 		// Declare a helper to force an operand into register form.
 		//
-		const auto force_register = [ & ] ( operand& op )
+		const auto force_clobber_register = [ & ] ( operand& op )
 		{
-			if ( !op.is_register() )
+			if ( !op.is_register() || op.reg().is_read_only() )
 			{
 				operand tmp = block->tmp( bitcnt_t( op.size() * 8 ) );
 				block->mov( tmp, op );
@@ -124,7 +124,7 @@ namespace vtil
 
 					// If stack pointer, remove the current offset:
 					//
-					if ( reg.is_stack_pointer() )
+					if ( reg.is_stack_pointer() && block->sp_offset != 0 )
 					{
 						operand tmp = block->tmp( reg.bit_count );
 						block->mov( tmp, reg )
@@ -158,7 +158,7 @@ namespace vtil
 					// Resolve tested expression into operand and address by-bit.
 					//
 					operand res = cvt( *exp.lhs );
-					force_register( res );
+					force_clobber_register( res );
 					res.reg().bit_offset += *offset;
 					res.reg().bit_count = 1;
 					return res;
@@ -168,7 +168,7 @@ namespace vtil
 					// Translate the shifted version and address first bit.
 					//
 					operand res = cvt( exp.lhs >> exp.rhs );
-					force_register( res );
+					force_clobber_register( res );
 					res.reg().bit_count = 1;
 					return res;
 				}
@@ -179,11 +179,11 @@ namespace vtil
 				// Translate the right hand side into a register.
 				//
 				operand tmp = cvt( *exp.rhs );
-				force_register( tmp );
+				force_clobber_register( tmp );
 
 				// Push [<INS> Reg1] and return Reg1.
 				//
-				block->push_back( { map_operator( op ),{ tmp } } );
+				block->push_back( { map_operator( op ), { tmp } } );
 				return tmp;
 			}
 			case math::operator_id::popcnt:
@@ -191,11 +191,11 @@ namespace vtil
 				// Translate the right hand side into a register.
 				//
 				operand tmp = cvt( *exp.rhs );
-				force_register( tmp );
+				force_clobber_register( tmp );
 
 				// Push [<INS> Reg1] and return Reg1.
 				//
-				block->push_back( { map_operator( op ),{ tmp } } );
+				block->push_back( { map_operator( op ), { tmp } } );
 
 				// Validate size and return resized to 8 bits.
 				//
@@ -230,7 +230,8 @@ namespace vtil
 
 				// Push [<INS> Lhs Rhs] and return Lhs.
 				//
-				block->push_back( { map_operator( op ),{ lhs, rhs } } );
+				force_clobber_register( lhs );
+				block->push_back( { map_operator( op ), { lhs, rhs } } );
 				return lhs;
 			}
 			case math::operator_id::value_if:
@@ -277,6 +278,7 @@ namespace vtil
 
 				// Push [<INS> Lhs 0 Rhs] and return Lhs.
 				//
+				force_clobber_register( lhs );
 				block->push_back( { map_operator( op ),{ lhs, operand( 0, bitcnt_t( rhs.size() * 8 ) ), rhs } } );
 				return lhs;
 			}
