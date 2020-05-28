@@ -202,18 +202,6 @@ namespace vtil
 		return { this, stream.emplace( it, std::move( ins ) ) };
 	}
 
-	// Helpers for the allocation of unique temporary registers.
-	//
-	register_desc basic_block::tmp( bitcnt_t size )
-	{
-		return register_desc
-		{
-			register_local,
-			last_temporary_index++,
-			size
-		};
-	}
-
 	// Queues a stack shift.
 	//
 	basic_block* basic_block::shift_sp( int64_t offset, bool merge_instance, const const_iterator& it_const )

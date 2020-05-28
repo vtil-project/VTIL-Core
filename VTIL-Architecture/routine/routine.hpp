@@ -57,6 +57,10 @@ namespace vtil
 		//
 		basic_block* entry_point = nullptr;
 
+		// Last local identifier used for an internal register.
+		//
+		std::atomic<size_t> last_internal_id = { 0 };
+
 		// Calling convention of the routine.
 		//
 		call_convention routine_convention = preserve_all_convention;
@@ -74,6 +78,18 @@ namespace vtil
 		routine() = default;
 		routine( const routine& ) = delete;
 		routine& operator=( const routine& ) = delete;
+
+		// Helpers for the allocation of unique internal registers.
+		//
+		register_desc alloc( bitcnt_t size )
+		{
+			return { register_internal, last_internal_id++, size };
+		}
+		template<typename... params>
+		auto alloc( bitcnt_t size_0, params... size_n )
+		{
+			return std::make_tuple( alloc( size_0 ), alloc( size_n )... );
+		}
 
 		// Invokes the enumerator passed for each basic block this routine contains.
 		//

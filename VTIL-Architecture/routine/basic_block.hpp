@@ -264,7 +264,10 @@ namespace vtil
 
 		// Helpers for the allocation of unique temporary registers.
 		//
-		register_desc tmp( bitcnt_t size );
+		register_desc tmp( bitcnt_t size )
+		{
+			return { register_local, last_temporary_index++, size };
+		}
 		template<typename... params>
 		auto tmp( bitcnt_t size_0, params... size_n )
 		{

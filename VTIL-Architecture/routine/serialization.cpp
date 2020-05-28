@@ -145,7 +145,7 @@ namespace vtil
 		for ( auto& pair : rtn->explored_blocks )
 			serialize( out, pair.second );
 	}
-	routine* deserialize( std::istream& in, routine*& rtn )
+	void deserialize( std::istream& in, routine*& rtn )
 	{
 		// Read and validate the magic.
 		//
@@ -185,7 +185,27 @@ namespace vtil
 		rtn->entry_point = rtn->explored_blocks[ entry_vip ];
 		if ( !rtn->entry_point )
 			throw std::runtime_error( "Failed resolving entry point." );
-		return rtn;
+
+		// Determine last internal id.
+		//
+		size_t last_internal_id = 0;
+		for ( auto& [v, block] : rtn->explored_blocks )
+		{
+			for ( auto& ins : *block )
+			{
+				for ( auto& op : ins.operands )
+				{
+					if ( op.is_register() && op.reg().is_internal() )
+					{
+						last_internal_id = std::max( 
+							last_internal_id, 
+							op.reg().local_id + 1 
+						);
+					}
+				}
+			}
+		}
+		rtn->last_internal_id = last_internal_id;
 	}
 
 	// Serialization of VTIL instructions.

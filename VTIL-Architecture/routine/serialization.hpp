@@ -201,7 +201,7 @@ namespace vtil
 	// Serialization of VTIL routines.
 	//
 	void serialize( std::ostream& out, const routine* rtn );
-	routine* deserialize( std::istream& in, routine*& rtn );
+	void deserialize( std::istream& in, routine*& rtn );
 
 	// Serialization of VTIL instructions.
 	//
