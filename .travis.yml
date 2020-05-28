@@ -15,7 +15,7 @@ before_script:
   - wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc 2>/dev/null | gpg --dearmor - | sudo tee /etc/apt/trusted.gpg.d/kitware.gpg >/dev/null
   - sudo apt-add-repository 'deb https://apt.kitware.com/ubuntu/ bionic main'
   - sudo DEBIAN_FRONTEND=noninteractive apt-get -yq update
-  - sudo DEBIAN_FRONTEND=noninteractive apt-get -yq install cmake
+  - sudo DEBIAN_FRONTEND=noninteractive apt-get -yq install cmake cmake-data
 
   # Install latest LLVM from LLVM repository
   - sudo bash -c "$(wget -O - https://apt.llvm.org/llvm.sh)"
@@ -27,9 +27,10 @@ before_script:
 
   # Run CMake generator
   - /usr/bin/cmake --version # print so we can see which version travis is using
-  - /usr/bin/cmake -D CMAKE_C_COMPILER=/usr/bin/clang-10 -D CMAKE_CXX_COMPILER=/usr/bin/clang++-10 ..
+  - /usr/bin/cmake -DCMAKE_C_COMPILER=/usr/bin/clang-10 -DCMAKE_CXX_COMPILER=/usr/bin/clang++-10 -DVTIL_BUILD_TESTS=ON ..
 
 
 
 script:
   - /usr/bin/cmake --build .
+  - ./VTIL-Tests/VTIL-Tests

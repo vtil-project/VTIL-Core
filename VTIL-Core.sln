@@ -2,6 +2,8 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.29709.97
 MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "VTIL-Tests", "VTIL-Tests\VTIL-Tests.vcxproj", "{836DC7AA-919E-4463-970B-22D9012A8DA4}"
+EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "VTIL-SymEx", "VTIL-SymEx\VTIL-SymEx.vcxproj", "{FE3202CE-D05C-4E04-AE9B-D30305D8CE31}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "VTIL-Architecture", "VTIL-Architecture\VTIL-Architecture.vcxproj", "{A79E2869-7626-4801-B09D-5C12F5163BA3}"
@@ -38,6 +40,10 @@ Global
 		{8163E74C-DDE4-4507-BD3D-064CD95FF33B}.Debug|x64.Build.0 = Debug|x64
 		{8163E74C-DDE4-4507-BD3D-064CD95FF33B}.Release|x64.ActiveCfg = Release|x64
 		{8163E74C-DDE4-4507-BD3D-064CD95FF33B}.Release|x64.Build.0 = Release|x64
+		{836DC7AA-919E-4463-970B-22D9012A8DA4}.Debug|x64.ActiveCfg = Debug|x64
+		{836DC7AA-919E-4463-970B-22D9012A8DA4}.Debug|x64.Build.0 = Debug|x64
+		{836DC7AA-919E-4463-970B-22D9012A8DA4}.Release|x64.ActiveCfg = Release|x64
+		{836DC7AA-919E-4463-970B-22D9012A8DA4}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
