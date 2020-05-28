@@ -52,7 +52,7 @@ namespace vtil::math
             case operator_id::shift_right:
             case operator_id::shift_left:
             case operator_id::rotate_right:
-            case operator_id::rotate_left:    return bcnt_rhs;
+            case operator_id::rotate_left:    return bcnt_lhs;
 
             // - Boolean operators.           
             //                                
