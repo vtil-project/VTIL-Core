@@ -287,8 +287,8 @@ namespace vtil
 			case math::operator_id::umax_value:
 			case math::operator_id::umin_value:
 			{
-				// Unpack the expression by forcing re-simplifying without
-				// prettification requested and call again.
+				// Unpack the expression by forcing re-simplification without
+				// prettification requested and recurse.
 				//
 				return cvt( exp.clone().transform( [ ] ( auto& ) {} ) );
 			}
