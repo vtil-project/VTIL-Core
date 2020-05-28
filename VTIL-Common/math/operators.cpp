@@ -98,6 +98,13 @@ namespace vtil::math
         //
         int64_t& ilhs = ( int64_t& ) lhs;
         int64_t& irhs = ( int64_t& ) rhs;
+        
+        // Handle __cast and __ucast.
+        //
+        if ( id == operator_id::ucast )
+            return { zero_extend( lhs, rhs ), rhs };
+        if ( id == operator_id::cast )
+            return { sign_extend( lhs, rhs ), rhs };
 
         // Calculate the result of the operation.
         //
@@ -137,8 +144,6 @@ namespace vtil::math
 
             // - Special operators.                                                          
             //                                                                                  
-            case operator_id::cast:             result = ilhs, bcnt_res = rhs;                                      break;
-            case operator_id::ucast:            result = lhs,  bcnt_res = rhs;                                      break;
             case operator_id::popcnt:           result = popcnt( rhs );                                             break;
             case operator_id::bit_test:         result = ( lhs >> rhs ) & 1;                                        break;
             case operator_id::mask:             result = fill( bcnt_rhs );                                          break;
