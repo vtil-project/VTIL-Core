@@ -1,12 +1,9 @@
-# VTIL-Optimizer target
-#
+project(VTIL-Optimizer)
 
-set(optimizer_SOURCES passes/normalize_stack.cpp
+set(SOURCES passes/normalize_stack.cpp
     passes/eliminate_dead.cpp
 )
 
-add_library(optimizer STATIC ${optimizer_SOURCES})
-target_include_directories(optimizer PUBLIC "./includes")
-target_link_libraries(optimizer common)
-target_link_libraries(optimizer symex)
-target_link_libraries(optimizer architecture)
+add_library(${PROJECT_NAME} STATIC ${SOURCES})
+target_include_directories(${PROJECT_NAME} PUBLIC includes)
+target_link_libraries(${PROJECT_NAME} VTIL-Common VTIL-SymEx VTIL-Architecture)
