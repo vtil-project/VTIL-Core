@@ -4,6 +4,8 @@ cmake_minimum_required(VERSION 3.14.5)
 # Define the VTIL project
 project(VTIL)
 
+option(VTIL_BUILD_TESTS "Build tests" OFF)
+
 # Append the CMake module search path so we can use our own modules
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/cmake)
 
@@ -52,3 +54,8 @@ add_subdirectory(VTIL-Optimizer)
 # After all other targets are defined, include the VTIL interface target
 #
 add_subdirectory(VTIL)
+
+# Tests
+if(VTIL_BUILD_TESTS)
+    add_subdirectory(VTIL-Tests)
+endif()

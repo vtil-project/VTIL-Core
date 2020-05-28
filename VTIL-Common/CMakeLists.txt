@@ -1,7 +1,6 @@
-# VTIL-Common target
-#
+project(VTIL-Common)
 
-set(common_SOURCES amd64/assembler.cpp
+set(SOURCES amd64/assembler.cpp
     amd64/disassembler.cpp
     amd64/register_details.cpp
     io/logger.cpp
@@ -10,8 +9,8 @@ set(common_SOURCES amd64/assembler.cpp
     util/variant.cpp
 )
 
-add_library(common STATIC ${common_SOURCES})
-target_include_directories(common PUBLIC "./includes")
+add_library(${PROJECT_NAME} STATIC ${SOURCES})
+target_include_directories(${PROJECT_NAME} PUBLIC includes)
 
 # Common needs Capstone & Keystone
-target_link_libraries(common capstone-static keystone)
+target_link_libraries(${PROJECT_NAME} capstone-static keystone)
