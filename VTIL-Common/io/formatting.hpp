@@ -143,7 +143,8 @@ namespace vtil::format
 
 		// If fundamental type, return as is.
 		//
-		if constexpr ( std::is_fundamental_v<base_type> || std::is_enum_v<base_type> || std::is_pointer_v<base_type> )
+		if constexpr ( std::is_fundamental_v<base_type> || std::is_enum_v<base_type> || 
+					   std::is_pointer_v<base_type> || std::is_array_v<base_type> )
 		{
 			return std::forward<T>( x );
 		}
