@@ -57,7 +57,7 @@ namespace vtil
 		//
 		const auto force_clobber_register = [ & ] ( operand& op )
 		{
-			if ( !op.is_register() || op.reg().is_read_only() )
+			if ( !op.is_register() || op.reg().is_local() )
 			{
 				operand tmp = block->tmp( bitcnt_t( op.size() * 8 ) );
 				block->mov( tmp, op );
