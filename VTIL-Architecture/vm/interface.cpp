@@ -87,7 +87,7 @@ namespace vtil
 			// Query base pointer without using the wrapper to skip SP adjustment and 
 			// add offset. Read the value and resize to written size.
 			//
-			auto [base, offset] = ins.get_mem_loc();
+			auto [base, offset] = ins.memory_location();
 			auto exp = read_memory(
 				read_register( base ) + offset,
 				ins.operands[ 0 ].size()
@@ -113,7 +113,7 @@ namespace vtil
 			// Query base pointer without using the wrapper to skip SP adjustment and 
 			// add offset. Write the source to the pointer.
 			//
-			auto [base, offset] = ins.get_mem_loc();
+			auto [base, offset] = ins.memory_location();
 			write_memory( read_register( base ) + offset, src );
 			return true;
 		}
@@ -232,9 +232,9 @@ namespace vtil
 				//
 				if ( it->base->writes_memory() )
 				{
-					auto [base, offset] = it->get_mem_loc();
+					auto [base, offset] = it->memory_location();
 					write_memory(
-						read_register( it->get_mem_loc().first ) + it->get_mem_loc().second,
+						read_register( base ) + offset,
 						symbolic::make_undefined_ex( it->access_size() ? it->access_size() * 8 : 64 )
 					);
 				}

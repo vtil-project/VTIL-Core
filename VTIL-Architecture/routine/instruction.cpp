@@ -81,9 +81,9 @@ namespace vtil
 		return true;
 	}
 
-	// Returns the memory address this instruction references.
+	// Returns the memory location this instruction references.
 	//
-	std::pair<register_desc&, int64_t&> instruction::ref_mem_loc()
+	std::pair<register_desc&, int64_t&> instruction::memory_location()
 	{
 		// Assert that instruction does access memory.
 		//
@@ -91,11 +91,12 @@ namespace vtil
 
 		// Reference the pair of operands used to create the pointer and return them.
 		//
-		operand& mem_base = operands[ base->memory_operand_index ];
-		operand& mem_offset = operands[ base->memory_operand_index + 1 ];
-		return { mem_base.reg(), mem_offset.imm().i64 };
+		return {
+			operands[ base->memory_operand_index ].reg(), 
+			operands[ base->memory_operand_index + 1 ].imm().i64 
+		};
 	}
-	std::pair<register_desc, int64_t> instruction::get_mem_loc() const
+	std::pair<const register_desc&, const int64_t&> instruction::memory_location() const
 	{
 		// Assert that instruction does access memory.
 		//
@@ -103,9 +104,10 @@ namespace vtil
 
 		// Reference the pair of operands used to create the pointer and return them.
 		//
-		const operand& mem_base = operands[ base->memory_operand_index ];
-		const operand& mem_offset = operands[ base->memory_operand_index + 1 ];
-		return { mem_base.reg(), mem_offset.imm().i64 };
+		return {
+			operands[ base->memory_operand_index ].reg(),
+			operands[ base->memory_operand_index + 1 ].imm().i64
+		};
 	}
 
 	// Checks whether the instruction reads from the given register or not, and

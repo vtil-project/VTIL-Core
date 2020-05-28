@@ -31,7 +31,7 @@
 
 namespace vtil::assert
 {
-	static void or_die( bool condition, const char* file_name, const char* condition_str, uint32_t line_number )
+	static void or_die( bool condition, const char* file_name, uint32_t line_number, const char* condition_str )
 	{
 		if ( condition ) return;
 		logger::error
@@ -46,8 +46,8 @@ namespace vtil::assert
 
 #ifdef _DEBUG
 	#define fassert__stringify(x) #x
-	#define fassert(x) vtil::assert::or_die( (x), __FILE__, fassert__stringify(x), __LINE__ )
-	#define unreachable() vtil::assert::or_die( false, __FILE__, "Illegal control flow.", __LINE__ )
+	#define fassert(x) vtil::assert::or_die( (x), __FILE__, __LINE__, fassert__stringify(x) )
+	#define unreachable() vtil::logger::error( "Illegal control flow. %s:%d", __FILE__, __LINE__ )
 #else
 	#define fassert(...)
 	#define unreachable() vtil::logger::impl::noreturn_helper()

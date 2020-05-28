@@ -98,7 +98,7 @@ namespace vtil::symbolic
 				{
 					// Generate an expression for the pointer.
 					//
-					auto [base, offset] = it->get_mem_loc();
+					auto [base, offset] = it->memory_location();
 					pointer ptr = { tracer->trace( { it, base } ) + offset };
 
 					// If the two pointers can overlap (not restrict qualified against each other):

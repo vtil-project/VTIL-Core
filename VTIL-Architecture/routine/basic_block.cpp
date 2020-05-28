@@ -260,7 +260,7 @@ namespace vtil
 			{
 				// If base is stack pointer, add the offset.
 				//
-				auto [base, offset] = it->ref_mem_loc();
+				auto [base, offset] = it->memory_location();
 				if ( base.is_stack_pointer() )
 					offset += offset;
 			}

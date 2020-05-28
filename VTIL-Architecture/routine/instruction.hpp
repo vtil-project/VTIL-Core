@@ -108,10 +108,10 @@ namespace vtil
 		//
 		size_t access_size() const { return operands.empty() ? 0 : operands[ base->access_size_index ].size(); }
 
-		// Returns the memory address this instruction references.
+		// Returns the memory location this instruction references.
 		//
-		std::pair<register_desc&, int64_t&> ref_mem_loc();
-		std::pair<register_desc, int64_t> get_mem_loc() const;
+		std::pair<register_desc&, int64_t&> memory_location();
+		std::pair<const register_desc&, const int64_t&> memory_location() const;
 
 		// Checks whether the instruction reads from the given register or not, and
 		// returns [operand index + 1] if a match is found and zero otherwise.

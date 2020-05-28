@@ -90,7 +90,7 @@ namespace vtil::optimizer
 			.where( [ ] ( instruction& ins ) { return !ins.is_volatile(); } )
 			
 			// | Filter to instructions that operate with non-sp based pointers.
-			.where( [ ] ( instruction& ins ) { return ins.base->accesses_memory() && !ins.get_mem_loc().first.is_stack_pointer(); } )
+			.where( [ ] ( instruction& ins ) { return ins.base->accesses_memory() && !ins.memory_location().first.is_stack_pointer(); } )
 
 			// := Project back to iterator type.
 			.unproject()
@@ -100,7 +100,7 @@ namespace vtil::optimizer
 			{
 				// Try to simplify pointer to SP + C.
 				//
-				auto delta = ctrace( { it, it->get_mem_loc().first } ) -
+				auto delta = ctrace( { it, it->memory_location().first } ) -
 							 ctrace( { it, REG_SP } );
 
 				// If successful, replace the operands.
@@ -162,7 +162,7 @@ namespace vtil::optimizer
 			.where( [ ] ( instruction& ins ) { return !ins.is_volatile(); } )
 			
 			// | Filter to LDD instructions referencing stack:
-			.where( [ ] ( instruction& ins ) { return *ins.base == ins::ldd && ins.get_mem_loc().first.is_stack_pointer(); } )
+			.where( [ ] ( instruction& ins ) { return *ins.base == ins::ldd && ins.memory_location().first.is_stack_pointer(); } )
 
 			// := Project back to iterator type.
 			.unproject()
@@ -174,7 +174,7 @@ namespace vtil::optimizer
 			
 				// Lazy-trace the value.
 				//
-				symbolic::pointer ptr = { tracer( { it, REG_SP } ) + it->get_mem_loc().second };
+				symbolic::pointer ptr = { tracer( { it, REG_SP } ) + it->memory_location().second };
 				symbolic::expression exp = tracer( { it, { ptr, bitcnt_t( it->access_size() * 8 ) } } );
 
 				// Resize and pack variables.
@@ -285,7 +285,7 @@ namespace vtil::optimizer
 			.where( [ ] ( instruction& ins ) { return !ins.is_volatile(); } )
 			
 			// | Filter to STR instructions referencing stack:
-			.where( [ ] ( instruction& ins ) { return *ins.base == ins::str && ins.get_mem_loc().first.is_stack_pointer(); } )
+			.where( [ ] ( instruction& ins ) { return *ins.base == ins::str && ins.memory_location().first.is_stack_pointer(); } )
 
 			// := Project back to iterator type.
 			.unproject()
@@ -296,7 +296,7 @@ namespace vtil::optimizer
 				// Create a mask for the value.
 				//
 				uint64_t mask = math::fill( it->access_size() * 8 );
-				int64_t offset = it->get_mem_loc().second;
+				int64_t offset = it->memory_location().second;
 
 				// For each instruction afterwards within the same stack instance until mask is reset.
 				//
@@ -305,13 +305,13 @@ namespace vtil::optimizer
 					// If instruction does access stack:
 					//
 					if ( it2->base->accesses_memory() &&
-						 it2->get_mem_loc().first.is_stack_pointer() )
+						 it2->memory_location().first.is_stack_pointer() )
 					{
 						// Determine the mask of the relative access.
 						//
 						uint64_t mask_access = math::fill(
 							it2->access_size() * 8,
-							offset - it2->get_mem_loc().second
+							offset - it2->memory_location().second
 						);
 
 						// If instruction reads from memory:
