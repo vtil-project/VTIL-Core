@@ -223,18 +223,6 @@ namespace vtil::math
     //
     static constexpr bitcnt_t bit_index_size = 8;
 
-    // Before operators return their result, the result size is always
-    // rounded up to either 1, 8, 16, 32 or 64 (where available).
-    //
-    static constexpr bitcnt_t round_bit_count( bitcnt_t n )
-    {
-        if ( n > 32 )      return 64;
-        else if ( n > 16 ) return 32;
-        else if ( n > 8 )  return 16;
-        else if ( n > 1 )  return 8;
-        else               return 1;
-    }
-
     // Calculates the size of the result after after the application of the operator [id] on the operands.
     //
     bitcnt_t result_size( operator_id id, bitcnt_t bcnt_lhs, bitcnt_t bcnt_rhs );

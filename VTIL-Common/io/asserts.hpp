@@ -46,7 +46,7 @@ namespace vtil::assert
 
 #ifdef _DEBUG
 	#define fassert__stringify(x) #x
-	#define fassert(x) vtil::assert::or_die( (x), __FILE__, __LINE__, fassert__stringify(x) )
+	#define fassert(x) vtil::assert::or_die( bool(x), __FILE__, __LINE__, fassert__stringify(x) )
 	#define unreachable() vtil::logger::error( "Illegal control flow. %s:%d", __FILE__, __LINE__ )
 #else
 	#define fassert(...)

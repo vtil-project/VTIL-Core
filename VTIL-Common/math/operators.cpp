@@ -36,8 +36,6 @@ namespace vtil::math
     //
     bitcnt_t result_size( operator_id id, bitcnt_t bcnt_lhs, bitcnt_t bcnt_rhs )
     {
-        static_assert( round_bit_count( bit_index_size ) == bit_index_size, "Bit-index size must be rounded by default." );
-
         switch ( id )
         {
             // - Operators that work with bit-indices.
@@ -50,11 +48,11 @@ namespace vtil::math
             case operator_id::negate:
             case operator_id::bitwise_not:
             case operator_id::mask:
-            case operator_id::value_if:       return round_bit_count( bcnt_rhs );
+            case operator_id::value_if:       return bcnt_rhs;
             case operator_id::shift_right:
             case operator_id::shift_left:
             case operator_id::rotate_right:
-            case operator_id::rotate_left:    return round_bit_count( bcnt_lhs );
+            case operator_id::rotate_left:    return bcnt_rhs;
 
             // - Boolean operators.           
             //                                
@@ -78,7 +76,7 @@ namespace vtil::math
 
         // - Rest default to maximum operand size.
         //
-        return round_bit_count( std::max( bcnt_lhs, bcnt_rhs ) );
+        return std::max( bcnt_lhs, bcnt_rhs );
     }
 
     // Applies the specified operator [id] on left hand side [lhs] and right hand side [rhs]
