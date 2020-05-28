@@ -65,7 +65,7 @@ namespace vtil
 	symbolic::expression symbolic_vm::read_memory( const symbolic::expression& pointer, size_t byte_count )
 	{
 		bitcnt_t bcnt = byte_count * 8;
-		return memory_state.read( pointer, bcnt ).value_or( { symbolic::make_undefined_ex( bcnt ) } );
+		return memory_state.read_v( pointer, bcnt );
 	}
 
 	// Writes the given expression to the memory.
