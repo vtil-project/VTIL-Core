@@ -8,7 +8,10 @@
 
   <p align="center">
     <a href="https://travis-ci.com/vtil-project/VTIL-Core">
-      <img src="https://img.shields.io/travis/com/vtil-project/vtil-core/master.svg?style=flat-square" alt="travis-ci"/>
+      <img src="https://img.shields.io/travis/com/vtil-project/vtil-core/master.svg?logo=travis&style=flat-square" alt="travis-ci"/>
+    </a>
+    <a href="https://ci.appveyor.com/project/can1357/vtil-core">
+      <img src="https://img.shields.io/appveyor/build/can1357/VTIL-Core?logo=appveyor&style=flat-square" alt="appveyor-ci"/>
     </a>
     <a href="https://github.com/vtil-project/vtil-core/blob/master/LICENSE.md">
       <img src="https://img.shields.io/github/license/vtil-project/vtil-core.svg?style=flat-square" alt="license"/>
