@@ -51,6 +51,7 @@ namespace vtil::optimizer
 	// Declares a generic pass interface that any optimization pass implements.
 	// - Passes should be always default constructable.
 	//
+	template<bool serial_execution = false>
 	struct pass_interface
 	{
 		// Passes a single basic block through the optimizer, xblock will be set to true
@@ -62,8 +63,13 @@ namespace vtil::optimizer
 		// returns the number of instances where this optimization was applied.
 		//
 		virtual size_t xpass( routine* rtn ) 
-		{ 
-			return transform_parallel( rtn, [ & ] ( auto* blk ) { return pass( blk, true ); } );
+		{
+			size_t n = 0;
+			if constexpr ( serial_execution )
+				rtn->for_each( [ & ] ( auto* blk ) { n += pass( blk, true ); } );
+			else
+				n = transform_parallel( rtn, [ & ] ( auto* blk ) { return pass( blk, true ); } );
+			return n;
 		}
 
 		// Overload operator().
@@ -79,15 +85,15 @@ namespace vtil::optimizer
 	template<typename T>
 	struct combine_pass<T> : T {};
 	template<typename T1, typename... Tx>
-	struct combine_pass<T1, Tx...> : pass_interface
+	struct combine_pass<T1, Tx...>
 	{
 		T1 t1 = {};
 		combine_pass<Tx...> t2 = {};
-		size_t pass( basic_block* blk, bool xblock = false ) override 
+		size_t pass( basic_block* blk, bool xblock = false )
 		{ 
 			return t1.pass( blk, xblock ) + t2.pass( blk, xblock ); 
 		}
-		size_t xpass( routine* rtn ) override 
+		size_t xpass( routine* rtn ) 
 		{ 
 			return t1.xpass( rtn ) + t2.xpass( rtn ); 
 		}
@@ -115,7 +121,7 @@ namespace vtil::optimizer
 	// Specializes the pass logic depending on whether it's restricted or not.
 	//
 	template<typename opt_lblock, typename opt_xblock>
-	struct specialize_pass : pass_interface
+	struct specialize_pass
 	{
 		opt_xblock cross_optimizer = {};
 		opt_lblock local_optimizer = {};
@@ -144,17 +150,10 @@ namespace vtil::optimizer
 
 	// No-op pass.
 	//
-	template<size_t reported_n = 0>
-	struct nop_pass : pass_interface
+	struct nop_pass : pass_interface<>
 	{
-		size_t pass( basic_block* blk, bool xblock = false ) override 
-		{ 
-			return reported_n; 
-		}
-		size_t xpass( routine* rtn ) override 
-		{ 
-			return reported_n; 
-		}
+		size_t pass( basic_block* blk, bool xblock = false ) override { return 0; }
+		size_t xpass( routine* rtn ) override { return 0; }
 	};
 
 	// This wrapper spawns a new state of the given base type for each call

@@ -36,7 +36,7 @@ namespace vtil::optimizer
 	// SP+C where possible and converts local variables in virtual
 	// stack into explicit temporaries if applicable.
 	//
-	struct stack_normalization_pass : pass_interface
+	struct stack_normalization_pass : pass_interface<>
 	{
 		size_t pass( basic_block* blk, bool xblock = false ) override;
 	};
