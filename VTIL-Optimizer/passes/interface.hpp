@@ -89,11 +89,11 @@ namespace vtil::optimizer
 	{
 		T1 t1 = {};
 		combine_pass<Tx...> t2 = {};
-		size_t pass( basic_block* blk, bool xblock = false )
+		virtual size_t pass( basic_block* blk, bool xblock = false )
 		{ 
 			return t1.pass( blk, xblock ) + t2.pass( blk, xblock ); 
 		}
-		size_t xpass( routine* rtn ) 
+		virtual size_t xpass( routine* rtn ) 
 		{ 
 			return t1.xpass( rtn ) + t2.xpass( rtn ); 
 		}
@@ -106,7 +106,7 @@ namespace vtil::optimizer
 	{
 		// Simple looping until pass returns 0.
 		//
-		size_t pass( basic_block* blk, bool xblock = false ) override 
+		size_t pass( basic_block* blk, bool xblock = false ) override
 		{ 
 			size_t cnt = combine_pass<Tx...>::pass( blk, xblock );
 			return cnt ? cnt + exhaust_pass::pass( blk, xblock ) : 0;
@@ -125,11 +125,11 @@ namespace vtil::optimizer
 	{
 		opt_xblock cross_optimizer = {};
 		opt_lblock local_optimizer = {};
-		size_t pass( basic_block* blk, bool xblock = false ) override
+		virtual size_t pass( basic_block* blk, bool xblock = false )
 		{
 			return xblock ? cross_optimizer.pass( blk, true ) : local_optimizer.pass( blk, false );
 		}
-		size_t xpass( routine* rtn ) override
+		virtual size_t xpass( routine* rtn )
 		{
 			return cross_optimizer.xpass( rtn );
 		}
