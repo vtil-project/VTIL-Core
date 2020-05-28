@@ -27,9 +27,27 @@
 //
 #pragma once
 #include <vtil/arch>
+#include <thread>
 
 namespace vtil::optimizer
 {
+	// Passes every block through the transformer given in parallel, returns the 
+	// number of instances where this transformation was applied.
+	//
+	static size_t transform_parallel( routine* rtn, const std::function<size_t( basic_block* )>& fn )
+	{
+		std::atomic<size_t> n = { 0 };
+		std::vector<std::thread> pool;
+		pool.reserve( rtn->explored_blocks.size() );
+		rtn->for_each( [ & ] ( auto* blk )
+		{
+			pool.emplace_back( [ & ] ( auto* b ) { n += fn( b ); }, blk );
+		} );
+		for ( auto& thread : pool )
+			thread.join();
+		return n;
+	}
+
 	// Declares a generic pass interface that any optimization pass implements.
 	// - Passes should be always default constructable.
 	//
@@ -45,9 +63,7 @@ namespace vtil::optimizer
 		//
 		virtual size_t xpass( routine* rtn ) 
 		{ 
-			size_t n = 0; 
-			rtn->for_each( [ & ] ( auto* blk ) { n += pass( blk, true ); } ); 
-			return n; 
+			return transform_parallel( rtn, [ & ] ( auto* blk ) { return pass( blk, true ); } );
 		}
 
 		// Overload operator().
@@ -110,6 +126,19 @@ namespace vtil::optimizer
 		size_t xpass( routine* rtn ) override
 		{
 			return cross_optimizer.xpass( rtn );
+		}
+	};
+
+	// This wrapper invokes block-local optimization for each block first and 
+	// then invokes cross-block optimization as the second part.
+	//
+	template<typename T>
+	struct double_pass : T
+	{
+		size_t xpass( routine* rtn ) override
+		{
+			size_t n = transform_parallel( rtn, [ & ] ( auto* blk ) { return T::pass( blk, false ); } );
+			return n + T::xpass( rtn );
 		}
 	};
 
