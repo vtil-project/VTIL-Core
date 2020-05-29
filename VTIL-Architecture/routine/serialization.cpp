@@ -32,25 +32,27 @@
 #pragma warning(disable:4267)
 namespace vtil
 {
-	using magic_t = uint32_t;
-	static constexpr magic_t vtil_magic = 'LITV';
+	using magic_t = uint64_t;
+	static constexpr magic_t vtil_magic = 'LITV' | ( 0xDEAD0000ull << 32 );
 
 	// Serialization of VTIL calling conventions.
 	//
 	void serialize( std::ostream& out, const call_convention& in )
 	{
 		serialize( out, in.volatile_registers );
-		serialize( out, in.forbidden_registers );
+		serialize( out, in.param_registers );
 		serialize( out, in.retval_registers );
 		serialize( out, in.frame_register );
+		serialize( out, in.shadow_space );
 		serialize( out, in.purge_stack );
 	}
 	void deserialize( std::istream& in, call_convention& out )
 	{
 		deserialize( in, out.volatile_registers );
-		deserialize( in, out.forbidden_registers );
+		deserialize( in, out.param_registers );
 		deserialize( in, out.retval_registers );
 		deserialize( in, out.frame_register );
+		deserialize( in, out.shadow_space );
 		deserialize( in, out.purge_stack );
 	}
 

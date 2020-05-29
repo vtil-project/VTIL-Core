@@ -29,18 +29,6 @@
 #include <set>
 #include "../arch/register_desc.hpp"
 
-// List of calling conventions supported.
-//
-#define VTIL_CCONV_AMD64_WINDOWS 0
-#define VTIL_CCONV_AMD64_UNIX    1
-
-// [Configuration]
-// Determine which calling convention we should default to.
-//
-#ifndef VTIL_DEFAULT_CALL_CONV
-	#define VTIL_DEFAULT_CALL_CONV VTIL_CCONV_AMD64_WINDOWS
-#endif
-
 namespace vtil
 {
 	// Declares a calling convention to be used during the elimination of dead stores 
@@ -53,9 +41,10 @@ namespace vtil
 		//
 		std::set<register_desc> volatile_registers = {};
 
-		// List of regsiters that this routine should not touch at all.
+		// List of regsiters that this routine wlil read from as a way of taking arguments.
+		// - Any additional arguments will be passed at [$sp + shadow_space + n*8]
 		//
-		std::set<register_desc> forbidden_registers = {};
+		std::set<register_desc> param_registers = {};
 
 		// List of registers that are used to store the return value of the routine and
 		// thus will change during routine execution but must be considered "used" by return.
@@ -66,86 +55,89 @@ namespace vtil
 		//
 		register_desc frame_register = {};
 		
+		// Size of the shadow space.
+		//
+		size_t shadow_space = 0;
+		
 		// Purges any writes to stack that will be end up below the final stack pointer.
 		//
 		bool purge_stack = false;
 	};
-
-#if VTIL_DEFAULT_CALL_CONV == VTIL_CCONV_AMD64_WINDOWS || VTIL_DEFAULT_CALL_CONV == VTIL_CCONV_AMD64_UNIX
+	
 	// Define a convention preserving all changes.
 	//
 	static const call_convention preserve_all_convention = {
-		/*.volatile_registers =*/ {},
-		/*.forbidden_registers =*/ {},
-		/*.retval_registers =*/ { 
-			// Callee reads whole context.
-			//
+		/*.volatile_registers =*/ {
 			{ register_physical, X86_REG_RAX, 64 }, { register_physical, X86_REG_RBX, 64 },
 			{ register_physical, X86_REG_RCX, 64 }, { register_physical, X86_REG_RDX, 64 },
 			{ register_physical, X86_REG_RSI, 64 }, { register_physical, X86_REG_RDI, 64 },
-			{ register_physical, X86_REG_RBP, 64 }, { register_physical, X86_REG_RSP, 64 },
-			{ register_physical, X86_REG_R8,  64 }, { register_physical, X86_REG_R9,  64 },
-			{ register_physical, X86_REG_R10, 64 }, { register_physical, X86_REG_R11, 64 },
-			{ register_physical, X86_REG_R12, 64 }, { register_physical, X86_REG_R13, 64 },
-			{ register_physical, X86_REG_R14, 64 }, { register_physical, X86_REG_R15, 64 },
+			{ register_physical, X86_REG_RBP, 64 }, { register_physical, X86_REG_R8,  64 },
+			{ register_physical, X86_REG_R9,  64 }, { register_physical, X86_REG_R10, 64 },
+			{ register_physical, X86_REG_R11, 64 }, { register_physical, X86_REG_R12, 64 },
+			{ register_physical, X86_REG_R13, 64 }, { register_physical, X86_REG_R14, 64 },
+			{ register_physical, X86_REG_R15, 64 },
 			REG_FLAGS,
 		},
-		{ register_physical, X86_REG_RBP, 64 },
-		/*.purge_stack =*/ true,
-	};
-#else
-	#error "Unknown call convention."
-#endif
 
-	// Define the default call convention.
-	//
-#if VTIL_DEFAULT_CALL_CONV == VTIL_CCONV_AMD64_WINDOWS
+		/*.param_registers =*/ {
+			{ register_physical, X86_REG_RAX, 64 }, { register_physical, X86_REG_RBX, 64 },
+			{ register_physical, X86_REG_RCX, 64 }, { register_physical, X86_REG_RDX, 64 },
+			{ register_physical, X86_REG_RSI, 64 }, { register_physical, X86_REG_RDI, 64 },
+			{ register_physical, X86_REG_RBP, 64 }, { register_physical, X86_REG_R8,  64 },
+			{ register_physical, X86_REG_R9,  64 }, { register_physical, X86_REG_R10, 64 },
+			{ register_physical, X86_REG_R11, 64 }, { register_physical, X86_REG_R12, 64 },
+			{ register_physical, X86_REG_R13, 64 }, { register_physical, X86_REG_R14, 64 },
+			{ register_physical, X86_REG_R15, 64 },
+			REG_FLAGS,
+		},
+
+		/*.retval_registers =*/ {
+			{ register_physical, X86_REG_RAX, 64 }, { register_physical, X86_REG_RBX, 64 },
+			{ register_physical, X86_REG_RCX, 64 }, { register_physical, X86_REG_RDX, 64 },
+			{ register_physical, X86_REG_RSI, 64 }, { register_physical, X86_REG_RDI, 64 },
+			{ register_physical, X86_REG_RBP, 64 }, { register_physical, X86_REG_R8,  64 },
+			{ register_physical, X86_REG_R9,  64 }, { register_physical, X86_REG_R10, 64 },
+			{ register_physical, X86_REG_R11, 64 }, { register_physical, X86_REG_R12, 64 },
+			{ register_physical, X86_REG_R13, 64 }, { register_physical, X86_REG_R14, 64 },
+			{ register_physical, X86_REG_R15, 64 },
+			REG_FLAGS,
+		},
+
+		/*.frame_register =*/ 
+		{ register_physical, X86_REG_RBP, 64 },
+
+		/*.shadow_space =*/ 
+		0x0,
+
+		/*.purge_stack =*/ 
+		true,
+	};
+	
 	static const call_convention default_call_convention = {
 		/*.volatile_registers =*/ {
-			// Parameters of an ABI-abiding routine.
-			//
 			{ register_physical, X86_REG_RCX, 64 }, { register_physical, X86_REG_RDX, 64 }, 
 			{ register_physical, X86_REG_R8,  64 }, { register_physical, X86_REG_R9,  64 }, 
 			{ register_physical, X86_REG_R10, 64 }, { register_physical, X86_REG_R11, 64 },
-
-			// Every bit except the direction flag.
-			//
 			{ register_physical | register_flags, 0, 10, 0  },
 			{ register_physical | register_flags, 0, 53, 11 }
 		},
-		/*.forbidden_registers =*/ {},
-		/*.retval_registers =*/ {
-			// Single integral return.
-			//
-			{ register_physical, X86_REG_RAX, 64 },
-		},
-		/*.frame_register =*/ { register_physical, X86_REG_RBP, 64 },
-		/*.purge_stack =*/ true,
-	};
-#elif VTIL_DEFAULT_CALL_CONV == VTIL_CCONV_AMD64_UNIX
-	static const call_convention default_call_convention = {
-		/*.volatile_registers =*/ {
-			// Parameters of an ABI-abiding routine.
-			//
-			{ register_physical, X86_REG_RDI, 64 }, { register_physical, X86_REG_RSI, 64 }, 
+
+		/*.param_registers =*/ {
+			{ register_physical, X86_REG_RCX, 64 }, { register_physical, X86_REG_RDX, 64 },
 			{ register_physical, X86_REG_R8,  64 }, { register_physical, X86_REG_R9,  64 },
+		},
 
-			// Every bit except the direction flag.
-			//
-			{ register_physical | register_flags, 0, 10, 0  },
-			{ register_physical | register_flags, 0, 53, 11 }
-		},
-		/*.forbidden_registers =*/ {},
-		/*.retval_registers =*/ { 
-			// Double integral return @ [LOW:HIGH].
-			//
+		/*.retval_registers =*/ {
 			{ register_physical, X86_REG_RAX, 64 },
-			{ register_physical, X86_REG_RDX, 64 }
 		},
-		/*.frame_register =*/ { register_physical, X86_REG_RBP, 64 },
-		/*.purge_stack =*/ true,
+
+		/*.frame_register =*/ 
+		{ register_physical, X86_REG_RBP, 64 },
+
+		/*.shadow_space =*/ 
+		0x20,
+
+		/*.purge_stack =*/ 
+		true,
 	};
-#else
-	#error "Unknown call convention."
-#endif
 };
