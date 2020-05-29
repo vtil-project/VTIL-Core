@@ -55,9 +55,6 @@
     <ClInclude Include="includes\vtil\math">
       <Filter>Includes</Filter>
     </ClInclude>
-    <ClInclude Include="util\priority_list.hpp">
-      <Filter>Utility</Filter>
-    </ClInclude>
     <ClInclude Include="includes\vtil\utility">
       <Filter>Includes</Filter>
     </ClInclude>
