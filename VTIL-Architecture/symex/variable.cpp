@@ -27,6 +27,7 @@
 //
 #include "variable.hpp"
 #include "../trace/tracer.hpp"
+#include "../routine/call_convention.hpp"
 
 namespace vtil::symbolic
 {
@@ -46,6 +47,92 @@ namespace vtil::symbolic
 	static access_details test_access( const variable& var, const il_const_iterator& it, tracer* tracer, bool write, bool read )
 	{
 		fassert( !( write && read ) );
+
+		// If external call:
+		//
+		if ( it->base->is_branching_real() )
+		{
+			// Get calling convention.
+			//
+			call_convention cc = it.container->owner
+				? it.container->owner->get_cconv( it->vip )
+				: default_call_convention;
+
+			// If variable is a register:
+			//
+			if ( var.is_register() )
+			{
+				const register_desc& reg = var.reg();
+
+				// If virtual register, indicate it's discarded.
+				//
+				if ( reg.is_virtual() )
+				{
+					if ( !read )
+						return access_details{ .bit_offset = 0, .bit_count = reg.bit_count, .read = false, .write = true };
+					else
+						return access_details{ .bit_count = 0, .read = false, .write = false };
+				}
+
+				// If not only looking for read access, check if register is written to.
+				//
+				access_details wdetails = { .bit_count = 0 };
+				if ( !read )
+				{
+					for ( const register_desc& param : cc.volatile_registers )
+					{
+						if ( param.overlaps( reg ) )
+						{
+							wdetails.bit_offset = param.bit_offset - reg.bit_offset;
+							wdetails.bit_count = param.bit_count;
+							break;
+						}
+					}
+					for ( const register_desc& retval : cc.retval_registers )
+					{
+						if ( retval.overlaps( reg ) )
+						{
+							wdetails.bit_offset = retval.bit_offset - reg.bit_offset;
+							wdetails.bit_count = retval.bit_count;
+							break;
+						}
+					}
+				}
+
+				// If not only looking for write access, check if register is read from.
+				//
+				access_details rdetails = { .bit_count = 0 };
+				if ( !write )
+				{
+					for ( const register_desc& param : cc.param_registers )
+					{
+						if ( param.overlaps( reg ) )
+						{
+							rdetails.bit_offset = param.bit_offset - reg.bit_offset;
+							rdetails.bit_count = param.bit_count;
+							break;
+						}
+					}
+				}
+
+				// Merge rdetails and wdetails, return.
+				//
+				if ( !wdetails ) return rdetails;
+				if ( !rdetails ) return wdetails;
+				return access_details{
+					.bit_offset = std::min( wdetails.bit_offset, rdetails.bit_offset ),
+					.bit_count = std::max( wdetails.bit_count, rdetails.bit_count ),
+					.read = true,
+					.write = true
+				};
+			}
+			// If variable is memory, report unknown access. (TODO: Propper parsing!)
+			//
+			else
+			{
+				return access_details{ .bit_offset = -1, .bit_count = -1 };
+			}
+		}
 
 		// If variable is of register type:
 		//
@@ -131,7 +218,12 @@ namespace vtil::symbolic
 						//
 						else
 						{
-							return access_details{ .bit_offset = -1, .bit_count = -1 };
+							return access_details{ 
+								.bit_offset = -1, 
+								.bit_count = -1,
+								.read = !it->base->writes_memory(),
+								.write = it->base->writes_memory()
+							};
 						}
 					}
 				}
@@ -140,7 +232,7 @@ namespace vtil::symbolic
 
 		// No access case.
 		//
-		return access_details{ .bit_count = 0 };
+		return access_details{ .bit_count = 0, .read = false, .write = false };
 	}
 
 	// Constructs by iterator and the variable descriptor itself.
