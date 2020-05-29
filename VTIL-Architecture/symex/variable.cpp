@@ -48,92 +48,6 @@ namespace vtil::symbolic
 	{
 		fassert( !( write && read ) );
 
-		// If external call:
-		//
-		if ( it->base->is_branching_real() )
-		{
-			// Get calling convention.
-			//
-			call_convention cc = it.container->owner
-				? it.container->owner->get_cconv( it->vip )
-				: default_call_convention;
-
-			// If variable is a register:
-			//
-			if ( var.is_register() )
-			{
-				const register_desc& reg = var.reg();
-
-				// If virtual register, indicate it's discarded.
-				//
-				if ( reg.is_virtual() )
-				{
-					if ( !read )
-						return access_details{ .bit_offset = 0, .bit_count = reg.bit_count, .read = false, .write = true };
-					else
-						return access_details{ .bit_count = 0, .read = false, .write = false };
-				}
-
-				// If not only looking for read access, check if register is written to.
-				//
-				access_details wdetails = { .bit_count = 0 };
-				if ( !read )
-				{
-					for ( const register_desc& param : cc.volatile_registers )
-					{
-						if ( param.overlaps( reg ) )
-						{
-							wdetails.bit_offset = param.bit_offset - reg.bit_offset;
-							wdetails.bit_count = param.bit_count;
-							break;
-						}
-					}
-					for ( const register_desc& retval : cc.retval_registers )
-					{
-						if ( retval.overlaps( reg ) )
-						{
-							wdetails.bit_offset = retval.bit_offset - reg.bit_offset;
-							wdetails.bit_count = retval.bit_count;
-							break;
-						}
-					}
-				}
-
-				// If not only looking for write access, check if register is read from.
-				//
-				access_details rdetails = { .bit_count = 0 };
-				if ( !write )
-				{
-					for ( const register_desc& param : cc.param_registers )
-					{
-						if ( param.overlaps( reg ) )
-						{
-							rdetails.bit_offset = param.bit_offset - reg.bit_offset;
-							rdetails.bit_count = param.bit_count;
-							break;
-						}
-					}
-				}
-
-				// Merge rdetails and wdetails, return.
-				//
-				if ( !wdetails ) return rdetails;
-				if ( !rdetails ) return wdetails;
-				return access_details{
-					.bit_offset = std::min( wdetails.bit_offset, rdetails.bit_offset ),
-					.bit_count = std::max( wdetails.bit_count, rdetails.bit_count ),
-					.read = true,
-					.write = true
-				};
-			}
-			// If variable is memory, report unknown access. (TODO: Propper parsing!)
-			//
-			else
-			{
-				return access_details{ .bit_offset = -1, .bit_count = -1 };
-			}
-		}
-
 		// If variable is of register type:
 		//
 		if ( auto reg = std::get_if<variable::register_t>( &var.descriptor ) )
@@ -227,6 +141,134 @@ namespace vtil::symbolic
 						}
 					}
 				}
+			}
+		}
+
+		// If external call:
+		//
+		if ( it->base->is_branching_real() )
+		{
+			// Get calling convention.
+			//
+			call_convention cc = it.container->owner
+				? it.container->owner->get_cconv( it->vip )
+				: default_call_convention;
+
+			// If variable is a register:
+			//
+			if ( var.is_register() )
+			{
+				const register_desc& reg = var.reg();
+
+				// If exiting the virtual machine:
+				//
+				if ( *it->base == ins::vexit )
+				{
+					// If checking for write only, return no-acccess.
+					//
+					if( write )
+						return access_details{ .bit_count = 0, .read = false, .write = false };
+
+					// If retval register, indicate read from:
+					//
+					for ( const register_desc& retval : it.container->owner->routine_convention.retval_registers )
+					{
+						if ( retval.overlaps( reg ) )
+						{
+							return access_details{
+								.bit_offset = retval.bit_offset - reg.bit_offset,
+								.bit_count = retval.bit_count,
+								.read = true, 
+								.write = false
+							};
+						}
+					}
+
+					// If volatile register, indicate discarded:
+					//
+					for ( const register_desc& retval : it.container->owner->routine_convention.volatile_registers )
+					{
+						if ( retval.overlaps( reg ) )
+							return access_details{ .bit_count = 0, .read = false, .write = false };
+					}
+				
+					// Otherwise indicate read from.
+					//
+					return access_details{
+						.bit_offset = 0,
+						.bit_count = reg.bit_count,
+						.read = true, 
+						.write = false
+					};
+
+					// If virtual register, indicate it's discarded.
+					//
+					if ( reg.is_virtual() )
+					{
+						if ( !read )
+							return access_details{ .bit_offset = 0, .bit_count = reg.bit_count, .read = false, .write = true };
+						else
+							return access_details{ .bit_count = 0, .read = false, .write = false };
+					}
+				}
+
+				// If not only looking for read access, check if register is written to.
+				//
+				access_details wdetails = { .bit_count = 0 };
+				if ( !read )
+				{
+					for ( const register_desc& param : cc.volatile_registers )
+					{
+						if ( param.overlaps( reg ) )
+						{
+							wdetails.bit_offset = param.bit_offset - reg.bit_offset;
+							wdetails.bit_count = param.bit_count;
+							break;
+						}
+					}
+					for ( const register_desc& retval : cc.retval_registers )
+					{
+						if ( retval.overlaps( reg ) )
+						{
+							wdetails.bit_offset = retval.bit_offset - reg.bit_offset;
+							wdetails.bit_count = retval.bit_count;
+							break;
+						}
+					}
+				}
+
+				// If not only looking for write access, check if register is read from.
+				//
+				access_details rdetails = { .bit_count = 0 };
+				if ( !write )
+				{
+					for ( const register_desc& param : cc.param_registers )
+					{
+						if ( param.overlaps( reg ) )
+						{
+							rdetails.bit_offset = param.bit_offset - reg.bit_offset;
+							rdetails.bit_count = param.bit_count;
+							break;
+						}
+					}
+				}
+
+				// Merge rdetails and wdetails, return.
+				//
+				if ( !wdetails ) return rdetails;
+				if ( !rdetails ) return wdetails;
+				return access_details{
+					.bit_offset = std::min( wdetails.bit_offset, rdetails.bit_offset ),
+					.bit_count = std::max( wdetails.bit_count, rdetails.bit_count ),
+					.read = true,
+					.write = true
+				};
+			}
+			// If variable is memory, report unknown access. (TODO: Propper parsing!)
+			//
+			else
+			{
+				return access_details{ .bit_offset = -1, .bit_count = -1 };
 			}
 		}
 

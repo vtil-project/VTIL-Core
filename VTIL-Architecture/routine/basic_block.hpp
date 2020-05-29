@@ -179,10 +179,7 @@ namespace vtil
 
 			// Make hashable.
 			//
-			hash_t hash() const
-			{
-				return make_hash( container, is_end() ? 0ull : ( 1 + std::distance( container->begin(), *this ) ) );
-			}
+			hash_t hash() const { return make_hash( container, is_end() ? 0ull : ( 1 + std::distance( container->begin(), *this ) ), paths_allowed ); }
 		};
 		using iterator =       riterator_base<basic_block, std::list<instruction>::iterator>;
 		using const_iterator = riterator_base<const basic_block, std::list<instruction>::const_iterator>;
