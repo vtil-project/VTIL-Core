@@ -72,8 +72,22 @@ namespace vtil
 			// Default constructor and the block-bound constructor.
 			//
 			riterator_base() {}
-			riterator_base( container_type* ref, const iterator_type& i ): container( ref ), iterator_type( i ) {}
-			template<typename X, typename Y> riterator_base( const riterator_base<X, Y>& o ) : container( o.container ), iterator_type( Y( o ) ) {}
+			riterator_base( container_type* ref, const iterator_type& i ) 
+				: container( ref ), iterator_type( i ) {}
+			template<typename X, typename Y> riterator_base( const riterator_base<X, Y>& o ) 
+				: container( o.container ), iterator_type( Y( o ) ) 
+			{
+				// If path restricted, copy paths.
+				//
+				if ( is_path_restricted = o.is_path_restricted )
+				{
+					std::transform( 
+						o.paths_allowed.begin(), o.paths_allowed.end(), 
+						std::inserter( paths_allowed, paths_allowed.begin() ), 
+						[ ] ( auto v ) { return ( container_type* ) v; } 
+					);
+				}
+			}
 
 			// Override equality operators to check container first.
 			//
@@ -122,7 +136,7 @@ namespace vtil
 			// Restricts the way current iterator can recurse in, making sure
 			// every path leads up-to the container specified.
 			//
-			void restrict_path( container_type* dst, bool forward )
+			riterator_base& restrict_path( container_type* dst, bool forward )
 			{
 				// Trace the path.
 				//
@@ -150,6 +164,7 @@ namespace vtil
 				// Declare the current iterator path restricted.
 				//
 				is_path_restricted = true;
+				return *this;
 			}
 
 			// Returns the possible paths the iterator can follow if it reaches it's end.
