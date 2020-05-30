@@ -188,13 +188,17 @@ namespace vtil
 
 		// If instruction writes to SP, reset the queued stack pointer.
 		//
-		if ( ins.writes_to( REG_SP ) )
+		for ( auto [op, type] : ins.enum_operands() )
 		{
-			shift_sp( -ins.sp_offset, false, it );
-			for ( auto it2 = it; !it2.is_end(); it2++ )
-				it2->sp_index++;
-			sp_index++;
-			ins.sp_reset = true;
+			if ( type >= operand_type::write && op.reg().is_stack_pointer() )
+			{
+				shift_sp( -ins.sp_offset, false, it );
+				for ( auto it2 = it; !it2.is_end(); it2++ )
+					it2->sp_index++;
+				sp_index++;
+				ins.sp_reset = true;
+				break;
+			}
 		}
 
 		// Append the instruction to the stream.

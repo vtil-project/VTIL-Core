@@ -110,51 +110,6 @@ namespace vtil
 		};
 	}
 
-	// Checks whether the instruction reads from the given register or not, and
-	// returns [operand index + 1] if a match is found and zero otherwise.
-	//
-	int instruction::reads_from( const register_desc& rw ) const
-	{
-		for ( int i = 0; i < base->operand_types.size(); i++ )
-		{
-			if ( base->operand_types[ i ] != operand_type::write &&
-				 operands[ i ].is_register() &&
-				 operands[ i ].reg().overlaps( rw ) )
-				return i + 1;
-		}
-		return 0;
-	}
-
-	// Checks whether the instruction reads from the given register or not, and
-	// returns [operand index + 1] if a match is found and zero otherwise.
-	//
-	int instruction::writes_to( const register_desc& rw ) const
-	{
-		for ( int i = 0; i < base->operand_types.size(); i++ )
-		{
-			if ( base->operand_types[ i ] >= operand_type::write && 
-				 operands[ i ].is_register() && 
-				 operands[ i ].reg().overlaps( rw ) )
-				return i + 1;
-		}
-		return 0;
-	}
-
-	// Checks whether the instruction reads from the given register or not, and
-	// returns [operand index + 1] if a match is found and zero otherwise.
-	//
-	int instruction::overwrites( const register_desc& rw ) const
-	{
-		for ( int i = 0; i < base->operand_types.size(); i++ )
-		{
-			if ( base->operand_types[ i ] == operand_type::write && 
-				 operands[ i ].is_register() && 
-				 operands[ i ].reg().overlaps( rw ) )
-				return i + 1;
-		}
-		return 0;
-	}
-
 	// Conversion to human-readable format.
 	//
 	std::string instruction::to_string( bool pad_right ) const

@@ -113,20 +113,10 @@ namespace vtil
 		std::pair<register_desc&, int64_t&> memory_location();
 		std::pair<const register_desc&, const int64_t&> memory_location() const;
 
-		// Checks whether the instruction reads from the given register or not, and
-		// returns [operand index + 1] if a match is found and zero otherwise.
+		// Returns operands with their types zipped for enumeration.
 		//
-		int reads_from( const register_desc& rw ) const;
-
-		// Checks whether the instruction reads from the given register or not, and
-		// returns [operand index + 1] if a match is found and zero otherwise.
-		//
-		int writes_to( const register_desc& rw ) const;
-
-		// Checks whether the instruction reads from the given register or not, and
-		// returns [operand index + 1] if a match is found and zero otherwise.
-		//
-		int overwrites( const register_desc& rw ) const;
+		auto enum_operands() { return zip( operands, base->operand_types ); }
+		auto enum_operands() const { return zip( operands, base->operand_types ); }
 
 		// Conversion to human-readable format.
 		//
