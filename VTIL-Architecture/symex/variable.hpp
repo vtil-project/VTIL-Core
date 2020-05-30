@@ -189,9 +189,9 @@ namespace vtil::symbolic
 		// access details as described by access_details. Tracer is used for
 		// pointer resolving, if nullptr passed will use default tracer.
 		//
-		access_details read_by( const il_const_iterator& it, tracer* tr = nullptr );
-		access_details written_by( const il_const_iterator& it, tracer* tr = nullptr );
-		access_details accessed_by( const il_const_iterator& it, tracer* tr = nullptr );
+		access_details read_by( const il_const_iterator& it, tracer* tr = nullptr ) const;
+		access_details written_by( const il_const_iterator& it, tracer* tr = nullptr ) const;
+		access_details accessed_by( const il_const_iterator& it, tracer* tr = nullptr ) const;
 	};
 
 	// Wrappers for quick variable->expression creaton.

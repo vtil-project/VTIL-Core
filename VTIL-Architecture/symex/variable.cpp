@@ -547,19 +547,19 @@ namespace vtil::symbolic
 	// access details as described by access_details. Tracer is used for
 	// pointer resolving, if nullptr passed will use default tracer.
 	//
-	access_details variable::read_by( const il_const_iterator& it, tracer* tr )
+	access_details variable::read_by( const il_const_iterator& it, tracer* tr ) const
 	{
 		tracer default_tracer;
 		if ( !tr ) tr = &default_tracer;
 		return test_access( *this, it, tr ? tr : &default_tracer, false, true );
 	}
-	access_details variable::written_by( const il_const_iterator& it, tracer* tr )
+	access_details variable::written_by( const il_const_iterator& it, tracer* tr ) const
 	{
 		tracer default_tracer;
 		if ( !tr ) tr = &default_tracer;
 		return test_access( *this, it, tr ? tr : &default_tracer, true, false );
 	}
-	access_details variable::accessed_by( const il_const_iterator& it, tracer* tr )
+	access_details variable::accessed_by( const il_const_iterator& it, tracer* tr ) const
 	{
 		tracer default_tracer;
 		if ( !tr ) tr = &default_tracer;
