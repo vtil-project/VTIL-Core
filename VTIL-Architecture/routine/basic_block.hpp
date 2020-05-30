@@ -81,11 +81,7 @@ namespace vtil
 				//
 				if ( is_path_restricted = o.is_path_restricted )
 				{
-					std::transform( 
-						o.paths_allowed.begin(), o.paths_allowed.end(), 
-						std::inserter( paths_allowed, paths_allowed.begin() ), 
-						[ ] ( auto v ) { return ( container_type* ) v; } 
-					);
+					paths_allowed = { o.paths_allowed.begin(), o.paths_allowed.end() };
 				}
 			}
 
@@ -164,6 +160,15 @@ namespace vtil
 				// Declare the current iterator path restricted.
 				//
 				is_path_restricted = true;
+				return *this;
+			}
+
+			// Clears any path restriction.
+			//
+			riterator_base& clear_restrictions() 
+			{
+				is_path_restricted = false;
+				paths_allowed.clear();
 				return *this;
 			}
 
