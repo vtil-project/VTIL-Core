@@ -175,7 +175,7 @@ namespace vtil::format
 	static std::string str( const char* fmt, params&&... ps )
 	{
 		std::string buffer;
-		buffer.resize( snprintf( nullptr, 0, fmt, fix_parameter<params>( std::forward<params>( ps ) )... ) );
+		buffer.resize( snprintf( nullptr, 0, fmt, fix_parameter( ps )... ) );
 		snprintf( buffer.data(), buffer.size() + 1, fmt, fix_parameter<params>( std::forward<params>( ps ) )... );
 		return buffer;
 	}
