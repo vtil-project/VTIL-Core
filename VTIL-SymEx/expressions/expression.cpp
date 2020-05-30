@@ -260,10 +260,19 @@ namespace vtil::symbolic
 				//
 				if ( lhs->size() > rhs->get().value() )
 				{
+					// If sign extension, double cast.
+					//
+					if ( signed_cast )
+					{
+						*this = __cast( *this, new_size );
+						break;
+					}
+
+					// Otherwise mask it and resize.
+					//
 					auto lhs_v = std::move( lhs );
 					auto rhs_v = std::move( rhs );
 					*this = ( lhs_v & expression{ math::fill( rhs_v->get<bitcnt_t>().value() ), lhs_v->size() } ).resize( new_size );
-					break;
 				}
 				// If sizes match, escape cast operator.
 				//
@@ -283,18 +292,13 @@ namespace vtil::symbolic
 			// requested cast is also a signed.
 			//
 			case math::operator_id::cast:
-				// If it was shrinked:
+				// Signed cast should not be used to shrink.
 				//
-				if ( lhs->size() > rhs->get().value() )
-				{
-					auto lhs_v = std::move( lhs );
-					auto rhs_v = std::move( rhs );
-					*this = ( lhs_v & expression{ math::fill( rhs_v->get<bitcnt_t>().value() ), lhs_v->size() } ).resize( new_size, true );
-					break;
-				}
+				fassert( lhs->size() <= rhs->get().value() );
+
 				// If sizes match, escape cast operator.
 				//
-				else if ( lhs->size() == new_size )
+				if ( lhs->size() == new_size )
 				{
 					*this = *std::move( lhs );
 				}
@@ -317,22 +321,6 @@ namespace vtil::symbolic
 			case math::operator_id::value_if:
 				( +rhs )->resize( new_size, false );
 				break;
-
-			/*// Boolean operators will ignore resizing requests.
-			//
-			case math::operator_id::bit_test:
-			case math::operator_id::greater:
-			case math::operator_id::greater_eq:
-			case math::operator_id::equal:
-			case math::operator_id::not_equal:
-			case math::operator_id::less_eq:
-			case math::operator_id::less:
-			case math::operator_id::ugreater:
-			case math::operator_id::ugreater_eq:
-			case math::operator_id::uless_eq:
-			case math::operator_id::uless:
-				value.resize( new_size, false );
-				break;*/
 
 			// If no handler found:
 			//

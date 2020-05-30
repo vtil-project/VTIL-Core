@@ -76,7 +76,7 @@ namespace vtil
 			//
 			write_register(
 				ins.operands[ 0 ].reg(),
-				cvt_operand( 1 ).resize( bitcnt_t( ins.operands[ 0 ].size() * 8 ), cast_signed )
+				cvt_operand( 1 ).resize( ( bitcnt_t ) ins.operands[ 0 ].size() * 8, cast_signed )
 			);
 			return true;
 		}
