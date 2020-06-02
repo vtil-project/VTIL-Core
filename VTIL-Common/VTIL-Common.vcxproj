@@ -137,6 +137,7 @@
     <ClInclude Include="util\optional_reference.hpp" />
     <ClInclude Include="util\range.hpp" />
     <ClInclude Include="util\reducable.hpp" />
+    <ClInclude Include="util\reverse_iterator.hpp" />
     <ClInclude Include="util\sinkhole.hpp" />
     <ClInclude Include="util\stack_container.hpp" />
     <ClInclude Include="util\zip.hpp" />

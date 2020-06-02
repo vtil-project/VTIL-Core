@@ -16,3 +16,4 @@
 #include "../../util/sinkhole.hpp"
 #include "../../util/constexpr_random.hpp"
 #include "../../util/range.hpp"
+#include "../../util/reverse_iterator.hpp"

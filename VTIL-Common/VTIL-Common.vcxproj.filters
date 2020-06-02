@@ -136,6 +136,9 @@
     <ClInclude Include="util\range.hpp">
       <Filter>Utility</Filter>
     </ClInclude>
+    <ClInclude Include="util\reverse_iterator.hpp">
+      <Filter>Utility</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="amd64\register_details.cpp">
