@@ -28,12 +28,36 @@
 #pragma once
 #include <type_traits>
 #include <vector>
+#include <map>
 #include "view.hpp"
 #include "query_descriptor.hpp"
 #include "../io/asserts.hpp"
+#include "../util/variant.hpp"
 
 namespace vtil::query
 {
+	// Thread local pointer to the current local mapping of stack variables.
+	//
+	namespace impl
+	{
+		using local_state_t = std::map<const void*, variant>;
+		static thread_local local_state_t* local_state;
+	};
+
+	// Gets the recursive-local copy of the given variable on stack.
+	//
+	template<typename T>
+	static T& rlocal( const T& alias )
+	{
+		fassert( impl::local_state );
+		return impl::local_state->find( ( void* ) &alias )->second.get<T>();
+	}
+	template<typename P0, typename... PN>
+	static std::tuple<P0&, PN&...> rlocal( const P0& p0, const PN&... pn )
+	{
+		return { rlocal<P0>( p0 ), rlocal<PN>( pn )... };
+	}
+
 	// Recursive results are used to collect results
 	// in a way that clearly indicates the path taken
 	// to get the result, and the source container.
@@ -130,6 +154,21 @@ namespace vtil::query
 		//
 		std::set<const void*> visited = {};
 
+		// Maps the each local variable on caller stack to the recursive copies.
+		//
+		impl::local_state_t local_variables;
+
+		// Binds the local variable to each possible recursive path,
+		// should be called prior to the beginning of the iteration.
+		//
+		template<typename... PN>
+		recursive_view& bind( const PN&... pn )
+		{
+			static constexpr auto ignore = [ ] ( ... ) {};
+			ignore( ( local_variables[ &pn ] = pn )... );
+			return *this;
+		}
+
 		// Constructs a recursive view from the view structure passed.
 		//
 		// - If partial visits are allowed, in case of an infinite loop,
@@ -210,6 +249,11 @@ namespace vtil::query
 		>
 		recursive_result<result_type, container_type> for_each( const enumerator_type& enumerator )
 		{
+			// Set local state.
+			//
+			auto* prev_state = impl::local_state;
+			impl::local_state = &local_variables;
+			
 			// Begin the iteration loop.
 			//
 			recursive_result<result_type, container_type> output = { false, view.query.iterator.container, {}, {} };
@@ -292,6 +336,10 @@ namespace vtil::query
 					break;
 				}
 			}
+
+			// Restore local state.
+			//
+			impl::local_state = prev_state;
 
 			// Return the final result.
 			//
