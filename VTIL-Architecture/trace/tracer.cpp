@@ -36,6 +36,10 @@ namespace vtil
 	using partial_tracer_t = std::function<symbolic::expression( bitcnt_t offset, bitcnt_t size )>;
 	using path_history_t = std::map<std::pair<const basic_block*, const basic_block*>, uint32_t>;
 
+	// Forward defs.
+	//
+	static symbolic::expression rtrace_primitive( const symbolic::variable& lookup, tracer* tracer, const path_history_t& history );
+
 	// Given a partial tracer, this routine will determine the full value of the variable
 	// at the given position where a partial write was found.
 	//
@@ -178,7 +182,9 @@ namespace vtil
 
             // Trace the variable in the destination block, fail if it fails.
             //
-			symbolic::expression var_traced = history ? tracer->rtrace( var ) : tracer->trace( var );
+			symbolic::expression var_traced = history 
+				? rtrace_primitive( var, tracer, *history )
+				: tracer->trace( var );
             if ( !var_traced )
                 return {};
 

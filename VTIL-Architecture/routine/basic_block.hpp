@@ -80,9 +80,7 @@ namespace vtil
 				// If path restricted, copy paths.
 				//
 				if ( is_path_restricted = o.is_path_restricted )
-				{
 					paths_allowed = { o.paths_allowed.begin(), o.paths_allowed.end() };
-				}
 			}
 
 			// Override equality operators to check container first.
