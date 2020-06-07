@@ -221,7 +221,7 @@ namespace vtil::query
 		// represents, read the note for query_base::fn_controller and
 		// ::to_controller()
 		//
-		view_type& with( fn_controller controller )
+		view_type& control( fn_controller controller )
 		{
 			// Override iteration logic.
 			//

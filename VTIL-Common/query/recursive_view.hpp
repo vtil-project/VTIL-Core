@@ -47,13 +47,25 @@ namespace vtil::query
 	// Gets the recursive-local copy of the given variable on stack.
 	//
 	template<typename T>
-	static T& rlocal( const T& alias )
+	static T& rlocal( T& alias )
 	{
-		fassert( impl::local_state );
-		return impl::local_state->find( ( void* ) &alias )->second.get<T>();
+		// If local state exists:
+		//
+		if ( impl::local_state )
+		{
+			// Search for the variable, if found return local state.
+			//
+			auto it = impl::local_state->find( ( void* ) &alias );
+			if ( it != impl::local_state->end() )
+				return it->second.get<T>();
+		}
+
+		// Otherwise, return as is.
+		//
+		return alias;
 	}
 	template<typename P0, typename... PN>
-	static std::tuple<P0&, PN&...> rlocal( const P0& p0, const PN&... pn )
+	static std::tuple<P0&, PN&...> rlocal( P0& p0, PN&... pn )
 	{
 		return { rlocal<P0>( p0 ), rlocal<PN>( pn )... };
 	}
@@ -162,7 +174,7 @@ namespace vtil::query
 		// should be called prior to the beginning of the iteration.
 		//
 		template<typename... PN>
-		recursive_view& bind( const PN&... pn )
+		recursive_view& bind( PN&... pn )
 		{
 			static constexpr auto ignore = [ ] ( ... ) {};
 			ignore( ( local_variables[ &pn ] = pn, 0 )... );
@@ -225,10 +237,10 @@ namespace vtil::query
 		
 		auto& reverse() { view.reverse(); return *this; }
 		template<typename T> auto& run( T next ) { view.run( next ); return *this; }
-		template<typename T> auto& with( T next ) { view.with( next ); return *this; }
 		template<typename T> auto& where( T next ) { view.where( next ); return *this; }
 		template<typename T> auto& until( T next ) { view.until( next ); return *this; }
 		template<typename T> auto& whilst( T next ) { view.whilst( next ); return *this; }
+		template<typename T> auto& control( T next ) { view.control( next ); return *this; }
 		
 		template<typename projector_type>
 		auto project( projector_type next ) { return recursive_view<decltype( view.project( next ) )>{ view.project( next ), it0.container != nullptr, filter }; }
