@@ -41,7 +41,7 @@ namespace vtil::query
 	namespace impl
 	{
 		using local_state_t = std::map<const void*, variant>;
-		static thread_local local_state_t* local_state;
+		static thread_local local_state_t* local_state = nullptr;
 	};
 
 	// Gets the recursive-local copy of the given variable on stack.
@@ -165,7 +165,7 @@ namespace vtil::query
 		recursive_view& bind( const PN&... pn )
 		{
 			static constexpr auto ignore = [ ] ( ... ) {};
-			ignore( ( local_variables[ &pn ] = pn )... );
+			ignore( ( local_variables[ &pn ] = pn, 0 )... );
 			return *this;
 		}
 

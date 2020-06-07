@@ -121,16 +121,18 @@ namespace vtil::logger
 		int active;
 		int prev;
 
-		scope_padding( unsigned u )
-			: active( ( state::get()->lock.lock(), 1 ) ),
-			  prev( state::get()->padding )
+		scope_padding( unsigned u ) : active( 1 )
 		{
+			state::get()->lock.lock();
+			prev = state::get()->padding;
 			state::get()->padding += u;
+			state::get()->lock.unlock();
 		}
 
 		void end()
 		{
 			if ( active-- <= 0 ) return;
+			state::get()->lock.lock();
 			state::get()->padding = prev;
 			state::get()->lock.unlock();
 		}
@@ -146,16 +148,18 @@ namespace vtil::logger
 		int active;
 		bool prev;
 
-		scope_verbosity( bool verbose_output )
-			: active( ( state::get()->lock.lock(), 1 ) ),
-			  prev( state::get()->mute )
+		scope_verbosity( bool verbose_output ) : active( 1 )
 		{
+			state::get()->lock.lock();
+			prev = state::get()->mute;
 			state::get()->mute |= !verbose_output;
+			state::get()->lock.unlock();
 		}
 
 		void end()
 		{
 			if ( active-- <= 0 ) return;
+			state::get()->lock.lock();
 			state::get()->mute = prev;
 			state::get()->lock.unlock();
 		}

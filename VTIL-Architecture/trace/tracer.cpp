@@ -448,8 +448,8 @@ namespace vtil
 		lvm.hooks.read_memory = [ & ] ( const symbolic::expression& pointer, size_t byte_count )
 		{
 			auto exp = trace( symbolic::variable{
-				lookup.at,{ pointer, bitcnt_t( byte_count * 8 ) }
-							  } );
+				lookup.at, { pointer, bitcnt_t( byte_count * 8 ) }
+			} );
 			return exp.is_valid() ? exp.resize( result_bcnt ) : exp;
 		};
 		lvm.hooks.write_register = [ & ] ( const register_desc& desc, symbolic::expression value )
