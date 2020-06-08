@@ -109,8 +109,7 @@ namespace vtil
 		return base.resize( bit_count );
 	}
 
-    // Propagates all variables in the reference expression onto the new iterator, if no 
-	// history pointer given will do trace instead of rtrace.
+    // Propagates all variables in the reference expression onto the new iterator, if no history pointer given will do trace instead of rtrace.
     // - Note: New iterator should be a connected block's end.
     //
     static symbolic::expression propagate( const symbolic::expression& ref, const il_const_iterator& it, tracer* tracer, path_history_t* history )

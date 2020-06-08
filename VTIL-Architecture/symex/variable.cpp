@@ -41,6 +41,132 @@ namespace vtil::symbolic
 		dummy_block.stream.push_back( {} );
 		return dummy_block.begin();
 	}();
+	
+	// Returns the origin block of the pointer.
+	//
+	static const basic_block* get_pointer_origin( const symbolic::expression& exp )
+	{
+		// If variable with valid iterator, return the block.
+		//
+		if ( exp.is_variable() )
+		{
+			auto& var = exp.uid.get<symbolic::variable>();
+			if ( var.at.is_valid() )
+				return var.at.container;
+		}
+
+		// Otherwise try each child.
+		//
+		for ( auto& exp : { exp.lhs, exp.rhs } )
+			if ( auto p = exp ? get_pointer_origin( *exp ) : nullptr )
+				return p;
+
+		// Fail.
+		//
+		return nullptr;
+	}
+
+	// Calculates the displacement between two pointers and fills the access_details accordingly.
+	//
+	static void fill_displacement( access_details* details, const pointer& p1, const pointer& p2, tracer* tracer )
+	{
+		// If valid tracer provided:
+		//
+		if ( tracer )
+		{
+			// If two pointers' origins mismatch, propagate first.
+			//
+			auto o1 = get_pointer_origin( p1.base );
+			auto o2 = get_pointer_origin( p2.base );
+			if ( o1 != o2 && o1 && o2 )
+			{
+				// Allocate temporary storage for new pointers.
+				//
+				pointer pn1, pn2;
+				std::array in = { &p1, &p2 };
+				std::array out = { &pn1, &pn2 };
+
+				// For each pointer:
+				//
+				for ( auto [in, out] : zip( in, out ) )
+				{
+					// Transform base pointer:
+					//
+					symbolic::expression base = in->base;
+					base.transform( [ & ] ( symbolic::expression& exp )
+					{
+						// Skip if not variable.
+						//
+						if ( !exp.is_variable() )
+							return;
+						variable var = exp.uid.get<variable>();
+
+						// Skip if it has an invalid iterator.
+						//
+						if ( !var.at.is_valid() )
+							return;
+
+						// Determine all paths and path restrict the iterator.
+						//
+						auto pathset_1 = il_const_iterator::path_to( var.at.container, o1, false );
+						auto pathset_2 = il_const_iterator::path_to( var.at.container, o2, false );
+						var.at.is_path_restricted = true;
+
+						// If only one of the paths are valid for backwards iteration:
+						//
+						if ( pathset_1.empty() ^ pathset_2.empty() )
+						{
+							// Set the restriction.
+							//
+							var.at.is_path_restricted = true;
+							var.at.paths_allowed = pathset_1.empty() ? pathset_2 : pathset_1;
+							exp = tracer->rtrace( std::move( var ) );
+						}
+						// If both paths are valid for backwards iteration:
+						//
+						else if( pathset_1.size() && pathset_2.size() )
+						{
+							// Calculate for both and set if equivalent.
+							//
+							var.at.paths_allowed = pathset_1;
+							auto exp1 = tracer->rtrace( var );
+							var.at.paths_allowed = pathset_2;
+							auto exp2 = tracer->rtrace( var );
+							if ( exp1.equals( exp2 ) )
+								exp = exp1;
+						}
+					} );
+
+					// Write the new pointer.
+					//
+					*out = pointer{ base };
+				}
+
+				// Recurse with the new pointers.
+				//
+				return fill_displacement( details, pn1, pn2, nullptr );
+			}
+		}
+
+		// If the two pointers can overlap (not restrict qualified against each other),
+		// write dummy bit count and the offset if we can calculate it.
+		//
+		if ( p1.can_overlap( p2 ) )
+		{
+			details->bit_count = -1;
+			if ( auto disp = p1 - p2 )
+				details->bit_offset = ( bitcnt_t ) *disp * 8;
+			else
+				details->bit_offset = -1;
+		}
+		// Otherwise declare no-overlap.
+		//
+		else
+		{
+			details->bit_count = 0;
+			details->bit_offset = 0;
+		}
+	}
 
 	// Implement generic access check for ::read_by & ::written_by, write and read must not be both set to true.
 	//
@@ -102,42 +228,33 @@ namespace vtil::symbolic
 					auto [base, offset] = it->memory_location();
 					pointer ptr = { tracer->trace( { it, base } ) + offset };
 
-					// If the two pointers can overlap (not restrict qualified against each other):
+					// Calculate displacement.
 					//
-					if ( ptr.can_overlap( mem->base ) )
+					access_details details;
+					fill_displacement( &details, ptr, mem->base, tracer );
+
+					// If pointers can indeed overlap:
+					//
+					if ( details )
 					{
-						// If it can be expressed as a constant:
+						// Fill read/write.
 						//
-						if ( auto disp = ( ptr - mem->base ) )
-						{
-							// Check if within boundaries:
-							//
-							int64_t low_offset = *disp;
-							int64_t high_offset = low_offset + it->access_size();
-							if ( low_offset < ( mem->bit_count / 8 ) && high_offset > 0 )
-							{
-								// Can safely multiply by 8 and shrink to bitcnt_t type from int64_t 
-								// since variables are of maximum 64-bit size which means both offset
-								// and size will be small numbers.
-								//
-								return access_details{
-									.bit_offset = bitcnt_t( low_offset * 8 ),
-									.bit_count = bitcnt_t( ( high_offset - low_offset ) * 8 ),
-									.read = !it->base->writes_memory(),
-									.write = it->base->writes_memory()
-								};
-							}
-						}
-						// Otherwise, return unknown.
+						details.read = !it->base->writes_memory();
+						details.write = it->base->writes_memory();
+
+						// If offset is unknown, return as is.
 						//
-						else
+						if ( details.is_unknown() )
+							return details;
+
+						// Check if within boundaries, set bit count and return if so.
+						//
+						bitcnt_t low_offset = details.bit_offset;
+						bitcnt_t high_offset = low_offset + ( bitcnt_t ) it->access_size() * 8;
+						if ( low_offset < mem->bit_count && high_offset > 0 )
 						{
-							return access_details{ 
-								.bit_offset = -1, 
-								.bit_count = -1,
-								.read = !it->base->writes_memory(),
-								.write = it->base->writes_memory()
-							};
+							details.bit_count = ( bitcnt_t ) it->access_size() * 8;
+							return details;
 						}
 					}
 				}
