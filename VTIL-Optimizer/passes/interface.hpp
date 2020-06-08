@@ -28,6 +28,7 @@
 #pragma once
 #include <vtil/arch>
 #include <thread>
+#include <vtil/io>
 
 namespace vtil::optimizer
 {
@@ -72,6 +73,10 @@ namespace vtil::optimizer
 			return n;
 		}
 
+		// Returns the name of the pass.
+		//
+		virtual std::string name() { return format::dynamic_type_name( *this ); }
+
 		// Overload operator().
 		//
 		size_t operator()( basic_block* blk, bool xblock = false ) { return pass( blk, xblock ); }
@@ -97,6 +102,7 @@ namespace vtil::optimizer
 		{ 
 			return t1.xpass( rtn ) + t2.xpass( rtn ); 
 		}
+		virtual std::string name() { return "(" + t1.name() + " + " + t2.name() + ")"; }
 	};
 
 	// Passes through each optimizer provided until the passes do not change the block.
@@ -116,6 +122,7 @@ namespace vtil::optimizer
 			size_t cnt = combine_pass<Tx...>::xpass( rtn );
 			return cnt ? cnt + exhaust_pass::xpass( rtn ) : 0;
 		}
+		std::string name() override { return "exhaust{" + combine_pass<Tx...>{}.name() + "}"; }
 	};
 
 	// Specializes the pass logic depending on whether it's restricted or not.
@@ -133,6 +140,7 @@ namespace vtil::optimizer
 		{
 			return cross_optimizer.xpass( rtn );
 		}
+		virtual std::string name() { return "specialize{local=" + local_optimizer.name() + ", cross=" + cross_optimizer.name() + "}"; }
 	};
 
 	// This wrapper invokes block-local optimization for each block first and 
@@ -146,6 +154,7 @@ namespace vtil::optimizer
 			size_t n = transform_parallel( rtn, [ & ] ( auto* blk ) { return T::pass( blk, false ); } );
 			return n + T::xpass( rtn );
 		}
+		std::string name() override { return "double{" + T{}.name() +"}"; }
 	};
 
 	// No-op pass.
@@ -154,6 +163,7 @@ namespace vtil::optimizer
 	{
 		size_t pass( basic_block* blk, bool xblock = false ) override { return 0; }
 		size_t xpass( routine* rtn ) override { return 0; }
+		std::string name() override { return "no-op"; }
 	};
 
 	// This wrapper spawns a new state of the given base type for each call
@@ -167,6 +177,7 @@ namespace vtil::optimizer
 		//
 		size_t pass( basic_block* blk, bool xblock = false ) const { return T{}.pass( blk, xblock ); }
 		size_t xpass( routine* rtn ) const { return T{}.xpass( rtn ); }
+		std::string name() { return T{}.name(); }
 
 		// Overload operator().
 		//

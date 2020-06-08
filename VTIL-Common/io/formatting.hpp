@@ -29,6 +29,7 @@
 #include <string>
 #include <type_traits>
 #include "../util/concept.hpp"
+#include "../util/lt_typeid.hpp"
 
 // [Configuration]
 // Determine the way we format the instructions.
@@ -97,6 +98,22 @@ namespace vtil::format
 			index = ++index % std::size( ring_buffer );
 			return ref.data();
 		}
+
+		// Fixes the type name to be more friendly.
+		//
+		static std::string fix_type_name( std::string&& in )
+		{
+			static constexpr const char* remove_list[] = {
+				"struct ",
+				"class ",
+				"enum ",
+				"vtil::"
+			};
+			for ( const char* str : remove_list )
+				if ( in.starts_with( str ) )
+					return fix_type_name( in.substr( strlen( str ) ) );
+			return in;
+		}
 	};
 
 	// Simple boolean to check if object supports string conversion.
@@ -104,7 +121,31 @@ namespace vtil::format
 	template<typename T>
 	static constexpr bool has_string_conversion_v = impl::std_to_string<T>::apply() || impl::has_to_string<T>::apply();
 
-	// Converts the given type to a string.
+	// Returns the type name of the object passed, dynamic type name will
+	// redirect to static type name if RTTI is not supported.
+	//
+	template<typename T>
+	static std::string static_type_name()
+	{
+#if HAS_RTTI
+		return impl::fix_type_name( typeid( T ).name() );
+#else
+		char buf[ 32 ];
+		sprintf_s( buf, "Type%llx", lt_typeid<T>::value );
+		return buf;
+#endif
+	}
+	template<typename T>
+	static std::string dynamic_type_name( const T& o )
+	{
+#if HAS_RTTI
+		return impl::fix_type_name( typeid( o ).name() );
+#else
+		return static_type_name<T>();
+#endif
+	}
+
+	// Converts any given object to a string.
 	//
 	template<typename T>
 	static std::string as_string( T&& x )
@@ -119,15 +160,9 @@ namespace vtil::format
 		}
 		else
 		{
-			static std::string type_name =
-#if HAS_RTTI
-				typeid( T ).name();
-#else
-				"object";
-#endif
 			char pointer_string[ 32 ];
 			sprintf_s( pointer_string, "%p", &x );
-			return "[" + type_name + "@" + std::string( pointer_string ) + "]";
+			return "[" + dynamic_type_name( x ) + "@" + std::string( pointer_string ) + "]";
 		}
 	}
 
