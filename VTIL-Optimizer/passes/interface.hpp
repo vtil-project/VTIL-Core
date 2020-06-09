@@ -90,19 +90,19 @@ namespace vtil::optimizer
 	template<typename T>
 	struct combine_pass<T> : T {};
 	template<typename T1, typename... Tx>
-	struct combine_pass<T1, Tx...>
+	struct combine_pass<T1, Tx...> : pass_interface<>
 	{
 		T1 t1 = {};
 		combine_pass<Tx...> t2 = {};
-		virtual size_t pass( basic_block* blk, bool xblock = false )
+		size_t pass( basic_block* blk, bool xblock = false ) override
 		{ 
 			return t1.pass( blk, xblock ) + t2.pass( blk, xblock ); 
 		}
-		virtual size_t xpass( routine* rtn ) 
+		size_t xpass( routine* rtn ) override
 		{ 
 			return t1.xpass( rtn ) + t2.xpass( rtn ); 
 		}
-		virtual std::string name() { return "(" + t1.name() + " + " + t2.name() + ")"; }
+		std::string name() override { return "(" + t1.name() + " + " + t2.name() + ")"; }
 	};
 
 	// Passes through each optimizer provided until the passes do not change the block.
@@ -128,19 +128,19 @@ namespace vtil::optimizer
 	// Specializes the pass logic depending on whether it's restricted or not.
 	//
 	template<typename opt_lblock, typename opt_xblock>
-	struct specialize_pass
+	struct specialize_pass : pass_interface<>
 	{
 		opt_xblock cross_optimizer = {};
 		opt_lblock local_optimizer = {};
-		virtual size_t pass( basic_block* blk, bool xblock = false )
+		size_t pass( basic_block* blk, bool xblock = false ) override
 		{
 			return xblock ? cross_optimizer.pass( blk, true ) : local_optimizer.pass( blk, false );
 		}
-		virtual size_t xpass( routine* rtn )
+		size_t xpass( routine* rtn ) override
 		{
 			return cross_optimizer.xpass( rtn );
 		}
-		virtual std::string name() { return "specialize{local=" + local_optimizer.name() + ", cross=" + cross_optimizer.name() + "}"; }
+		std::string name() override { return "specialize{local=" + local_optimizer.name() + ", cross=" + cross_optimizer.name() + "}"; }
 	};
 
 	// This wrapper invokes block-local optimization for each block first and 
