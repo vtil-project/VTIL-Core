@@ -93,7 +93,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="auxiliaries.cpp" />
+    <ClCompile Include="common\auxiliaries.cpp" />
     <ClCompile Include="passes\bblock_extension_pass.cpp" />
     <ClCompile Include="passes\dead_code_elimination_pass.cpp" />
     <ClCompile Include="passes\istack_ref_substitution_pass.cpp" />
@@ -102,9 +102,9 @@
     <ClCompile Include="passes\stack_propagation_pass.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="apply_all.hpp" />
-    <ClInclude Include="auxiliaries.hpp" />
-    <ClInclude Include="interface.hpp" />
+    <ClInclude Include="common\apply_all.hpp" />
+    <ClInclude Include="common\auxiliaries.hpp" />
+    <ClInclude Include="common\interface.hpp" />
     <ClInclude Include="passes\bblock_extension_pass.hpp" />
     <ClInclude Include="passes\dead_code_elimination_pass.hpp" />
     <ClInclude Include="passes\istack_ref_substitution_pass.hpp" />

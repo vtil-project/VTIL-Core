@@ -1,7 +1,7 @@
 project(VTIL-Optimizer)
 
 add_library(${PROJECT_NAME} STATIC
-    auxiliaries.cpp
+    common/auxiliaries.cpp
     passes/stack_pinning_pass.cpp
     passes/istack_ref_substitution_pass.cpp
     passes/bblock_extension_pass.cpp

@@ -19,7 +19,7 @@
     <ClCompile Include="passes\dead_code_elimination_pass.cpp">
       <Filter>Optimizer Passes</Filter>
     </ClCompile>
-    <ClCompile Include="auxiliaries.cpp">
+    <ClCompile Include="common\auxiliaries.cpp">
       <Filter>Common</Filter>
     </ClCompile>
   </ItemGroup>
@@ -53,13 +53,13 @@
     <ClInclude Include="passes\istack_ref_substitution_pass.hpp">
       <Filter>Optimizer Passes</Filter>
     </ClInclude>
-    <ClInclude Include="auxiliaries.hpp">
+    <ClInclude Include="common\apply_all.hpp">
       <Filter>Common</Filter>
     </ClInclude>
-    <ClInclude Include="apply_all.hpp">
+    <ClInclude Include="common\auxiliaries.hpp">
       <Filter>Common</Filter>
     </ClInclude>
-    <ClInclude Include="interface.hpp">
+    <ClInclude Include="common\interface.hpp">
       <Filter>Common</Filter>
     </ClInclude>
   </ItemGroup>
