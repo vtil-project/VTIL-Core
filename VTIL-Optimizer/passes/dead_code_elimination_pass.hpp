@@ -31,7 +31,8 @@
 
 namespace vtil::optimizer
 {
-	// <TODO>
+	// Removes every non-volatile instruction whose effects are
+	// ignored or overwritten.
 	//
 	struct dead_code_elimination_pass : pass_interface<true>
 	{

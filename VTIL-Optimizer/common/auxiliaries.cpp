@@ -170,9 +170,33 @@ namespace vtil::optimizer::aux
 					if ( query::rlocal( variable_mask ) & math::fill( details.bit_count, details.bit_offset ) )
 						return true;
 
-					// If exiting virtual machine, assume used.
+					// If we are exiting the virtual machine:
 					//
-					return *it->base == ins::vexit;
+					if ( it->base->is_branching_real() )
+					{
+						// Use the symbolic variable API.
+						//
+						if ( auto details = var.accessed_by( it, tracer ) )
+						{
+							// If unknown, assume used.
+							//
+							if ( details.is_unknown() )
+								return true;
+
+							// If read from, declare used.
+							//
+							uint64_t adjusted_mask = math::fill( details.bit_count, details.bit_offset );
+							if ( details.read && ( adjusted_mask & query::rlocal( variable_mask ) ) )
+								return true;
+
+							// If written to, clear mask.
+							//
+							if ( details.write )
+								query::rlocal( variable_mask ) &= ~adjusted_mask;
+						}
+					}
+
+					return false;
 				} );
 		}
 		// If register variable:
@@ -235,10 +259,33 @@ namespace vtil::optimizer::aux
 							return true;
 					}
 
-					// If exiting virtual machine and we are querying for a physical register, 
-					// declare used, otherwise dead.
+					// If we are exiting the virtual machine:
 					//
-					return reg.is_physical() && *it->base == ins::vexit;
+					if ( it->base->is_branching_real() )
+					{
+						// Use the symbolic variable API.
+						//
+						if ( auto details = var.accessed_by( it, tracer ) )
+						{
+							// If unknown, assume used.
+							//
+							if ( details.is_unknown() )
+								return true;
+
+							// If read from, declare used.
+							//
+							uint64_t adjusted_mask = math::fill( details.bit_count, details.bit_offset + reg.bit_offset );
+							if ( details.read && ( adjusted_mask & query::rlocal( variable_mask ) ) )
+								return true;
+
+							// If written to, clear mask.
+							//
+							if ( details.write )
+								query::rlocal( variable_mask ) &= ~adjusted_mask;
+						}
+					}
+
+					return false;
 				} );
 		}
 
