@@ -110,6 +110,7 @@ namespace vtil::optimizer::aux
 			// Declare iteration logic.
 			//
 			blueprint
+
 				// @ Clear from the active mask per overwrite.
 				.run( [ & ] ( const il_const_iterator& it ) 
 				{
@@ -147,8 +148,10 @@ namespace vtil::optimizer::aux
 					//
 					query::rlocal( variable_mask ) &= ~math::fill( details.bit_count, details.bit_offset );
 				} )
+
 				// | Skip further checks if value is dead.
-				.where( [ & ] ( auto& ) { return query::rlocal( variable_mask ) != 0; } )
+				.where( [ & ] ( const il_const_iterator& it ) { return query::rlocal( variable_mask ) != 0; } )
+
 				// >> Select the instructions that read the value previously written.
 				.where( [ & ] ( const il_const_iterator& it )
 				{
@@ -195,8 +198,10 @@ namespace vtil::optimizer::aux
 			// Declare iteration logic.
 			//
 			blueprint
+
 				// | Skip further checks if value is dead.
-				.where( [ & ] ( auto& ) { return query::rlocal( variable_mask ) != 0; } )
+				.where( [ & ] ( const il_const_iterator& it ) { return query::rlocal( variable_mask ) != 0; } )
+
 				// @ Clear from the active mask per overwrite.
 				.run( [ & ] ( const il_const_iterator& it ) 
 				{
@@ -213,6 +218,7 @@ namespace vtil::optimizer::aux
 							query::rlocal( variable_mask ) &= ~op.reg().get_mask();
 					}
 				} )
+
 				// >> Select the instructions that read the value previously written.
 				.where( [ & ] ( const il_const_iterator& it )
 				{
@@ -241,31 +247,42 @@ namespace vtil::optimizer::aux
 		if ( rec )
 		{
 			int skip_count = 0;
-
 			// => Begin forward iterating query:
-			auto res = query::create_recursive( var.at )
+			auto res = query::create_recursive( var.at, +1 )
+
 				// >> Skip one.
 				.where( [ & ] ( auto& ) { return skip_count++ >= 1; } )
+
 				// @ Make the current mask local per recursion.
 				.bind( variable_mask )
+
 				// @ Attach controller.
 				.control( blueprint.to_controller() )
+
 				// := Project to iterator form.
 				.unproject()
+
 				// <= Return first result and flatten the tree.
 				.first().flatten( true );
+
+			// Return used if any instruction reading from this value is hit.
+			//
 			return !res.result.empty();
 		}
 		else
 		{
 			// => Begin forward iterating query:
-			auto res = query::create( var.at )
+			auto res = query::create( var.at, +1 )
+
 				// >> Skip one.
 				.skip( 1 )
+
 				// @ Attach controller.
 				.control( blueprint.to_controller() )
+
 				// := Project to iterator form.
 				.unproject()
+
 				// <= Return first result.
 				.first();
 
