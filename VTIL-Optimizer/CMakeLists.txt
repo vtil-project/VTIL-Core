@@ -1,8 +1,13 @@
 project(VTIL-Optimizer)
 
 add_library(${PROJECT_NAME} STATIC
-    passes/normalize_stack.cpp
     auxiliaries.cpp
+    passes/stack_pinning_pass.cpp
+    passes/istack_ref_substitution_pass.cpp
+    passes/bblock_extension_pass.cpp
+    passes/stack_propagation_pass.cpp
+    passes/dead_code_elimination_pass.cpp
+    passes/mov_propagation_pass.cpp
 )
 
 target_include_directories(${PROJECT_NAME} PUBLIC includes)

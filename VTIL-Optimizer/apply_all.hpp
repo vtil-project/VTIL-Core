@@ -26,7 +26,7 @@
 // POSSIBILITY OF SUCH DAMAGE.        
 //
 #pragma once
-#include "normalize_stack.hpp"
+#include "interface.hpp"
 
 namespace vtil::optimizer
 {
@@ -34,7 +34,8 @@ namespace vtil::optimizer
 	//
 
 	// Combined pass for each optimization.
+	// TODO: Add final optimizers...
 	//
-	using combined_pass_type = combine_pass<stack_normalization_pass/*, dead_elimination_pass*/>;
+	using combined_pass_type = combine_pass<nop_pass/*stack_normalization_pass, dead_elimination_pass*/>;
 	static constexpr spawn_state<combined_pass_type> apply_all = {};
 };

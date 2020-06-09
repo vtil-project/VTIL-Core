@@ -1,10 +1,27 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <ClCompile Include="passes\normalize_stack.cpp">
+    <ClCompile Include="passes\bblock_extension_pass.cpp">
       <Filter>Optimizer Passes</Filter>
     </ClCompile>
-    <ClCompile Include="auxiliaries.cpp" />
+    <ClCompile Include="passes\istack_ref_substitution_pass.cpp">
+      <Filter>Optimizer Passes</Filter>
+    </ClCompile>
+    <ClCompile Include="passes\stack_pinning_pass.cpp">
+      <Filter>Optimizer Passes</Filter>
+    </ClCompile>
+    <ClCompile Include="passes\stack_propagation_pass.cpp">
+      <Filter>Optimizer Passes</Filter>
+    </ClCompile>
+    <ClCompile Include="passes\mov_propagation_pass.cpp">
+      <Filter>Optimizer Passes</Filter>
+    </ClCompile>
+    <ClCompile Include="passes\dead_code_elimination_pass.cpp">
+      <Filter>Optimizer Passes</Filter>
+    </ClCompile>
+    <ClCompile Include="auxiliaries.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Includes">
@@ -13,18 +30,38 @@
     <Filter Include="Optimizer Passes">
       <UniqueIdentifier>{93550fd4-29f0-496a-ba4a-c90fcf11efb1}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Common">
+      <UniqueIdentifier>{5ad32c73-c84f-45a2-ba7b-e4170f51b3d3}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="passes\apply_all.hpp">
+    <ClInclude Include="passes\mov_propagation_pass.hpp">
       <Filter>Optimizer Passes</Filter>
     </ClInclude>
-    <ClInclude Include="passes\normalize_stack.hpp">
+    <ClInclude Include="passes\stack_propagation_pass.hpp">
       <Filter>Optimizer Passes</Filter>
     </ClInclude>
-    <ClInclude Include="passes\interface.hpp">
+    <ClInclude Include="passes\dead_code_elimination_pass.hpp">
       <Filter>Optimizer Passes</Filter>
     </ClInclude>
-    <ClInclude Include="auxiliaries.hpp" />
+    <ClInclude Include="passes\stack_pinning_pass.hpp">
+      <Filter>Optimizer Passes</Filter>
+    </ClInclude>
+    <ClInclude Include="passes\bblock_extension_pass.hpp">
+      <Filter>Optimizer Passes</Filter>
+    </ClInclude>
+    <ClInclude Include="passes\istack_ref_substitution_pass.hpp">
+      <Filter>Optimizer Passes</Filter>
+    </ClInclude>
+    <ClInclude Include="auxiliaries.hpp">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="apply_all.hpp">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="interface.hpp">
+      <Filter>Common</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="includes\vtil\optimizer">
