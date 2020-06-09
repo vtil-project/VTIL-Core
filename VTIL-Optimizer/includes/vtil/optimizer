@@ -2,3 +2,4 @@
 #include "../../passes/interface.hpp"
 #include "../../passes/normalize_stack.hpp"
 #include "../../passes/apply_all.hpp"
+#include "../../auxiliaries.hpp"

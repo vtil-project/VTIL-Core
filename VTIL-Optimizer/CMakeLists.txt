@@ -2,6 +2,7 @@ project(VTIL-Optimizer)
 
 add_library(${PROJECT_NAME} STATIC
     passes/normalize_stack.cpp
+    auxiliaries.cpp
 )
 
 target_include_directories(${PROJECT_NAME} PUBLIC includes)

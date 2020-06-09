@@ -421,7 +421,7 @@ namespace vtil::query
 	template<typename iterator_type,
 			 typename view_type = view<typename query_desc<iterator_type>::reference_type, query_desc<iterator_type>>
 	>
-	static auto create_recursive( query_desc<iterator_type> q, typename recursive_view<view_type>::fn_container_filter filter = {}, bool partial_visits = true, bool safe = true )
+	static auto make_recursive( query_desc<iterator_type> q, typename recursive_view<view_type>::fn_container_filter filter = {}, bool partial_visits = true, bool safe = true )
 	{
 		return recurse<view_type>
 		(
@@ -439,6 +439,6 @@ namespace vtil::query
 	>
 	static auto create_recursive( iterator_type r, int8_t dir = 0, typename recursive_view<view_type>::fn_container_filter filter = {}, bool partial_visits = true, bool safe = true )
 	{
-		return create_recursive( query_desc{ r, dir }, filter, partial_visits, safe );
+		return make_recursive( query_desc{ r, dir }, filter, partial_visits, safe );
 	}
 };

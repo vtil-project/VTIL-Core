@@ -4,6 +4,7 @@
     <ClCompile Include="passes\normalize_stack.cpp">
       <Filter>Optimizer Passes</Filter>
     </ClCompile>
+    <ClCompile Include="auxiliaries.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Includes">
@@ -23,6 +24,7 @@
     <ClInclude Include="passes\interface.hpp">
       <Filter>Optimizer Passes</Filter>
     </ClInclude>
+    <ClInclude Include="auxiliaries.hpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="includes\vtil\optimizer">

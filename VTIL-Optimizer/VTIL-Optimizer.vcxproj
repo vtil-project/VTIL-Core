@@ -93,12 +93,12 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="passes\eliminate_dead.cpp" />
+    <ClCompile Include="auxiliaries.cpp" />
     <ClCompile Include="passes\normalize_stack.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="auxiliaries.hpp" />
     <ClInclude Include="passes\apply_all.hpp" />
-    <ClInclude Include="passes\eliminate_dead.hpp" />
     <ClInclude Include="passes\interface.hpp" />
     <ClInclude Include="passes\normalize_stack.hpp" />
   </ItemGroup>

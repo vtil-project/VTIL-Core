@@ -30,6 +30,7 @@
 #include <optional>
 #include <functional>
 #include <type_traits>
+#include "../io/asserts.hpp"
 #include "query_descriptor.hpp"
 
 // To improve the readability of queries, each directive can be
