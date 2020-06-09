@@ -267,9 +267,7 @@ namespace vtil::symbolic
 		{
 			// Get calling convention.
 			//
-			call_convention cc = it.container->owner
-				? it.container->owner->get_cconv( it->vip )
-				: default_call_convention;
+			call_convention cc = it.container->owner->get_cconv( it->vip );
 
 			// If variable is a register:
 			//
