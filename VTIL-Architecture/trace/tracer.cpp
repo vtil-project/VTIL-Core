@@ -115,7 +115,9 @@ namespace vtil
     static symbolic::expression propagate( const symbolic::expression& ref, const il_const_iterator& it, tracer* tracer, path_history_t* history )
     {
         using namespace logger;
+#if VTIL_OPT_TRACE_VERBOSE
         scope_padding _p( 3 );
+#endif
 
         // Copy the reference expression.
         //

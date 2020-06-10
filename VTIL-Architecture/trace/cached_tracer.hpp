@@ -56,5 +56,15 @@ namespace vtil
         // Flushes the cache.
         //
         void flush() { cache.clear(); }
+        void flush( basic_block* blk )
+        {
+            for ( auto it = cache.begin(); it != cache.end(); )
+            {
+                if ( it->first.at.container == blk )
+                    it = cache.erase( it );
+                else
+                    it++;
+            }
+        }
 	};
 };
