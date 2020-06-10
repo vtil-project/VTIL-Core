@@ -52,13 +52,35 @@ namespace vtil::optimizer
 			//
 			if ( *lookup.at->base == ins::mov )
 			{
-				// Return source as is.
+				// If destination is overlapping lookup variable:
 				//
-				auto& src = lookup.at->operands[ 1 ];
-				if ( src.is_register() )
-					return symbolic::variable{ lookup.at, src.reg() }.to_expression();
-				else
-					return { src.imm().u64, ( bitcnt_t ) src.size() * 8 };
+				auto& dst = lookup.at->operands[ 0 ].reg();
+				if ( lookup.is_register() && lookup.reg().overlaps( dst ) )
+				{
+					// If no unknown bits after mov:
+					//
+					if ( ( lookup.reg().get_mask() & dst.get_mask() ) == lookup.reg().get_mask() )
+					{
+						// If source isn't stack pointer.
+						//
+						auto& src = lookup.at->operands[ 1 ];
+						if ( src.is_immediate() || !src.reg().is_stack_pointer() )
+						{
+							// Create a symbolic expression for the source.
+							//
+							symbolic::expression result;
+							if ( src.is_register() )
+								result = symbolic::variable{ lookup.at, src.reg() }.to_expression();
+							else
+								result = { src.imm().u64, ( bitcnt_t ) src.size() * 8 };
+
+							// Shift and resize accordingly and return.
+							//
+							result = result >> ( lookup.reg().bit_offset - dst.bit_offset );
+							return result.resize( lookup.reg().bit_count );
+						}
+					}
+				}
 			}
 
 			// Otherwise, return the lookup expression and skip tracing.
@@ -133,6 +155,10 @@ namespace vtil::optimizer
 				//
 				fassert( it->is_valid() );
 				counter++;
+
+				// Flush mov tracer cache
+				//
+				mtracer.flush();
 			}
 		}
 		return counter;

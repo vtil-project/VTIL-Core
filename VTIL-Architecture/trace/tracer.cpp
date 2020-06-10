@@ -177,7 +177,7 @@ namespace vtil
 
             // Move the assigned iterator.
             //
-            var.at = it;
+            var.bind( it );
 
             // Trace the variable in the destination block, fail if it fails.
             //

@@ -273,7 +273,7 @@ namespace vtil::symbolic
 			//
 			if ( var.is_register() )
 			{
-				const register_desc& reg = var.reg();
+				auto& reg = var.reg();
 
 				// If exiting the virtual machine:
 				//
@@ -418,12 +418,12 @@ namespace vtil::symbolic
 	// Constructs by iterator and the variable descriptor itself.
 	//
 	variable::variable( const il_const_iterator& it, descriptor_t desc ) :
-		descriptor( std::move( desc ) ), at( it )
+		descriptor( std::move( desc ) )
 	{
 		// If read-only register, remove the iterator.
 		//
-		if ( is_register() && reg().is_read_only() )
-			at = {};
+		if ( is_register() && reg().is_read_only() ) bind( {} );
+		else                                         bind( it );
 
 		// Validate the variable.
 		//

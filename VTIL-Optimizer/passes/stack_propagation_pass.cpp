@@ -214,7 +214,7 @@ namespace vtil::optimizer
 							// If single direction possible, replace iterator, otherwise fail.
 							//
 							if ( next.size() == 1 )
-								var.at = next[ 0 ];
+								var.bind( next[ 0 ] );
 							else
 								return;
 						}

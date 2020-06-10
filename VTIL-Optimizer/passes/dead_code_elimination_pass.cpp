@@ -123,6 +123,11 @@ namespace vtil::optimizer
 			else
 				it++;
 		}
+
+		// Purge simplifier cache since block iterators are invalided thus cache may fail.
+		//
+		if( counter != 0 )
+			symbolic::purge_simplifier_cache();
 		return counter;
 	}
 };
