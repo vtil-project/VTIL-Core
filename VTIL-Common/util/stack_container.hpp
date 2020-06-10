@@ -225,6 +225,16 @@ namespace vtil
 			if constexpr( do_reserve )
 				container_t::reserve( N ); 
 		}
+
+		// Disallow copy.
+		//
+		stack_buffered_container( const stack_buffered_container& ) = delete;
+		stack_buffered_container& operator=( const stack_buffered_container& ) = delete;
+
+		// Decay to original type via copy.
+		//
+		container_t decay() const { return { container_t::begin(), container_t::end() }; }
+		operator container_t() const { return decay(); }
 	};
 
 	// Wrap basic string derivatives:
