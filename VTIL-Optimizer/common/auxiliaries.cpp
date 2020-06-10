@@ -150,7 +150,7 @@ namespace vtil::optimizer::aux
 				} )
 
 				// | Skip further checks if value is dead.
-				.where( [ & ] ( const il_const_iterator& it ) { return query::rlocal( variable_mask ) != 0; } )
+				.whilst( [ & ] ( const il_const_iterator& it ) { return query::rlocal( variable_mask ) != 0; } )
 
 				// >> Select the instructions that read the value previously written.
 				.where( [ & ] ( const il_const_iterator& it )
@@ -224,7 +224,7 @@ namespace vtil::optimizer::aux
 			blueprint
 
 				// | Skip further checks if value is dead.
-				.where( [ & ] ( const il_const_iterator& it ) { return query::rlocal( variable_mask ) != 0; } )
+				.whilst( [ & ] ( const il_const_iterator& it ) { return query::rlocal( variable_mask ) != 0; } )
 
 				// @ Clear from the active mask per overwrite.
 				.run( [ & ] ( const il_const_iterator& it ) 
