@@ -73,7 +73,7 @@ namespace vtil::optimizer
 			return cached_tracer::trace( std::move( lookup ) );
 		}
 
-		symbolic::expression rtrace( symbolic::variable lookup ) override
+		symbolic::expression rtrace( symbolic::variable lookup, int64_t limit = -1 ) override
 		{
 			// Invoke default tracer and store the result.
 			//
@@ -87,7 +87,7 @@ namespace vtil::optimizer
 				//
 				auto& var = result.uid.get<symbolic::variable>();
 				if ( var.is_memory() && !aux::is_local( var.mem().decay() ) )
-					return tracer::rtrace( var );
+					return tracer::rtrace( var, limit );
 			}
 			return result;
 		}
