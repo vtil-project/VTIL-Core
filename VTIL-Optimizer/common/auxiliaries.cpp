@@ -434,9 +434,7 @@ namespace vtil::optimizer::aux
 
 		// If cross block operation, lock routine mutex.
 		//
-		auto _g = it.container != var.at.container
-			? std::unique_lock{ it.container->owner->mutex }
-		: std::unique_lock<critical_section>{};
+		cnd_unique_lock _g{ it.container->owner->mutex, it.container != var.at.container };
 
 		// Drop const-qualifiers, this operation is not illegal since we're passed 
 		// non-constant iterator, meaning we have access to the routine itself.
