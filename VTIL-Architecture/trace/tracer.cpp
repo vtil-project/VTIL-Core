@@ -38,7 +38,7 @@ namespace vtil
 
 	// Forward defs.
 	//
-	static symbolic::expression rtrace_primitive( const symbolic::variable& lookup, tracer* tracer, const path_history_t& history );
+	static symbolic::expression rtrace_primitive( const symbolic::variable& lookup, tracer* tracer, const path_history_t& history, int64_t );
 
 	// Given a partial tracer, this routine will determine the full value of the variable
 	// at the given position where a partial write was found.
@@ -112,7 +112,7 @@ namespace vtil
     // Propagates all variables in the reference expression onto the new iterator, if no history pointer given will do trace instead of rtrace.
     // - Note: New iterator should be a connected block's end.
     //
-    static symbolic::expression propagate( const symbolic::expression& ref, const il_const_iterator& it, tracer* tracer, path_history_t* history )
+    static symbolic::expression propagate( const symbolic::expression& ref, const il_const_iterator& it, tracer* tracer, path_history_t* history, int64_t limit )
     {
         using namespace logger;
 #if VTIL_OPT_TRACE_VERBOSE
@@ -167,7 +167,7 @@ namespace vtil
 #endif
                 // Fail if propagation fails.
                 //
-				if ( !( mem = { propagate( mem.decay(), it, tracer, nullptr ), mem.bit_count } ).decay() )
+				if ( !( mem = { propagate( mem.decay(), it, tracer, nullptr, limit ), mem.bit_count } ).decay() )
                     return {};
 
 #if VTIL_OPT_TRACE_VERBOSE
@@ -184,7 +184,7 @@ namespace vtil
             // Trace the variable in the destination block, fail if it fails.
             //
 			symbolic::expression var_traced = history 
-				? rtrace_primitive( var, tracer, *history )
+				? rtrace_primitive( var, tracer, *history, limit )
 				: tracer->trace( var );
             if ( !var_traced )
                 return {};
@@ -210,13 +210,18 @@ namespace vtil
 
 	// Internal implementation of ::rtrace with a path history.
 	//
-	static symbolic::expression rtrace_primitive( const symbolic::variable& lookup, tracer* tracer, const path_history_t& history )
+	static symbolic::expression rtrace_primitive( const symbolic::variable& lookup, tracer* tracer, const path_history_t& history, int64_t limit )
 	{
 		using namespace logger;
 
 		// Trace through the current block first.
 		//
 		symbolic::expression result = tracer->trace( lookup );
+
+		// If limit was reached, return as is.
+		//
+		if ( --limit == 0 )
+			return result;
 
 		// If result has any variables:
 		//
@@ -271,7 +276,7 @@ namespace vtil
 #endif
 					// Propagate each variable onto to the destination block.
 					//
-					symbolic::expression exp = propagate( default_result, it, tracer, &history_local );
+					symbolic::expression exp = propagate( default_result, it, tracer, &history_local, limit );
 
 #if VTIL_OPT_TRACE_VERBOSE
 					// Log result.
@@ -476,10 +481,11 @@ namespace vtil
 	}
 
 	// Traces a variable across the entire routine and tries to generates a symbolic expression
-	// for it at the specified point of the block.
+	// for it at the specified point of the block, limit determines the maximum number of blocks 
+	// to trace backwards, any negative number implies infinite since it won't reach 0.
 	//
-	symbolic::expression tracer::rtrace( symbolic::variable lookup )
+	symbolic::expression tracer::rtrace( symbolic::variable lookup, int64_t limit )
 	{
-		return rtrace_primitive( lookup, this, {} );
+		return rtrace_primitive( lookup, this, {}, limit + 1 );
 	}
 };

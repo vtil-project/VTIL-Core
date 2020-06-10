@@ -49,14 +49,15 @@ namespace vtil
 		virtual symbolic::expression trace( symbolic::variable lookup );
 
 		// Traces a variable across the entire routine and tries to generates a symbolic expression
-		// for it at the specified point of the block.
+		// for it at the specified point of the block, limit determines the maximum number of blocks 
+		// to trace backwards, any negative number implies infinite since it won't reach 0.
 		//
-		virtual symbolic::expression rtrace( symbolic::variable lookup );
+		virtual symbolic::expression rtrace( symbolic::variable lookup, int64_t limit = -1 );
 
 		// Wrappers around the functions above that return expressions with the registers packed.
 		//
 		symbolic::expression trace_p( symbolic::variable lookup ) { return symbolic::variable::pack_all( trace( std::move( lookup ) ) ); }
-		symbolic::expression rtrace_p( symbolic::variable lookup ) { return symbolic::variable::pack_all( rtrace( std::move( lookup ) ) ); }
+		symbolic::expression rtrace_p( symbolic::variable lookup, int64_t limit = -1 ) { return symbolic::variable::pack_all( rtrace( std::move( lookup ), limit ) ); }
 
 		// Operator() wraps basic tracing with packing.
 		//
