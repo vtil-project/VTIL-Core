@@ -143,18 +143,15 @@ namespace vtil::optimizer
 		std::string name() override { return "specialize{local=" + local_optimizer.name() + ", cross=" + cross_optimizer.name() + "}"; }
 	};
 
-	// This wrapper invokes block-local optimization for each block first and 
-	// then invokes cross-block optimization as the second part.
+	// Forces logic pass to ignore cross-block.
 	//
 	template<typename T>
-	struct double_pass : T
+	struct local_pass : T
 	{
-		size_t xpass( routine* rtn ) override
+		size_t pass( basic_block* blk, bool xblock = false ) override
 		{
-			size_t n = transform_parallel( rtn, [ & ] ( auto* blk ) { return T::pass( blk, false ); } );
-			return n + T::xpass( rtn );
+			return T::pass( blk, false );
 		}
-		std::string name() override { return "double{" + T{}.name() +"}"; }
 	};
 
 	// No-op pass.
