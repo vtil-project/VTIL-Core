@@ -56,8 +56,8 @@ namespace vtil::query
 			// Search for the variable, if found return local state.
 			//
 			auto it = impl::local_state->find( ( void* ) &alias );
-			if ( it != impl::local_state->end() )
-				return it->second.get<T>();
+			fassert( it != impl::local_state->end() );
+			return it->second.get<T>();
 		}
 
 		// Otherwise, return as is.
@@ -243,10 +243,10 @@ namespace vtil::query
 		template<typename T> auto& control( T next ) { view.control( next ); return *this; }
 		
 		template<typename projector_type>
-		auto project( projector_type next ) { return recursive_view<decltype( view.project( next ) )>{ view.project( next ), it0.container != nullptr, filter }; }
+		auto project( projector_type next ) { auto res = recursive_view<decltype( view.project( next ) )>{ view.project( next ), it0.container != nullptr, filter }; res.local_variables = local_variables; return res; }
 		template<typename projector_type>
-		auto reproject( projector_type next ) { return recursive_view<decltype( view.reproject( next ) )>{ view.reproject( next ), it0.container != nullptr, filter }; }
-		auto unproject() { return recursive_view<decltype( view.unproject() )>{ view.unproject(), it0.container != nullptr, filter }; }
+		auto reproject( projector_type next ) { auto res = recursive_view<decltype( view.reproject( next ) )>{ view.reproject( next ), it0.container != nullptr, filter }; res.local_variables = local_variables; return res; }
+		auto unproject() { auto res = recursive_view<decltype( view.unproject() )>{ view.unproject(), it0.container != nullptr, filter }; res.local_variables = local_variables; return res; }
 
 		// [Collection method]
 		// Invokes the enumerator for each entry, if enumerator returns void/bool
