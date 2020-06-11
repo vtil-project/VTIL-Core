@@ -307,7 +307,7 @@ namespace vtil::symbolic
 							return access_details{ .bit_count = 0, .read = false, .write = false };
 					}
 
-					// If virtual register, indicate it's discarded.
+					// If virtual register, indicate discarded:
 					//
 					if ( reg.is_virtual() )
 					{
@@ -387,7 +387,7 @@ namespace vtil::symbolic
 
 				// If vmexit, declared trashed if below or at the shadow space:
 				//
-				if ( *it->base == ins::vexit )
+				if ( *it->base == ins::vexit && it.container->owner->routine_convention.purge_stack )
 				{
 					// Determine the limit of the stack memory owned by this routine.
 					//
@@ -399,9 +399,9 @@ namespace vtil::symbolic
 					// Calculate the displacement, if constant below 0, declare trashed.
 					//
 					access_details details;
-					fill_displacement( &details, pointer{ limit }, mem.base, tracer );
-					if ( details.is_unknown() && ( details.bit_offset + details.bit_count ) <= 0 )
-						return access_details{ .bit_count = 0, .read = false, .write = false };
+					fill_displacement( &details, mem.base, pointer{ limit }, tracer );
+					if ( !details.is_unknown() && ( details.bit_offset + var.bit_count() ) <= 0 )
+						return access_details{ .bit_offset = 0, .bit_count = var.bit_count(), .read = false, .write = true };
 				}
 
 				// Report unknown access: (TODO: Proper parsing!)
