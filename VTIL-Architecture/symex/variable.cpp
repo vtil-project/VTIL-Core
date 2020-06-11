@@ -387,7 +387,7 @@ namespace vtil::symbolic
 
 				// If vmexit, declared trashed if below or at the shadow space:
 				//
-				if ( *it->base == ins::vexit && it.container->owner->routine_convention.purge_stack )
+				if ( *it->base == ins::vexit ? it.container->owner->routine_convention.purge_stack : cc.purge_stack )
 				{
 					// Determine the limit of the stack memory owned by this routine.
 					//
@@ -401,7 +401,12 @@ namespace vtil::symbolic
 					access_details details;
 					fill_displacement( &details, mem.base, pointer{ limit }, tracer );
 					if ( !details.is_unknown() && ( details.bit_offset + var.bit_count() ) <= 0 )
-						return access_details{ .bit_offset = 0, .bit_count = var.bit_count(), .read = false, .write = true };
+					{
+						if ( !read )
+							return access_details{ .bit_offset = 0, .bit_count = var.bit_count(), .read = false, .write = true };
+						else
+							return access_details{ .bit_count = 0, .read = false, .write = false };
+					}
 				}
 
 				// Report unknown access: (TODO: Proper parsing!)
