@@ -91,10 +91,11 @@ namespace vtil::optimizer
 
 	// Implement the pass.
 	//
-	size_t mov_propagation_pass::pass( basic_block* blk, bool xblock ) 
+	size_t mov_propagation_pass::pass( basic_block* blk, bool xblock )
 	{
+		cnd_shared_lock lock( mtx, xblock );
+
 		mov_tracer mtracer = {};
-		cached_tracer ctracer = {};
 		std::vector<std::pair<operand*, operand>> operand_swap_buffer;
 
 		// Iterate each instruction:
@@ -113,10 +114,7 @@ namespace vtil::optimizer
 				// Declare bypass point and trace it.
 				//
 				mtracer.bypass = it;
-
-				if ( xblock ) mtx.lock_shared();
 				auto res = xblock ? mtracer.rtrace_p( { it, op.reg() } ) : mtracer.trace_p( { it, op.reg() } );
-				if ( xblock ) mtx.unlock_shared();
 
 				// Skip if invalid result or if we resolved it into an expression.
 				//
@@ -149,8 +147,11 @@ namespace vtil::optimizer
 
 					// Skip if value is dead, otherwise replace operand.
 					//
-					if ( !aux::is_alive( var, it, &ctracer ) )
-						continue;
+					{
+						cached_tracer ctracer = {};
+						if ( !aux::is_alive( var, it, &ctracer ) )
+							continue;
+					}
 					operand_swap_buffer.emplace_back( &op, operand{ var.reg() } );
 				}
 
@@ -166,6 +167,7 @@ namespace vtil::optimizer
 
 		// Acquire lock and swap all operands at once.
 		//
+		lock = {};
 		cnd_unique_lock _g( mtx, xblock );
 		for ( auto [dst, op] : operand_swap_buffer )
 			*dst = op;
