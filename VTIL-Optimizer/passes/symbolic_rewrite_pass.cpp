@@ -183,6 +183,7 @@ namespace vtil::optimizer
 		lock.unlock();
 		std::unique_lock{ mtx };
 		blk->stream = temporary_block.stream;
+		blk->last_temporary_index = temporary_block.last_temporary_index;
 		symbolic::purge_simplifier_cache();
 		return opt_count;
 	}
