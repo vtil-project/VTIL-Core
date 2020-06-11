@@ -36,6 +36,29 @@ namespace vtil::optimizer
 	//
 	struct dead_code_elimination_pass : pass_interface<true>
 	{
+		cached_tracer ctrace;
+
 		size_t pass( basic_block* blk, bool xblock = false ) override;
+
+		// Cross block logic should execute from the bottom.
+		//
+		std::set<basic_block*> visited;
+		size_t cpass( basic_block* blk )
+		{
+			if ( visited.contains( blk ) )
+				return 0;
+			visited.insert( blk );
+			size_t count = 0;
+			for ( basic_block* block : blk->next )
+				count += cpass( block );
+			count += pass( blk, true );
+			return count;
+		}
+		size_t xpass( routine* rtn ) override
+		{
+			ctrace.flush();
+			visited.clear();
+			return cpass( rtn->entry_point );
+		}
 	};
 };

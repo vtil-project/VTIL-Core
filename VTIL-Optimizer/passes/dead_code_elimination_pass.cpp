@@ -50,16 +50,9 @@ namespace vtil::optimizer
 	//
 	size_t dead_code_elimination_pass::pass( basic_block* blk, bool xblock )
 	{
-		if ( blk->size() == 0 )
-			return 0;
-
-		cached_tracer ctrace = {};
 		size_t counter = 0;
 
-		// If cross-block, first try local.
-		//
-		if ( xblock )
-			counter += pass( blk, false );
+		if ( !xblock ) ctrace.flush();
 
 		auto [rbegin, rend] = reverse_iterators( *blk );
 		for ( auto it = rbegin; it != rend; ++it )
@@ -95,12 +88,11 @@ namespace vtil::optimizer
 				if ( !used && it->base->writes_memory() )
 				{
 					auto [base, offset] = it->memory_location();
-					symbolic::variable var = { it, 
-					{ 
-						{ ctrace.trace_p( { it, base } ) + offset }, 
-						bitcnt_t( it->access_size() * 8 ) 
-					} };
-					used = aux::is_used( var, xblock, &ctrace );
+					symbolic::pointer ptr = { ctrace.trace_p( { it, base } ) + offset };
+					if ( !( ptr.flags & register_stack_pointer ) )
+						used = true;
+					else
+						used = aux::is_used( { it, {  ptr, ( bitcnt_t ) it->access_size() * 8 } }, xblock, &ctrace );
 				}
 			}
 
@@ -126,6 +118,7 @@ namespace vtil::optimizer
 
 		// Purge simplifier cache since block iterators are invalided thus cache may fail.
 		//
+		ctrace.flush();
 		if( counter != 0 )
 			symbolic::purge_simplifier_cache();
 		return counter;
