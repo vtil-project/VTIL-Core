@@ -55,6 +55,11 @@ namespace vtil::optimizer
 			if ( ins.is_volatile() )
 				return false;
 
+			// Halt if stack pointer is reset.
+			//
+			if ( ins.sp_reset )
+				return false;
+
 			// Halt if instruction accesses volatile registers excluding ?UD.
 			//
 			for ( auto& op : ins.operands )
@@ -162,6 +167,7 @@ namespace vtil::optimizer
 			{
 				temporary_block.stream.emplace_back( *limit );
 				it = std::next( limit );
+				temporary_block.sp_index = it.is_end() ? blk->sp_index : it->sp_index;
 			}
 		}
 
