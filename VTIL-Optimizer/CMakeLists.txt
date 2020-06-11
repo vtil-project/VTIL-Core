@@ -8,6 +8,7 @@ add_library(${PROJECT_NAME} STATIC
     passes/stack_propagation_pass.cpp
     passes/dead_code_elimination_pass.cpp
     passes/mov_propagation_pass.cpp
+    passes/symbolic_rewrite_pass.cpp
 )
 
 target_include_directories(${PROJECT_NAME} PUBLIC includes)

@@ -100,6 +100,7 @@
     <ClCompile Include="passes\mov_propagation_pass.cpp" />
     <ClCompile Include="passes\stack_pinning_pass.cpp" />
     <ClCompile Include="passes\stack_propagation_pass.cpp" />
+    <ClCompile Include="passes\symbolic_rewrite_pass.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="common\apply_all.hpp" />
@@ -111,6 +112,7 @@
     <ClInclude Include="passes\mov_propagation_pass.hpp" />
     <ClInclude Include="passes\stack_pinning_pass.hpp" />
     <ClInclude Include="passes\stack_propagation_pass.hpp" />
+    <ClInclude Include="passes\symbolic_rewrite_pass.hpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="includes\vtil\optimizer" />

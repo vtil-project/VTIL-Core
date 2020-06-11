@@ -27,6 +27,7 @@
 //
 #pragma once
 #include <vtil/arch>
+#include <shared_mutex>
 #include "../common/interface.hpp"
 
 namespace vtil::optimizer
@@ -36,7 +37,6 @@ namespace vtil::optimizer
 	struct mov_propagation_pass : pass_interface<>
 	{
 		std::shared_mutex mtx;
-
 		size_t pass( basic_block* blk, bool xblock = false ) override;
 	};
 };

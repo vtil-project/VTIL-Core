@@ -27,20 +27,17 @@
 //
 #pragma once
 #include <vtil/arch>
-#include <set>
+#include <shared_mutex>
 #include "../common/interface.hpp"
 
 namespace vtil::optimizer
 {
-	// Attempts to merge multiple basic blocks into a single extended basic block.
+	// Attempts to execute ranges of the given block in a symbolic virtual machine
+	// to automatically simplify expressions created by the instructions where possible.
 	//
-	struct bblock_extension_pass : pass_interface<true>
+	struct symbolic_rewrite_pass : pass_interface<true>
 	{
-		// List of blocks we have already visited, refreshed per xpass call.
-		//
-		std::set<basic_block*> visit_list;
-
-		size_t pass( basic_block* blk, bool xblock = false ) override;
-		size_t xpass( routine* rtn ) override;
+		std::shared_mutex mtx;
+		size_t pass( basic_block* blk, bool xblock ) override;
 	};
 };

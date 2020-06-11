@@ -8,3 +8,4 @@
 #include "../../passes/stack_propagation_pass.hpp"
 #include "../../passes/dead_code_elimination_pass.hpp"
 #include "../../passes/mov_propagation_pass.hpp"
+#include "../../passes/symbolic_rewrite_pass.hpp"
