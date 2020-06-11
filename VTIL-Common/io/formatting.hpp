@@ -110,8 +110,15 @@ namespace vtil::format
 				"vtil::"
 			};
 			for ( const char* str : remove_list )
+			{
 				if ( in.starts_with( str ) )
 					return fix_type_name( in.substr( strlen( str ) ) );
+				for ( int i = 0; i < in.size(); i++ )
+				{
+					if ( in[ i ] == '<' && in.substr( i + 1 ).starts_with( str ) )
+						in = in.substr( 0, i + 1 ) + in.substr( i + 1 + strlen( str ) );
+				}
+			}
 			return in;
 		}
 	};
@@ -128,7 +135,8 @@ namespace vtil::format
 	static std::string static_type_name()
 	{
 #if HAS_RTTI
-		return impl::fix_type_name( typeid( T ).name() );
+		static std::string res = impl::fix_type_name( typeid( T ).name() );
+		return res;
 #else
 		char buf[ 32 ];
 		sprintf_s( buf, "Type%llx", lt_typeid<T>::value );
