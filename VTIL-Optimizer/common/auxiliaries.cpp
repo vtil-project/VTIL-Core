@@ -85,15 +85,19 @@ namespace vtil::optimizer::aux
 		uint64_t variable_mask;
 		auto blueprint = query::dummy<il_const_iterator>().unproject();
 
+		// Allocate dummy pointer.
+		//
+		symbolic::variable ptr_var;
+
 		// If memory variable:
 		//
 		if ( var.is_memory() )
 		{
-			auto& mem = var.mem();
+			ptr_var = var;
 
 			// If it can't be simplified into $sp + C, assume used.
 			//
-			std::optional delta_o = mem.decay().evaluate( [ ] ( const symbolic::unique_identifier& uid )
+			std::optional delta_o = var.mem().decay().evaluate( [ ] ( const symbolic::unique_identifier& uid )
 															-> std::optional<uint64_t>
 			{
 				auto var = uid.get<symbolic::variable>();
@@ -105,7 +109,7 @@ namespace vtil::optimizer::aux
 
 			// Create a mask for the variable and a path.
 			//
-			variable_mask = math::fill( mem.bit_count );
+			variable_mask = math::fill( var.mem().bit_count );
 
 			// Declare iteration logic.
 			//
@@ -114,9 +118,27 @@ namespace vtil::optimizer::aux
 				// @ Clear from the active mask per overwrite.
 				.run( [ & ] ( const il_const_iterator& it ) 
 				{
+					auto& pvar = query::rlocal( ptr_var );
+
+					// Propagate pointer if needed.
+					//
+					if ( pvar.at.container != it.container )
+					{
+						if ( pvar.at.container->sp_index == 0 )
+						{
+							symbolic::expression exp = pvar.mem().decay();
+							exp = 
+								exp
+								- pvar.at.container->sp_offset 
+								+ symbolic::variable{ it.container->begin(), REG_SP }.to_expression()
+								- symbolic::variable{ pvar.at.container->begin(), REG_SP }.to_expression();
+							pvar = symbolic::variable{ it.container->begin(), { symbolic::pointer{ exp }, pvar.mem().bit_count } };
+						}
+					}
+
 					// If instruction is branching, check if stack is discarded.
 					//
-					if ( it->base->is_branching() )
+					if ( it->base->is_branching() && it.container->owner->routine_convention.purge_stack )
 					{
 						// Assert this instruction does not read memory.
 						//
@@ -124,7 +146,7 @@ namespace vtil::optimizer::aux
 
 						// Determine the displacement between high write and discarded limit.
 						//
-						symbolic::expression write_high = mem.decay() + ( mem.bit_count / 8 );
+						symbolic::expression write_high = pvar.mem().decay() + ( pvar.mem().bit_count / 8 );
 						symbolic::expression discard_limit = rel_ptr( { it, REG_SP } ) + it->sp_offset;
 						std::optional disp = ( write_high - discard_limit ).get<true>();
 
@@ -136,7 +158,7 @@ namespace vtil::optimizer::aux
 
 					// Skip if variable is not written to by this instruction.
 					//
-					auto details = var.written_by( it, tracer );
+					auto details = pvar.written_by( it, tracer );
 					if ( !details ) return;
 
 					// If also read or if unknown access, skip.
@@ -155,9 +177,11 @@ namespace vtil::optimizer::aux
 				// >> Select the instructions that read the value previously written.
 				.where( [ & ] ( const il_const_iterator& it )
 				{
+					auto& pvar = query::rlocal( ptr_var );
+
 					// Skip if variable is not read by this instruction.
 					//
-					auto details = var.read_by( it, tracer );
+					auto details = pvar.read_by( it, tracer );
 					if ( !details ) return false;
 
 					// If unknown access, continue.
@@ -176,7 +200,7 @@ namespace vtil::optimizer::aux
 					{
 						// Use the symbolic variable API.
 						//
-						if ( auto details = var.accessed_by( it, tracer ) )
+						if ( auto details = pvar.accessed_by( it, tracer ) )
 						{
 							// If unknown, assume used.
 							//
@@ -209,7 +233,7 @@ namespace vtil::optimizer::aux
 			//
 			if ( reg.is_volatile() )
 				return true;
-		
+
 			// Create a mask for the variable.
 			//
 			variable_mask = reg.get_mask();
@@ -222,7 +246,6 @@ namespace vtil::optimizer::aux
 			// Declare iteration logic.
 			//
 			blueprint
-
 				// | Skip further checks if value is dead.
 				.whilst( [ & ] ( const il_const_iterator& it ) { return query::rlocal( variable_mask ) != 0; } )
 
@@ -294,14 +317,15 @@ namespace vtil::optimizer::aux
 		if ( rec )
 		{
 			int skip_count = 0;
+
 			// => Begin forward iterating query:
 			auto res = query::create_recursive( var.at, +1 )
 
 				// >> Skip one.
-				.where( [ & ] ( auto& ) { return skip_count++ >= 1; } )
+				.where( [ & ] ( auto& ) { return query::rlocal( skip_count )++ >= 1; } )
 
 				// @ Make the current mask local per recursion.
-				.bind( variable_mask )
+				.bind( variable_mask, ptr_var, skip_count )
 
 				// @ Attach controller.
 				.control( blueprint.to_controller() )
