@@ -130,7 +130,7 @@ namespace vtil::optimizer
 				operand base, offset, value;
 				if ( auto displacement = ( k - symbolic::make_register_ex( REG_SP ) ) )
 				{
-					// Buffer a str $sp, c, OP
+					// Buffer a str $sp, c, value.
 					//
 					instruction_buffer.push_back(
 					{
@@ -140,7 +140,7 @@ namespace vtil::optimizer
 				}
 				else
 				{
-					// Buffer a str <ptr>, 0, OP
+					// Buffer a str <ptr>, 0, value.
 					//
 					instruction_buffer.push_back(
 					{

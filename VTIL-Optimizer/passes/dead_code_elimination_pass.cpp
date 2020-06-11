@@ -106,6 +106,12 @@ namespace vtil::optimizer
 			}
 		}
 
+		// Purge simplifier cache since block iterators are invalided thus cache may fail.
+		//
+		ctrace.flush( blk );
+		if ( counter != 0 )
+			symbolic::purge_simplifier_cache();
+
 		// Remove all nops.
 		//
 		for ( auto it = blk->begin(); it != blk->end(); )
@@ -115,12 +121,6 @@ namespace vtil::optimizer
 			else
 				it++;
 		}
-
-		// Purge simplifier cache since block iterators are invalided thus cache may fail.
-		//
-		ctrace.flush();
-		if( counter != 0 )
-			symbolic::purge_simplifier_cache();
 		return counter;
 	}
 };
