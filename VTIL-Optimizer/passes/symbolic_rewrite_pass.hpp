@@ -35,7 +35,7 @@ namespace vtil::optimizer
 	// Attempts to execute ranges of the given block in a symbolic virtual machine
 	// to automatically simplify expressions created by the instructions where possible.
 	//
-	struct symbolic_rewrite_pass : pass_interface<true>
+	struct symbolic_rewrite_pass : pass_interface<>
 	{
 		std::shared_mutex mtx;
 		size_t pass( basic_block* blk, bool xblock ) override;
