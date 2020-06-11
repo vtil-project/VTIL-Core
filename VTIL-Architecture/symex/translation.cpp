@@ -124,14 +124,17 @@ namespace vtil
 
 					// If stack pointer, remove the current offset:
 					//
+					operand tmp = block->tmp( reg.bit_count );
 					if ( reg.is_stack_pointer() && block->sp_offset != 0 )
 					{
-						operand tmp = block->tmp( reg.bit_count );
 						block->mov( tmp, reg )
 							 ->sub( tmp, block->sp_offset );
-						return tmp;
 					}
-					return { reg };
+					else
+					{
+						block->mov( tmp, reg );
+					}
+					return tmp;
 				}
 				unreachable();
 			}
