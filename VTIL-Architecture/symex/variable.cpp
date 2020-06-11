@@ -394,7 +394,7 @@ namespace vtil::symbolic
 					symbolic::expression limit = 
 						tracer->trace( { it, REG_SP } ) + 
 						it.container->sp_offset + 
-						it.container->owner->routine_convention.shadow_space;
+						cc.shadow_space;
 
 					// Calculate the displacement, if constant below 0, declare trashed.
 					//
