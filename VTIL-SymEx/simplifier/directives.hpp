@@ -358,7 +358,7 @@ namespace vtil::symbolic::directive
         { __uless_eq(A,B),                                    __ugreat_eq(!(~A),s(~B)) },
         { __uless(A,B),                                       __ugreat(!(~A),s(~B)) },
         { A<=B,                                               !(~A)>=s(~B) },
-        { A<B,                                                !(~A)<s(~B) },
+        { A<B,                                                !(~A)>s(~B) },
             
         { A>B,                                                !(-A)<s(-B) },
         { A>=B,                                               !(-A)<=s(-B) },
