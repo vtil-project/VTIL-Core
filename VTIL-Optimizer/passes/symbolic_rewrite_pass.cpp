@@ -61,9 +61,9 @@ namespace vtil::optimizer
 				if ( op.is_register() && op.reg().is_volatile() && !op.reg().is_undefined() )
 					return false;
 
-			// Halt if instruction reads from non-stack / image memory.
+			// Halt if instruction writes to non [$sp + C] memory.
 			//
-			if ( ins.base->accesses_memory() )
+			if ( ins.base->writes_memory() )
 			{
 				auto [base, _] = ins.memory_location();
 				if ( !base.is_stack_pointer() && !( vm.read_register( base ) - symbolic::make_register_ex( REG_SP ) ).is_constant() )
