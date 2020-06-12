@@ -51,6 +51,10 @@ namespace vtil::optimizer
 				 it->operands[ 0 ].reg().bit_count != it->operands[ 1 ].reg().bit_count )
 				continue;
 			
+			// Discard path restriction.
+			//
+			it.clear_restrictions();
+
 			// Skip if non-position bound.
 			//
 			symbolic::variable dst = { it, it->operands[ 0 ].reg() };
@@ -58,20 +62,26 @@ namespace vtil::optimizer
 			if ( !src.at.is_valid() || !dst.at.is_valid() || dst.reg().is_stack_pointer() )
 				continue;
 
-			// If src is used after this point, skip
+			// If src is used after this point, skip.
 			//
 			if ( aux::is_used( src, xblock, &tracer ) )
 				continue;
 
 			// Path restrict iterator if not cross-block.
 			//
-			it.paths_allowed = {};
-			it.is_path_restricted = !xblock;
+			if( !xblock ) it.restrict_path();
 
 			// Allocate fail and value mask.
 			//
-			bool fail = false;
+			bool failed = false;
 			uint64_t mask = math::fill( it->operands[ 1 ].reg().bit_count );
+
+			const auto fail = [ & ] ()
+			{
+				failed = true;
+				query::rlocal( mask ) = 0;
+				return true;
+			};
 
 			// => Begin backwards recursive query:
 			//
@@ -80,8 +90,15 @@ namespace vtil::optimizer
 				.bind( mask )
 				// := Unproject to iterator form.
 				.unproject()
+				// @ At every branch validate used-ness.
+				.run( [ & ] ( const il_iterator& i ) 
+				{ 
+					if( i->base->is_branching() && i.container->next.size() != 1 )
+						if( aux::is_used( src.bind( i ), xblock, &tracer ) )
+							fail();
+				} )
 				// @ If destination is used by the instruction, fail.
-				.until( [ & ] ( const il_iterator& i ) { return fail |= ( bool ) dst.accessed_by( i, &tracer ); })
+				.run( [ & ] ( const il_iterator& i ) { if( dst.accessed_by( i, &tracer ) ) fail(); } )
 				// | Filter to instructions that write to source.
 				.where( [ & ] ( const il_iterator& i ) 
 				{
@@ -89,35 +106,37 @@ namespace vtil::optimizer
 					//
 					auto details = src.accessed_by( i, &tracer );
 					if ( !details ) return false;
-					if ( details.is_unknown() ) fail = true;
+					if ( details.is_unknown() )
+						return fail();
 
 					// If out-of-bounds access, fail.
 					//
 					if ( details.bit_offset < 0 || ( details.bit_count + details.bit_offset ) > it->operands[ 1 ].reg().bit_count )
-					{
-						fail = true;
-						return false;
-					}
+						return fail();
 
 					// If source is being overwritten, clear the mask.
 					//
 					if( details.write && !details.read )
 						query::rlocal( mask ) &= ~math::fill( details.bit_count, details.bit_offset );
-					
-					// Include in iteration if write.
-					//
-					return details.write;
+					return true;
 				} )
 				// >> Skip until mask is cleared.
 				.where( [ & ] ( const il_iterator& it )
 				{
-					return query::rlocal( mask ) == 0;
+					// Skip if mask is not cleared.
+					//
+					if ( query::rlocal( mask ) )
+						return false;
+
+					// If dst is used after this point, fail.
+					//
+					return aux::is_used( dst.bind( it ), xblock, &tracer ) ? fail() : true;
 				})
 				.first();
 
 			// If query failed or returned cross-block iterator for local register, skip.
 			//
-			if ( fail || ( dst.reg().is_local() && res.paths.size() ) )
+			if ( failed || ( dst.reg().is_local() && res.paths.size() ) )
 				continue;
 
 			// If results counts are as expected:
@@ -168,7 +187,7 @@ namespace vtil::optimizer
 			}
 		}
 
-		// Compress register space!
+		// TODO: Compress register space!
 		//
 		return cnt;
 	}
