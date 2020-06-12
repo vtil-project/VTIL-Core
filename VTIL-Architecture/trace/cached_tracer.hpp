@@ -28,6 +28,7 @@
 #pragma once
 #include <vtil/symex>
 #include <unordered_map>
+#include <shared_mutex>
 #include "tracer.hpp"
 #include "../symex/variable.hpp"
 
@@ -48,6 +49,10 @@ namespace vtil
         // result of the primitive traver.
         //
         cache_type cache;
+        
+        // Locks the cache.
+        //
+        std::shared_mutex mtx;
 
         // Hooks default tracer and does a cache lookup before invokation.
         //

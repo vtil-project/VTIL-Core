@@ -55,19 +55,6 @@ namespace vtil
 			return result;
 		}
 
-		// Try lookup the exact variable in the map in a fast manner.
-		//
-		auto it = cache.find( lookup );
-		if ( it != cache.end() )
-		{
-			const symbolic::expression& result = *it->second;
-	#if VTIL_OPT_TRACE_VERBOSE
-			// Log result.
-			//
-			log<CON_BLU>( "= %s [Cached result]\n", result );
-	#endif
-			return result;
-		}
 		// Declare a predicate for the search of the variable in the cache.
 		//
 		std::function<bool( const cache_entry& )> predicate;
@@ -88,7 +75,7 @@ namespace vtil
 				auto& self = lookup.mem();
 				auto& other = pair.first.mem();
 				return self.decay().equals( other.decay() ) &&
-					self.bit_count >= other.bit_count;
+					   self.bit_count >= other.bit_count;
 			};
 		}
 		// If register variable:
@@ -114,18 +101,43 @@ namespace vtil
 			};
 		}
 
+		// Try lookup the exact variable in the map in a fast manner.
+		//
+		std::shared_lock lock{ mtx };
+		auto it = cache.find( lookup );
+		if ( it != cache.end() )
+		{
+			const symbolic::expression& result = *it->second;
+#if VTIL_OPT_TRACE_VERBOSE
+			// Log result.
+			//
+			log<CON_BLU>( "= %s [Cached result]\n", result );
+#endif
+			return result;
+		}
+
 		// Search the map, if we find a matching entry shrink and use as the result.
 		//
 		symbolic::expression result;
 		it = std::find_if( cache.begin(), cache.end(), predicate );
 		if ( it != cache.end() )
-			result = symbolic::expression{ *it->second }.resize( lookup.bit_count() );
+		{
+			result = symbolic::expression{ *it->second };
+			lock = {};
+			result = result.resize( lookup.bit_count() );
+		}
 		else
+		{
+			lock = {};
 			result = tracer::trace( lookup );
+		}
 
 		// Insert a cache entry for the exact variable we're looking up and return.
 		//
-		cache.emplace( lookup, result );
+		{
+			std::unique_lock ulock{ mtx };
+			cache.emplace( lookup, result );
+		}
 
 	#if VTIL_OPT_TRACE_VERBOSE
 		// Log result.
