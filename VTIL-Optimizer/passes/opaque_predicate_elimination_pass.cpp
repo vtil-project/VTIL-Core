@@ -28,6 +28,7 @@
 #include "opaque_predicate_elimination_pass.hpp"
 #include <vtil/symex>
 #include <algorithm>
+#include "../common/auxiliaries.hpp"
 
 namespace vtil::optimizer
 {
@@ -46,72 +47,11 @@ namespace vtil::optimizer
 		if ( !branch->base->is_branching_virt() )
 			return 0;
 
-		// Declare common tracer.
+		// Discover each possible branch target.
 		//
-		std::function<symbolic::expression( symbolic::variable&& v )> tracer;
-		if ( xblock )
-		{
-			tracer = [ & ] ( symbolic::variable&& v )
-			{
-				std::lock_guard _g( mtx );
-				return ctracer.rtrace_p( std::move(v) );
-			};
-		}
-		else
-		{
-			tracer = [ &, tr = cached_tracer{} ]( symbolic::variable&& v ) mutable
-			{
-				return tr.trace_p( std::move( v ) );
-			};
-		}
-
-		// Filter tracer result to filter out reg base and pack.
-		//
-		tracer = [ &, fn = std::move( tracer ) ]( symbolic::variable&& v )
-		{
-			return fn( std::move( v ) ).transform( [ ] ( symbolic::expression& ex )
-			{
-				if ( ex.is_variable() )
-				{
-					auto& var = ex.uid.get<symbolic::variable>();
-					if ( var.is_register() && var.reg() == REG_IMGBASE )
-						ex = { 0, ex.size() };
-				}
-			} ).simplify( true );
-		};
+		cached_tracer tmp = {};
+		auto branch_targets = aux::discover_branches( blk, xblock ? &ctracer : &tmp, xblock );
 		
-		// For each possible branch target:
-		//
-		std::vector<symbolic::expression> branch_targets;
-		for ( int idx : branch->base->branch_operands_vip )
-		{
-			// Determine the symbolic expression describing branch destination.
-			//
-			operand& op = branch->operands[ idx ];
-			symbolic::expression destination = op.is_immediate()
-				? symbolic::expression{ op.imm().u64 }
-				: tracer( { branch, op.reg() } );
-
-			// Match classic Jcc:
-			//
-			using namespace symbolic::directive;
-			std::vector<symbol_table_t> results;
-			if ( fast_match( &results, U + ( __if( A, C ) + __if( B, D ) ), destination ) )
-			{
-				auto& sym = results.front();
-				if ( sym.translate( A )->equals( ~sym.translate( B ) ) )
-				{
-					branch_targets.push_back( sym.translate( U ) + sym.translate( C ) );
-					branch_targets.push_back( sym.translate( U ) + sym.translate( D ) );
-					continue;
-				}
-			}
-
-			// If not, push as is.
-			//
-			branch_targets.push_back( destination );
-		}
-
 		// For each destination block:
 		//
 		size_t cnt = 0;
@@ -121,8 +61,9 @@ namespace vtil::optimizer
 			//
 			vip_t target = ( *it )->entry_vip;
 			bool impossible = true;
-			for ( auto& exp : branch_targets )
-				impossible &= ( exp != target ).get<bool>().value_or( false );
+			for ( auto& [real, dst] : branch_targets )
+				if ( !real )
+					impossible &= ( dst != target ).get<bool>().value_or( false );
 			
 			// If it is not:
 			//
