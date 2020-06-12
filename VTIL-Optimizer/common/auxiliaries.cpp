@@ -478,7 +478,7 @@ namespace vtil::optimizer::aux
 		for ( auto [op, type] : access_point->enum_operands() )
 			if ( type < operand_type::write && op.is_register() && op.reg() == var.reg() )
 				op = temporary;
-		source->insert( access_point, { &ins::mov,{ temporary, var.reg() } } );
+		source->insert( access_point, { &ins::mov, { temporary, var.reg() } } );
 		return temporary;
 	}
 };

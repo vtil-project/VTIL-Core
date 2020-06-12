@@ -69,7 +69,7 @@ namespace vtil
 		//
 		else if ( access.bit_offset < 0 )
 		{
-			base = ( base >> access.bit_offset ).resize( bit_count );
+			base = ( base >> -access.bit_offset ).resize( bit_count );
 #if VTIL_OPT_TRACE_VERBOSE
 			// Log the low bits after shifting.
 			//

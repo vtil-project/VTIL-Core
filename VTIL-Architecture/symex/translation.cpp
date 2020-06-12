@@ -65,14 +65,21 @@ namespace vtil
 			}
 		};
 
-		// If no proxy given, use self.
+		// Converts the given symbolic expression into an operand after translating.
 		//
-		const auto cvt = [ & ] ( const symbolic::expression& exp )
+		const auto cvt = [ & ] ( const symbolic::expression& exp, bool clobber = false )
 		{
-			if ( proxy )
-				return proxy( exp, block );
-			else
+			// If no proxy given, translate, ignore clobber since we always return temporaries.
+			//
+			if ( !proxy )
 				return translate_expression( exp, block );
+
+			// Invoke proxy, if clobber requested force it and return.
+			//
+			operand op = proxy( exp, block );
+			if ( clobber && op.is_register() )
+				force_clobber_register( op );
+			return op;
 		};
 
 		// Switch operators:
@@ -160,8 +167,7 @@ namespace vtil
 				{
 					// Resolve tested expression into operand and address by-bit.
 					//
-					operand res = cvt( *exp.lhs );
-					force_clobber_register( res );
+					operand res = cvt( *exp.lhs, true );
 					res.reg().bit_offset += *offset;
 					res.reg().bit_count = 1;
 					return res;
@@ -170,8 +176,7 @@ namespace vtil
 				{
 					// Translate the shifted version and address first bit.
 					//
-					operand res = cvt( exp.lhs >> exp.rhs );
-					force_clobber_register( res );
+					operand res = cvt( exp.lhs >> exp.rhs, true );
 					res.reg().bit_count = 1;
 					return res;
 				}
@@ -181,8 +186,7 @@ namespace vtil
 			{
 				// Translate the right hand side into a register.
 				//
-				operand tmp = cvt( *exp.rhs );
-				force_clobber_register( tmp );
+				operand tmp = cvt( *exp.rhs, true );
 
 				// Push [<INS> Reg1] and return Reg1.
 				//
@@ -193,8 +197,7 @@ namespace vtil
 			{
 				// Translate the right hand side into a register.
 				//
-				operand tmp = cvt( *exp.rhs );
-				force_clobber_register( tmp );
+				operand tmp = cvt( *exp.rhs, true );
 
 				// Push [<INS> Reg1] and return Reg1.
 				//
@@ -260,7 +263,7 @@ namespace vtil
 				//
 				else if( lhs.imm().u64 & 1 )
 				{
-					return cvt( *exp.rhs );
+					return cvt( *exp.rhs, true );
 				}
 				// Otherwise return 0.
 				//
@@ -293,7 +296,7 @@ namespace vtil
 				// Unpack the expression by forcing re-simplification without
 				// prettification requested and recurse.
 				//
-				return cvt( exp.clone().transform( [ ] ( auto& ) {} ) );
+				return cvt( exp.clone().transform( [ ] ( auto& ) {} ), true );
 			}
 			case math::operator_id::greater:
 			case math::operator_id::greater_eq:
