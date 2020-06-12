@@ -219,7 +219,7 @@ namespace vtil::optimizer
 			auto t0 = std::chrono::steady_clock::now();
 			size_t cnt = T::pass( blk, xblock );
 			auto t1 = std::chrono::steady_clock::now();
-			if ( xblock )
+			if ( !xblock )
 				logger::log( "Block %08x => %-64s | Took %-8.2fms (N=%d).\n", blk->entry_vip, T{}.name(), ( t1 - t0 ).count() * 1e-6f, cnt );
 			return cnt;
 		}
