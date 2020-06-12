@@ -29,6 +29,7 @@
 #include <vtil/arch>
 #include <thread>
 #include <vtil/io>
+#include <chrono>
 
 namespace vtil::optimizer
 {
@@ -206,6 +207,31 @@ namespace vtil::optimizer
 		//
 		size_t operator()( basic_block* blk, bool xblock = false ) const { return pass( blk, xblock ); }
 		size_t operator()( routine* rtn ) const { return xpass( rtn ); }
+	};
+
+	// Used to profile the pass.
+	//
+	template<typename T>
+	struct profile_pass : public T
+	{
+		size_t pass( basic_block* blk, bool xblock = false ) override
+		{
+			auto t0 = std::chrono::steady_clock::now();
+			size_t cnt = T::pass( blk, xblock );
+			auto t1 = std::chrono::steady_clock::now();
+			if ( xblock )
+				logger::log( "Block %08x => %-64s | Took %-8.2fms (N=%d).\n", blk->entry_vip, T{}.name(), ( t1 - t0 ).count() * 1e-6f, cnt );
+			return cnt;
+		}
+
+		size_t xpass( routine* rtn ) override
+		{
+			auto t0 = std::chrono::steady_clock::now();
+			size_t cnt = T::xpass( rtn );
+			auto t1 = std::chrono::steady_clock::now();
+			logger::log( "Routine => %-64s            | Took %-8.2fms (N=%d).\n", T{}.name(), ( t1 - t0 ).count() * 1e-6f, cnt );
+			return cnt;
+		}
 	};
 
 	// This wrapper applies a template modifier on each individual pass in the
