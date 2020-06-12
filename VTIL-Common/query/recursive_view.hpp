@@ -93,6 +93,18 @@ namespace vtil::query
 		//
 		std::vector<recursive_result> paths;
 
+		// Counts the different paths.
+		//
+		size_t count_paths() const
+		{
+			if ( paths.size() <= 1 )
+				return 1;
+			size_t n = 0;
+			for ( auto& path : paths )
+				n += path.count_paths();
+			return n;
+		}
+
 		// Merges the results of all or extended basic-blocks.
 		//
 		template<typename>
