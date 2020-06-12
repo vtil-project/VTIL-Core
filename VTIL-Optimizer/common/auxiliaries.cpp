@@ -362,10 +362,15 @@ namespace vtil::optimizer::aux
 			if ( res.has_value() ) 
 				return true;
 
-			// If there is a next block and mask is not cleared:
+			// If mask is not cleared:
 			//
-			if ( !var.at.container->next.empty() && variable_mask != 0 )
+			if ( variable_mask != 0 )
 			{
+				// If block is complete and is exiting vm, report not used.
+				//
+				if ( var.at.container->is_complete() && *var.at.container->stream.back().base == ins::vexit )
+					return false;
+
 				// If query was restricted, report used if not local register.
 				//
 				if ( is_restricted )
