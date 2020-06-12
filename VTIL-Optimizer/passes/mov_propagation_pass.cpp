@@ -125,6 +125,11 @@ namespace vtil::optimizer
 				//
 				if ( res.is_constant() )
 				{
+					// If operand does not accept immediates, skip.
+					//
+					if ( type != operand_type::read_any )
+						continue;
+
 					// Replace the operand with a constant.
 					//
 					operand_swap_buffer.emplace_back( &op, operand{ *res.get(), ( bitcnt_t ) op.size() * 8 } );

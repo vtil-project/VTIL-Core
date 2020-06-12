@@ -140,6 +140,8 @@ namespace vtil
 	//
 	basic_block::iterator basic_block::insert( const const_iterator& it_const, instruction&& ins )
 	{
+		fassert( ins.is_valid() );
+
 		// Drop const qualifier of the iterator, since we are in a non-const 
 		// qualified member function, this qualifier is unnecessary.
 		//

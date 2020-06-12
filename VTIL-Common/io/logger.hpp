@@ -255,10 +255,7 @@ namespace vtil::logger
 		log<CON_RED>( "\n%s\n", message.data() );
 
 		// Break the program. 
-		// 
-#ifndef _DEBUG 
-		exit( EXIT_FAILURE );
-#endif 
+		//
 		impl::noreturn_helper();
 	}
 };

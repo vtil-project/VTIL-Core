@@ -41,14 +41,10 @@ namespace vtil::assert
 			line_number,
 			condition_str
 		);
+		logger::impl::noreturn_helper();
 	}
 };
 
-#ifdef _DEBUG
-	#define fassert__stringify(x) #x
-	#define fassert(x) vtil::assert::or_die( bool(x), __FILE__, __LINE__, fassert__stringify(x) )
-	#define unreachable() vtil::logger::error( "Illegal control flow. %s:%d", __FILE__, __LINE__ )
-#else
-	#define fassert(...)
-	#define unreachable() vtil::logger::impl::noreturn_helper()
-#endif
+#define fassert__stringify(x) #x
+#define fassert(x) vtil::assert::or_die( bool(x), __FILE__, __LINE__, fassert__stringify(x) )
+#define unreachable() vtil::logger::error( "Illegal control flow. %s:%d", __FILE__, __LINE__ )

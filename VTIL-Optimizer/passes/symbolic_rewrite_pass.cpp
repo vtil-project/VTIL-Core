@@ -118,7 +118,7 @@ namespace vtil::optimizer
 
 				// Buffer a mov instruction.
 				//
-				instruction_buffer.push_back( { &ins::mov,{ k, op } } );
+				instruction_buffer.push_back( { &ins::mov, { k, op } } );
 			}
 
 			// For each memory state:
@@ -145,12 +145,20 @@ namespace vtil::optimizer
 				}
 				else
 				{
+					operand base = translator << k.base;
+					if ( base.is_immediate() )
+					{
+						operand tmp = temporary_block.tmp( bitcnt_t( base.size() * 8 ) );
+						instruction_buffer.push_back( { &ins::mov, { tmp, base } } );
+						base = tmp;
+					}
+
 					// Buffer a str <ptr>, 0, value.
 					//
 					instruction_buffer.push_back(
 					{
 						&ins::str,
-						{ translator << k.base, make_imm<int64_t>( 0 ), translator << v.simplify( true ) }
+						{ base, make_imm<int64_t>( 0 ), translator << v.simplify( true ) }
 					} );
 				}
 			}
