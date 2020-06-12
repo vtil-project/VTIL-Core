@@ -25,6 +25,9 @@
     <ClCompile Include="passes\symbolic_rewrite_pass.cpp">
       <Filter>Optimizer Passes</Filter>
     </ClCompile>
+    <ClCompile Include="passes\opaque_predicate_elimination_pass.cpp">
+      <Filter>Optimizer Passes</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Includes">
@@ -66,6 +69,9 @@
       <Filter>Common</Filter>
     </ClInclude>
     <ClInclude Include="passes\symbolic_rewrite_pass.hpp">
+      <Filter>Optimizer Passes</Filter>
+    </ClInclude>
+    <ClInclude Include="passes\opaque_predicate_elimination_pass.hpp">
       <Filter>Optimizer Passes</Filter>
     </ClInclude>
   </ItemGroup>

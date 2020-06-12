@@ -98,6 +98,7 @@
     <ClCompile Include="passes\dead_code_elimination_pass.cpp" />
     <ClCompile Include="passes\istack_ref_substitution_pass.cpp" />
     <ClCompile Include="passes\mov_propagation_pass.cpp" />
+    <ClCompile Include="passes\opaque_predicate_elimination_pass.cpp" />
     <ClCompile Include="passes\stack_pinning_pass.cpp" />
     <ClCompile Include="passes\stack_propagation_pass.cpp" />
     <ClCompile Include="passes\symbolic_rewrite_pass.cpp" />
@@ -110,6 +111,7 @@
     <ClInclude Include="passes\dead_code_elimination_pass.hpp" />
     <ClInclude Include="passes\istack_ref_substitution_pass.hpp" />
     <ClInclude Include="passes\mov_propagation_pass.hpp" />
+    <ClInclude Include="passes\opaque_predicate_elimination_pass.hpp" />
     <ClInclude Include="passes\stack_pinning_pass.hpp" />
     <ClInclude Include="passes\stack_propagation_pass.hpp" />
     <ClInclude Include="passes\symbolic_rewrite_pass.hpp" />
