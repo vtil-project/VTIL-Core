@@ -81,14 +81,15 @@ namespace vtil::optimizer
 				// := Unproject to iterator form.
 				.unproject()
 				// @ If destination is used by the instruction, fail.
-				.until( [ & ] ( const il_iterator& i ) { return fail |= ( bool ) dst.read_by( i, &tracer ); })
+				.until( [ & ] ( const il_iterator& i ) { return fail |= ( bool ) dst.accessed_by( i, &tracer ); })
 				// | Filter to instructions that write to source.
 				.where( [ & ] ( const il_iterator& i ) 
 				{
-					// If it does not write to source, skip.
+					// If it does not access source, skip.
 					//
 					auto details = src.accessed_by( i, &tracer );
-					if ( !details || !details.write ) return false;
+					if ( !details ) return false;
+					if ( details.is_unknown() ) fail = true;
 
 					// If out-of-bounds access, fail.
 					//
@@ -98,14 +99,14 @@ namespace vtil::optimizer
 						return false;
 					}
 
-					// If source is not being read, clear the mask.
+					// If source is being overwritten, clear the mask.
 					//
-					if( !details.read )
+					if( details.write && !details.read )
 						query::rlocal( mask ) &= ~math::fill( details.bit_count, details.bit_offset );
 					
-					// Include in iteration.
+					// Include in iteration if write.
 					//
-					return true;
+					return details.write;
 				} )
 				// >> Skip until mask is cleared.
 				.where( [ & ] ( const il_iterator& it )
@@ -114,9 +115,14 @@ namespace vtil::optimizer
 				})
 				.first();
 
-			// If query did not fail and we have as many results as we expected:
+			// If query failed or returned cross-block iterator for local register, skip.
 			//
-			if ( !fail && res.count_paths() == res.flatten( true ).result.size() )
+			if ( fail || ( dst.reg().is_local() && res.paths.size() ) )
+				continue;
+
+			// If results counts are as expected:
+			//
+			if ( res.count_paths() == res.flatten( true ).result.size() && !res.result.empty() )
 			{
 				// For each edge node:
 				//

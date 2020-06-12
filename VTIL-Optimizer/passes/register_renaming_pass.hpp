@@ -27,11 +27,12 @@
 //
 #pragma once
 #include <vtil/arch>
-#include <shared_mutex>
 #include "../common/interface.hpp"
 
 namespace vtil::optimizer
 {
+	// Attempts to rename registers as a way to propagate through MOV instructions.
+	//
 	struct register_renaming_pass : pass_interface<true>
 	{
 		size_t pass( basic_block* blk, bool xblock = false ) override;
