@@ -481,4 +481,67 @@ namespace vtil::optimizer::aux
 		source->insert( access_point, { &ins::mov, { temporary, var.reg() } } );
 		return temporary;
 	}
+
+	// Returns each possible branch destination of the given basic block in the format of:
+	// - [is_real, target] x N
+	//
+	std::vector<std::pair<bool, symbolic::expression>> discover_branches( const basic_block* blk, tracer* tracer, bool xblock )
+	{
+		// If block is not complete, return empty vector.
+		//
+		std::vector<std::pair<bool, symbolic::expression>> targets = {};
+		if ( !blk->is_complete() )
+			return targets;
+
+		// Declare operand->expression helper.
+		//
+		auto branch = std::prev( blk->end() );
+		auto discover = [ & ] ( const operand& op_dst, bool real )
+		{
+			// Determine the symbolic expression describing branch destination.
+			//
+			symbolic::expression destination = op_dst.is_immediate()
+				? symbolic::expression{ op_dst.imm().u64 }
+				: ( xblock ? tracer->rtrace_p( { branch, op_dst.reg() } ) : tracer->trace_p( { branch, op_dst.reg() } ) );
+
+			// Remove any matches of REG_IMGBASE and pack.
+			//
+			destination.transform( [ ] ( symbolic::expression& ex )
+			{
+				if ( ex.is_variable() )
+				{
+					auto& var = ex.uid.get<symbolic::variable>();
+					if ( var.is_register() && var.reg() == REG_IMGBASE )
+						ex = { 0, ex.size() };
+				}
+			} ).simplify( true );
+
+			// Match classic Jcc:
+			//
+			using namespace symbolic::directive;
+			std::vector<symbol_table_t> results;
+			if ( fast_match( &results, U + ( __if( A, C ) + __if( B, D ) ), destination ) )
+			{
+				auto& sym = results.front();
+				if ( sym.translate( A )->equals( ~sym.translate( B ) ) )
+				{
+					targets.emplace_back( real, sym.translate( U ) + sym.translate( C ) );
+					targets.emplace_back( real, sym.translate( U ) + sym.translate( D ) );
+					return;
+				}
+			}
+
+			// If not, push as is.
+			//
+			targets.emplace_back( real, destination );
+		};
+
+		// Discover all targets and return.
+		//
+		for ( int idx : branch->base->branch_operands_vip )
+			discover( branch->operands[ idx ], false );
+		for ( int idx : branch->base->branch_operands_rip )
+			discover( branch->operands[ idx ], true );
+		return targets;
+	}
 };

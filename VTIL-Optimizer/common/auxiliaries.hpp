@@ -46,4 +46,9 @@ namespace vtil::optimizer::aux
 	// Revives the value of the given variable to be used by the point specified.
 	//
 	register_desc revive_register( const symbolic::variable& var, const il_iterator& it );
+
+	// Returns each possible branch destination of the given basic block in the format of:
+	// - [is_real, target] x N
+	//
+	std::vector<std::pair<bool, symbolic::expression>> discover_branches( const basic_block* blk, tracer* tracer, bool xblock );
 }
