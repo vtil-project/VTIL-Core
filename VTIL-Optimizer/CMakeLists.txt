@@ -10,6 +10,7 @@ add_library(${PROJECT_NAME} STATIC
     passes/mov_propagation_pass.cpp
     passes/symbolic_rewrite_pass.cpp
     passes/opaque_predicate_elimination_pass.cpp
+    passes/register_renaming_pass.cpp
 )
 
 target_include_directories(${PROJECT_NAME} PUBLIC includes)

@@ -10,3 +10,4 @@
 #include "../../passes/mov_propagation_pass.hpp"
 #include "../../passes/symbolic_rewrite_pass.hpp"
 #include "../../passes/opaque_predicate_elimination_pass.hpp"
+#include "../../passes/register_renaming_pass.hpp"
