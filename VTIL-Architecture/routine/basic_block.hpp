@@ -128,8 +128,14 @@ namespace vtil
 			}
 
 			// Restricts the way current iterator can recurse in, making sure
-			// every path leads up-to the container specified.
+			// every path leads up-to the container specified (or none).
 			//
+			riterator_base& restrict_path()
+			{ 
+				paths_allowed = {};
+				is_path_restricted = true;
+				return *this;
+			}
 			riterator_base& restrict_path( container_type* dst, bool forward )
 			{
 				// Trace the path.
