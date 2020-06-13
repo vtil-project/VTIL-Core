@@ -57,12 +57,9 @@ namespace vtil
 		//
 		const auto force_clobber_register = [ & ] ( operand& op )
 		{
-			if ( op.is_register() )
-			{
-				operand tmp = block->tmp( bitcnt_t( op.size() * 8 ) );
-				block->mov( tmp, op );
-				op = tmp;
-			}
+			operand tmp = block->tmp( bitcnt_t( op.size() * 8 ) );
+			block->mov( tmp, op );
+			op = tmp;
 		};
 
 		// Converts the given symbolic expression into an operand after translating.
