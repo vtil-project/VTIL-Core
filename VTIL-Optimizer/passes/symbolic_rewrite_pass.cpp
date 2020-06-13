@@ -148,7 +148,7 @@ namespace vtil::optimizer
 					operand base = translator << k.base;
 					if ( base.is_immediate() )
 					{
-						operand tmp = temporary_block.tmp( bitcnt_t( base.size() * 8 ) );
+						operand tmp = temporary_block.tmp( base.bit_count() );
 						instruction_buffer.push_back( { &ins::mov, { tmp, base } } );
 						base = tmp;
 					}

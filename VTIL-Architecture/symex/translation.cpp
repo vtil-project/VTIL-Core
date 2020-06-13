@@ -57,7 +57,7 @@ namespace vtil
 		//
 		const auto force_clobber_register = [ & ] ( operand& op )
 		{
-			operand tmp = block->tmp( bitcnt_t( op.size() * 8 ) );
+			operand tmp = block->tmp( op.bit_count() );
 			block->mov( tmp, op );
 			op = tmp;
 		};
@@ -290,7 +290,7 @@ namespace vtil
 				// Push [<INS> Lhs 0 Rhs] and return Lhs.
 				//
 				force_clobber_register( lhs );
-				block->push_back( { map_operator( op ),{ lhs, operand( 0, bitcnt_t( rhs.size() * 8 ) ), rhs } } );
+				block->push_back( { map_operator( op ),{ lhs, operand{ 0, rhs.bit_count() }, rhs } } );
 				return lhs;
 			}
 			case math::operator_id::max_value:

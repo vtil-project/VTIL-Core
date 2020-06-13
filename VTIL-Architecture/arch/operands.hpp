@@ -100,9 +100,10 @@ namespace vtil
 		register_t& reg() { return std::get<register_t>( descriptor ); }
 		const register_t& reg() const { return std::get<register_t>( descriptor ); }
 
-		// Getter for the operand size (rounded-up to bytes).
+		// Getter for the operand size (byte variant rounds up).
 		//
-		size_t size() const { return ( ( is_register() ? reg().bit_count : imm().bit_count ) + 7 ) / 8; }
+		size_t size() const { return ( bit_count() + 7 ) / 8; }
+		bitcnt_t bit_count() const { return is_register() ? reg().bit_count : imm().bit_count; }
 
 		// Conversion to human-readable format.
 		//

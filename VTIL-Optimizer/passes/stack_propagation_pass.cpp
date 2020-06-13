@@ -135,7 +135,7 @@ namespace vtil::optimizer
 				};
 				auto resize_and_pack = [ & ] ( symbolic::expression& exp )
 				{
-					exp = symbolic::variable::pack_all( exp.resize( it->operands[ 0 ].size() * 8 ) );
+					exp = symbolic::variable::pack_all( exp.resize( it->operands[ 0 ].bit_count() ) );
 				};
 
 				// Lazy-trace the value.

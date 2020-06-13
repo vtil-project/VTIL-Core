@@ -62,7 +62,7 @@ namespace vtil
 		{
 			const operand& mem_base = operands[ base->memory_operand_index ];
 			const operand& mem_offset = operands[ base->memory_operand_index + 1 ];
-			if ( !mem_base.is_register() || mem_base.size() != 8 )
+			if ( !mem_base.is_register() || mem_base.bit_count() != 64 )
 				return false;
 			if ( !mem_offset.is_immediate() )
 				return false;
@@ -74,7 +74,7 @@ namespace vtil
 		{
 			for ( int idx : list )
 			{
-				if ( operands[ idx ].size() != 8 )
+				if ( operands[ idx ].bit_count() != 64 )
 					return false;
 			}
 		}

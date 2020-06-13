@@ -72,7 +72,7 @@ namespace vtil::optimizer
 							if ( src.is_register() )
 								result = symbolic::variable{ lookup.at, src.reg() }.to_expression();
 							else
-								result = { src.imm().u64, ( bitcnt_t ) src.size() * 8 };
+								result = { src.imm().u64, src.bit_count() };
 
 							// Shift and resize accordingly and return.
 							//
@@ -132,7 +132,7 @@ namespace vtil::optimizer
 
 					// Replace the operand with a constant.
 					//
-					operand_swap_buffer.emplace_back( &op, operand{ *res.get(), ( bitcnt_t ) op.size() * 8 } );
+					operand_swap_buffer.emplace_back( &op, operand{ *res.get(), op.bit_count() } );
 				}
 				// If variable:
 				//
