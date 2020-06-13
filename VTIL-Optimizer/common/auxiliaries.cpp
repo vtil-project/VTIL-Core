@@ -249,23 +249,6 @@ namespace vtil::optimizer::aux
 				// | Skip further checks if value is dead.
 				.whilst( [ & ] ( const il_const_iterator& it ) { return query::rlocal( variable_mask ) != 0; } )
 
-				// @ Clear from the active mask per overwrite.
-				.run( [ & ] ( const il_const_iterator& it ) 
-				{
-					// For each register this instruction overwrites:
-					//
-					for ( auto [op, type] : it->enum_operands() )
-					{
-						if ( type != operand_type::write )
-							continue;
-
-						// If register overlaps, strip from mask.
-						//
-						if ( op.reg().overlaps( reg ) )
-							query::rlocal( variable_mask ) &= ~op.reg().get_mask();
-					}
-				} )
-
 				// >> Select the instructions that read the value previously written.
 				.where( [ & ] ( const il_const_iterator& it )
 				{
@@ -306,6 +289,19 @@ namespace vtil::optimizer::aux
 							if ( details.write )
 								query::rlocal( variable_mask ) &= ~adjusted_mask;
 						}
+					}
+
+					// For each register this instruction overwrites:
+					//
+					for ( auto [op, type] : it->enum_operands() )
+					{
+						if ( type != operand_type::write )
+							continue;
+
+						// If register overlaps, strip from mask.
+						//
+						if ( op.reg().overlaps( reg ) )
+							query::rlocal( variable_mask ) &= ~op.reg().get_mask();
 					}
 
 					return false;
