@@ -215,7 +215,7 @@ namespace vtil::optimizer::aux
 
 							// If written to, clear mask.
 							//
-							if ( details.write && !details.read )
+							if ( details.write )
 								query::rlocal( variable_mask ) &= ~adjusted_mask;
 						}
 					}
@@ -303,7 +303,7 @@ namespace vtil::optimizer::aux
 
 							// If written to, clear mask.
 							//
-							if ( details.write && !details.read )
+							if ( details.write )
 								query::rlocal( variable_mask ) &= ~adjusted_mask;
 						}
 					}

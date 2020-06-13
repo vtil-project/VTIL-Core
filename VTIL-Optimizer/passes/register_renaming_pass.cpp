@@ -97,38 +97,35 @@ namespace vtil::optimizer
 						if( aux::is_used( src.bind( i ), xblock, &tracer ) )
 							fail();
 				} )
-				// | Filter to instructions that write to source.
+				// >> Skip until value is overwritten.
 				.where( [ & ] ( const il_iterator& i ) 
 				{
 					// If it does not access source, skip.
 					//
-					auto details = src.accessed_by( i, &tracer );
-					if ( !details ) return false;
-					if ( details.is_unknown() )
-						return fail();
+					if ( auto details = src.accessed_by( i, &tracer ) )
+					{
+						// If unknown access, fail.
+						//
+						if ( details.is_unknown() )
+							return fail();
 
-					// If out-of-bounds access, fail.
-					//
-					if ( details.bit_offset < 0 || ( details.bit_count + details.bit_offset ) > it->operands[ 1 ].reg().bit_count )
-						return fail();
+						// If out-of-bounds access, fail.
+						//
+						if ( details.bit_offset < 0 || ( details.bit_count + details.bit_offset ) > it->operands[ 1 ].reg().bit_count )
+							return fail();
 
-					// If source is being overwritten, clear the mask.
-					//
-					if( details.write && !details.read )
-						query::rlocal( mask ) &= ~math::fill( details.bit_count, details.bit_offset );
-					return true;
-				} )
-				// @ If destination is used by the instruction, fail.
-				.run( [ & ] ( const il_iterator& i ) 
-				{ 
+						// If source is being overwritten, clear the mask.
+						//
+						if ( details.write && !details.read )
+							query::rlocal( mask ) &= ~math::fill( details.bit_count, details.bit_offset );
+					}
+
+					// If destination is used by the instruction, fail.
 					// Can be ignored if mask is cleared.
 					//
 					if ( dst.accessed_by( i, &tracer ) && query::rlocal( mask ) )
 						fail();
-				} )
-				// >> Skip until mask is cleared.
-				.where( [ & ] ( const il_iterator& it )
-				{
+
 					// Skip if mask is not cleared.
 					//
 					if ( query::rlocal( mask ) )
@@ -136,8 +133,8 @@ namespace vtil::optimizer
 
 					// If dst is used after this point, fail.
 					//
-					return aux::is_used( dst.bind( it ), xblock, &tracer ) ? fail() : true;
-				})
+					return aux::is_used( dst.bind( i ), xblock, &tracer ) ? fail() : true;
+				} )
 				.first();
 
 			// If query failed or returned cross-block iterator for local register, skip.
