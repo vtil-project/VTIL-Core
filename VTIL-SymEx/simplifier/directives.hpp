@@ -340,9 +340,9 @@ namespace vtil::symbolic::directive
         //{ __uless(A+B, C),                                   __ugreat(A,!(C-B)) },
         //{ __uless(A-B, C),                                   __ugreat(A,!(C+B)) },
 
-        //{ A==B,                                               !(A-B)==0u },
+        { A==B,                                               !(A-B)==0u },
         { A==B,                                               !(A^B)==0u },
-        //{ A!=B,                                               !(A-B)!=0u },
+        { A!=B,                                               !(A-B)!=0u },
         { A!=B,                                               !(A^B)!=0u },
 
         { (A^B)==C,                                           !(C^B)==A },
