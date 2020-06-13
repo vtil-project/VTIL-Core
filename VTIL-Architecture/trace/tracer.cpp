@@ -33,8 +33,8 @@ namespace vtil
 {
 	// Internal type definitions.
 	//
+	using path_history_t = std::map<std::pair<symbolic::variable, const basic_block*>, uint32_t>;
 	using partial_tracer_t = std::function<symbolic::expression( bitcnt_t offset, bitcnt_t size )>;
-	using path_history_t = std::map<std::pair<const basic_block*, const basic_block*>, uint32_t>;
 
 	// Forward defs.
 	//
@@ -110,11 +110,14 @@ namespace vtil
 	}
 
     // Propagates all variables in the reference expression onto the new iterator, if no history pointer given will do trace instead of rtrace.
+	// Returns an additional boolean parameter that indicates, if the propagation failed, it was due to a total failure or not; total failure
+	// meaning the origin expression was a variable and it infinite-looped during propagation by itself.
     // - Note: New iterator should be a connected block's end.
-    //
-    static symbolic::expression propagate( const symbolic::expression& ref, const il_const_iterator& it, tracer* tracer, path_history_t* history, int64_t limit )
+	//
+    static std::pair<bool, symbolic::expression> propagate( const symbolic::expression& ref, const il_const_iterator& it, tracer* tracer, path_history_t* history, int64_t limit )
     {
         using namespace logger;
+
 #if VTIL_OPT_TRACE_VERBOSE
         scope_padding _p( 1 );
 #endif
@@ -167,8 +170,8 @@ namespace vtil
 #endif
                 // Fail if propagation fails.
                 //
-				if ( !( mem = { propagate( mem.decay(), it, tracer, nullptr, limit ), mem.bit_count } ).decay() )
-                    return {};
+				if ( !( mem = { propagate( mem.decay(), it, tracer, nullptr, limit ).second, mem.bit_count } ).decay() )
+					return {};
 
 #if VTIL_OPT_TRACE_VERBOSE
                 // Log new pointer.
@@ -183,11 +186,14 @@ namespace vtil
 
             // Trace the variable in the destination block, fail if it fails.
             //
-			symbolic::expression var_traced = history 
-				? rtrace_primitive( var, tracer, *history, limit )
-				: tracer->trace( var );
+			path_history_t history_local;
+			symbolic::expression var_traced;
+			if ( history )
+				var_traced = rtrace_primitive( var, tracer, (history_local = *history), limit );
+			else
+				var_traced = tracer->trace( var );
             if ( !var_traced )
-                return {};
+				return { exp.is_variable(), {} };
 
             // If we are tracing the value of RSP, add the stack pointer delta between blocks.
             //
@@ -205,7 +211,7 @@ namespace vtil
 
         // Return the result.
         //
-        return exp;
+		return { false, exp };
     }
 
 	// Internal implementation of ::rtrace with a path history.
@@ -255,7 +261,7 @@ namespace vtil
 					// and increment the visit counter.
 					//
 					path_history_t history_local = { history };
-					uint32_t& visit_counter = history_local[ { lookup.at.container, it.container } ];
+					uint32_t& visit_counter = history_local[ { lookup, it.container } ];
 
 					// If we've taken this path more than twice, skip it.
 					//
@@ -274,9 +280,11 @@ namespace vtil
 					//
 					log<CON_YLW>( "Taking path [%llx->%llx]\n", lookup.at.container->entry_vip, it.container->entry_vip );
 #endif
-					// Propagate each variable onto to the destination block.
+					// Propagate each variable onto to the destination block, if total fail, skip path.
 					//
-					symbolic::expression exp = propagate( default_result, it, tracer, &history_local, limit );
+					auto [total_fail, exp] = propagate( default_result, it, tracer, &history_local, limit );
+					if ( total_fail )
+						continue;
 
 #if VTIL_OPT_TRACE_VERBOSE
 					// Log result.
@@ -303,7 +311,7 @@ namespace vtil
 						{
 							result = lookup.to_expression();
 						}
-						// If it was mismatchign, return default result as branch dependant.
+						// If it was mismatching, return default result as branch dependant.
 						//
 						else
 						{
