@@ -116,7 +116,7 @@ namespace vtil::query
 			// Apply to each path recursively.
 			//
 			for ( auto& path : paths )
-				path = path.flatten();
+				path = path.flatten( force );
 
 			// If single possible path or force mode:
 			//

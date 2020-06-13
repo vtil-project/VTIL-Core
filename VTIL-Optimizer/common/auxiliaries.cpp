@@ -215,7 +215,7 @@ namespace vtil::optimizer::aux
 
 							// If written to, clear mask.
 							//
-							if ( details.write )
+							if ( details.write && !details.read )
 								query::rlocal( variable_mask ) &= ~adjusted_mask;
 						}
 					}
@@ -278,7 +278,7 @@ namespace vtil::optimizer::aux
 
 						// If register overlaps, and value is alive, pick.
 						//
-						if ( op.reg().overlaps( reg ) && query::rlocal( variable_mask ) & op.reg().get_mask() )
+						if ( op.reg().overlaps( reg ) && ( query::rlocal( variable_mask ) & op.reg().get_mask() ) )
 							return true;
 					}
 
@@ -303,7 +303,7 @@ namespace vtil::optimizer::aux
 
 							// If written to, clear mask.
 							//
-							if ( details.write )
+							if ( details.write && !details.read )
 								query::rlocal( variable_mask ) &= ~adjusted_mask;
 						}
 					}
