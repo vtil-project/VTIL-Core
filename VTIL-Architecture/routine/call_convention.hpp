@@ -118,8 +118,7 @@ namespace vtil
 			{ register_physical, X86_REG_RCX, 64 }, { register_physical, X86_REG_RDX, 64 }, 
 			{ register_physical, X86_REG_R8,  64 }, { register_physical, X86_REG_R9,  64 }, 
 			{ register_physical, X86_REG_R10, 64 }, { register_physical, X86_REG_R11, 64 },
-			{ register_physical | register_flags, 0, 10, 0  },
-			{ register_physical | register_flags, 0, 53, 11 }
+			REG_FLAGS,
 		},
 
 		/*.param_registers =*/ {

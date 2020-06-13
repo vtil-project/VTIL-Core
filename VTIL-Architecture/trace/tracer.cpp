@@ -116,7 +116,7 @@ namespace vtil
     {
         using namespace logger;
 #if VTIL_OPT_TRACE_VERBOSE
-        scope_padding _p( 3 );
+        scope_padding _p( 1 );
 #endif
 
         // Copy the reference expression.

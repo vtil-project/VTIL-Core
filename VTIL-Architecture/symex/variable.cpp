@@ -338,6 +338,7 @@ namespace vtil::symbolic
 						{
 							wdetails.bit_offset = param.bit_offset - reg.bit_offset;
 							wdetails.bit_count = param.bit_count;
+							wdetails.write = true;
 							break;
 						}
 					}
@@ -347,6 +348,7 @@ namespace vtil::symbolic
 						{
 							wdetails.bit_offset = retval.bit_offset - reg.bit_offset;
 							wdetails.bit_count = retval.bit_count;
+							wdetails.write = true;
 							break;
 						}
 					}
@@ -363,6 +365,7 @@ namespace vtil::symbolic
 						{
 							rdetails.bit_offset = param.bit_offset - reg.bit_offset;
 							rdetails.bit_count = param.bit_count;
+							rdetails.read = true;
 							break;
 						}
 					}

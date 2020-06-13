@@ -120,9 +120,18 @@ namespace vtil::optimizer
 			{
 				constexpr auto is_convertable = [ ] ( const symbolic::expression& exp )
 				{
-					return !exp.is_expression() ||
-						( exp.op == math::operator_id::cast && exp.lhs->is_variable() ) ||
-						( exp.op == math::operator_id::ucast && exp.lhs->is_variable() );
+					// If not a single variable, fail.
+					//
+					if ( exp.is_expression() &&
+						 ( exp.op != math::operator_id::cast || !exp.lhs->is_variable() ) &&
+						 ( exp.op != math::operator_id::ucast || !exp.lhs->is_variable() ) )
+						return false;
+
+					// If memory variable, fail.
+					//
+					if ( exp.is_variable() && exp.uid.get<symbolic::variable>().is_memory() )
+						return false;
+					return true;
 				};
 				auto resize_and_pack = [ & ] ( symbolic::expression& exp )
 				{
@@ -143,6 +152,7 @@ namespace vtil::optimizer
 				//
 				if ( !is_convertable( exp ) )
 				{
+					var.mem().base = { ctracer( { it, REG_SP } ) + it->memory_location().second };
 					exp = xblock ? ctracer.rtrace( var ) : ctracer.trace( var );
 					resize_and_pack( exp );
 				}

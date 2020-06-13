@@ -366,15 +366,16 @@ namespace vtil::optimizer::aux
 			//
 			if ( variable_mask != 0 )
 			{
-				// If block is complete and is exiting vm, report not used.
-				//
-				if ( var.at.container->is_complete() && *var.at.container->stream.back().base == ins::vexit )
-					return false;
-
 				// If query was restricted, report used if not local register.
 				//
 				if ( is_restricted )
+				{
+					// If block is complete and is exiting vm, report not used.
+					//
+					if ( var.at.container->is_complete() && *var.at.container->stream.back().base == ins::vexit )
+						return false;
 					return !var.is_register() || !var.reg().is_local();
+				}
 			}
 
 			// Report not used.
