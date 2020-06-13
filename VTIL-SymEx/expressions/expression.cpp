@@ -223,6 +223,14 @@ namespace vtil::symbolic
 			case math::operator_id::umin_value:
 				if ( !signed_cast )
 				{
+					// If shrinking and is division-related:
+					//
+					if ( new_size < value.size() && ( op == math::operator_id::udivide || op == math::operator_id::uremainder ))
+					{
+						*this = __ucast( *this, new_size );
+						break;
+					}
+
 					if ( lhs && lhs->size() != new_size ) ( +lhs )->resize( new_size, false );
 					if ( rhs->size() != new_size ) ( +rhs )->resize( new_size, false );
 				}
@@ -249,6 +257,15 @@ namespace vtil::symbolic
 				}
 				else
 				{
+					// If shrinking and is not division-related:
+					//
+					if ( new_size < value.size() && op != math::operator_id::divide && op != math::operator_id::remainder )
+					{
+						if ( lhs && lhs->size() != new_size ) ( +lhs )->resize( new_size, false );
+						if ( rhs->size() != new_size ) ( +rhs )->resize( new_size, false );
+						break;
+					}
+
 					*this = __ucast( *this, new_size );
 				}
 				break;
@@ -284,7 +301,8 @@ namespace vtil::symbolic
 				//
 				else
 				{
-					*+rhs = new_size;
+					auto ex = lhs->clone().resize( new_size, false );
+					return *this = ex;
 				}
 				break;
 
@@ -306,7 +324,8 @@ namespace vtil::symbolic
 				//
 				else if ( signed_cast )
 				{
-					*+rhs = new_size;
+					auto ex = lhs->clone().resize( new_size, true );
+					return *this = ex;
 				}
 				// Else, convert to unsigned cast since top bits will be zero.
 				//
