@@ -325,6 +325,12 @@ namespace vtil
 						break;
 					}
 				}
+
+				// If result is null, use default result if the call was not from propagate(),
+				// determined by history having entries set.
+				//
+				if ( !result && history.empty() ) 
+					result = std::move( default_result );
 			}
 		}
 #if VTIL_OPT_TRACE_VERBOSE
