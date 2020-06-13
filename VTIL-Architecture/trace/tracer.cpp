@@ -420,7 +420,7 @@ namespace vtil
 						bit_count,
 						reg.bit_offset + bit_offset
 					};
-					return trace( { it, tmp } );
+					return tracer::trace( { it, tmp } );
 				};
 			}
 			else
@@ -433,7 +433,7 @@ namespace vtil
 						mem.decay() + bit_offset / 8,
 						bit_count
 					};
-					return trace( { it, tmp } );
+					return tracer::trace( { it, tmp } );
 				};
 			}
 
