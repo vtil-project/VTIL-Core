@@ -97,8 +97,6 @@ namespace vtil::optimizer
 						if( aux::is_used( src.bind( i ), xblock, &tracer ) )
 							fail();
 				} )
-				// @ If destination is used by the instruction, fail.
-				.run( [ & ] ( const il_iterator& i ) { if( dst.accessed_by( i, &tracer ) ) fail(); } )
 				// | Filter to instructions that write to source.
 				.where( [ & ] ( const il_iterator& i ) 
 				{
@@ -119,6 +117,14 @@ namespace vtil::optimizer
 					if( details.write && !details.read )
 						query::rlocal( mask ) &= ~math::fill( details.bit_count, details.bit_offset );
 					return true;
+				} )
+				// @ If destination is used by the instruction, fail.
+				.run( [ & ] ( const il_iterator& i ) 
+				{ 
+					// Can be ignored if mask is cleared.
+					//
+					if ( dst.accessed_by( i, &tracer ) && query::rlocal( mask ) )
+						fail();
 				} )
 				// >> Skip until mask is cleared.
 				.where( [ & ] ( const il_iterator& it )
