@@ -109,7 +109,7 @@ namespace vtil::optimizer
 	// Passes through first optimizer, if not no-op, passes through the rest.
 	//
 	template<typename T1, typename... Tx>
-	struct sequential_pass : pass_interface<>
+	struct conditional_pass : pass_interface<>
 	{
 		T1 entry_optimizer = {};
 		combine_pass<Tx...> sequential_optimizer = {};
@@ -260,7 +260,7 @@ namespace vtil::optimizer
 		struct apply_each_opt_t<modifier, specialize_pass<parts...>> { using type = specialize_pass<typename apply_each_opt_t<modifier, parts>::type...>; };
 
 		template<template<typename...> typename modifier, typename... parts>
-		struct apply_each_opt_t<modifier, sequential_pass<parts...>> { using type = sequential_pass<typename apply_each_opt_t<modifier, parts>::type...>; };
+		struct apply_each_opt_t<modifier, conditional_pass<parts...>> { using type = conditional_pass<typename apply_each_opt_t<modifier, parts>::type...>; };
 	};
 
 	template<template<typename...> typename modifier, typename compound>

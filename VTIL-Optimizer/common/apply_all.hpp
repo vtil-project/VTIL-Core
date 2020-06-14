@@ -60,7 +60,7 @@ namespace vtil::optimizer
 		mov_propagation_pass,
 		register_renaming_pass,
 		dead_code_elimination_pass,
-		sequential_pass<
+		conditional_pass<
 			opaque_predicate_elimination_pass,
 			bblock_extension_pass
 		>
@@ -72,7 +72,7 @@ namespace vtil::optimizer
 		collective_routine_correction_pass,
 		collective_propagation_pass,
 		exhaust_pass<
-			sequential_pass<
+			conditional_pass<
 				symbolic_rewrite_pass,
 				collective_propagation_pass
 			>
