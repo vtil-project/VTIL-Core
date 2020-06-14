@@ -125,8 +125,12 @@ namespace vtil::optimizer
 				
 				// Try minimizing expression size.
 				//
-				for ( auto size : prefered_exp_sizes )
+				for ( bitcnt_t size : prefered_exp_sizes )
 				{
+					// Skip if above or equal.
+					//
+					if ( size >= v.size() ) break;
+
 					// If all bits above [size] are matching with original value, resize.
 					//
 					if ( ( v >> size ).equals( v0 >> size ) )
@@ -153,13 +157,13 @@ namespace vtil::optimizer
 
 					// For each size:
 					//
-					for ( auto size : prefered_exp_sizes )
+					for ( bitcnt_t size : prefered_exp_sizes )
 					{
 						// If mask matches, resize and return.
 						//
 						if ( e.rhs->equals( math::fill( size ) ) )
 						{
-							e = ( *+e.lhs ).resize( size );
+							e = e.lhs->clone().resize( size );
 							break;
 						}
 					}
@@ -187,7 +191,7 @@ namespace vtil::optimizer
 
 				// Try minimizing expression size.
 				//
-				for ( auto size : prefered_exp_sizes )
+				for ( bitcnt_t size : prefered_exp_sizes )
 				{
 					// If all bits above [size] are matching with original value, resize.
 					//
