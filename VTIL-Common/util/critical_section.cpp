@@ -81,20 +81,27 @@ namespace vtil
 	//
 	void critical_section::lock()
 	{
-		// If owner is not the current thread, spin until we acquire the mutex.
+		// If we could not acquire the mutex ownership:
 		//
-		if ( owner != get_thread_id() )
+		if ( !mtx.try_lock() )
+		{
+			// If thread identifier matches, increment counter and return.
+			//
+			if ( owner.load() == get_thread_id() )
+			{
+				lock_count++;
+				return;
+			}
+
+			// Spin until we acquire the mutex.
+			//
 			mtx.lock();
+		}
 
-		// Increment the lock counter, if it was zero, store the current threads
-		// identifier as the owning thread identifier and return.
+		// Increment lock count and declare ownership.
 		//
-		if ( lock_count++ == 0 )
-			owner.store( get_thread_id() );
-
-		// Validate sanity.
-		//
-		fassert( owner.load() == get_thread_id() );
+		fassert( lock_count++ == 0 );
+		owner.store( get_thread_id() );
 	}
 
 	// Unlocks the mutex with the assumption that caller currently owns it.
