@@ -34,6 +34,7 @@
 // Define _AddressOfReturnAddress() for compilers that do not have it.
 //
 #if not defined(_MSC_VER) and not defined(__INTELLISENSE__)
+	#define __forceinline __attribute__((always_inline))
 	#define _AddressOfReturnAddress() __builtin_frame_address(0)
 #endif
 
