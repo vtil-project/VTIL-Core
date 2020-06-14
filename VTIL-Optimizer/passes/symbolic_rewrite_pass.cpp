@@ -30,6 +30,12 @@
 
 namespace vtil::optimizer
 {
+	// Ideal expression sizes.
+	//
+	static constexpr bitcnt_t prefered_exp_sizes[] = {
+		1, 8, 16, 32, 64
+	};
+
 	// Implement the pass.
 	//
 	size_t symbolic_rewrite_pass::pass( basic_block* blk, bool xblock )
@@ -103,32 +109,94 @@ namespace vtil::optimizer
 
 			// For each register state:
 			//
-			for ( auto [k, v] : vm.register_state )
+			for ( auto& pair : vm.register_state )
 			{
+				// If value is unchanged, skip.
+				//
+				auto k = pair.first; auto v = pair.second;
+				symbolic::expression v0 = symbolic::make_register_ex( k );
+				if ( v0.equals( v ) )
+					continue;
+
 				// If register value is not used after this instruction, skip from emitted state.
 				//
 				if ( !aux::is_used( { std::prev( limit ), k }, xblock, &ctracer ) )
 					continue;
-
-				// Translate into an operand, if unchanged skip.
+				
+				// Try minimizing expression size.
 				//
-				operand op = translator << v.simplify( true );
-				if ( operand{ k } == op )
-					continue;
+				for ( auto size : prefered_exp_sizes )
+				{
+					// If all bits above [size] are matching with original value, resize.
+					//
+					if ( ( v >> size ).equals( v0 >> size ) )
+					{
+						k.bit_count = size;
+						v.resize( size );
+						break;
+					}
+				}
+
+				// Try replacing A&B with __ucast(A, B).
+				//
+				v.transform( [ ] ( symbolic::expression& e )
+				{
+					// Skip if not AND.
+					//
+					if ( e.op != math::operator_id::bitwise_and )
+						return;
+
+					// If any of the sides have a constant, make sure it is at RHS.
+					//
+					if ( e.lhs->is_constant() )
+						std::swap( e.lhs, e.rhs );
+
+					// For each size:
+					//
+					for ( auto size : prefered_exp_sizes )
+					{
+						// If mask matches, resize and return.
+						//
+						if ( e.rhs->equals( math::fill( size ) ) )
+						{
+							e = ( *+e.lhs ).resize( size );
+							break;
+						}
+					}
+				} );
+
+				// TODO: Prefer bitwise mov for $flags.
+				//
 
 				// Buffer a mov instruction.
 				//
-				instruction_buffer.push_back( { &ins::mov, { k, op } } );
+				instruction_buffer.push_back( { &ins::mov, { k, translator << v.simplify( true ) } } );
 			}
 
 			// For each memory state:
+			// -- TODO: Simplify memory state, merge if simplifies, discard if left as is.
 			//
 			for ( auto [k, v] : vm.memory_state )
 			{
+				symbolic::expression v0 = symbolic::make_memory_ex( k, v.size() );
+
 				// If value is unchanged, skip.
 				//
-				if ( v.equals( symbolic::make_memory_ex( k, v.size() ) ) )
+				if ( v.equals( v0 ) )
 					continue;
+
+				// Try minimizing expression size.
+				//
+				for ( auto size : prefered_exp_sizes )
+				{
+					// If all bits above [size] are matching with original value, resize.
+					//
+					if ( ( v >> size ).equals( v0 >> size ) )
+					{
+						v.resize( size );
+						break;
+					}
+				}
 
 				// If pointer can be rewritten as $sp + C:
 				//
@@ -189,7 +257,7 @@ namespace vtil::optimizer
 		// iterators are now invalidated making the cache also invalid.
 		//
 		lock.unlock();
-		std::unique_lock{ mtx };
+		std::unique_lock _g{ mtx };
 		blk->stream = temporary_block.stream;
 		blk->last_temporary_index = temporary_block.last_temporary_index;
 		symbolic::purge_simplifier_cache();
