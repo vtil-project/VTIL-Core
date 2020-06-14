@@ -113,10 +113,7 @@ namespace vtil::symbolic
 
 		// Conversion to human-readable format.
 		//
-		std::string to_string() const
-		{
-			return base.to_string();
-		}
+		std::string to_string() const { return base.to_string(); }
 
 		// Define reduction.
 		//

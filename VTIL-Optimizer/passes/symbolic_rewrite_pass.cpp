@@ -143,7 +143,7 @@ namespace vtil::optimizer
 
 				// Try replacing A&B with __ucast(A, B).
 				//
-				v.transform( [ ] ( symbolic::expression& e )
+				v.simplify( true ).transform( [ ] ( symbolic::expression& e )
 				{
 					// Skip if not AND.
 					//
@@ -167,14 +167,14 @@ namespace vtil::optimizer
 							break;
 						}
 					}
-				} );
+				}, true, false ).simplify( true );
 
 				// TODO: Prefer bitwise mov for $flags.
 				//
 
 				// Buffer a mov instruction.
 				//
-				instruction_buffer.push_back( { &ins::mov, { k, translator << v.simplify( true ) } } );
+				instruction_buffer.push_back( { &ins::mov, { k, translator << v } } );
 			}
 
 			// For each memory state:

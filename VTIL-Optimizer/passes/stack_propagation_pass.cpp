@@ -37,8 +37,6 @@ namespace vtil::optimizer
 	{
 		symbolic::expression trace( symbolic::variable lookup ) override
 		{
-			size_t idx_special = lookup.at.container->last_temporary_index + 1;
-
 			// If register:
 			//
 			if ( lookup.is_register() )
@@ -47,6 +45,8 @@ namespace vtil::optimizer
 				//
 				if ( lookup.reg().is_stack_pointer() )
 				{
+					const size_t idx_special = lookup.at.container->last_temporary_index + 1;
+
 					// If index 0, return as is.
 					//
 					uint32_t sp_index = lookup.at.is_end() ? lookup.at.container->sp_index : lookup.at->sp_index;

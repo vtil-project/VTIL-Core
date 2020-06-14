@@ -118,6 +118,11 @@ namespace vtil::optimizer
 						//
 						if ( details.write && !details.read )
 							query::rlocal( mask ) &= ~math::fill( details.bit_count, details.bit_offset );
+
+						// If source is being read by volatile instruction, fail.
+						//
+						if ( i->is_volatile() && details.read && ( query::rlocal( mask ) & math::fill( details.bit_count, details.bit_offset ) ) )
+							fail();
 					}
 
 					// If destination is used by the instruction, fail.

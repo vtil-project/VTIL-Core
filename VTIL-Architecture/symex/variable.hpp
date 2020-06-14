@@ -178,7 +178,7 @@ namespace vtil::symbolic
 
 		// Declare reduction.
 		//
-		REDUCE_TO( dereference_if( !at.is_end(), at ).pointer, at.is_valid() ? at.container->entry_vip : invalid_vip, descriptor, is_branch_dependant );
+		REDUCE_TO( at.is_end() ? nullptr : at.operator->(), at.is_valid() ? at.container : nullptr, descriptor, is_branch_dependant );
 
 		// Packs all the variables in the expression where it'd be optimal.
 		//
