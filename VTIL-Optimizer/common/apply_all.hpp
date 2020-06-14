@@ -27,15 +27,80 @@
 //
 #pragma once
 #include "interface.hpp"
+#include "../passes/stack_pinning_pass.hpp"
+#include "../passes/istack_ref_substitution_pass.hpp"
+#include "../passes/bblock_extension_pass.hpp"
+#include "../passes/stack_propagation_pass.hpp"
+#include "../passes/dead_code_elimination_pass.hpp"
+#include "../passes/mov_propagation_pass.hpp"
+#include "../passes/symbolic_rewrite_pass.hpp"
+#include "../passes/opaque_predicate_elimination_pass.hpp"
+#include "../passes/register_renaming_pass.hpp"
 
 namespace vtil::optimizer
 {
-	// TODO: Add a wrapping validation pass and validated_t<T> to nop | apply depending on _DEBUG.
+	// TODO: Add a wrapping validation pass.
 	//
 
-	// Combined pass for each optimization.
-	// TODO: Add final optimizers...
+	// Initial routine correction passes.
 	//
-	using combined_pass_type = combine_pass<nop_pass/*stack_normalization_pass, dead_elimination_pass*/>;
-	static constexpr spawn_state<combined_pass_type> apply_all = {};
+	using collective_routine_correction_pass = combine_pass<
+		stack_pinning_pass,
+		istack_ref_substitution_pass,
+		opaque_predicate_elimination_pass,
+		bblock_extension_pass
+	>;
+
+	// Exhaustive propagation pass.
+	//
+	using collective_propagation_pass = exhaust_pass<
+		stack_propagation_pass,
+		local_pass<mov_propagation_pass>,
+		local_pass<dead_code_elimination_pass>,
+		mov_propagation_pass,
+		register_renaming_pass,
+		dead_code_elimination_pass,
+		sequential_pass<
+			opaque_predicate_elimination_pass,
+			bblock_extension_pass
+		>
+	>;
+
+	// Cross optimization pass.
+	//
+	using collective_cross_pass = combine_pass<
+		collective_routine_correction_pass,
+		collective_propagation_pass,
+		exhaust_pass<
+			sequential_pass<
+				symbolic_rewrite_pass,
+				collective_propagation_pass
+			>
+		>
+	>;
+
+	// Local optimization pass.
+	//
+	using collective_local_pass = combine_pass<
+		stack_pinning_pass,
+		istack_ref_substitution_pass,
+		exhaust_pass<
+			stack_propagation_pass,
+			mov_propagation_pass,
+			register_renaming_pass,
+			dead_code_elimination_pass,
+			symbolic_rewrite_pass
+		>
+	>;
+
+	// Combined optimization pass.
+	//
+	using collective_pass = specialize_pass<
+		collective_local_pass,
+		collective_cross_pass
+	>;
+
+	// Combined pass for each optimization.
+	//
+	static constexpr spawn_state<collective_pass> apply_all = {};
 };

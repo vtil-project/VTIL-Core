@@ -209,10 +209,18 @@ namespace vtil::optimizer
 		size_t operator()( routine* rtn ) const { return xpass( rtn ); }
 	};
 
+	// Dummy non-modifying wrapper.
+	//
+	template<typename T>
+	struct nop_wrap : T
+	{
+		std::string name() override { return T{}.name(); }
+	};
+
 	// Used to profile the pass.
 	//
 	template<typename T>
-	struct profile_pass : public T
+	struct profile_pass : T
 	{
 		size_t pass( basic_block* blk, bool xblock = false ) override
 		{
