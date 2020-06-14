@@ -39,12 +39,12 @@ namespace vtil
 		auto it = register_state.find( full );
 		if ( it == register_state.end() )
 		{
-			symbolic::expression exp = symbolic::variable{ full }.to_expression();
+			symbolic::expression exp = symbolic::variable{ full }.to_expression( false );
 			if ( desc.bit_offset ) exp = exp >> desc.bit_offset;
 			return exp.resize( desc.bit_count );
 		}
-		else
-			return ( it->second >> desc.bit_offset ).resize( desc.bit_count );
+
+		return ( it->second >> desc.bit_offset ).resize( desc.bit_count );
 	}
 
 	// Writes to the register.
@@ -52,6 +52,8 @@ namespace vtil
 	void symbolic_vm::write_register( const register_desc& desc, symbolic::expression value )
 	{
 		bitcnt_t size = size_register( desc );
+		register_desc full = { desc.flags, desc.local_id, size, 0 };
+
 		if ( desc.bit_count == size && desc.bit_offset == 0 )
 		{
 			register_state.erase( desc );
@@ -59,7 +61,6 @@ namespace vtil
 		}
 		else
 		{
-			register_desc full = { desc.flags, desc.local_id, size, 0 };
 			auto& exp = register_state[ full ];
 			if ( !exp ) exp = symbolic::make_register_ex( full );
 			exp = ( exp & ~desc.get_mask() ) | ( value.resize( desc.bit_count ).resize( size ) << desc.bit_offset );
