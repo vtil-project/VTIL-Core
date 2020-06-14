@@ -45,10 +45,32 @@ namespace vtil::optimizer
 		std::shared_lock lock{ mtx };
 		cached_tracer ctracer = {};
 
+		// Determine the temporary sizes in the block.
+		//
+		std::map<std::pair<uint64_t, size_t>, bitcnt_t> temp_sizes;
+		for ( auto& ins : blk->stream )
+		{
+			for ( auto& op : ins.operands )
+			{
+				if ( op.is_register() && op.reg().is_local() )
+				{
+					bitcnt_t& sz = temp_sizes[ { op.reg().flags, op.reg().local_id } ];
+					sz = std::max( sz, op.reg().bit_count + op.reg().bit_offset );
+				}
+			}
+		}
+
 		// Create an instrumented symbolic virtual machine and hook execution to exit at 
 		// instructions that cannot be executed out-of-order.
 		//
 		lambda_vm<symbolic_vm> vm;
+		vm.hooks.size_register = [ & ] ( const register_desc& reg )
+		{
+			if ( auto it = temp_sizes.find( { reg.flags, reg.local_id } ); 
+				      it != temp_sizes.end() )
+				return it->second ? it->second : 64;
+			return 64;
+		};
 		vm.hooks.execute = [ & ] ( const instruction& ins )
 		{
 			// Halt if branching instruction.
@@ -141,33 +163,9 @@ namespace vtil::optimizer
 					}
 				}
 
-				// Try replacing A&B with __ucast(A, B).
+				// Pack registers and the expression.
 				//
-				v.simplify( true ).transform( [ ] ( symbolic::expression& e )
-				{
-					// Skip if not AND.
-					//
-					if ( e.op != math::operator_id::bitwise_and )
-						return;
-
-					// If any of the sides have a constant, make sure it is at RHS.
-					//
-					if ( e.lhs->is_constant() )
-						std::swap( e.lhs, e.rhs );
-
-					// For each size:
-					//
-					for ( bitcnt_t size : prefered_exp_sizes )
-					{
-						// If mask matches, resize and return.
-						//
-						if ( e.rhs->equals( math::fill( size ) ) )
-						{
-							e = e.lhs->clone().resize( size );
-							break;
-						}
-					}
-				}, true, false ).simplify( true );
+				v = symbolic::variable::pack_all( v.simplify( true ) );
 
 				// TODO: Prefer bitwise mov for $flags.
 				//
@@ -202,6 +200,10 @@ namespace vtil::optimizer
 					}
 				}
 
+				// Pack registers and the expression.
+				//
+				v = symbolic::variable::pack_all( v.simplify( true ) );
+
 				// If pointer can be rewritten as $sp + C:
 				//
 				operand base, offset, value;
@@ -212,12 +214,12 @@ namespace vtil::optimizer
 					instruction_buffer.push_back(
 					{
 						&ins::str,
-						{ REG_SP, make_imm<int64_t>( *displacement ), translator << v.simplify( true ) }
+						{ REG_SP, make_imm<int64_t>( *displacement ), translator << v }
 					} );
 				}
 				else
 				{
-					operand base = translator << k.base;
+					operand base = translator << symbolic::variable::pack_all( k.base ).simplify( true );
 					if ( base.is_immediate() )
 					{
 						operand tmp = temporary_block.tmp( base.bit_count() );
@@ -230,7 +232,7 @@ namespace vtil::optimizer
 					instruction_buffer.push_back(
 					{
 						&ins::str,
-						{ base, make_imm<int64_t>( 0 ), translator << v.simplify( true ) }
+						{ base, make_imm<int64_t>( 0 ), translator << v }
 					} );
 				}
 			}
