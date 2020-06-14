@@ -229,7 +229,7 @@ namespace vtil
 	// note that they should not be stored under any condition.
 	//
 	template<typename T>
-	inline static shared_reference<T> make_local_reference( T* variable_pointer )
+	__forceinline static shared_reference<T> make_local_reference( T* variable_pointer )
 	{
 		// Save current frame address.
 		//
@@ -242,7 +242,7 @@ namespace vtil
 		{
 			// Should not be destructed above current frame.
 			//
-			fassert( creation_frame > _AddressOfReturnAddress() );
+			fassert( creation_frame >= _AddressOfReturnAddress() );
 		} };
 
 		// Mark as locked and return.
