@@ -33,7 +33,7 @@ namespace vtil
 {
 	// Internal type definitions.
 	//
-	using path_history_t = std::map<std::pair<symbolic::variable, const basic_block*>, uint32_t>;
+	using path_history_t =   std::map<std::pair<const basic_block*, const basic_block*>, uint32_t>;
 	using partial_tracer_t = std::function<symbolic::expression( bitcnt_t offset, bitcnt_t size )>;
 
 	// Forward defs.
@@ -114,7 +114,7 @@ namespace vtil
 	// meaning the origin expression was a variable and it infinite-looped during propagation by itself.
     // - Note: New iterator should be a connected block's end.
 	//
-    static std::pair<bool, symbolic::expression> propagate( const symbolic::expression& ref, const il_const_iterator& it, tracer* tracer, path_history_t* history, int64_t limit )
+    static std::pair<bool, symbolic::expression> propagate( const symbolic::expression& ref, const il_const_iterator& it, tracer* tracer, const path_history_t* history, int64_t limit )
     {
         using namespace logger;
 
@@ -186,10 +186,9 @@ namespace vtil
 
             // Trace the variable in the destination block, fail if it fails.
             //
-			path_history_t history_local;
 			symbolic::expression var_traced;
 			if ( history )
-				var_traced = rtrace_primitive( var, tracer, (history_local = *history), limit );
+				var_traced = rtrace_primitive( var, tracer, *history, limit );
 			else
 				var_traced = tracer->trace( var );
             if ( !var_traced )
@@ -253,19 +252,19 @@ namespace vtil
 				symbolic::expression default_result = {};
 				std::swap( result, default_result );
 
+				// Create a local copy of the visited list.
+				//
+				path_history_t history_local = { history };
+
 				// For each path:
 				//
 				for ( auto& it : it_list )
 				{
-					// Create a local copy for the visited list for this path 
-					// and increment the visit counter.
-					//
-					path_history_t history_local = { history };
-					uint32_t& visit_counter = history_local[ { lookup, it.container } ];
+					uint32_t& visit_counter = history_local[ { lookup.at.container, it.container } ];
 
 					// If we've taken this path more than twice, skip it.
 					//
-					if ( ++visit_counter > 2 )
+					if ( visit_counter >= 2 )
 					{
 #if VTIL_OPT_TRACE_VERBOSE
 						// Log skipping of path.
@@ -282,7 +281,9 @@ namespace vtil
 #endif
 					// Propagate each variable onto to the destination block, if total fail, skip path.
 					//
+					visit_counter++;
 					auto [total_fail, exp] = propagate( default_result, it, tracer, &history_local, limit );
+					visit_counter--;
 					if ( total_fail )
 						continue;
 
