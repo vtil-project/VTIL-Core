@@ -54,6 +54,7 @@ namespace vtil
 		//
 		struct
 		{
+			impl::strip_object_t<decltype( &vm_interface::size_register )> size_register = {};
 			impl::strip_object_t<decltype( &vm_interface::read_register )> read_register = {};
 			impl::strip_object_t<decltype( &vm_interface::read_memory )> read_memory = {};
 			impl::strip_object_t<decltype( &vm_interface::write_register )> write_register = {};
@@ -63,6 +64,12 @@ namespace vtil
 
 		// Declare the overrides redirecting to the callbacks.
 		//
+		bitcnt_t size_register( const register_desc& desc ) override 
+		{
+			return hooks.size_register
+				? hooks.size_register( desc )
+				: vm_base::size_register( desc );
+		}
 		symbolic::expression read_register( const register_desc& desc ) override 
 		{
 			return hooks.read_register 
