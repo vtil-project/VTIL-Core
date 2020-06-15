@@ -25,10 +25,10 @@
     <ClCompile Include="passes\symbolic_rewrite_pass.cpp">
       <Filter>Optimizer Passes</Filter>
     </ClCompile>
-    <ClCompile Include="passes\opaque_predicate_elimination_pass.cpp">
+    <ClCompile Include="passes\register_renaming_pass.cpp">
       <Filter>Optimizer Passes</Filter>
     </ClCompile>
-    <ClCompile Include="passes\register_renaming_pass.cpp">
+    <ClCompile Include="passes\branch_correction_pass.cpp">
       <Filter>Optimizer Passes</Filter>
     </ClCompile>
   </ItemGroup>
@@ -74,10 +74,10 @@
     <ClInclude Include="passes\symbolic_rewrite_pass.hpp">
       <Filter>Optimizer Passes</Filter>
     </ClInclude>
-    <ClInclude Include="passes\opaque_predicate_elimination_pass.hpp">
+    <ClInclude Include="passes\register_renaming_pass.hpp">
       <Filter>Optimizer Passes</Filter>
     </ClInclude>
-    <ClInclude Include="passes\register_renaming_pass.hpp">
+    <ClInclude Include="passes\branch_correction_pass.hpp">
       <Filter>Optimizer Passes</Filter>
     </ClInclude>
   </ItemGroup>

@@ -32,13 +32,15 @@
 
 namespace vtil::optimizer
 {
-	// Eliminates each prev-next link where the jump is not possible after
-	// the elimination of opaque predicates, removes the entire block if
-	// it was left without any references.
+	// This pass serves two purposes:
+	// 1) Eliminates each prev-next link where the jump is not possible after
+	//    the elimination of opaque predicates, removes the entire block if
+	//    it was left without any references.
+	// 2) Converts jmps to jccs where it can be inferred.
 	//
-	struct opaque_predicate_elimination_pass : pass_interface<>
+	struct branch_correction_pass : pass_interface<>
 	{
-		std::mutex mtx;
+		std::shared_mutex mutex;
 		cached_tracer ctracer = {};
 
 		size_t pass( basic_block* blk, bool xblock = false ) override;

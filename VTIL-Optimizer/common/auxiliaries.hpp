@@ -31,6 +31,24 @@
 
 namespace vtil::optimizer::aux
 {
+	// Simple structure describing branch details.
+	//
+	struct branch_info
+	{
+		// If jump to real:
+		//
+		bool is_vm_exit = false;
+		
+		// If jcc:
+		//
+		bool is_jcc = false;
+		symbolic::expression cc;
+
+		// Possible destination expressions:
+		//
+		std::vector<symbolic::expression> destinations;
+	};
+
 	// Helper to check if the expression given is block-local.
 	//
 	bool is_local( const symbolic::expression& ex );
@@ -47,8 +65,7 @@ namespace vtil::optimizer::aux
 	//
 	register_desc revive_register( const symbolic::variable& var, const il_iterator& it );
 
-	// Returns each possible branch destination of the given basic block in the format of:
-	// - [is_real, target] x N
+	// Extracts the details of the branch taken at the end of the block where possible.
 	//
-	std::vector<std::pair<bool, symbolic::expression>> discover_branches( const basic_block* blk, tracer* tracer, bool xblock );
+	branch_info analyze_branch( const basic_block* blk, tracer* tracer, bool xblock, bool pack = true );
 }

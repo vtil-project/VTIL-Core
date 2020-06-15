@@ -458,10 +458,6 @@ namespace vtil::optimizer::aux
 	{
 		fassert( var.is_register() );
 
-		// If cross block operation, lock routine mutex.
-		//
-		cnd_unique_lock _g{ it.container->owner->mutex, it.container != var.at.container };
-
 		// Drop const-qualifiers, this operation is not illegal since we're passed 
 		// non-constant iterator, meaning we have access to the routine itself.
 		//
@@ -487,24 +483,33 @@ namespace vtil::optimizer::aux
 	// Returns each possible branch destination of the given basic block in the format of:
 	// - [is_real, target] x N
 	//
-	std::vector<std::pair<bool, symbolic::expression>> discover_branches( const basic_block* blk, tracer* tracer, bool xblock )
+	branch_info analyze_branch( const basic_block* blk, tracer* tracer, bool xblock, bool pack )
 	{
 		// If block is not complete, return empty vector.
 		//
-		std::vector<std::pair<bool, symbolic::expression>> targets = {};
 		if ( !blk->is_complete() )
-			return targets;
+			return {};
+
+		// Declare tracer.
+		//
+		const auto trace = [ & ] ( symbolic::variable&& lookup )
+		{
+			auto exp = xblock ? tracer->rtrace( std::move( lookup ) ) : tracer->trace( std::move( lookup ) );
+			if ( pack )
+				symbolic::variable::pack_all( exp );
+			return exp;
+		};
 
 		// Declare operand->expression helper.
 		//
 		auto branch = std::prev( blk->end() );
-		auto discover = [ & ] ( const operand& op_dst, bool real )
+		auto discover = [ & ] ( const operand& op_dst, bool real, bool parse = true ) -> branch_info
 		{
 			// Determine the symbolic expression describing branch destination.
 			//
 			symbolic::expression destination = op_dst.is_immediate()
 				? symbolic::expression{ op_dst.imm().u64 }
-				: ( xblock ? tracer->rtrace_p( { branch, op_dst.reg() } ) : tracer->trace_p( { branch, op_dst.reg() } ) );
+				: trace( { branch, op_dst.reg() } );
 
 			// Remove any matches of REG_IMGBASE and pack.
 			//
@@ -518,38 +523,95 @@ namespace vtil::optimizer::aux
 				}
 			} ).simplify( true );
 
-			// Match classic Jcc:
+			// If parsing requested:
 			//
-			using namespace symbolic::directive;
-			std::vector<symbol_table_t> results;
-			if ( fast_match( &results, A + ( __if( B, D ) + __if( C, E ) ), destination ) ||
-				 fast_match( &results, A + ( __if( B, D ) | __if( C, E ) ), destination ) ||
-				 fast_match( &results, __if( B, D ) + __if( C, E ), destination ) ||
-				 fast_match( &results, __if( B, D ) | __if( C, E ), destination ) )
+			if ( parse )
 			{
-				auto& sym = results.front();
-				sym.add( A, symbolic::expression{ 0, 64 } );
-
-				if ( sym.translate( B )->equals( ~sym.translate( C ) ) )
+				// Match classic Jcc:
+				//
+				using namespace symbolic::directive;
+				std::vector<symbol_table_t> results;
+				if ( fast_match( &results, A + ( __if( B, D ) + __if( C, E ) ), destination ) ||
+					 fast_match( &results, A + ( __if( B, D ) | __if( C, E ) ), destination ) ||
+					 fast_match( &results, __if( B, D ) + __if( C, E ), destination ) ||
+					 fast_match( &results, __if( B, D ) | __if( C, E ), destination ) )
 				{
-					auto reloc = sym.translate( A );
-					targets.emplace_back( real, reloc + sym.translate( D ) );
-					targets.emplace_back( real, reloc + sym.translate( E ) );
-					return;
-				}
-			}
+					// Pick the first result and translate conditions.
+					//
+					auto& sym = results.front();
+					auto cond1 = sym.translate( B );
+					auto cond2 = sym.translate( C );
 
-			// If not, push as is.
+					// If inverse conditionals:
+					//
+					if ( cond1->equals( ~cond2 ) )
+					{
+						// Translate destinations.
+						//
+						auto reloc = sym.translate( A ) ? *sym.translate( A ) : symbolic::expression{ 0, 64 };
+						auto dst1 = sym.translate( D );
+						auto dst2 = sym.translate( E );
+
+						// Make sure first condition is the simplest.
+						//
+						if ( cond1->complexity > cond2->complexity )
+						{
+							std::swap( cond1, cond2 );
+							std::swap( dst1, dst2 );
+						}
+
+						return {
+							.is_vm_exit = real,
+							.is_jcc = true,
+							.cc = *cond1,
+							.destinations = { reloc + dst1, reloc + dst2 }
+						};
+					}
+				}
+
+				// -- TODO: Handle jump tables.
+				//
+			}
+			
+			// Otherwise assume direct jump.
 			//
-			targets.emplace_back( real, destination );
+			return {
+				.is_vm_exit = real,
+				.destinations = { destination }
+			};
 		};
 
 		// Discover all targets and return.
 		//
-		for ( int idx : branch->base->branch_operands_vip )
-			discover( branch->operands[ idx ], false );
-		for ( int idx : branch->base->branch_operands_rip )
-			discover( branch->operands[ idx ], true );
-		return targets;
+		if ( *branch->base == ins::jmp )
+			return discover( branch->operands[ 0 ], false );
+		if ( *branch->base == ins::vexit )
+			return discover( branch->operands[ 0 ], true );
+		if ( *branch->base == ins::vxcall )
+			return discover( branch->operands[ 0 ], true );
+		if ( *branch->base == ins::js )
+		{
+			// If condition can be resolved in compile time:
+			//
+			symbolic::expression cc = trace( { branch, branch->operands[ 0 ].reg() } );
+			if ( cc.is_constant() )
+			{
+				// Redirect to jmp resolver.
+				//
+				return discover( branch->operands[ *cc.get<bool>() ? 1 : 2 ], false, false );
+			}
+
+			// Resolve each individually and form jcc.
+			//
+			branch_info b1 = discover( branch->operands[ 1 ], false, false );
+			branch_info b2 = discover( branch->operands[ 2 ], false, false );
+			return {
+				.is_vm_exit = false,
+				.is_jcc = true,
+				.cc = cc,
+				.destinations = { b1.destinations[ 0 ], b2.destinations[ 0 ] }
+			};
+		}
+		unreachable();
 	}
 };

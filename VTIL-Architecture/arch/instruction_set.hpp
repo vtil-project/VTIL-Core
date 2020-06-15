@@ -142,7 +142,7 @@ namespace vtil
     
         //  -- Control flow instructions
         //                                                            
-        //    JS         Reg,    Reg/Imm,    Reg/Imm                        | Jumps to OP3 if OP1 != 0, else jumps to OP2, continues virtual execution
+        //    JS         Reg,    Reg/Imm,    Reg/Imm                        | Jumps to OP1 is set, jumps to OP2, otherwise OP3, continues virtual execution
         //    JMP        Reg/Imm                                            | Jumps to OP1, continues virtual execution
         //    VEXIT      Reg/Imm                                            | Jumps to OP1, continues real execution
         //    VXCALL     Reg/Imm                                            | Calls into OP1, pauses virtual execution until the call returns

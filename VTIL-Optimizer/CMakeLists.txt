@@ -9,7 +9,7 @@ add_library(${PROJECT_NAME} STATIC
     passes/dead_code_elimination_pass.cpp
     passes/mov_propagation_pass.cpp
     passes/symbolic_rewrite_pass.cpp
-    passes/opaque_predicate_elimination_pass.cpp
+    passes/branch_correction_pass.cpp
     passes/register_renaming_pass.cpp
 )
 

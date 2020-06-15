@@ -34,7 +34,7 @@
 #include "../passes/dead_code_elimination_pass.hpp"
 #include "../passes/mov_propagation_pass.hpp"
 #include "../passes/symbolic_rewrite_pass.hpp"
-#include "../passes/opaque_predicate_elimination_pass.hpp"
+#include "../passes/branch_correction_pass.hpp"
 #include "../passes/register_renaming_pass.hpp"
 
 namespace vtil::optimizer
@@ -47,7 +47,7 @@ namespace vtil::optimizer
 	using collective_routine_correction_pass = combine_pass<
 		stack_pinning_pass,
 		istack_ref_substitution_pass,
-		opaque_predicate_elimination_pass,
+		branch_correction_pass,
 		bblock_extension_pass
 	>;
 
@@ -61,7 +61,7 @@ namespace vtil::optimizer
 		register_renaming_pass,
 		dead_code_elimination_pass,
 		conditional_pass<
-			opaque_predicate_elimination_pass,
+			branch_correction_pass,
 			conditional_pass<
 				bblock_extension_pass, 
 				symbolic_rewrite_pass<true>

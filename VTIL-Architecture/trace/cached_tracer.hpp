@@ -48,7 +48,7 @@ namespace vtil
         // Declare the lookup map for the cache mapping each variable to the
         // result of the primitive traver.
         //
-        cache_type cache;
+        mutable cache_type cache;
         
         // Locks the cache.
         //
