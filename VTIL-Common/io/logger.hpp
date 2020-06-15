@@ -256,7 +256,7 @@ namespace vtil::logger
 
 		// Print the warning.
 		//
-		log( "[!] Warning: %s\n", message );
+		log( CON_YLW, "[!] Warning: %s\n", message );
 
 		// Restore the padding and return.
 		//
