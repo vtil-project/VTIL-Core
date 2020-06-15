@@ -114,9 +114,7 @@ namespace vtil::symbolic
 
 		// If not an expression, we cannot simplify further.
 		//
-		if ( !exp->is_expression() || 
-			 exp->op == math::operator_id::ucast || 
-			 exp->op == math::operator_id::cast )
+		if ( !exp->is_expression() )
 			return false;
 
 #if VTIL_SYMEX_SIMPLIFY_VERBOSE
@@ -318,7 +316,7 @@ namespace vtil::symbolic
 			// If we can transform the expression by the directive set:
 			//
 			if ( auto exp_new = transform( exp, dir_src, dir_dst, 
-				 [ & ] ( auto& exp_new ) { return simplify_expression( exp_new, pretty, max_depth - 1 ) && exp_new->complexity < exp->complexity; }, max_depth ) )
+				 [ & ] ( auto& exp_new ) { simplify_expression( exp_new, pretty, max_depth - 1 ); return exp_new->complexity < exp->complexity; }, max_depth ) )
 			{
 #if VTIL_SYMEX_SIMPLIFY_VERBOSE
 				log<CON_YLW>( "[Unpack] %s => %s\n", *dir_src, *dir_dst );
