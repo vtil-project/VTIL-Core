@@ -73,6 +73,10 @@ namespace vtil
 		//
 		std::map<vip_t, call_convention> spec_subroutine_conventions;
 
+		// Misc. stats.
+		//
+		std::atomic<size_t> local_opt_count = 0;
+
 		// This structure cannot be copied.
 		//
 		routine() = default;

@@ -33,17 +33,17 @@ namespace vtil
 	// Calculates the address of an inline object within the region [begin-end]
 	// with the given size and alignment properties.
 	//
-	static size_t calc_inline_address( const void* begin, const void* end, size_t size, size_t align )
+	static uint64_t calc_inline_address( const void* begin, const void* end, size_t size, size_t align )
 	{
 		// Calculate inline boundaries. 
 		//
-		size_t ptr = ( size_t ) begin;
-		size_t ptr_lim = ( size_t ) end;
+		uint64_t ptr = ( uint64_t ) begin;
+		uint64_t ptr_lim = ( uint64_t ) end;
 
 		// Align as required.
 		//
-		size_t align_mask = align - 1;
-		size_t ptr_a = ( ptr + align_mask ) & ~align_mask;
+		uint64_t align_mask = align - 1;
+		uint64_t ptr_a = ( ptr + align_mask ) & ~align_mask;
 
 		// If overflows, return null, else return the aligned address.
 		//
@@ -154,13 +154,13 @@ namespace vtil
 	// Gets the address of the object with the given properties.
 	// - Will throw assert failure if the variant is empty.
 	//
-	size_t variant::get_address( size_t size, size_t align ) const
+	uint64_t variant::get_address( size_t size, size_t align ) const
 	{
 		fassert( has_value() );
 
 		// If object is inline, calculate the inline address, otherwise return the external pointer.
 		//
-		return is_inline ? calc_inline_address( inl, std::end( inl ), size, align ) : ( size_t ) ext;
+		return is_inline ? calc_inline_address( inl, std::end( inl ), size, align ) : ( uint64_t ) ext;
 	}
 
 	// Allocates the space for an object of the given properties and returns the pointer.
@@ -169,7 +169,7 @@ namespace vtil
 	{
 		// Calculate the inline address, if successful reference the inline object.
 		//
-		if ( size_t inline_adr = calc_inline_address( inl, std::end( inl ), size, align ) )
+		if ( uint64_t inline_adr = calc_inline_address( inl, std::end( inl ), size, align ) )
 		{
 			is_inline = true;
 			return ( void* ) inline_adr;

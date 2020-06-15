@@ -41,17 +41,18 @@ namespace vtil
 	{
 		// Magic constants for 128-bit FNV-1 .
 		//
-		static constexpr size_t default_seed[] = { 0x62B821756295C58D, 0x6C62272E07BB0142 };
-		static constexpr size_t prime[] =        { 0x000000000000013B, 0x0000000001000000 };
+		using value_t = uint64_t;
+		static constexpr value_t default_seed[] = { 0x62B821756295C58D, 0x6C62272E07BB0142 };
+		static constexpr value_t prime[] =        { 0x000000000000013B, 0x0000000001000000 };
 
 		// Current value of the hash.
 		//
-		size_t value[ 2 ];
+		value_t value[ 2 ];
 
 		// Construct a new hash from an optional seed of either 64-bit or 128-bit value.
 		//
-		fnv128_hash_t( size_t seed64 ) { value[ 1 ] = ~0ull; value[ 0 ] = seed64; }
-		fnv128_hash_t( const size_t( &seed128 )[ 2 ] = default_seed ) { std::copy( seed128, std::end( seed128 ), value ); }
+		fnv128_hash_t( value_t seed64 ) { value[ 1 ] = ~0ull; value[ 0 ] = seed64; }
+		fnv128_hash_t( const value_t( &seed128 )[ 2 ] = default_seed ) { std::copy( seed128, std::end( seed128 ), value ); }
 
 		// Appends the given array of bytes into the hash value.
 		//
@@ -95,8 +96,8 @@ namespace vtil
 
 		// Implicit conversion to 64-bit and 128-bit values.
 		//
-		size_t as64() const { return value[ 0 ] + value[ 1 ]; }
-		operator size_t() const { return as64(); }
+		uint64_t as64() const { return value[ 0 ] + value[ 1 ]; }
+		operator uint64_t() const { return as64(); }
 
 		// Conversion to human-readable format.
 		//
@@ -120,6 +121,6 @@ namespace std
 	template<>
 	struct hash<vtil::fnv128_hash_t>
 	{
-		size_t operator()( const vtil::fnv128_hash_t& value ) const { return value.as64(); }
+		size_t operator()( const vtil::fnv128_hash_t& value ) const { return ( size_t ) value.as64(); }
 	};
 };

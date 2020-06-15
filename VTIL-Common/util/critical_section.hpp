@@ -35,7 +35,7 @@ namespace vtil
 	// used instead of std::thread::get_id() as conversion to an integer
 	// requires std::hash...
 	//
-	using tid_t = size_t;
+	using tid_t = uint64_t;
 	tid_t get_thread_id();
 
 	// Implements a structure that mimics the way Win32 CRITICAL_SECTION objects work.

@@ -40,9 +40,9 @@ namespace vtil
 	{
 		// Magic constants for 64-bit FNV-1 .
 		//
-		using value_t = size_t;
-		static constexpr size_t default_seed = { 0xCBF29CE484222325 };
-		static constexpr size_t prime =        { 0x00000100000001B3 };
+		using value_t = uint64_t;
+		static constexpr value_t default_seed = { 0xCBF29CE484222325 };
+		static constexpr value_t prime =        { 0x00000100000001B3 };
 
 		// Current value of the hash.
 		//
@@ -73,8 +73,8 @@ namespace vtil
 
 		// Implicit conversion to 64-bit values.
 		//
-		size_t as64() const { return value[ 0 ]; }
-		operator size_t() const { return as64(); }
+		uint64_t as64() const { return value[ 0 ]; }
+		operator uint64_t() const { return as64(); }
 
 		// Conversion to human-readable format.
 		//
@@ -98,6 +98,6 @@ namespace std
 	template<>
 	struct hash<vtil::fnv64_hash_t>
 	{
-		size_t operator()( const vtil::fnv64_hash_t& value ) const { return value.as64(); }
+		size_t operator()( const vtil::fnv64_hash_t& value ) const { return ( size_t ) value.as64(); }
 	};
 };

@@ -94,14 +94,14 @@ namespace vtil
 		inline static T* reloc_const( const T* ptr, const void* src, void* dst )
 		{
 			int64_t reloc_delta = ( int64_t ) dst - ( int64_t ) src;
-			return ( T* ) ( ( size_t ) ptr + reloc_delta );
+			return ( T* ) ( ( uint64_t ) ptr + reloc_delta );
 		}
 
 		template<typename T>
 		inline static T& reloc_const( const T& ref, const void* src, void* dst )
 		{
 			int64_t reloc_delta = ( int64_t ) dst - ( int64_t ) src;
-			return *( T* ) ( ( size_t ) &ref + reloc_delta );
+			return *( T* ) ( ( uint64_t ) &ref + reloc_delta );
 		}
 	};
 

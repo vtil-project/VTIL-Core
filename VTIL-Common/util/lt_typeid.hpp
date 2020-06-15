@@ -48,9 +48,9 @@ namespace vtil
 				// should match for all identical binaries regardless of relocations.
 				//
 				intptr_t reloc_delta = ( intptr_t ) &value - ( intptr_t ) &lt_typeid<void>::value;
-				return ( 0x47C63F4156E0EA7F ^ reloc_delta ) * ( sizeof( T ) + reloc_delta | 3 );
+				return ( size_t ) ( ( 0x47C63F4156E0EA7F ^ reloc_delta ) * ( sizeof( T ) + reloc_delta | 3 ) );
 			}
-			return -1;
+			return ( size_t ) -1;
 		}
 	public:
 		// Stores the computed hash at process initialization time.

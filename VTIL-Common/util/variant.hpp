@@ -89,8 +89,8 @@ namespace vtil
 			//
 			struct
 			{
-				size_t copy_size : 32;
-				size_t copy_align : 32;
+				uint64_t copy_size : 32;
+				uint64_t copy_align : 32;
 			};
 
 			// Otherwise pointer to helper.
@@ -182,7 +182,7 @@ namespace vtil
 		// Gets the address of the object with the given properties.
 		// - Will throw assert failure if the variant is empty.
 		//
-		size_t get_address( size_t size, size_t align ) const;
+		uint64_t get_address( size_t size, size_t align ) const;
 
 		// Allocates the space for an object of the given properties and returns the pointer.
 		//
