@@ -91,9 +91,11 @@ namespace vtil::optimizer
 		istack_ref_substitution_pass,
 		stack_propagation_pass,
 		symbolic_rewrite_pass<true>,
-		mov_propagation_pass,
-		register_renaming_pass,
-		dead_code_elimination_pass
+		exhaust_pass<
+			mov_propagation_pass,
+			register_renaming_pass,
+			dead_code_elimination_pass
+		>
 	>;
 
 	// Combined optimization pass.
