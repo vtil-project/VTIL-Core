@@ -59,7 +59,7 @@ namespace vtil
 
 		// Last local identifier used for an internal register.
 		//
-		std::atomic<size_t> last_internal_id = { 0 };
+		std::atomic<uint32_t> last_internal_id = { 0 };
 
 		// Calling convention of the routine.
 		//
@@ -75,7 +75,7 @@ namespace vtil
 
 		// Misc. stats.
 		//
-		std::atomic<size_t> local_opt_count = 0;
+		std::atomic<size_t> local_opt_count = { 0 };
 
 		// This structure cannot be copied.
 		//
