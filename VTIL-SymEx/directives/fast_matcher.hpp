@@ -36,7 +36,7 @@ namespace vtil::symbolic::directive
 	//
 	struct symbol_table_t
 	{
-		expression::reference lookup_table[ max_lookup_index + 1 ];
+		expression::reference lookup_table[ number_of_lookup_indices ];
 
 		// Adds the mapping of a variable to an expression.
 		//

@@ -211,8 +211,8 @@ namespace vtil::symbolic::directive
 
        Used names are kept track using the table below:
        -------------------------------------------------------
-       | Free                                    | Used      |
-       | ΑΝνΒΞξΓγΟοΔπΕΡρΖζσςΗηΤτΥυΙιΦφΚκΧχΛλψΜμω | ΠΣΘΩαβδεΨ |
+       | Free                                 | Used         |
+       | ΑΝνΒΞξΓγΟοΔπΕΡρΖσςΗΤτΥυΙιΦφΚκΧχΛψΜμω | ληΠΣΘΩαζβδεΨ |
        -------------------------------------------------------
     */
 
@@ -222,20 +222,23 @@ namespace vtil::symbolic::directive
     static const instance B = { "β", 1 };
     static const instance C = { "δ", 2 };
     static const instance D = { "ε", 3 };
+    static const instance E = { "ζ", 4 };
+    static const instance F = { "η", 5 };
+    static const instance G = { "λ", 6 };
 
     // Special variables, one per type:
     // 
-    static const instance V = { "Π", 4, match_variable };
-    static const instance U = { "Σ", 5, match_constant };
-    static const instance Q = { "Ω", 6, match_expression };
-    static const instance W = { "Ψ", 7, match_non_constant };
-    static const instance X = { "Θ", 8, match_non_expression };
+    static const instance V = { "Π", 7, match_variable };
+    static const instance U = { "Σ", 8, match_constant };
+    static const instance Q = { "Ω", 9, match_expression };
+    static const instance W = { "Ψ", 10, match_non_constant };
+    static const instance X = { "Θ", 11, match_non_expression };
 
     // To avoid string comparison each directive variable gets assigned a 
-    // lookup table index. Maximum index is an arbitrary constant to avoid heap 
+    // lookup table index. This is an arbitrary constant to avoid heap 
     // allocation for the lookup table.
     //
-    static constexpr uint32_t max_lookup_index = 8;
+    static constexpr uint32_t number_of_lookup_indices = 12;
 
     // Operable-like directive operators.
     //
