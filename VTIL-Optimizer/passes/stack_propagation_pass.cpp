@@ -62,7 +62,7 @@ namespace vtil::optimizer
 		{
 			// Invoke default tracer and store the result.
 			//
-			symbolic::expression result = trace( std::move( lookup ) );
+			symbolic::expression result = cached_tracer::trace( std::move( lookup ) );
 			
 			// If result is a variable:
 			//
@@ -134,9 +134,9 @@ namespace vtil::optimizer
 
 				// Lazy-trace the value.
 				//
-				symbolic::pointer ptr = { ltracer( { it, REG_SP } ) + it->memory_location().second };
+				symbolic::pointer ptr = { ltracer.cached_tracer::trace_p( { it, REG_SP } ) + it->memory_location().second };
 				symbolic::variable var = { it, { ptr, bitcnt_t( it->access_size() * 8 ) } };
-				symbolic::expression exp = xblock ? ltracer.cached_tracer::rtrace( var ) : ltracer.cached_tracer::trace( var );
+				symbolic::expression exp = xblock ? ltracer.rtrace( var ) : ltracer.cached_tracer::trace( var );
 
 				// Resize and pack variables.
 				//
@@ -184,10 +184,10 @@ namespace vtil::optimizer
 				
 					// Skip if not a register or branch dependant.
 					//
-					symbolic::variable& var = exp.uid.get<symbolic::variable>();
-					if ( var.is_branch_dependant || !var.is_register() )
+					symbolic::variable& rvar = exp.uid.get<symbolic::variable>();
+					if ( rvar.is_branch_dependant || !rvar.is_register() )
 						return;
-					register_desc reg = var.reg();
+					register_desc reg = rvar.reg();
 
 					// If value is not alive, try hijacking the value declaration.
 					//
@@ -195,23 +195,23 @@ namespace vtil::optimizer
 					{
 						// Must be a valid (and non-end) iterator.
 						//
-						if ( var.at.is_end() )
+						if ( rvar.at.is_end() )
 						{
 							// If begin (begin&&end == invalid), fail.
 							//
-							if ( var.at.is_begin() )
+							if ( rvar.at.is_begin() )
 								return;
 
 							// Try determining the path to current block.
 							//
-							il_const_iterator it_rstr = var.at;
+							il_const_iterator it_rstr = rvar.at;
 							it_rstr.restrict_path( it.container, true );
 							std::vector<il_const_iterator> next = it_rstr.recurse( true );
 
 							// If single direction possible, replace iterator, otherwise fail.
 							//
 							if ( next.size() == 1 )
-								var.bind( next[ 0 ] );
+								rvar.bind( next[ 0 ] );
 							else
 								return;
 						}
