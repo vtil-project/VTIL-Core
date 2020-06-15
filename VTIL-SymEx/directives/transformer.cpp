@@ -62,7 +62,7 @@ namespace vtil::symbolic
 			//
 			if ( dir->op == math::operator_id::invalid )
 			{
-				if ( !dir->id ) return expression{ dir->get().value(), bit_cnt };
+				if ( !dir->id ) return expression{ dir->get().value(), bit_cnt ? bit_cnt : 64 };
 				else            return sym.translate( dir );
 			}
 			// If it is an expression:
@@ -84,7 +84,7 @@ namespace vtil::symbolic
 				if ( dir->op == math::operator_id::ucast ||
 					 dir->op == math::operator_id::cast )
 				{
-					auto lhs = translate( sym, dir->lhs, bit_cnt, speculative_condition, max_depth );
+					auto lhs = translate( sym, dir->lhs, 0, speculative_condition, max_depth );
 					if ( !lhs )	return {};
 					auto rhs = translate( sym, dir->rhs, bit_cnt, speculative_condition, max_depth );
 					if ( !rhs ) return {};
@@ -182,7 +182,7 @@ namespace vtil::symbolic
 			{
 				// Translate left hand side, if failed to do so or is not equal to [true], fail.
 				//
-				auto condition_status = translate( sym, dir->lhs, bit_cnt, false, max_depth );
+				auto condition_status = translate( sym, dir->lhs, 0, false, max_depth );
 				if ( !condition_status || !( +condition_status )->simplify().get().value_or( false ) )
 				{
 #if VTIL_SYMEX_SIMPLIFY_VERBOSE

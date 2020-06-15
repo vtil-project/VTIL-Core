@@ -383,6 +383,7 @@ namespace vtil::symbolic::directive
     //
     static const std::pair<instance::reference, instance::reference> pack_descriptors[] =
     {
+        { __ucast(A>>B, 0x1),                                 __bt(A, B) },
         { (A>>B)&1,                                           __ucast(__bt(A,B),__bcnt(A)) },
         { (A&B)>>C,                                           __iff((B>>C)==1u, __ucast(__bt(A,C),__bcnt(A))) },
         { __if(A<=B,A)|__if(A>B,B),                           __min(A,B) },
@@ -403,7 +404,7 @@ namespace vtil::symbolic::directive
     //
     static const std::pair<instance::reference, instance::reference> unpack_descriptors[] =
     {
-        { __bt(A,B),                                          __ucast((A>>B)&1,1) },
+        { __bt(A,B),                                          __ucast((A&(1<<B))>>B,1) },
         { __min(A,B),                                         __if(A<=B,A)|__if(A>B,B) },
         { __max(A,B),                                         __if(A>=B,A)|__if(A<B,B) },
         { __umin(A,B),                                        __if(__uless_eq(A,B),A)|__if(__ugreat(A,B),B) },

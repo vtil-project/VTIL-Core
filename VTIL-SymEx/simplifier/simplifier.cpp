@@ -50,7 +50,7 @@ namespace vtil::symbolic
 
 	// Attempts to prettify the expression given.
 	//
-	static void prettify_expression( expression::reference& exp )
+	static bool prettify_expression( expression::reference& exp )
 	{
 		using namespace logger;
 #if VTIL_SYMEX_SIMPLIFY_VERBOSE
@@ -58,13 +58,21 @@ namespace vtil::symbolic
 		log<CON_CYN>( "[Prettify]  = %s\n", *exp );
 #endif
 
-		// Prettify each operand
+		// Prettify each operand.
 		//
 		auto pexp = +exp;
 		for ( auto* op_ptr : { &pexp->lhs, &pexp->rhs } )
 		{
 			if ( !op_ptr->is_valid() ) continue;
-			prettify_expression( *op_ptr );
+			
+			// If successful, recurse.
+			//
+			if ( prettify_expression( *op_ptr ) )
+			{
+				pexp->update( false );
+				simplify_expression( exp, true, -1, false );
+				return true;
+			}
 		}
 
 		// Update the expression.
@@ -84,19 +92,20 @@ namespace vtil::symbolic
 				log<CON_GRN>( "= %s\n", *exp );
 #endif
 				exp = exp_new;
-				return;
+				return true;
 			}
 		}
 
 #if VTIL_SYMEX_SIMPLIFY_VERBOSE
 		log<CON_YLW>( "= %s\n", *exp );
 #endif
+		return false;
 	}
 
 	// Attempts to simplify the expression given, returns whether the simplification
 	// succeeded or not.
 	//
-	bool simplify_expression( expression::reference& exp, bool pretty, int64_t max_depth )
+	bool simplify_expression( expression::reference& exp, bool pretty, int64_t max_depth, bool unpack )
 	{
 		using namespace logger;
 
@@ -107,7 +116,7 @@ namespace vtil::symbolic
 		//
 		if ( exp->simplify_hint )
 		{
-			if ( pretty ) 
+			if ( pretty )
 				prettify_expression( exp );
 			return false;
 		}
@@ -116,6 +125,65 @@ namespace vtil::symbolic
 		//
 		if ( !exp->is_expression() )
 			return false;
+
+		// If trying to simplify resizing:
+		//
+		if ( exp->op == math::operator_id::ucast ||
+			 exp->op == math::operator_id::cast )
+		{
+			// If the temporary disable flag to prevent stack overflow is set:
+			//
+			static thread_local bool temp_disable = false;
+			if ( temp_disable )
+			{
+				// Toggle temporary disable bit.
+				//
+				temp_disable = false;
+
+				// If left hand side simplifies:
+				//
+				expression::reference op_ref = exp->lhs;
+				if ( simplify_expression( op_ref, pretty, max_depth - 1, unpack ) )
+				{
+					// Own the reference and relocate the pointer.
+					//
+					auto [exp_new, op_new] = exp.own( &exp->lhs );
+
+					// Update the expression and indicate success.
+					//
+					*op_new = op_ref;
+					exp_new->update( false );
+					exp_new->simplify_hint = true;
+				}
+
+				// Toggle temporary disable bit.
+				//
+				temp_disable = true;
+			}
+			else
+			{
+				// Simplify left hand side with the exact same arguments.
+				//
+				expression::reference exp_new = exp->lhs;
+				bool simplified = simplify_expression( exp_new, pretty, max_depth - 1, unpack );
+
+				// Toggle temporary disable bit and invoke resize.
+				//
+				temp_disable = true;
+				( +exp_new )->resize( *exp->rhs->get(), exp->op == math::operator_id::cast );
+				temp_disable = false;
+
+				// If operand was simplified or if the complexity reduced, indicate success. 
+				//
+				if ( simplified || exp_new->complexity < exp->complexity )
+				{
+					( +exp_new )->simplify_hint = true;
+					exp = exp_new;
+				}
+			}
+			return exp->simplify_hint;
+		}
+
 
 #if VTIL_SYMEX_SIMPLIFY_VERBOSE
 		// Log the input.
@@ -309,27 +377,32 @@ namespace vtil::symbolic
 			}
 		}
 
-		// Enumerate each unpack descriptor:
+		// Unpack the expression if requested:
 		//
-		for ( auto& [dir_src, dir_dst] : directive::unpack_descriptors )
+		if ( unpack )
 		{
-			// If we can transform the expression by the directive set:
+			// Enumerate each unpack descriptor:
 			//
-			if ( auto exp_new = transform( exp, dir_src, dir_dst, 
-				 [ & ] ( auto& exp_new ) { simplify_expression( exp_new, pretty, max_depth - 1 ); return exp_new->complexity < exp->complexity; }, max_depth ) )
+			for ( auto& [dir_src, dir_dst] : directive::unpack_descriptors )
 			{
+				// If we can transform the expression by the directive set:
+				//
+				if ( auto exp_new = transform( exp, dir_src, dir_dst, 
+					 [ & ] ( auto& exp_new ) { simplify_expression( exp_new, true, max_depth - 1 ); return exp_new->complexity < exp->complexity; }, max_depth ) )
+				{
 #if VTIL_SYMEX_SIMPLIFY_VERBOSE
-				log<CON_YLW>( "[Unpack] %s => %s\n", *dir_src, *dir_dst );
-				log<CON_GRN>( "= %s [By unpack directive]\n", *exp_new );
+					log<CON_YLW>( "[Unpack] %s => %s\n", *dir_src, *dir_dst );
+					log<CON_GRN>( "= %s [By unpack directive]\n", *exp_new );
 #endif
 
-				// Set the hint and return the simplified instance.
-				//
-				( +exp_new )->simplify_hint = true;
-				cache_entry = exp_new;
-				success_flag = true;
-				exp = exp_new;
-				return success_flag;
+					// Set the hint and return the simplified instance.
+					//
+					( +exp_new )->simplify_hint = true;
+					cache_entry = exp_new;
+					success_flag = true;
+					exp = exp_new;
+					return success_flag;
+				}
 			}
 		}
 
