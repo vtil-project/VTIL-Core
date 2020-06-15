@@ -107,11 +107,6 @@ namespace vtil::optimizer
 			//
 			return vm.symbolic_vm::execute( ins );
 		};
-		
-		// If block is the entry point, declare flags reset.
-		//
-		if ( blk == blk->owner->entry_point )
-			vm.write_register( REG_FLAGS, 0ull );
 
 		// Allocate a temporary block.
 		//
@@ -164,16 +159,46 @@ namespace vtil::optimizer
 					}
 				}
 
-				// Pack registers and the expression.
+				// If flags register:
 				//
-				v = symbolic::variable::pack_all( v.simplify( true ) );
+				if ( k.is_flags() )
+				{
+					// For each bit:
+					//
+					for ( int i = 0; i < k.bit_count; i++ )
+					{
+						// Skip if unchanged.
+						//
+						auto subexp = __bt( v, i );
+						if ( subexp.equals( __bt( v0, i ) ) )
+							continue;
+						
+						// Pack registers and the expression.
+						//
+						auto sv = symbolic::variable::pack_all( subexp );
 
-				// TODO: Prefer bitwise mov for $flags.
+						// Buffer a mov instruction to the exact bit.
+						//
+						register_desc ks = k;
+						ks.bit_offset += i;
+						ks.bit_count = 1;
+						instruction_buffer.push_back( { &ins::mov, { ks, translator << sv } } );
+					}
+				}
+				// If general purpose register:
 				//
+				else
+				{
+					fassert( !k.is_stack_pointer() && !k.is_read_only() );
 
-				// Buffer a mov instruction.
-				//
-				instruction_buffer.push_back( { &ins::mov, { k, translator << v } } );
+					// Pack registers and the expression.
+					//
+					v = symbolic::variable::pack_all( v.simplify( true ) );
+
+					// Buffer a mov instruction.
+					//
+					instruction_buffer.push_back( { &ins::mov, { k, translator << v } } );
+				}
 			}
 
 			// For each memory state:
