@@ -194,7 +194,8 @@ namespace vtil::symbolic::directive
 
         // Simplify manual sign extension.
         //
-        { __ucast(A, B)|(__ucast((0x1+~(A>>U)), B)<<C),       __iff((B>__bcnt(A))&(U==(__bcnt(A)-1))&(C==__bcnt(A)), __cast(A, B)) },
+        { __ucast(A, B)|(__ucast((0x1+~(A>>U)), B)<<C),       __iff((B>__bcnt(A))&(U==(__bcnt(A)-1))&(C==__bcnt(A)), __cast(A,B)) },
+        { __ucast(A, B)|((~(__ucast(A,B)>>U)+0x1)<<C),        __iff((B>__bcnt(A))&(U==(__bcnt(A)-1))&(C==__bcnt(A)), __cast(A,B)) },
     };
 
     // Describes the way operands of two operators join each other.
