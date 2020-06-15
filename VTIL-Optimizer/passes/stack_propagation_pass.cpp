@@ -47,8 +47,11 @@ namespace vtil::optimizer
 			//
 			if ( !lookup.at.is_end() && *lookup.at->base == ins::str &&
 				 lookup.is_register() && lookup.at->operands[ 2 ].is_register() &&
-				 lookup.reg().overlaps( lookup.at->operands[ 2 ].reg() ) )
+				 lookup.reg() == lookup.at->operands[ 2 ].reg() &&
+				 !lookup.reg().is_stack_pointer() )
+			{
 				return lookup.to_expression();
+			}
 
 			// Fallback to default tracer.
 			//
