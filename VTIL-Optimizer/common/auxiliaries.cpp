@@ -522,13 +522,19 @@ namespace vtil::optimizer::aux
 			//
 			using namespace symbolic::directive;
 			std::vector<symbol_table_t> results;
-			if ( fast_match( &results, U + ( __if( A, C ) + __if( B, D ) ), destination ) )
+			if ( fast_match( &results, A + ( __if( B, D ) + __if( C, E ) ), destination ) ||
+				 fast_match( &results, A + ( __if( B, D ) | __if( C, E ) ), destination ) ||
+				 fast_match( &results, __if( B, D ) + __if( C, E ), destination ) ||
+				 fast_match( &results, __if( B, D ) | __if( C, E ), destination ) )
 			{
 				auto& sym = results.front();
-				if ( sym.translate( A )->equals( ~sym.translate( B ) ) )
+				sym.add( A, symbolic::expression{ 0, 64 } );
+
+				if ( sym.translate( B )->equals( ~sym.translate( C ) ) )
 				{
-					targets.emplace_back( real, sym.translate( U ) + sym.translate( C ) );
-					targets.emplace_back( real, sym.translate( U ) + sym.translate( D ) );
+					auto reloc = sym.translate( A );
+					targets.emplace_back( real, reloc + sym.translate( D ) );
+					targets.emplace_back( real, reloc + sym.translate( E ) );
 					return;
 				}
 			}
