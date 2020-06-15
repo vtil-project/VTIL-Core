@@ -59,6 +59,13 @@ namespace vtil
 		symbolic::expression trace_p( symbolic::variable lookup ) { return symbolic::variable::pack_all( trace( std::move( lookup ) ) ); }
 		symbolic::expression rtrace_p( symbolic::variable lookup, int64_t limit = -1 ) { return symbolic::variable::pack_all( rtrace( std::move( lookup ), limit ) ); }
 
+		// Wrappers around trace(_p) and rtrace(_p) that can trace an entire expression.
+		//
+		symbolic::expression trace_exp( const symbolic::expression& exp );
+		symbolic::expression rtrace_exp( const symbolic::expression& exp, int64_t limit = -1 );
+		symbolic::expression trace_pexp( const symbolic::expression& exp ) { return symbolic::variable::pack_all( trace_exp( exp ) ); }
+		symbolic::expression rtrace_pexp( const symbolic::expression& exp, int64_t limit = -1 ) { return symbolic::variable::pack_all( rtrace_exp( exp, limit ) ); }
+
 		// Operator() wraps basic tracing with packing.
 		//
 		auto operator()( symbolic::variable lookup ) { return trace_p( std::move( lookup ) ); }
