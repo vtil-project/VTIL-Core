@@ -159,9 +159,9 @@ namespace vtil::optimizer
 					}
 				}
 
-				// If flags register:
+				// If partially inherited flags register:
 				//
-				if ( k.is_flags() )
+				if ( k.is_flags() && k.bit_count != 64 )
 				{
 					// For each bit:
 					//
@@ -184,21 +184,20 @@ namespace vtil::optimizer
 						ks.bit_count = 1;
 						instruction_buffer.push_back( { &ins::mov, { ks, translator << sv } } );
 					}
+					continue;
 				}
-				// If general purpose register:
+				
+				// Validate the register output.
 				//
-				else
-				{
-					fassert( !k.is_stack_pointer() && !k.is_read_only() );
+				fassert( !k.is_stack_pointer() && !k.is_read_only() );
 
-					// Pack registers and the expression.
-					//
-					v = symbolic::variable::pack_all( v.simplify( true ) );
+				// Pack registers and the expression.
+				//
+				v = symbolic::variable::pack_all( v.simplify( true ) );
 
-					// Buffer a mov instruction.
-					//
-					instruction_buffer.push_back( { &ins::mov, { k, translator << v } } );
-				}
+				// Buffer a mov instruction.
+				//
+				instruction_buffer.push_back( { &ins::mov, { k, translator << v } } );
 			}
 
 			// For each memory state:
