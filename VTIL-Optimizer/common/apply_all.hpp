@@ -93,8 +93,7 @@ namespace vtil::optimizer
 		symbolic_rewrite_pass<true>,
 		exhaust_pass<
 			mov_propagation_pass,
-			register_renaming_pass,
-			dead_code_elimination_pass
+			register_renaming_pass
 		>
 	>;
 

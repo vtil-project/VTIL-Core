@@ -191,7 +191,7 @@ namespace vtil::optimizer
 
 					// If value is not alive, try hijacking the value declaration.
 					//
-					if ( !aux::is_alive( var, it, &ctracer ) )
+					if ( !aux::is_alive( rvar, it, &ctracer ) )
 					{
 						// Must be a valid (and non-end) iterator.
 						//
@@ -218,7 +218,7 @@ namespace vtil::optimizer
 
 						// Push to swap buffer.
 						//
-						ins_revive_swap_buffer.emplace_back( it, new_instruction, var );
+						ins_revive_swap_buffer.emplace_back( it, new_instruction, rvar );
 					}
 					else
 					{
@@ -235,16 +235,16 @@ namespace vtil::optimizer
 		lock = {};
 		cnd_unique_lock _g( mtx, xblock );
 
-		for ( auto [it, ins, var] : ins_revive_swap_buffer )
-		{
-			it->base = ins;
-			it->operands = { it->operands[ 0 ], aux::revive_register( var, it ) };
-			fassert( it->is_valid() );
-		}
 		for ( auto [it, ins, op] : ins_swap_buffer )
 		{
 			it->base = ins;
 			it->operands = { it->operands[ 0 ], op };
+			fassert( it->is_valid() );
+		}
+		for ( auto [it, ins, var] : ins_revive_swap_buffer )
+		{
+			it->base = ins;
+			it->operands = { it->operands[ 0 ], aux::revive_register( var, it ) };
 			fassert( it->is_valid() );
 		}
 		return ins_swap_buffer.size() + ins_revive_swap_buffer.size();
