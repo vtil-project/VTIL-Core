@@ -394,34 +394,6 @@ namespace vtil
 		if ( lookup.at.is_begin() || ( lookup.is_register() && ( lookup.reg().flags & ( register_volatile | register_readonly ) ) ) )
 			return lookup.to_expression();
 
-	#ifdef _DEBUG
-		// If memory, make sure pointer is expressed as a variable within current block.
-		//
-		if ( lookup.is_memory() )
-		{
-			using validator_t = std::function<void( const symbolic::expression& )>;
-			static const std::function<validator_t( const basic_block* )> make_validator = [ ] ( const basic_block* container )
-			{
-				return[ container = std::move( container ) ]( auto& exp )
-				{
-					if ( exp.is_variable() )
-					{
-						// Make sure it either has no iterator or belongs to the current container.
-						//
-						auto& var = exp.uid.get<symbolic::variable>();
-						fassert( !var.at.is_valid() || var.at.container == container );
-
-						// If memory variable, validate pointer as well.
-						//
-						if ( var.is_memory() )
-							var.mem().decay().enumerate( make_validator( container ) );
-					}
-				};
-			};
-			lookup.mem().decay().enumerate( make_validator( lookup.at.container ) );
-		}
-	#endif
-
 		// Fast forward until iterator writes to the lookup, if none found return as is.
 		//
 		symbolic::access_details details = {};
