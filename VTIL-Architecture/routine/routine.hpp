@@ -59,7 +59,7 @@ namespace vtil
 
 		// Last local identifier used for an internal register.
 		//
-		std::atomic<uint32_t> last_internal_id = { 0 };
+		std::atomic<uint64_t> last_internal_id = { 0 };
 
 		// Calling convention of the routine.
 		//

@@ -190,7 +190,7 @@ namespace vtil
 
 		// Determine last internal id.
 		//
-		size_t last_internal_id = 0;
+		uint64_t last_internal_id = 0;
 		for ( auto& [v, block] : rtn->explored_blocks )
 		{
 			for ( auto& ins : *block )
