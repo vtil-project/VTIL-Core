@@ -242,6 +242,8 @@ namespace vtil::optimizer
 				//
 				fassert( it->is_valid() );
 				counter++;
+				ctracer.flush();
+				ltracer.flush();
 			});
 		return counter;
 	}

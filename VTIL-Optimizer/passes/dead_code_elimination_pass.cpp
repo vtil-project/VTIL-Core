@@ -52,8 +52,6 @@ namespace vtil::optimizer
 	{
 		size_t counter = 0;
 
-		if ( !xblock ) ctrace.flush();
-
 		auto [rbegin, rend] = reverse_iterators( *blk );
 		for ( auto it = rbegin; it != rend; ++it )
 		{

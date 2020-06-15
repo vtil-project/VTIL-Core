@@ -107,6 +107,11 @@ namespace vtil::optimizer
 			//
 			return vm.symbolic_vm::execute( ins );
 		};
+		
+		// If block is the entry point, declare flags reset.
+		//
+		if ( blk == blk->owner->entry_point )
+			vm.write_register( REG_FLAGS, 0ull );
 
 		// Allocate a temporary block.
 		//
@@ -116,10 +121,6 @@ namespace vtil::optimizer
 
 		for ( il_const_iterator it = blk->begin(); !it.is_end(); )
 		{
-			// Reset virtual machine state.
-			//
-			vm.reset();
-
 			// Execute starting from the instruction.
 			//
 			auto limit = vm.run( it, true );
@@ -251,6 +252,10 @@ namespace vtil::optimizer
 				it = std::next( limit );
 				temporary_block.sp_index = it.is_end() ? blk->sp_index : it->sp_index;
 			}
+
+			// Reset virtual machine state.
+			//
+			vm.reset();
 		}
 
 		// Skip rewriting if we produced larger code.

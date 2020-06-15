@@ -124,9 +124,8 @@ namespace vtil::optimizer
 	}
 	size_t bblock_extension_pass::xpass( routine* rtn )
 	{
-		// Clear visit list and invoke recursive extender.
+		// Invoke recursive extender.
 		//
-		visit_list = {};
 		return pass( rtn->entry_point, true );
 	}
 };

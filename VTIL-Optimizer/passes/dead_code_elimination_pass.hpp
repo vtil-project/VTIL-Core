@@ -56,8 +56,6 @@ namespace vtil::optimizer
 		}
 		size_t xpass( routine* rtn ) override
 		{
-			ctrace.flush();
-			visited.clear();
 			return cpass( rtn->entry_point );
 		}
 	};

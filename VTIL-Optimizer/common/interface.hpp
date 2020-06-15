@@ -135,19 +135,23 @@ namespace vtil::optimizer
 	// Passes through each optimizer provided until the passes do not change the block.
 	//
 	template<typename... Tx>
-	struct exhaust_pass : combine_pass<Tx...>
+	struct exhaust_pass : pass_interface<>
 	{
 		// Simple looping until pass returns 0.
 		//
 		size_t pass( basic_block* blk, bool xblock = false ) override
 		{ 
-			size_t cnt = combine_pass<Tx...>::pass( blk, xblock );
-			return cnt ? cnt + exhaust_pass::pass( blk, xblock ) : 0;
+			size_t cnt = 0;
+			while ( size_t n = combine_pass<Tx...>{}.pass( blk, xblock ) )
+				cnt += n;
+			return cnt;
 		}
 		size_t xpass( routine* rtn ) override
 		{
-			size_t cnt = combine_pass<Tx...>::xpass( rtn );
-			return cnt ? cnt + exhaust_pass::xpass( rtn ) : 0;
+			size_t cnt = 0;
+			while ( size_t n = combine_pass<Tx...>{}.xpass( rtn ) )
+				cnt += n;
+			return cnt;
 		}
 		std::string name() override { return "exhaust{" + combine_pass<Tx...>{}.name() + "}"; }
 	};
@@ -251,13 +255,16 @@ namespace vtil::optimizer
 		struct apply_each_opt_t { using type = modifier<compound>; };
 
 		template<template<typename...> typename modifier, typename... parts>
-		struct apply_each_opt_t<modifier, exhaust_pass<parts...>>    { using type =    exhaust_pass<typename apply_each_opt_t<modifier, parts>::type...>; };
+		struct apply_each_opt_t<modifier, spawn_state<parts...>>      { using type =   spawn_state<typename apply_each_opt_t<modifier, parts>::type...>;    };
 
 		template<template<typename...> typename modifier, typename... parts>
-		struct apply_each_opt_t<modifier, combine_pass<parts...>>    { using type =    combine_pass<typename apply_each_opt_t<modifier, parts>::type...>; };
+		struct apply_each_opt_t<modifier, exhaust_pass<parts...>>     { using type =    exhaust_pass<typename apply_each_opt_t<modifier, parts>::type...>;  };
 
 		template<template<typename...> typename modifier, typename... parts>
-		struct apply_each_opt_t<modifier, specialize_pass<parts...>> { using type = specialize_pass<typename apply_each_opt_t<modifier, parts>::type...>; };
+		struct apply_each_opt_t<modifier, combine_pass<parts...>>     { using type =    combine_pass<typename apply_each_opt_t<modifier, parts>::type...>;  };
+
+		template<template<typename...> typename modifier, typename... parts>
+		struct apply_each_opt_t<modifier, specialize_pass<parts...>>  { using type = specialize_pass<typename apply_each_opt_t<modifier, parts>::type...>;  };
 
 		template<template<typename...> typename modifier, typename... parts>
 		struct apply_each_opt_t<modifier, conditional_pass<parts...>> { using type = conditional_pass<typename apply_each_opt_t<modifier, parts>::type...>; };
