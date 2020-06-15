@@ -34,8 +34,9 @@ namespace vtil::optimizer
 	// Attempts to resolve all loads from stack where the value can be 
 	// determined during compile time.
 	//
-	struct stack_propagation_pass : pass_interface<true>
+	struct stack_propagation_pass : pass_interface<>
 	{
+		std::shared_mutex mtx;
 		size_t pass( basic_block* blk, bool xblock = false ) override;
 	};
 };
