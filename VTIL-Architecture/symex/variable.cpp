@@ -216,46 +216,42 @@ namespace vtil::symbolic
 		{
 			// If instruction accesses memory:
 			//
-			if ( it->base->accesses_memory() )
+			if ( ( write && it->base->writes_memory() ) ||
+				 ( read && it->base->reads_memory() ) ||
+				 ( !read && !write && it->base->accesses_memory() ) )
 			{
-				// If access type matches:
+				// Generate an expression for the pointer.
 				//
-				if ( ( write && it->base->writes_memory() ) ||
-					 ( read && !it->base->writes_memory() ) )
+				auto [base, offset] = it->memory_location();
+				pointer ptr = { tracer->trace( { it, base } ) + offset };
+
+				// Calculate displacement.
+				//
+				access_details details;
+				fill_displacement( &details, ptr, mem->base, tracer );
+
+				// If pointers can indeed overlap:
+				//
+				if ( details )
 				{
-					// Generate an expression for the pointer.
+					// Fill read/write.
 					//
-					auto [base, offset] = it->memory_location();
-					pointer ptr = { tracer->trace( { it, base } ) + offset };
+					details.read = it->base->reads_memory();
+					details.write = it->base->writes_memory();
 
-					// Calculate displacement.
+					// If offset is unknown, return as is.
 					//
-					access_details details;
-					fill_displacement( &details, ptr, mem->base, tracer );
+					if ( details.is_unknown() )
+						return details;
 
-					// If pointers can indeed overlap:
+					// Check if within boundaries, set bit count and return if so.
 					//
-					if ( details )
+					bitcnt_t low_offset = details.bit_offset;
+					bitcnt_t high_offset = low_offset + ( bitcnt_t ) it->access_size() * 8;
+					if ( low_offset < mem->bit_count && high_offset > 0 )
 					{
-						// Fill read/write.
-						//
-						details.read = !it->base->writes_memory();
-						details.write = it->base->writes_memory();
-
-						// If offset is unknown, return as is.
-						//
-						if ( details.is_unknown() )
-							return details;
-
-						// Check if within boundaries, set bit count and return if so.
-						//
-						bitcnt_t low_offset = details.bit_offset;
-						bitcnt_t high_offset = low_offset + ( bitcnt_t ) it->access_size() * 8;
-						if ( low_offset < mem->bit_count && high_offset > 0 )
-						{
-							details.bit_count = ( bitcnt_t ) it->access_size() * 8;
-							return details;
-						}
+						details.bit_count = ( bitcnt_t ) it->access_size() * 8;
+						return details;
 					}
 				}
 			}
