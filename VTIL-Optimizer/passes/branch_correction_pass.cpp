@@ -218,7 +218,7 @@ namespace vtil::optimizer
 			//
 			for ( auto it = rtn->explored_blocks.begin(); it != rtn->explored_blocks.end(); )
 			{
-				if ( it->second->prev.size() == 0 )
+				if ( it->second->prev.size() == 0 && it->second != rtn->entry_point )
 					it = rtn->explored_blocks.erase( it );
 				else
 					++it;
