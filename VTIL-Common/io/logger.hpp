@@ -233,6 +233,14 @@ namespace vtil::logger
 		return log( color, fmt, std::forward<params>( ps )... );
 	}
 
+	// Prints a warning message.
+	//
+	template<typename... params>
+	static int warning( const char* fmt, params&&... ps )
+	{
+		return log( CON_YLW, fmt, std::forward<params>( ps )... );
+	}
+
 	// Prints an error message and breaks the execution.
 	//
 	template<typename... params>
