@@ -38,7 +38,7 @@ namespace vtil::optimizer
 
 	// Implement the pass.
 	//
-	size_t symbolic_rewrite_pass::pass( basic_block* blk, bool xblock )
+	size_t isymbolic_rewrite_pass::pass( basic_block* blk, bool xblock )
 	{
 		// Acquire shared mutex and create cached tracer.
 		//
@@ -262,7 +262,10 @@ namespace vtil::optimizer
 		//
 		int64_t opt_count = blk->stream.size() - temporary_block.stream.size();
 		if ( opt_count <= 0 )
-			return 0;
+		{
+			if ( !force ) return 0;
+			opt_count = 0;
+		}
 
 		// Acquire a unique lock and rewrite the stream. Purge simplifier cache since block 
 		// iterators are now invalidated making the cache also invalid.

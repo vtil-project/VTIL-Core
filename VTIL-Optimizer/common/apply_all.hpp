@@ -62,7 +62,10 @@ namespace vtil::optimizer
 		dead_code_elimination_pass,
 		conditional_pass<
 			opaque_predicate_elimination_pass,
-			bblock_extension_pass
+			conditional_pass<
+				bblock_extension_pass, 
+				symbolic_rewrite_pass<true>
+			>
 		>
 	>;
 
@@ -71,9 +74,11 @@ namespace vtil::optimizer
 	using collective_cross_pass = combine_pass<
 		collective_routine_correction_pass,
 		collective_propagation_pass,
+		symbolic_rewrite_pass<true>,
+		collective_propagation_pass,
 		exhaust_pass<
 			conditional_pass<
-				symbolic_rewrite_pass,
+				symbolic_rewrite_pass<false>,
 				collective_propagation_pass
 			>
 		>
@@ -84,13 +89,11 @@ namespace vtil::optimizer
 	using collective_local_pass = combine_pass<
 		stack_pinning_pass,
 		istack_ref_substitution_pass,
-		exhaust_pass<
-			stack_propagation_pass,
-			mov_propagation_pass,
-			register_renaming_pass,
-			dead_code_elimination_pass,
-			symbolic_rewrite_pass
-		>
+		stack_propagation_pass,
+		symbolic_rewrite_pass<true>,
+		mov_propagation_pass,
+		register_renaming_pass,
+		dead_code_elimination_pass
 	>;
 
 	// Combined optimization pass.
