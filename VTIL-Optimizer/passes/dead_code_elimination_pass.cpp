@@ -52,6 +52,9 @@ namespace vtil::optimizer
 	{
 		size_t counter = 0;
 
+		if ( blk->stream.empty() )
+			return 0;
+
 		auto [rbegin, rend] = reverse_iterators( *blk );
 		for ( auto it = rbegin; it != rend; ++it )
 		{

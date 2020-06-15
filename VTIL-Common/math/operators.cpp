@@ -25,6 +25,7 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE  
 // POSSIBILITY OF SUCH DAMAGE.        
 //
+#include "../io/logger.hpp"
 #include "operators.hpp"
 #include "../util/mul128.hpp"
 
@@ -84,6 +85,8 @@ namespace vtil::math
     //
     std::pair<uint64_t, bitcnt_t> evaluate( operator_id id, bitcnt_t bcnt_lhs, uint64_t lhs, bitcnt_t bcnt_rhs, uint64_t rhs )
     {
+        using namespace logger;
+
         // Normalize the input.
         //
         const operator_desc* desc = descriptor_of( id );
@@ -135,11 +138,15 @@ namespace vtil::math
                                                         : ( lhs * rhs ) >> bcnt_res;                                break;
             case operator_id::multiply:         result = ilhs * irhs;                                               break;
             case operator_id::umultiply:        result = lhs * rhs;                                                 break;
-            case operator_id::divide:           result = ilhs / irhs;                                               break;
-            case operator_id::udivide:          result = lhs / rhs;                                                 break;
-            case operator_id::remainder:        result = ilhs % irhs;                                               break;
-            case operator_id::uremainder:       result = lhs % rhs;                                                 break;
 
+            case operator_id::divide:           if( irhs == 0 ) result = INT64_MAX, warning("Division by immediate zero (IDIV).");
+                                                else            result = ilhs / irhs;                               break;
+            case operator_id::udivide:          if( rhs == 0 )  result = UINT64_MAX, warning("Division by immediate zero (DIV).");
+                                                else            result = lhs / rhs;                                 break;
+            case operator_id::remainder:        if( irhs == 0 ) result = 0, warning("Division by immediate zero (IREM).");
+                                                else            result = ilhs % irhs;                               break;
+            case operator_id::uremainder:       if( rhs == 0 )  result = 0, warning("Division by immediate zero (REM).");
+                                                else            result = lhs % rhs;                                 break;
             // - Special operators.                                                          
             //                                                                                  
             case operator_id::popcnt:           result = popcnt( rhs );                                             break;

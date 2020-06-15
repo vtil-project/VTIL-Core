@@ -236,9 +236,31 @@ namespace vtil::logger
 	// Prints a warning message.
 	//
 	template<typename... params>
-	static int warning( const char* fmt, params&&... ps )
+	static void warning( const char* fmt, params&&... ps )
 	{
-		return log( CON_YLW, fmt, std::forward<params>( ps )... );
+		// Format warning message.
+		//
+		std::string message = format::str(
+			fmt,
+			format::fix_parameter<params>( std::forward<params>( ps ) )...
+		);
+
+		// Acquire the lock.
+		//
+		std::lock_guard _g{ state::get()->lock };
+		
+		// Reset padding.
+		//
+		int old_padding = state::get()->padding;
+		state::get()->padding = 0;
+
+		// Print the warning.
+		//
+		log( "[!] Warning: %s\n", message );
+
+		// Restore the padding and return.
+		//
+		state::get()->padding = old_padding;
 	}
 
 	// Prints an error message and breaks the execution.
@@ -260,7 +282,7 @@ namespace vtil::logger
 		// Reset padding and print error message.
 		//
 		state::get()->padding = 0;
-		log<CON_RED>( "\n%s\n", message.data() );
+		log( CON_RED, "[*] Error: %s\n", message );
 
 		// Break the program. 
 		//
