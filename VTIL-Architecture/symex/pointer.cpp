@@ -186,6 +186,6 @@ namespace vtil::symbolic
 	//
 	bool pointer::can_overlap( const pointer& o ) const
 	{
-		return ( flags & o.flags ) == o.flags;
+		return flags & o.flags;
 	}
 };
