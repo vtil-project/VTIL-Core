@@ -43,8 +43,15 @@ namespace vtil::optimizer
 			return 0;
 
 		size_t cnt = 0;
-		// Analyse the branching instruction.
+
+		// Analyse the branch first locally, next globally.
 		//
+		cached_tracer local_tracer = {};
+		auto lbranch_info = aux::analyze_branch( blk, &local_tracer, false, false );
+		ctracer.mtx.lock();
+		for ( auto& [k, v] : local_tracer.cache )
+			ctracer.cache[ k ] = v;
+		ctracer.mtx.unlock();
 		auto branch_info = aux::analyze_branch( blk, &ctracer, true );
 
 		// If branching to real, assert single next block.
@@ -93,106 +100,97 @@ namespace vtil::optimizer
 
 		// If branch is jmp where it could be jcc:
 		//
-		if ( branch_info.is_jcc && *branch->base == ins::jmp )
+		if ( branch_info.is_jcc && 
+			 lbranch_info.is_jcc && 
+			 *branch->base == ins::jmp )
 		{
-			// Demote conditional to local block:
+			// Attempts to revive an expression via cache.
 			//
-			cached_tracer local_tracer;
-			auto lbranch_info = aux::analyze_branch( blk, &local_tracer, false, false );
-			if ( lbranch_info.is_jcc )
+			const auto revive_via_cache = [ & ] ( const symbolic::expression& exp, cached_tracer* tr ) -> std::future<operand>
 			{
-				// Attempts to revive an expression via cache.
+				// If immediate return as is.
 				//
-				const auto revive_via_cache = [ & ] ( const symbolic::expression& exp, cached_tracer* tr ) -> std::future<operand>
-				{
-					// If immediate return as is.
-					//
-					if ( exp.is_constant() )
-						return std::async( std::launch::deferred, [ op = operand{ *exp.get<uint64_t>(), exp.size() } ]() { return op; } );
+				if ( exp.is_constant() )
+					return std::async( std::launch::deferred, [ op = operand{ *exp.get<uint64_t>(), exp.size() } ]() { return op; } );
 
-					// If expression is not a register:
+				// If expression is not a register:
+				//
+				symbolic::variable var_reg;
+				if ( !exp.is_variable() || !exp.uid.get<symbolic::variable>().is_register() )
+				{
+					// Iterate cache entries:
 					//
-					symbolic::variable var_reg;
-					if ( !exp.is_variable() || !exp.uid.get<symbolic::variable>().is_register() )
+					std::shared_lock _g{ tr->mtx };
+					for ( auto& [var, ex] : tr->cache )
 					{
-						// Iterate cache entries:
+						// Skip if memory variable or has invalid iterator.
 						//
-						std::shared_lock _g{ tr->mtx };
-						for ( auto& [var, ex] : tr->cache )
-						{
-							// Skip if memory variable or has invalid iterator.
-							//
-							if ( var.is_memory() || !var.at.is_valid() )
-								continue;
+						if ( var.is_memory() || !var.at.is_valid() )
+							continue;
 
-							// If expressions are not identical skip.
-							//
-							if ( !ex->is_identical( exp ) )
-								continue;
+						// If expressions are not identical skip.
+						//
+						if ( !ex->is_identical( exp ) )
+							continue;
 
-							// Set var_reg and break.
-							//
-							var_reg = var;
-							break;
-						}
-					}
-					else
-					{
-						var_reg = exp.uid.get<symbolic::variable>();
-					}
-
-					// Fail if invalid.
-					//
-					if ( !var_reg.is_valid() )
-						return {};
-
-					// Check if alive, if not revive, else return as is.
-					//
-					if ( aux::is_alive( var_reg, branch, &ctracer ) )
-						return std::async( std::launch::deferred, [ op = operand{ var_reg.reg() } ]() { return op; } );
-					else
-						return std::async( std::launch::deferred, [ = ]() -> operand { return aux::revive_register( var_reg, branch ); } );
-				};
-
-				// Convert [cc] [d1] [d2] in order.
-				//
-				auto op_cc = revive_via_cache( lbranch_info.cc, &local_tracer );
-				if ( op_cc.valid() )
-				{
-					bool fail = false;
-					std::future<operand> dsts[ 2 ];
-					for ( auto [out, blocal, bglobal] : zip( dsts, lbranch_info.destinations, branch_info.destinations ) )
-					{
-						std::future<operand> op;
-						if ( blocal.complexity <= bglobal.complexity )
-							op = revive_via_cache( blocal, &local_tracer );
-						else
-							op = revive_via_cache( bglobal, &ctracer );
-
-						if ( !op.valid() )
-						{
-							fail = true;
-							break;
-						}
-						out = std::move(op);
-					}
-
-					// If we converted all succesfully:
-					//
-					if ( !fail )
-					{
-						branch->base = &ins::js;
-						branch->operands = { 
-							op_cc.get(),
-							dsts[ 0 ].get(),
-							dsts[ 1 ].get()
-						};
-						cnt++;
+						// Set var_reg and break.
+						//
+						var_reg = var;
+						break;
 					}
 				}
 				else
 				{
-					logger::log( "opcc invalid!\n" );
+					var_reg = exp.uid.get<symbolic::variable>();
+				}
+
+				// Fail if invalid.
+				//
+				if ( !var_reg.is_valid() )
+					return {};
+
+				// Check if alive, if not revive, else return as is.
+				//
+				if ( aux::is_alive( var_reg, branch, &ctracer ) )
+					return std::async( std::launch::deferred, [ op = operand{ var_reg.reg() } ]() { return op; } );
+				else
+					return std::async( std::launch::deferred, [ = ]() -> operand { return aux::revive_register( var_reg, branch ); } );
+			};
+
+			// Convert [cc] [d1] [d2] in order.
+			//
+			auto op_cc = revive_via_cache( lbranch_info.cc, &local_tracer );
+			if ( op_cc.valid() )
+			{
+				bool fail = false;
+				std::future<operand> dsts[ 2 ];
+				for ( auto [out, blocal, bglobal] : zip( dsts, lbranch_info.destinations, branch_info.destinations ) )
+				{
+					std::future<operand> op;
+					if ( blocal.complexity <= bglobal.complexity )
+						op = revive_via_cache( blocal, &local_tracer );
+					else
+						op = revive_via_cache( bglobal, &ctracer );
+
+					if ( !op.valid() )
+					{
+						fail = true;
+						break;
+					}
+					out = std::move(op);
+				}
+
+				// If we converted all succesfully:
+				//
+				if ( !fail )
+				{
+					branch->base = &ins::js;
+					branch->operands = { 
+						op_cc.get(),
+						dsts[ 0 ].get(),
+						dsts[ 1 ].get()
+					};
+					cnt++;
 				}
 			}
 		}

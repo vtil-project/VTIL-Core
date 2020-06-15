@@ -38,6 +38,7 @@ namespace vtil::optimizer
 		//
 		if ( !xblock || visit_list.contains( blk ) )
 			return 0;
+		visit_list.insert( blk );
 
 		// While we can form an extended basic block:
 		//
@@ -117,7 +118,6 @@ namespace vtil::optimizer
 
 		// Recurse into destinations:
 		//
-		visit_list.insert( blk );
 		for ( auto* dst : blk->next )
 			counter += pass( dst, true );
 		return counter;
