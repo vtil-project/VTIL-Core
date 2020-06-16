@@ -59,6 +59,18 @@ namespace vtil::logger
 	{
 #if _WIN64
 		SetConsoleTextAttribute( GetStdHandle( STD_OUTPUT_HANDLE ), color );
+#else
+		switch ( color )
+		{
+			case CON_BRG: printf( "\x1b[37m" ); break;
+			case CON_YLW: printf( "\x1b[33m" ); break;
+			case CON_PRP: printf( "\x1b[35m" ); break;
+			case CON_RED: printf( "\x1b[31m" ); break;
+			case CON_CYN: printf( "\x1b[36m" ); break;
+			case CON_GRN: printf( "\x1b[32m" ); break;
+			case CON_BLU: printf( "\x1b[34m" ); break;
+			case CON_DEF: printf( "\x1b[0m" ); break;
+		}
 #endif
 	}
 };
