@@ -81,59 +81,105 @@ namespace vtil::optimizer
 				}
 			} );
 
-		// TODO: Fix
+		// If block is complete:
 		//
-		// Iterate each instruction:
-		//
-		/*for( auto i1 = blk->begin(); i1 != blk->end(); i1++ )
+		if ( blk->is_complete() )
 		{
-			// Find the first instruction accesing $sp.
+			// Iterate each instruction in reverse:
 			//
-			auto it = std::find_if( i1, blk->end(), [ & ] ( const instruction& ins )
+			int64_t sp_offset = blk->sp_offset;
+			auto [bgn, end] = reverse_iterators( *blk );
+			for ( auto it = bgn; it != end; ++it )
 			{
-				static const auto indices = [ ] () {
+				// Determine if instruction accesses $sp.
+				//
+				static const auto indices = [ ] ()
+				{
 					std::array<size_t, VTIL_ARCH_MAX_OPERAND_COUNT> arr;
 					std::iota( arr.begin(), arr.end(), 0 );
 					return arr;
 				}();
 
-				// If stack index is changed, return.
-				//
-				if ( ins.sp_index != i1->sp_index )
-					return true;
-				
-				for ( auto [op, idx] : zip( ins.operands, indices ) )
+				stack_vector<int> read_sp;
+				stack_vector<int> write_sp;
+				for ( auto [op, type, idx] : zip( it->operands, it->base->operand_types, indices ) )
 				{
 					// Skip if memory location since it's virtual $sp in that case.
 					//
-					if ( idx == ins.base->memory_operand_index )
+					if ( idx == it->base->memory_operand_index )
 						continue;
 
-					// If operand is stack pointer, declare found.
+					// If operand is stack pointer:
 					//
 					if ( op.is_register() && op.reg().is_stack_pointer() )
-						return true;
-				}
-				return false;
-			} );
-
-			// Pin the stack offset for the range.
-			//
-			if ( it != i1 )
-			{
-				int64_t new_sp_offset = it.is_end() && blk->sp_index == i1->sp_index ? blk->sp_offset : it->sp_offset;
-				for ( auto i2 = i1; i2 != it; i2++ )
-				{
-					if ( i2->sp_offset != new_sp_offset )
 					{
-						i2->sp_offset = new_sp_offset;
-						counter++;
+						// Add to each list.
+						//
+						if ( type >= operand_type::write )
+						{
+							write_sp.push_back( idx );
+						}
+						else
+						{
+							if( it->sp_offset != sp_offset )
+								read_sp.push_back( idx );
+						}
 					}
 				}
-				i1 = it;
-				if ( i1 == blk->end() ) break;
+
+				// If instruction does not write into $sp:
+				//
+				if ( !write_sp.size() )
+				{
+					// If instruction reads from $sp:
+					//
+					if ( read_sp.size() )
+					{
+						// If volatile, fail and set new target $sp.
+						//
+						if ( it->is_volatile() )
+						{
+							sp_offset = it->sp_offset;
+							continue;
+						}
+
+						// Mov to temporary and substract the target offset.
+						//
+						auto tmp = blk->tmp( 64 );
+						auto mov = blk->insert( it, { &ins::mov, { tmp, REG_SP } } );
+						auto sub = blk->insert( it, { &ins::sub, { tmp, make_imm<int64_t>( sp_offset - it->sp_offset ) } } );
+						mov->sp_offset = sp_offset;
+						sub->sp_offset = sp_offset;
+						it->sp_offset = sp_offset;
+
+						// Replace every read.
+						//
+						for ( auto index : read_sp )
+						{
+							it->operands[ index ].reg().local_id = tmp.local_id;
+							it->operands[ index ].reg().flags = tmp.flags;
+						}
+						
+						// Continue iteration.
+						//
+						it = { mov, blk->begin() };
+						counter++;
+						continue;
+					}
+
+					// Replace stack pointer offset and continue.
+					//
+					if ( it->sp_offset != sp_offset )
+						it->sp_offset = sp_offset, counter++;
+				}
+				else
+				{
+					// Set new target $sp and continue.
+					//
+					sp_offset = it->sp_offset;
+				}
 			}
-		}*/
+		}
 
 		return counter;
 	}
