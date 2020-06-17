@@ -66,8 +66,7 @@ namespace vtil::optimizer
 				bblock_extension_pass, 
 				symbolic_rewrite_pass<true>
 			>
-		>,
-		stack_pinning_pass
+		>
 	>;
 
 	// Cross optimization pass.
@@ -82,7 +81,8 @@ namespace vtil::optimizer
 				symbolic_rewrite_pass<false>,
 				collective_propagation_pass
 			>
-		>
+		>,
+		stack_pinning_pass
 	>;
 
 	// Local optimization pass.

@@ -210,12 +210,37 @@ namespace vtil::symbolic
 				}
 				break;
 
+			// If not:
+			//
+			case math::operator_id::bitwise_not:
+				if ( !signed_cast )
+				{
+					// If shrinking, just resize.
+					//
+					if ( new_size < value.size() )
+					{
+						if ( rhs->size() != new_size ) ( +rhs )->resize( new_size, false );
+					}
+					// If extending:
+					//
+					else
+					{
+						bitcnt_t rhs_mask = value.known_one() | value.unknown_mask();
+						auto rhs_v = std::move( rhs );
+						*this = ( ~( ( +rhs_v )->resize( new_size, false ) ) ) & expression{ rhs_mask, new_size };
+					}
+				}
+				else
+				{
+					*this = __cast( *this, new_size );
+				}
+				break;
+
 			// If basic unsigned operation, unsigned cast both sides if requested type is also unsigned.
 			//
 			case math::operator_id::bitwise_and:
 			case math::operator_id::bitwise_or:
 			case math::operator_id::bitwise_xor:
-			case math::operator_id::bitwise_not:
 			case math::operator_id::umultiply:
 			case math::operator_id::udivide:
 			case math::operator_id::uremainder:

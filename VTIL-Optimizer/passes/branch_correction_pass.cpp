@@ -52,7 +52,7 @@ namespace vtil::optimizer
 		for ( auto& [k, v] : local_tracer.cache )
 			ctracer.cache[ k ] = v;
 		ctracer.mtx.unlock();
-		auto branch_info = aux::analyze_branch( blk, &ctracer, true );
+		auto branch_info = aux::analyze_branch( blk, &ctracer, xblock );
 
 		// If branching to real, assert single next block.
 		//
