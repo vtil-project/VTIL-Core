@@ -27,6 +27,7 @@
 //
 #include "simplifier.hpp"
 #include "directives.hpp"
+#include "boolean_directives.hpp"
 #include "../expressions/expression.hpp"
 #include "../directives/transformer.hpp"
 #include <vtil/io>
@@ -271,6 +272,62 @@ namespace vtil::symbolic
 			return success_flag;
 		}
 
+		// Declare the filter.
+		//
+		expression_filter_t filter;
+
+		// If no maximum depth was set:
+		//
+		if ( max_depth < 0 )
+		{
+			filter = [ & ] ( auto& exp_new )
+			{
+				// If complexity was reduced already, pass.
+				//
+				if ( exp_new->complexity < exp->complexity )
+					return true;
+
+				// Save current cache iterator.
+				//
+				auto it0 = simplifier_cache.end();
+
+				// Try simplifying with maximum depth set as expression's
+				// depth times two and pass if complexity was reduced.
+				//
+				try
+				{
+					simplify_expression( exp_new, false, exp_new->depth * 2 );
+					return exp_new->complexity < exp->complexity;
+				}
+				// If maximum depth was reached, revert any changes to the cache
+				// and fail the join directive.
+				//
+				catch ( join_depth_exception& )
+				{
+					simplifier_cache.erase( it0, simplifier_cache.end() );
+					return false;
+				}
+			};
+		}
+		// Else:
+		//
+		else
+		{
+			filter = [ & ] ( auto& exp_new )
+			{
+				// If complexity was reduced already, pass.
+				//
+				if ( exp_new->complexity < exp->complexity )
+					return true;
+
+				// Attempt simplifying with maximum depth decremented by one,
+				// fail if complexity was not reduced.
+				//
+				simplify_expression( exp_new, false, max_depth - 1 );
+				return exp_new->complexity < exp->complexity;
+			};
+		}
+
 		// Enumerate each universal simplifier:
 		//
 		for ( auto& [dir_src, dir_dst] : directive::universal_simplifiers )
@@ -283,7 +340,6 @@ namespace vtil::symbolic
 				log<CON_GRN>( "[Simplify] %s => %s\n", *dir_src, *dir_dst );
 				log<CON_GRN>( "= %s [By simplify directive]\n", *exp_new );
 #endif
-
 				// Recurse, set the hint and return the simplified instance.
 				//
 				simplify_expression( exp_new, pretty, max_depth );
@@ -299,61 +355,6 @@ namespace vtil::symbolic
 		//
 		for ( auto& [dir_src, dir_dst] : directive::join_descriptors )
 		{
-			// Declare the filter.
-			//
-			expression_filter_t filter;
-			
-			// If no maximum depth was set:
-			//
-			if ( max_depth < 0 )
-			{
-				filter = [ & ] ( auto& exp_new )
-				{
-					// If complexity was reduced already, pass.
-					//
-					if ( exp_new->complexity < exp->complexity )
-						return true;
-
-					// Save current cache iterator.
-					//
-					auto it0 = simplifier_cache.end();
-					
-					// Try simplifying with maximum depth set as expression's
-					// depth times two and pass if complexity was reduced.
-					//
-					try
-					{
-						simplify_expression( exp_new, false, exp_new->depth * 2 );
-						return exp_new->complexity < exp->complexity;
-					}
-					// If maximum depth was reached, revert any changes to the cache
-					// and fail the join directive.
-					//
-					catch ( join_depth_exception& )
-					{
-						simplifier_cache.erase( it0, simplifier_cache.end() );
-						return false;
-					}
-				};
-			}
-			// Else:
-			//
-			else
-			{
-				filter = [ & ] ( auto& exp_new )
-				{
-					// If complexity was reduced already, pass.
-					//
-					if ( exp_new->complexity < exp->complexity )
-						return true;
-
-					// Attempt simplifying with maximum depth decremented by one,
-					// fail if complexity was not reduced.
-					//
-					simplify_expression( exp_new, false, max_depth - 1 );
-					return exp_new->complexity < exp->complexity;
-				};
-			}
 
 			// If we can transform the expression by the directive set:
 			//
@@ -372,6 +373,59 @@ namespace vtil::symbolic
 				success_flag = true;
 				exp = exp_new;
 				return success_flag;
+			}
+		}
+
+		// If it is a boolean expression:
+		//
+		if ( exp->size() == 1 )
+		{
+			// Enumerate each universal simplifier:
+			//
+			for ( auto& [dir_src, dir_dst] : directive::boolean_simplifiers )
+			{
+				// If we can transform the expression by the directive set:
+				//
+				if ( auto exp_new = transform( exp, dir_src, dir_dst, {}, max_depth ) )
+				{
+#if VTIL_SYMEX_SIMPLIFY_VERBOSE
+					log<CON_GRN>( "[Simplify] %s => %s\n", *dir_src, *dir_dst );
+					log<CON_GRN>( "= %s [By simplify directive]\n", *exp_new );
+#endif
+					// Recurse, set the hint and return the simplified instance.
+					//
+					simplify_expression( exp_new, pretty, max_depth );
+					( +exp_new )->simplify_hint = true;
+					cache_entry = exp_new;
+					success_flag = true;
+					exp = exp_new;
+					return success_flag;
+				}
+			}
+
+			// Enumerate each join descriptor:
+			//
+			for ( auto& [dir_src, dir_dst] : directive::boolean_joiners )
+			{
+
+				// If we can transform the expression by the directive set:
+				//
+				if ( auto exp_new = transform( exp, dir_src, dir_dst, filter, max_depth ) )
+				{
+#if VTIL_SYMEX_SIMPLIFY_VERBOSE
+					log<CON_GRN>( "[Join] %s => %s\n", *dir_src, *dir_dst );
+					log<CON_GRN>( "= %s [By join directive]\n", *exp_new );
+					log<CON_YLW>( "Complexity: %lf => %lf\n", exp->complexity, exp_new->complexity );
+#endif
+					// Recurse, set the hint and return the simplified instance.
+					//
+					simplify_expression( exp_new, pretty, max_depth - 1 );
+					( +exp_new )->simplify_hint = true;
+					cache_entry = exp_new;
+					success_flag = true;
+					exp = exp_new;
+					return success_flag;
+				}
 			}
 		}
 

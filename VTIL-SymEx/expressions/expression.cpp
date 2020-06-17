@@ -485,6 +485,7 @@ namespace vtil::symbolic
 
 				switch ( op )
 				{
+					
 					case math::operator_id::bitwise_and:
 					case math::operator_id::bitwise_or:
 					case math::operator_id::bitwise_xor:

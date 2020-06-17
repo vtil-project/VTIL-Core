@@ -42,6 +42,9 @@
     <ClInclude Include="directives\transformer.hpp">
       <Filter>Directives</Filter>
     </ClInclude>
+    <ClInclude Include="simplifier\boolean_directives.hpp">
+      <Filter>Simplifier</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Directives">

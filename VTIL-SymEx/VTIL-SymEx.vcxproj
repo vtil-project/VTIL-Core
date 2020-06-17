@@ -120,6 +120,7 @@
     <ClInclude Include="expressions\expression.hpp" />
     <ClInclude Include="expressions\unique_identifier.hpp" />
     <ClInclude Include="includes\vtil\symex" />
+    <ClInclude Include="simplifier\boolean_directives.hpp" />
     <ClInclude Include="simplifier\simplifier.hpp" />
     <ClInclude Include="simplifier\directives.hpp" />
   </ItemGroup>

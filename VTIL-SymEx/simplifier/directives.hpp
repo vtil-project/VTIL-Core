@@ -321,58 +321,15 @@ namespace vtil::symbolic::directive
         { ~__rotl(A,C),                                       __rotl(!~A,C) },
         { ~__rotr(A,C),                                       __rotr(!~A,C) },
 
-        // Comparison simplifiers: [TODO: Complete]
+        // Manually added comparison simplifiers:
         //
-        { (A+B)>C,                                            A>!(C-B) },
-        { (A-B)>C,                                            A>!(C+B) },
-        //{ __ugreat(A+B, C),                                  __uless(A,!(C-B)) },
-        //{ __ugreat(A-B, C),                                  __uless(A,!(C+B)) },
-        { (A+B)>=C,                                           A>=!(C-B) },
-        { (A-B)>=C,                                           A>=!(C+B) },
-        //{ __ugreat_eq(A+B, C),                               __uless_eq(A,!(C-B)) },
-        //{ __ugreat_eq(A-B, C),                               __uless_eq(A,!(C+B)) },
-        { (A+B)==C,                                           A==!(C-B) },
-        { (A-B)==C,                                           A==!(C+B) },
-        { (A+B)!=C,                                           A!=!(C-B) },
-        { (A-B)!=C,                                           A!=!(C+B) },
-        { (A+B)<=C,                                           A<=!(C-B) },
-        { (A-B)<=C,                                           A<=!(C+B) },
-        //{ __uless_eq(A+B, C),                                __ugreat_eq(A,!(C-B)) },
-        //{ __uless_eq(A-B, C),                                __ugreat_eq(A,!(C+B)) },
-        { (A+B)<C,                                            A<!(C-B) },
-        { (A-B)<C,                                            A<!(C+B) },
-        //{ __uless(A+B, C),                                   __ugreat(A,!(C-B)) },
-        //{ __uless(A-B, C),                                   __ugreat(A,!(C+B)) },
-
         { A==B,                                               !(A-B)==0u },
         { A==B,                                               !(A^B)==0u },
         { A!=B,                                               !(A-B)!=0u },
         { A!=B,                                               !(A^B)!=0u },
-
         { (A^B)==C,                                           !(C^B)==A },
         { (A<<B)==C,                                          s((A<<B)>>B)==s(C>>B) },
         { (A>>B)==C,                                          s((A>>B)<<B)==s(C<<B) },
-            
-        { A>B,                                                !(~A)<s(~B) },
-        { A>=B,                                               !(~A)<=s(~B) },
-        { __ugreat(A,B),                                      __uless(!(~A),s(~B)) },
-        { __ugreat_eq(A,B),                                   __uless_eq(!(~A),s(~B)) },
-        { A==B,                                               !(~A)==s(~B) },
-        { A!=B,                                               !(~A)!=s(~B) },
-        { __uless_eq(A,B),                                    __ugreat_eq(!(~A),s(~B)) },
-        { __uless(A,B),                                       __ugreat(!(~A),s(~B)) },
-        { A<=B,                                               !(~A)>=s(~B) },
-        { A<B,                                                !(~A)>s(~B) },
-            
-        { A>B,                                                !(-A)<s(-B) },
-        { A>=B,                                               !(-A)<=s(-B) },
-        { A==B,                                               !(-A)==s(-B) },
-        { A!=B,                                               !(-A)!=s(-B) },
-        { A<=B,                                               !(-A)>=s(-B) },
-        { A<B,                                                !(-A)>s(-B) },
-
-
-
         { ((A<<B)|C)==0,                                      __iff(A==((A<<B)>>B), (A|C)==0u ) },
         { (A|B)==0,                                           s(A==0) & s(B==0) },
         { __ucast(A,B)==C,                                    __iff(__bcnt(A)<=__bcnt(C), __iff(C==__ucast(C,__bcnt(A)), A==s(__ucast(C,__bcnt(A))))) },
