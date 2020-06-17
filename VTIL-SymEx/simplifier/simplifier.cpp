@@ -184,7 +184,6 @@ namespace vtil::symbolic
 			return exp->simplify_hint;
 		}
 
-
 #if VTIL_SYMEX_SIMPLIFY_VERBOSE
 		// Log the input.
 		//
