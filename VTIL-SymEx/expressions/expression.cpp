@@ -472,6 +472,17 @@ namespace vtil::symbolic
 
 				// Handle size mismatches.
 				//
+				const auto optimistic_size = [ ] ( symbolic::expression::reference& lhs,
+												   symbolic::expression::reference& rhs )
+				{
+
+					bitcnt_t op_size = lhs->size();
+					if ( ( op_size < rhs->size() && math::msb( ~rhs->value.known_zero() ) > op_size ) ||
+						 ( op_size > rhs->size() && math::msb( ~lhs->value.known_zero() ) < rhs->size() ) )
+						op_size = rhs->size();
+					return op_size;
+				};
+
 				switch ( op )
 				{
 					case math::operator_id::bitwise_and:
@@ -502,7 +513,7 @@ namespace vtil::symbolic
 					case math::operator_id::uless_eq:
 					case math::operator_id::uless:
 					{
-						bitcnt_t op_size = std::max( lhs->size(), rhs->size() );
+						bitcnt_t op_size = optimistic_size( lhs, rhs );
 						if ( lhs->size() != op_size ) ( +lhs )->resize( op_size, false );
 						if ( rhs->size() != op_size ) ( +rhs )->resize( op_size, false );
 						break;
@@ -514,7 +525,7 @@ namespace vtil::symbolic
 					case math::operator_id::equal:
 					case math::operator_id::not_equal:
 					{
-						bitcnt_t op_size = std::max( lhs->size(), rhs->size() );
+						bitcnt_t op_size = optimistic_size( lhs, rhs );
 						if ( lhs->size() != op_size ) ( +lhs )->resize( op_size, true );
 						if ( rhs->size() != op_size ) ( +rhs )->resize( op_size, true );
 						break;
@@ -525,7 +536,7 @@ namespace vtil::symbolic
 					case math::operator_id::uequal:
 					case math::operator_id::unot_equal:
 					{
-						bitcnt_t op_size = std::max( lhs->size(), rhs->size() );
+						bitcnt_t op_size = optimistic_size( lhs, rhs );
 						if ( lhs->size() != op_size ) ( +lhs )->resize( op_size, false );
 						if ( rhs->size() != op_size ) ( +rhs )->resize( op_size, false );
 						op = op == math::operator_id::uequal ? math::operator_id::equal

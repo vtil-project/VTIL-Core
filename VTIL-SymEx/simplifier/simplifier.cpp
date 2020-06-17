@@ -365,7 +365,6 @@ namespace vtil::symbolic
 				log<CON_GRN>( "= %s [By join directive]\n", *exp_new );
 				log<CON_YLW>( "Complexity: %lf => %lf\n", exp->complexity, exp_new->complexity );
 #endif
-
 				// Recurse, set the hint and return the simplified instance.
 				//
 				simplify_expression( exp_new, pretty, max_depth - 1 );
