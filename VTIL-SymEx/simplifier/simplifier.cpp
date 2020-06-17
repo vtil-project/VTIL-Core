@@ -42,11 +42,9 @@ namespace vtil::symbolic
 		}
 	};
 
-	// Simplifier cache and its accessors.
+	// Simplifier cache and its accessor.
 	//
 	static thread_local simplifier_cache_t simplifier_cache;
-
-	void purge_simplifier_cache() { simplifier_cache.clear(); }
 	simplifier_cache_t& ref_simplifier_cache() { return simplifier_cache; }
 
 	// Attempts to prettify the expression given.
@@ -113,6 +111,11 @@ namespace vtil::symbolic
 		if ( max_depth == 0 )
 			throw join_depth_exception{};
 
+		// If not an expression, we cannot simplify further.
+		//
+		if ( !exp->is_expression() )
+			return false;
+
 		// If simplify hint is set, only call prettify if requested and return.
 		//
 		if ( exp->simplify_hint )
@@ -122,10 +125,40 @@ namespace vtil::symbolic
 			return false;
 		}
 
-		// If not an expression, we cannot simplify further.
+#if VTIL_SYMEX_SIMPLIFY_VERBOSE
+		// Log the input.
 		//
-		if ( !exp->is_expression() )
+		scope_padding _p( 1 );
+		if ( !state::get()->padding ) log( "\n" );
+		log( "[Input]  = %s ", *exp );
+		log( "(Hash: %s)\n", exp->hash() );
+#endif
+
+		// If we resolved a valid cache entry:
+		//
+		auto cache_it = simplifier_cache.find( ( boxed_expression& ) *exp );
+		if ( cache_it != simplifier_cache.end() )
+		{
+			// Replace with the cached entry if simplifies.
+			//
+			if ( cache_it->second.first.is_valid() && cache_it->second.second )
+			{
+#if VTIL_SYMEX_SIMPLIFY_VERBOSE
+				log<CON_YLW>( "= %s (From cache, Success: %d)\n", *cache_it->second.first, cache_it->second.second );
+#endif
+				exp = *cache_it->second.first;
+				return true;
+			}
+#if VTIL_SYMEX_SIMPLIFY_VERBOSE
+			log<CON_RED>( "Failed as directed by cache...\n" );
+#endif
 			return false;
+		}
+
+		// Otherwise create a new cache entry with {invalid, false} by default.
+		//
+		cache_it = simplifier_cache.insert( { ( boxed_expression& ) *exp, { {}, false } } ).first;
+		auto& [cache_entry, success_flag] = cache_it->second;
 
 		// If trying to simplify resizing:
 		//
@@ -154,7 +187,7 @@ namespace vtil::symbolic
 					//
 					*op_new = op_ref;
 					exp_new->update( false );
-					exp_new->simplify_hint = true;
+					success_flag = true;
 				}
 
 				// Toggle temporary disable bit.
@@ -178,47 +211,14 @@ namespace vtil::symbolic
 				//
 				if ( simplified || exp_new->complexity < exp->complexity )
 				{
-					( +exp_new )->simplify_hint = true;
 					exp = exp_new;
+					success_flag = true;
 				}
 			}
-			return exp->simplify_hint;
+			cache_entry = *exp;
+			( +exp )->simplify_hint = true;
+			return success_flag;
 		}
-
-#if VTIL_SYMEX_SIMPLIFY_VERBOSE
-		// Log the input.
-		//
-		scope_padding _p( 1 );
-		if ( !state::get()->padding ) log( "\n" );
-		log( "[Input]  = %s ", *exp );
-		log( "(Hash: %s)\n", exp->hash() );
-#endif
-
-		// If we resolved a valid cache entry:
-		//
-		auto cache_it = simplifier_cache.find( ( boxed_expression& ) *exp );
-		if ( cache_it != simplifier_cache.end() )
-		{
-			// Replace with the cached entry, inherit simplification state.
-			//
-			if ( cache_it->second.first.is_valid() )
-			{
-#if VTIL_SYMEX_SIMPLIFY_VERBOSE
-				log<CON_YLW>( "= %s (From cache, Success: %d)\n", *cache_it->second.first, cache_it->second.second );
-#endif
-				exp = cache_it->second.first;
-				return cache_it->second.second;
-			}
-#if VTIL_SYMEX_SIMPLIFY_VERBOSE
-			log<CON_RED>( "Failed as directed by cache...\n" );
-#endif
-			return false;
-		}
-
-		// Otherwise create a new cache entry with {invalid, false} by default.
-		//
-		cache_it = simplifier_cache.insert( { ( boxed_expression& ) *exp, { {}, false } } ).first;
-		auto& [cache_entry, success_flag] = cache_it->second;
 
 		// Simplify operands first if not done already.
 		//
