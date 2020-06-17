@@ -303,13 +303,9 @@ namespace vtil::symbolic::directive
         { ~__rotl(A,C),                                       __rotl(!~A,C) },
         { ~__rotr(A,C),                                       __rotr(!~A,C) },
 
+
         // Manually added comparison simplifiers:
         //
-        { A==B,                                               !(A-B)==0u },
-        { A==B,                                               !(A^B)==0u },
-        { A!=B,                                               !(A-B)!=0u },
-        { A!=B,                                               !(A^B)!=0u },
-        { (A^B)==C,                                           !(C^B)==A },
         { (A<<B)==C,                                          s((A<<B)>>B)==s(C>>B) },
         { (A>>B)==C,                                          s((A>>B)<<B)==s(C<<B) },
         { ((A<<B)|C)==0,                                      __iff(A==((A<<B)>>B), (A|C)==0u ) },

@@ -2577,35 +2577,58 @@ namespace vtil::symbolic::directive
         { (__uless(B, A)&__uless_eq(C, A)),                                __iff(__ugreat_eq(B, (C-0x1)), __ugreat(A, B)) },
         { (__uless(B, A)&__uless(C, A)),                                   __iff(__ugreat(B, (C-0x1)), __ugreat(A, B)) },
     };
+
+	constexpr auto overflow = [ ] ( auto a, auto b ) { return ((a<0)==(b<0))&((a<0)!=((a+b)<0)); };
+	constexpr auto underflow = [ ] ( auto a, auto b ) { return ((a<0)!=(b<0))&((a<0)!=((a-b)<0)); };
+
     const std::vector<std::pair<instance::reference, instance::reference>> boolean_joiners =
     {
+		// TODO: Replace with proper overflow check detection later, this is bad.
+        //
+        { (A+B)>C,                                                         s((A>!(C-B))|overflow(A,B)|underflow(C,B)) },
+		{ (A+B)<C,                                                         s((A<!(C-B))&~overflow(A,B)&~underflow(C,B)) },
+        { (A-B)>C,                                                         s((A>!(C+B))&~overflow(C,B)&~underflow(A,B)) },
+		{ (A-B)<C,                                                         s((A<!(C+B))|overflow(C,B)|underflow(A,B)) },
+        { (A-B)>=C,                                                        s((A==!(C+B))|((A-B)>C)) },
+        { (A-B)<=C,                                                        s((A==!(C+B))|((A-B)<C)) },
+        { (A+B)>=C,                                                        s((A==!(C-B))|((A+B)>C)) },
+        { (A+B)<=C,                                                        s((A==!(C-B))|((A+B)<C)) },
+
         { (A>B),                                                           (!(~A)<s(~B)) },
         { (A>=B),                                                          (!(~A)<=s(~B)) },
         { (A==B),                                                          (!(~A)==s(~B)) },
-        { (A==B),                                                          __uequal(!(~A), s(~B)) },
         { (A!=B),                                                          (!(~A)!=s(~B)) },
-        { (A!=B),                                                          __unot_equal(!(~A), s(~B)) },
         { (A<=B),                                                          (!(~A)>=s(~B)) },
         { (A<B),                                                           (!(~A)>s(~B)) },
         { __ugreat(A, B),                                                  __uless(!(~A), s(~B)) },
         { __ugreat_eq(A, B),                                               __uless_eq(!(~A), s(~B)) },
-        { __uequal(A, B),                                                  (!(~A)==s(~B)) },
-        { __uequal(A, B),                                                  __uequal(!(~A), s(~B)) },
-        { __unot_equal(A, B),                                              (!(~A)!=s(~B)) },
-        { __unot_equal(A, B),                                              __unot_equal(!(~A), s(~B)) },
         { __uless_eq(A, B),                                                __ugreat_eq(!(~A), s(~B)) },
         { __uless(A, B),                                                   __ugreat(!(~A), s(~B)) },
         { (A>B),                                                           (!(-A)<s(-B)) },
         { (A>=B),                                                          (!(-A)<=s(-B)) },
         { (A==B),                                                          (!(-A)==s(-B)) },
-        { (A==B),                                                          __uequal(!(-A), s(-B)) },
         { (A!=B),                                                          (!(-A)!=s(-B)) },
-        { (A!=B),                                                          __unot_equal(!(-A), s(-B)) },
         { (A<=B),                                                          (!(-A)>=s(-B)) },
         { (A<B),                                                           (!(-A)>s(-B)) },
-        { __uequal(A, B),                                                  (!(-A)==s(-B)) },
-        { __uequal(A, B),                                                  __uequal(!(-A), s(-B)) },
-        { __unot_equal(A, B),                                              (!(-A)!=s(-B)) },
-        { __unot_equal(A, B),                                              __unot_equal(!(-A), s(-B)) },
+
+        // Manually added boolean directives:
+        //
+        { (A+B)==C,                                                        A==!(C-B) },
+        { (A-B)==C,                                                        A==!(C+B) },
+        { (A+B)!=C,                                                        A!=!(C-B) },
+        { (A-B)!=C,                                                        A!=!(C+B) },
+        { A==B,                                                            !(A-B)==0u },
+        { A==B,                                                            !(A^B)==0u },
+        { A!=B,                                                            !(A-B)!=0u },
+        { A!=B,                                                            !(A^B)!=0u },
+        { (A^B)==C,                                                        !(C^B)==A },
+		{ __uless( A + B, B ),                                             __uless( ~A, B ) },
+		{ __uless_eq( A + B, B ),                                          __uless_eq( -A, B ) },
+		{ __ugreat( A + B, B ),                                            __ugreat( -A, B ) },
+		{ __ugreat_eq( A + B, B ),                                         __ugreat_eq( ~A, B ) },
+		{ __uless( A + B, B ),                                             __ugreat( A, ~B ) },
+		{ __uless_eq( A - B, ~B ),                                         __ugreat_eq( A, B ) },
+		{ __ugreat( A - B, ~B ),                                           __uless( A, B ) },
+		{ __ugreat_eq( A + B, B ),                                         __uless_eq( A, ~B ) },
     };
 };
