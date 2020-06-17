@@ -146,6 +146,7 @@
     <ClInclude Include="util\fnv64.hpp" />
     <ClInclude Include="util\hashable.hpp" />
     <ClInclude Include="util\mul128.hpp" />
+    <ClInclude Include="util\numeric_iterator.hpp" />
     <ClInclude Include="util\optional_reference.hpp" />
     <ClInclude Include="util\range.hpp" />
     <ClInclude Include="util\reducable.hpp" />
