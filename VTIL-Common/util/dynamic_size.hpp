@@ -74,7 +74,7 @@ namespace vtil
 	// Gets the Nth element from the object.
 	//
 	template<typename T>
-	static auto& deref_n( T& o, size_t N )
+	static decltype( std::declval<T&>()[0] ) deref_n( T& o, size_t N )
 	{
 		return o[ N ];
 	}

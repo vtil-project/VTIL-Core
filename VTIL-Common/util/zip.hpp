@@ -42,12 +42,9 @@ namespace vtil
 		template<typename T>
 		struct modref_wrapper
 		{
-			auto& operator()( T& o, size_t N ) const
+			decltype( std::declval<T&>()[ 0 ] ) operator()( T& o, size_t N ) const
 			{
-				if constexpr ( is_random_access_v<T> )
-					return o[ N % dynamic_size( o ) ];
-				else
-					return o;
+				return o[ N % dynamic_size( o ) ];
 			}
 		};
 
@@ -60,10 +57,10 @@ namespace vtil
 		{
 			auto operator()( T& o, size_t N ) const
 			{
-				if constexpr ( is_random_access_v<T> )
+				if constexpr ( std::is_reference_v<o[ N ]> )
 					return dereference_if_n( N < dynamic_size( o ), std::begin( o ), N );
 				else
-					return dereference_if_n( N == 0, &o );
+					return N < dynamic_size( o ) ? std::optional{ o[ N ] } : std::nullopt;
 			}
 		};
 	};
