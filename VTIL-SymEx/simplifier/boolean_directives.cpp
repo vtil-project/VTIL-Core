@@ -32,6 +32,7 @@ namespace vtil::symbolic::directive
 {
     const std::vector<std::pair<instance::reference, instance::reference>> boolean_simplifiers =
     {
+#ifndef __INTELLISENSE__
         { ((A>B)&(A>C)),                                                   __iff((B>C), (A>B)) },
         { ((A>B)&(A>C)),                                                   __iff((B>=C), (A>B)) },
         { ((A>B)&(A>C)),                                                   __iff((B==C), (A>B)) },
@@ -2575,6 +2576,7 @@ namespace vtil::symbolic::directive
         { (__uless(B, A)&__uless_eq(C, A)),                                __iff((B==(C-0x1)), __ugreat(A, B)) },
         { (__uless(B, A)&__uless_eq(C, A)),                                __iff(__ugreat(B, (C-0x1)), __ugreat(A, B)) },
         { (__uless(B, A)&__uless_eq(C, A)),                                __iff(__ugreat_eq(B, (C-0x1)), __ugreat(A, B)) },
+#endif
         { (__uless(B, A)&__uless(C, A)),                                   __iff(__ugreat(B, (C-0x1)), __ugreat(A, B)) },
     };
 
