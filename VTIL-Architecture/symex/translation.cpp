@@ -111,7 +111,30 @@ namespace vtil
 					}
 					else
 					{
-						operand base = cvt( var.mem().decay() );
+						// Try to extract the offset from the compound expression.
+						//
+						int64_t offset = 0;
+						symbolic::expression mem_base = symbolic::variable::pack_all( var.mem().decay() ).simplify( true );
+						if ( !mem_base.is_constant() )
+						{
+							using namespace symbolic::directive;
+
+							std::vector<symbol_table_t> results;
+							if ( fast_match( &results, A + U, mem_base ) )
+							{
+								mem_base = *results.front().translate( A );
+								offset = *results.front().translate( U )->get<int64_t>();
+							}
+							else if ( fast_match( &results, A - U, mem_base ) )
+							{
+								mem_base = *results.front().translate( A );
+								offset = -*results.front().translate( U )->get<int64_t>();
+							}
+						}
+
+						// Translate the base address.
+						//
+						operand base = cvt( mem_base );
 						if ( base.is_immediate() )
 						{
 							operand tmp2 = block->tmp( 64 );
@@ -120,7 +143,7 @@ namespace vtil
 						}
 
 						operand tmp = block->tmp( exp.size() );
-						block->ldd( tmp, base, 0 );
+						block->ldd( tmp, base, make_imm( offset ) );
 						return tmp;
 					}
 				}

@@ -244,7 +244,30 @@ namespace vtil::optimizer
 				}
 				else
 				{
-					operand base = translator << symbolic::variable::pack_all( k.base ).simplify( true );
+					// Try to extract the offset from the compound expression.
+					//
+					int64_t offset = 0;
+					symbolic::expression exp = symbolic::variable::pack_all( k.base ).simplify( true );
+					if ( !exp.is_constant() )
+					{
+						using namespace symbolic::directive;
+
+						std::vector<symbol_table_t> results;
+						if ( fast_match( &results, A + U, exp ) )
+						{
+							exp = *results.front().translate( A );
+							offset = *results.front().translate( U )->get<int64_t>();
+						}
+						else if ( fast_match( &results, A - U, exp ) )
+						{
+							exp = *results.front().translate( A );
+							offset = -*results.front().translate( U )->get<int64_t>();
+						}
+					}
+
+					// Translate the base address.
+					//
+					operand base = translator << exp;
 					if ( base.is_immediate() )
 					{
 						operand tmp = temporary_block.tmp( base.bit_count() );
@@ -257,7 +280,7 @@ namespace vtil::optimizer
 					instruction_buffer.push_back(
 					{
 						&ins::str,
-						{ base, make_imm<int64_t>( 0 ), translator << v }
+						{ base, make_imm( offset ), translator << v }
 					} );
 				}
 			}
