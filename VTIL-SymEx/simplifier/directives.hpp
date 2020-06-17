@@ -100,24 +100,6 @@ namespace vtil::symbolic::directive
         { ~__uless(A,B),                                      __ugreat_eq(A,B) },
         { ~__uless_eq(A,B),                                   __ugreat(A,B) },
 
-        // Evaluate partial comparison.
-        //
-        { A>=B,                                               __iff(A==B, 1) },
-        { A>=B,                                               __iff(A!=B, A>B) },
-        { A<=B,                                               __iff(A==B, 1) },
-        { A<=B,                                               __iff(A!=B, A<B) },
-        { __ugreat_eq(A,B),                                   __iff(A==B, 1) },
-        { __ugreat_eq(A,B),                                   __iff(A!=B, __ugreat(A,B)) },
-        { __uless_eq(A,B),                                    __iff(A==B, 1) },
-        { __uless_eq(A,B),                                    __iff(A!=B, __uless(A,B)) },
-
-        // Evaluate based on equality.
-        //
-        { A>B,                                                __iff(A==B, 0) },
-        { A<B,                                                __iff(A==B, 0) },
-        { __ugreat(A,B),                                      __iff(A==B, 0) },
-        { __uless(A,B),                                       __iff(A==B, 0) },
-
         // NOT conversion.
         //
         { A^-1,                                               ~A },
