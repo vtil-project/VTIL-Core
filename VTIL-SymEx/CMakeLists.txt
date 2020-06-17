@@ -6,6 +6,7 @@ add_library(${PROJECT_NAME} STATIC
     expressions/expression.cpp
     expressions/unique_identifier.cpp
     simplifier/simplifier.cpp
+    simplifier/boolean_directives.cpp
 )
 
 target_include_directories(${PROJECT_NAME} PUBLIC includes)
