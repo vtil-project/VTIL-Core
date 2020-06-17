@@ -529,44 +529,64 @@ namespace vtil::optimizer::aux
 			{
 				// Match classic Jcc:
 				//
-				using namespace symbolic::directive;
-				std::vector<symbol_table_t> results;
-				if ( fast_match( &results, A + ( __if( B, D ) + __if( C, E ) ), destination ) ||
-					 fast_match( &results, A + ( __if( B, D ) | __if( C, E ) ), destination ) ||
-					 fast_match( &results, __if( B, D ) + __if( C, E ), destination ) ||
-					 fast_match( &results, __if( B, D ) | __if( C, E ), destination ) )
+				const auto extract_and_transform_cnd = [ ] ( symbolic::expression& dst, int idx )
 				{
-					// Pick the first result and translate conditions.
-					//
-					auto& sym = results.front();
-					auto cond1 = sym.translate( B );
-					auto cond2 = sym.translate( C );
+					symbolic::expression cnd_out = {};
+					bool confirmed = false;
 
-					// If inverse conditionals:
-					//
-					if ( cond1->equals( ~cond2 ) )
+					dst.enumerate( [ & ] ( const symbolic::expression& exp )
 					{
-						// Translate destinations.
-						//
-						auto reloc = sym.translate( A ) ? *sym.translate( A ) : symbolic::expression{ 0, 64 };
-						auto dst1 = sym.translate( D );
-						auto dst2 = sym.translate( E );
-
-						// Make sure first condition is the simplest.
-						//
-						if ( cond1->complexity > cond2->complexity )
+						if ( exp.op == math::operator_id::value_if )
 						{
-							std::swap( cond1, cond2 );
-							std::swap( dst1, dst2 );
+							if ( !cnd_out.is_valid() )
+							{
+								if ( idx == 0 )
+									cnd_out = *exp.lhs;
+								else
+									idx--;
+							}
 						}
+					} );
+					dst.transform( [ & ] ( symbolic::expression& exp )
+					{
+						if ( exp.op == math::operator_id::value_if )
+						{
+							if ( exp.lhs->equals( cnd_out ) )
+							{
+								exp = *exp.rhs;
+								confirmed = true;
+							}
+							else if ( exp.lhs->equals( ~cnd_out ) )
+							{
+								exp = 0;
+								confirmed = true;
+							}
+						}
+					} );
+					return confirmed ? cnd_out : symbolic::expression{};
+				};
 
-						return {
-							.is_vm_exit = real,
-							.is_jcc = true,
-							.cc = *cond1,
-							.destinations = { reloc + dst1, reloc + dst2 }
-						};
+				symbolic::expression dst1 = destination;
+				symbolic::expression dst2 = destination;
+				symbolic::expression cnd1 = extract_and_transform_cnd( dst1, 0 );
+				symbolic::expression cnd2 = extract_and_transform_cnd( dst2, 1 );
+
+				if ( cnd1 && cnd2 )
+				{
+					// Make sure first condition is the simplest.
+					//
+					if ( cnd1.complexity > cnd2.complexity )
+					{
+						std::swap( cnd1, cnd2 );
+						std::swap( dst1, dst2 );
 					}
+
+					return {
+						.is_vm_exit = real,
+						.is_jcc = true,
+						.cc = std::move( cnd1 ),
+						.destinations = { dst1, dst2 }
+					};
 				}
 
 				// -- TODO: Handle jump tables.
