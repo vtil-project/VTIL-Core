@@ -163,9 +163,9 @@ namespace vtil::debug
 
 			log<CON_BLU>( "%04d: ", ins_idx );
 			if ( it->vip == invalid_vip )
-				log<CON_DEF>( "[PSEUDO] " );
+				log<CON_DEF>( "[ PSEUDO ] " );
 			else
-				log<CON_DEF>( "[%06x] ", it->vip );
+				log<CON_DEF>( "[%08llx] ", it->vip );
 			dump( *it, it.is_begin() ? nullptr : &*std::prev( it ) );
 		}
 

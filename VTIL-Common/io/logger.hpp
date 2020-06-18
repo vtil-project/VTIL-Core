@@ -275,14 +275,10 @@ namespace vtil::logger
 			format::fix_parameter<params>( std::forward<params>( ps ) )...
 		);
 
-		// Error will stop any execution so feel free to ignore any locks.
+		// Error will stop any execution so feel free to ignore any locks. Print error message.
 		//
-		new ( &state::get()->lock ) critical_section();
-
-		// Reset padding and print error message.
-		//
-		state::get()->padding = 0;
-		log( CON_RED, "[*] Error: %s\n", message );
+		set_color( CON_RED );
+		fprintf( VTIL_LOGGER_DST, "[*] Error: %s\n", message.c_str() );
 
 		// Break the program. 
 		//
