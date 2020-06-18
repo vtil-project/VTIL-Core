@@ -25,6 +25,7 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE  
 // POSSIBILITY OF SUCH DAMAGE.        
 //
+#include "routine.hpp"
 #include "basic_block.hpp"
 
 namespace vtil
@@ -35,5 +36,59 @@ namespace vtil
 	{
 		for ( auto [vip, block] : explored_blocks )
 			delete block;
+	}
+
+	// Clones the routine and it's every block.
+	//
+	routine* routine::clone() const
+	{
+		routine* copy = new routine;
+
+		// Acquire the routine mutex.
+		//
+		std::lock_guard g{ this->mutex };
+
+		// Copy calling conventions.
+		//
+		copy->routine_convention = this->routine_convention;
+		copy->subroutine_convention = this->subroutine_convention;
+		copy->spec_subroutine_conventions = this->spec_subroutine_conventions;
+
+		// Copy internally tracked stats.
+		//
+		copy->local_opt_count = this->local_opt_count.load();
+		copy->last_internal_id = this->last_internal_id.load();
+
+		// Create a recursive clone helper and call into it with entry point.
+		//
+		const std::function<basic_block*(const basic_block*)> reference_block = 
+			[ & ] ( const basic_block* src ) -> basic_block*
+		{
+			// If already indexed, return as is.
+			//
+			basic_block*& index = copy->explored_blocks[ src->entry_vip ];
+			if ( index ) return index;
+			
+			// Copy the block and fix it's references.
+			//
+			index = new basic_block{ *src };
+			index->owner = copy;
+			
+			for ( basic_block*& next : index->next )
+				next = reference_block( next );
+			for ( basic_block*& prev : index->prev )
+				prev = reference_block( prev );
+			return index;
+		};
+		copy->entry_point = reference_block( this->entry_point );
+
+		// Iterate each explored block to make sure we've covered all.
+		//
+		for ( auto& [vip, block] : this->explored_blocks )
+			fassert( copy->explored_blocks[ vip ] == reference_block( block ) );
+
+		// Return the copy.
+		//
+		return copy;
 	}
 };

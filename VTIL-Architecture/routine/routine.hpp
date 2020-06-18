@@ -44,6 +44,14 @@ namespace vtil
 	//
 	struct routine
 	{
+		// This structure cannot be copied without a call to ::clone().
+		//
+		routine() = default;
+		routine( routine&& ) = default;
+		routine( const routine& ) = delete;
+		routine& operator=( routine&& ) = default;
+		routine& operator=( const routine& ) = delete;
+
 		// Mutex guarding the whole structure, more information on thread-safety can be found at basic_block.hpp.
 		//
 		mutable critical_section mutex;
@@ -76,12 +84,6 @@ namespace vtil
 		// Misc. stats.
 		//
 		std::atomic<size_t> local_opt_count = { 0 };
-
-		// This structure cannot be copied.
-		//
-		routine() = default;
-		routine( const routine& ) = delete;
-		routine& operator=( const routine& ) = delete;
 
 		// Helpers for the allocation of unique internal registers.
 		//
@@ -125,5 +127,9 @@ namespace vtil
 		// Routine structures free all basic blocks they own upon their destruction.
 		//
 		~routine();
+
+		// Clones the routine and it's every block.
+		//
+		routine* clone() const;
 	};
 };
