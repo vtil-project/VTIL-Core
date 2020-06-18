@@ -110,6 +110,11 @@ namespace vtil::optimizer
 		//
 		for ( auto it = blk->begin(); it != blk->end(); it++ )
 		{
+			// Skip if volatile.
+			//
+			if ( it->is_volatile() )
+				continue;
+
 			// Enumerate each operand:
 			//
 			for ( auto [op, type] : it->enum_operands() )
