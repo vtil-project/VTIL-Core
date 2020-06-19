@@ -137,6 +137,11 @@ namespace vtil
 	{
 		fassert( ins.is_valid() );
 
+		// If label stack is not empty and instruction has an invalid vip, use the last label pushed.
+		//
+		if ( !label_stack.empty() && ins.vip == invalid_vip )
+			ins.vip = label_stack.back();
+
 		// Drop const qualifier of the iterator, since we are in a non-const 
 		// qualified member function, this qualifier is unnecessary.
 		//

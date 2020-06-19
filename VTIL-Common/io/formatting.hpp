@@ -228,20 +228,23 @@ namespace vtil::format
 	template<typename T, std::enable_if_t<std::is_integral_v<std::remove_cvref_t<T>>, int> = 0>
 	static std::string hex( T&& value )
 	{
-		if ( !std::is_signed_v<std::remove_cvref_t<T>> || value >= 0 )
+		if constexpr ( !std::is_signed_v<std::remove_cvref_t<T>> )
+		{
 			return str( "0x%llx", value );
+		}
 		else
-			return str( "-0x%llx", -value );
+		{
+			if ( value >= 0 ) return str( "0x%llx", value );
+			else              return str( "-0x%llx", -value );
+		}
 	}
 
 	// Formats the integer into a signed hexadecimal with explicit + if positive.
 	//
 	static std::string offset( int64_t value )
 	{
-		if ( value >= 0 )
-			return str( "+ 0x%llx", value );
-		else
-			return str( "- 0x%llx", -value );
+		if ( value >= 0 ) return str( "+ 0x%llx", value );
+		else              return str( "- 0x%llx", -value );
 	}
 };
 #undef HAS_RTTI
