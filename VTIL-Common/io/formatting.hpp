@@ -27,6 +27,7 @@
 //
 #pragma once
 #include <string>
+#include <cstring>
 #include <type_traits>
 #include "../util/concept.hpp"
 #include "../util/lt_typeid.hpp"
