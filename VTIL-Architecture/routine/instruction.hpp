@@ -79,10 +79,8 @@ namespace vtil
 		instruction() = default;
 		instruction( const instruction_desc* base,
 					 const std::vector<operand>& operands = {},
-					 vip_t vip = invalid_vip,
 					 bool explicit_volatile = false ) :
-			base( base ), operands( operands ),
-			vip( vip ), explicit_volatile( explicit_volatile )
+			base( base ), operands( operands ), explicit_volatile( explicit_volatile )
 		{
 			fassert( is_valid() );
 		}
