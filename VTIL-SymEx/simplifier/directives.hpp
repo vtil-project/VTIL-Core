@@ -104,8 +104,8 @@ namespace vtil::symbolic::directive
         // NOT conversion.
         //
         { A^-1,                                               ~A },
-        { A==0,                                               __iff((__mask_knw1(A)|__mask_unk(A))==1u, A^1) },
-        { A!=1,                                               __iff((__mask_knw1(A)|__mask_unk(A))==1u, A^1) },
+        { A==0,                                               __iff(__bcnt(A)==1u, A^1) },
+        { A!=1,                                               __iff(__bcnt(A)==1u, A^1) },
 
         // XOR conversion.
         //
