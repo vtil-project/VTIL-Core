@@ -80,7 +80,6 @@ namespace vtil
 			// Generic iterator typedefs.
 			//
 			using iterator_category = std::bidirectional_iterator_tag;
-			using value_type =        value_type;
 			using difference_type =   size_t;
 			using pointer =           value_type*;
 			using reference =         value_type&;

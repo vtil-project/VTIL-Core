@@ -81,6 +81,7 @@ namespace vtil::symbolic::directive
         { A+(-B),                                             A-B },
         { ~((~A)+B),                                          A-B },
         { ~(A-B),                                             (~A)+B },
+        { (~A+U),                                             (U-1)-A },
 
         // NEG conversion.
         //

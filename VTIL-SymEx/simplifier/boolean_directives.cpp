@@ -2578,6 +2578,17 @@ namespace vtil::symbolic::directive
         { (__uless(B, A)&__uless_eq(C, A)),                                __iff(__ugreat_eq(B, (C-0x1)), __ugreat(A, B)) },
 #endif
         { (__uless(B, A)&__uless(C, A)),                                   __iff(__ugreat(B, (C-0x1)), __ugreat(A, B)) },
+
+        // Manually added:
+        //
+		{ __uless( A + B, B ),                                             __uless( ~A, B ) },
+		{ __uless_eq( A + B, B ),                                          __uless_eq( -A, B ) },
+		{ __ugreat( A + B, B ),                                            __ugreat( -A, B ) },
+		{ __ugreat_eq( A + B, B ),                                         __ugreat_eq( ~A, B ) },
+		{ __uless( A + B, B ),                                             __ugreat( A, ~B ) },
+		{ __uless_eq( A - B, ~B ),                                         __ugreat_eq( A, B ) },
+		{ __ugreat( A - B, ~B ),                                           __uless( A, B ) },
+		{ __ugreat_eq( A + B, B ),                                         __uless_eq( A, ~B ) },
     };
 
 	constexpr auto overflow = [ ] ( auto a, auto b ) { return ((a<0)==(b<0))&((a<0)!=((a+b)<0)); };
@@ -2585,6 +2596,9 @@ namespace vtil::symbolic::directive
 
     const std::vector<std::pair<instance::reference, instance::reference>> boolean_joiners =
     {
+        // Manually added:
+        //
+
 		// TODO: Replace with proper overflow check detection later, this is bad.
         //
         //{ (A+B)>C,                                                         s((A>!(C-B))|overflow(A,B)|underflow(C,B)) },
@@ -2613,8 +2627,6 @@ namespace vtil::symbolic::directive
         { (W<=B),                                                          (!(-W)>=s(-B)) },
         { (W<B),                                                           (!(-W)>s(-B)) },
 
-        // Manually added boolean directives:
-        //
         { (A+B)==C,                                                        A==!(C-B) },
         { (A-B)==C,                                                        A==!(C+B) },
         { (A+B)!=C,                                                        A!=!(C-B) },
@@ -2624,13 +2636,5 @@ namespace vtil::symbolic::directive
         { A!=B,                                                            !(A-B)!=0u },
         { A!=B,                                                            !(A^B)!=0u },
         { (A^B)==C,                                                        !(C^B)==A },
-		{ __uless( A + B, B ),                                             __uless( !~A, B ) },
-		{ __uless_eq( A + B, B ),                                          __uless_eq( !-A, B ) },
-		{ __ugreat( A + B, B ),                                            __ugreat( !-A, B ) },
-		{ __ugreat_eq( A + B, B ),                                         __ugreat_eq( !~A, B ) },
-		{ __uless( A + B, B ),                                             __ugreat( A, !~B ) },
-		{ __uless_eq( A - B, ~B ),                                         __ugreat_eq( A, B ) },
-		{ __ugreat( A - B, ~B ),                                           __uless( A, B ) },
-		{ __ugreat_eq( A + B, B ),                                         __uless_eq( A, !~B ) },
     };
 };
