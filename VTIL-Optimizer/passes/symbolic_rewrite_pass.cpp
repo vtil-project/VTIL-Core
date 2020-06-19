@@ -30,12 +30,6 @@
 
 namespace vtil::optimizer
 {
-	// Ideal expression sizes.
-	//
-	static constexpr bitcnt_t prefered_exp_sizes[] = {
-		1, 8, 16, 32, 64
-	};
-
 	// Implement the pass.
 	//
 	size_t isymbolic_rewrite_pass::pass( basic_block* blk, bool xblock )
@@ -66,9 +60,13 @@ namespace vtil::optimizer
 		lambda_vm<symbolic_vm> vm;
 		vm.hooks.size_register = [ & ] ( const register_desc& reg )
 		{
-			if ( auto it = temp_sizes.find( { reg.flags, reg.local_id } ); 
+			if ( auto it = temp_sizes.find( { reg.flags, reg.local_id } );
 				      it != temp_sizes.end() )
+			{
+				// Pick the minimum size from preferred sizes.
+				//
 				return it->second ? it->second : 64;
+			}
 			return 64;
 		};
 		vm.hooks.execute = [ & ] ( const instruction& ins )
@@ -161,7 +159,7 @@ namespace vtil::optimizer
 
 				// If partially inherited flags register:
 				//
-				if ( k.is_flags() && k.bit_count != 64 )
+				if ( k.is_flags() && k.bit_count != 64 && prefered_exp_sizes.contains( 1 ) )
 				{
 					// For each bit:
 					//

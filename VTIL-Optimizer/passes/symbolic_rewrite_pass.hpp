@@ -37,9 +37,12 @@ namespace vtil::optimizer
 	//
 	struct isymbolic_rewrite_pass : pass_interface<>
 	{
-		bool force = false;
 		std::shared_mutex mtx;
-		isymbolic_rewrite_pass( bool force ) : force( force ){}
+
+		bool force;
+		std::set<bitcnt_t> prefered_exp_sizes;
+		isymbolic_rewrite_pass( bool force, const std::set<bitcnt_t>& prefered_exp_sizes = { 1, 8, 16, 32, 64 } )
+			: force( force ), prefered_exp_sizes( prefered_exp_sizes ) {}
 
 		size_t pass( basic_block* blk, bool xblock ) override;
 	};
