@@ -42,7 +42,7 @@ namespace vtil
 	//
 	routine* routine::clone() const
 	{
-		routine* copy = new routine;
+		routine* copy = new routine{};
 
 		// Acquire the routine mutex.
 		//

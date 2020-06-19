@@ -165,7 +165,7 @@ namespace vtil::debug
 			if ( it->vip == invalid_vip )
 				log<CON_DEF>( "[ PSEUDO ] " );
 			else
-				log<CON_DEF>( "[%08llx] ", it->vip );
+				log<CON_DEF>( "[%08x] ", ( uint32_t ) it->vip );
 			dump( *it, it.is_begin() ? nullptr : &*std::prev( it ) );
 		}
 
