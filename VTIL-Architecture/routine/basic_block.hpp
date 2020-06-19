@@ -249,7 +249,7 @@ namespace vtil
 		// Labels are a simple way to assign the same VIP for multiple 
 		// instructions that will be pushed after the call.
 		//
-		std::vector<std::pair<size_t, vip_t>> label_stack = {};
+		std::vector<vip_t> label_stack = {};
 		basic_block* label_begin( vip_t vip );
 		basic_block* label_end();
 
