@@ -355,7 +355,6 @@ namespace vtil::symbolic
 		//
 		for ( auto& [dir_src, dir_dst] : directive::join_descriptors )
 		{
-
 			// If we can transform the expression by the directive set:
 			//
 			if ( auto exp_new = transform( exp, dir_src, dir_dst, filter, max_depth ) )
@@ -407,7 +406,6 @@ namespace vtil::symbolic
 			//
 			for ( auto& [dir_src, dir_dst] : directive::boolean_joiners )
 			{
-
 				// If we can transform the expression by the directive set:
 				//
 				if ( auto exp_new = transform( exp, dir_src, dir_dst, filter, max_depth ) )
