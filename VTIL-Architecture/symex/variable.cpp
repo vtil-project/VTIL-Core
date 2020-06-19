@@ -157,7 +157,7 @@ namespace vtil::symbolic
 			if ( auto disp = p1 - p2 )
 				details->bit_offset = ( bitcnt_t ) *disp * 8;
 			else
-				details->bit_offset = -1;
+				details->unknown = 1;
 		}
 		// Otherwise declare no-overlap.
 		//
@@ -409,8 +409,9 @@ namespace vtil::symbolic
 				}
 
 				// Report unknown access: (TODO: Proper parsing!)
-				// - We can estimate usage based on 
-				return { .bit_offset = -1, .bit_count = -1 };
+				// - We can estimate usage based on registers passed, maybe?
+				//
+				return { .bit_count = var.bit_count(), .unknown = true };
 			}
 		}
 

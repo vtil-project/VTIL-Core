@@ -58,6 +58,7 @@ namespace vtil::symbolic
 		//
 		bool read = false;
 		bool write = false;
+		bool unknown = false;
 
 		// Cast to bool to check if non-null access.
 		//
@@ -65,7 +66,7 @@ namespace vtil::symbolic
 
 		// Check if details are unknown.
 		//
-		bool is_unknown() { return bit_offset == -1; }
+		bool is_unknown() { return unknown; }
 	};
 
 	// A pseudo single-static-assignment variable describing the state of a 
