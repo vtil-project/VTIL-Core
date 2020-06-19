@@ -47,17 +47,17 @@ namespace vtil::symbolic
 	{
 		// Relative offset to the variable, in bits.
 		//
-		bitcnt_t bit_offset;
+		bitcnt_t bit_offset = 0;
 
 		// Number of bits the instruction wrote at that offset.
 		// - Note: Not necessarily all have to be overlapping with the variable.
 		//
-		bitcnt_t bit_count;
+		bitcnt_t bit_count = 0;
 
 		// Type of access.
 		//
-		bool read;
-		bool write;
+		bool read = false;
+		bool write = false;
 
 		// Cast to bool to check if non-null access.
 		//
