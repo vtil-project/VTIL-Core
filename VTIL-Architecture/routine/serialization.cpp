@@ -136,7 +136,12 @@ namespace vtil
 		//
 		serialize( out, rtn->routine_convention );
 		serialize( out, rtn->subroutine_convention );
-		serialize( out, rtn->spec_subroutine_conventions );
+		serialize<clength_t>( out, rtn->spec_subroutine_conventions.size() );
+		for ( auto& [k, v] : rtn->spec_subroutine_conventions )
+		{
+			serialize( out, k );
+			serialize( out, v );
+		}
 
 		// Write the number of blocks we will serialize.
 		//
@@ -169,7 +174,15 @@ namespace vtil
 		//
 		deserialize( in, rtn->routine_convention );
 		deserialize( in, rtn->subroutine_convention );
-		deserialize( in, rtn->spec_subroutine_conventions );
+
+		clength_t num_convs;
+		deserialize( in, num_convs );
+		while ( rtn->spec_subroutine_conventions.size() != num_convs )
+		{
+			vip_t k; call_convention v;
+			deserialize( in, k ); deserialize( in, v );
+			rtn->spec_subroutine_conventions[ k ] = v;
+		}
 
 		// Read the number of blocks serialized and invoke basic-block 
 		// deserialization until number of blocks read matches.

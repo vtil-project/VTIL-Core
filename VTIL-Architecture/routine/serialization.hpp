@@ -135,7 +135,7 @@ namespace vtil
 
 		// If container stores data linearly and trivial data is stored:
 		//
-		if constexpr ( impl::is_linear_container_v<T>&& std::is_trivial<value_type>::value )
+		if constexpr ( impl::is_linear_container_v<T> && std::is_trivial<value_type>::value )
 		{
 			// Resize the container to expected size and read all entries at once.
 			//
