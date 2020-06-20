@@ -529,62 +529,89 @@ namespace vtil::optimizer::aux
 			{
 				// Match classic Jcc:
 				//
-				const auto extract_and_transform_cnd = [ ] ( symbolic::expression& dst, int idx )
+				const auto extract_and_transform_cnd = [ & ] ( symbolic::expression& dst, symbolic::expression& cnd_out, bool state )
 				{
-					symbolic::expression cnd_out = {};
 					bool confirmed = false;
 
-					dst.enumerate( [ & ] ( const symbolic::expression& exp )
+					std::function<void( const symbolic::expression& )> explore_cc_space = [ & ] ( const symbolic::expression& exp )
 					{
 						if ( exp.op == math::operator_id::value_if )
 						{
 							if ( !cnd_out.is_valid() )
-							{
-								if ( idx == 0 )
-									cnd_out = *exp.lhs;
-								else
-									idx--;
-							}
+								cnd_out = *exp.lhs;
 						}
-					} );
-					dst.transform( [ & ] ( symbolic::expression& exp )
+						else if ( ( exp.value.unknown_mask() | exp.value.known_one() ) == 1 )
+						{
+							if ( !cnd_out.is_valid() )
+								cnd_out = exp;
+						}
+						else if ( exp.is_variable() && exp.uid.get<symbolic::variable>().is_memory() )
+						{
+							exp.uid.get<symbolic::variable>().mem().decay().enumerate( explore_cc_space );
+						}
+					};
+
+					std::function<void( symbolic::expression& )> transform_cc = [ & ] ( symbolic::expression& exp )
 					{
 						if ( exp.op == math::operator_id::value_if )
 						{
 							if ( exp.lhs->equals( cnd_out ) )
 							{
-								exp = *exp.rhs;
+								exp = state ? *exp.rhs : 0;
 								confirmed = true;
 							}
 							else if ( exp.lhs->equals( ~cnd_out ) )
 							{
-								exp = 0;
+								exp = state ? 0 : *exp.rhs;
 								confirmed = true;
 							}
 						}
-					} );
-					return confirmed ? cnd_out : symbolic::expression{};
+						else if ( ( exp.value.unknown_mask() | exp.value.known_one() ) == 1 )
+						{
+							if ( exp.equals( cnd_out ) )
+							{
+								exp = { state, 1 };
+								confirmed = true;
+							}
+							else if ( exp.equals( ~cnd_out ) )
+							{
+								exp = { !state, 1 };
+								confirmed = true;
+							}
+						}
+						else if ( exp.is_variable() && exp.uid.get<symbolic::variable>().is_memory() )
+						{
+							auto& var = exp.uid.get<symbolic::variable>();
+							symbolic::pointer exp_ptr = var.mem().decay().clone().transform( transform_cc );
+							exp = trace( symbolic::variable{ var.at, { exp_ptr, var.mem().bit_count } } );
+						}
+					};
+
+					dst.enumerate( explore_cc_space );
+					dst.transform( transform_cc );
+					if ( !confirmed ) cnd_out = {};
 				};
 
+				symbolic::expression cc = {};
 				symbolic::expression dst1 = destination;
 				symbolic::expression dst2 = destination;
-				symbolic::expression cnd1 = extract_and_transform_cnd( dst1, 0 );
-				symbolic::expression cnd2 = extract_and_transform_cnd( dst2, 1 );
+				extract_and_transform_cnd( dst1, cc, true );
+				extract_and_transform_cnd( dst2, cc, false );
 
-				if ( cnd1 && cnd2 )
+				if ( cc )
 				{
 					// Make sure first condition is the simplest.
 					//
-					if ( cnd1.complexity > cnd2.complexity )
+					if ( cc.complexity > (~cc).complexity )
 					{
-						std::swap( cnd1, cnd2 );
+						cc = ~cc;
 						std::swap( dst1, dst2 );
 					}
 
 					return {
 						.is_vm_exit = real,
 						.is_jcc = true,
-						.cc = std::move( cnd1 ),
+						.cc = std::move( cc ),
 						.destinations = { dst1, dst2 }
 					};
 				}
