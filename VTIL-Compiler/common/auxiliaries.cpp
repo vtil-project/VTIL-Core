@@ -617,7 +617,7 @@ namespace vtil::optimizer::aux
 					return {
 						.is_vm_exit = real,
 						.is_jcc = true,
-						.cc = std::move( cc ),
+						.cc = cc.resize( 1 ),
 						.destinations = { dst1, dst2 }
 					};
 				}

@@ -193,6 +193,7 @@ namespace vtil::optimizer
 					cnt++;
 				}
 			}
+			// TODO: Generate exp if we cannot convert.
 		}
 		// If branch is [j/c* reg] where it could be [j/c* reg] imm:
 		//
