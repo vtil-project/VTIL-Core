@@ -155,7 +155,7 @@ namespace vtil::symbolic
 		{
 			details->bit_count = -1;
 			if ( auto disp = p1 - p2 )
-				details->bit_offset = ( bitcnt_t ) *disp * 8;
+				details->bit_offset = math::narrow_cast<bitcnt_t>( *disp * 8 );
 			else
 				details->unknown = 1;
 		}

@@ -43,27 +43,22 @@ using bitcnt_t = int;
 
 namespace vtil::math
 {
-    // Sizeof equivalent in bits.
-    //
-    template<typename T>
-    static constexpr bitcnt_t bitcnt = sizeof( T ) * 8;
-
     // Narrows the given type in a safe manner.
     //
     template<typename T, typename T2>
     static T narrow_cast( T2 o )
     {
         if constexpr ( std::is_signed_v<T2> ^ std::is_signed_v<T> )
-            fassert( 0 <= o && o <= std::numeric_limits<T>::max() );
+            dassert( 0 <= o && o <= std::numeric_limits<T>::max() );
         else
-            fassert( std::numeric_limits<T>::min() <= o && o <= std::numeric_limits<T>::max() );
+            dassert( std::numeric_limits<T>::min() <= o && o <= std::numeric_limits<T>::max() );
         return ( T ) o;
     }
 
     // Extracts the sign bit from the given value.
     //
     template<typename T, std::enable_if_t<std::is_integral_v<T>, int> = 0>
-    static constexpr bool sgn( T type ) { return bool( type >> ( bitcnt<T> - 1 ) ); }
+    static constexpr bool sgn( T type ) { return bool( type >> ( ( sizeof( T ) * 8 ) - 1 ) ); }
 
     // Implement platform-indepdenent popcnt/msb/lsb.
     //
@@ -75,7 +70,7 @@ namespace vtil::math
         x = ( x & 0x3333333333333333 ) + ( ( x >> 2 ) & 0x3333333333333333 );
         x = ( x + ( x >> 4 ) ) & 0x0f0f0f0f0f0f0f0f;
         x = ( x * 0x0101010101010101 ) >> 56;
-        return bitcnt_t( x );
+        return (bitcnt_t) x;
     }
     static constexpr bitcnt_t msb( uint64_t x )
     {

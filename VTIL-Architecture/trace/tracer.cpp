@@ -480,7 +480,7 @@ namespace vtil
 		lvm.hooks.read_memory = [ & ] ( const symbolic::expression& pointer, size_t byte_count )
 		{
 			auto exp = trace( symbolic::variable{
-				lookup.at, { pointer, bitcnt_t( byte_count * 8 ) }
+				lookup.at, { pointer, math::narrow_cast<bitcnt_t>( byte_count * 8 ) }
 			} );
 			return exp.is_valid() ? exp.resize( result_bcnt ) : exp;
 		};
