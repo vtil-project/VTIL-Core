@@ -12,7 +12,11 @@ list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/cmake)
 # For portability on non-MSVC compilers, add some compile options
 if (CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
     add_compile_options(-Wno-narrowing)
-
+	add_compile_options(-Wno-format-security)
+	add_compile_options(-Wno-unused-value)
+	add_compile_options(-Wno-uninitialized)
+	add_compile_options(-Wno-parentheses)
+	
     # Clang-only flags
     if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
         # Use libc++ if compiling C++
@@ -23,7 +27,6 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
     if(CMAKE_CXX_COMPILER_ID MATCHES "GNU")
         add_compile_options(-Wvolatile)
         add_compile_options(-fpermissive)
-        add_compile_options(-Wno-format-security)
         add_compile_options(-Wno-attributes)
         add_compile_options(-Wno-multichar)
     endif()

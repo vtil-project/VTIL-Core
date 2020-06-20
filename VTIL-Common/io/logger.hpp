@@ -225,16 +225,7 @@ namespace vtil::logger
 		if ( sizeof...( ps ) == 0 )
 			return out_cnt + fputs( fmt, VTIL_LOGGER_DST );
 		else
-		{
-#ifdef __GNUC__
-	#pragma GCC diagnostic push
-	#pragma GCC diagnostic ignored "-Wformat-security"
-#endif
 			return out_cnt + fprintf( VTIL_LOGGER_DST, fmt, format::fix_parameter<params>( std::forward<params>( ps ) )... );
-#ifdef __GNUC__
-	#pragma GCC diagnostic pop
-#endif
-		}
 	}
 	template<console_color color = CON_DEF, typename... params>
 	static int log( const char* fmt, params&&... ps )

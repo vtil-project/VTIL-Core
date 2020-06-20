@@ -47,9 +47,7 @@ namespace vtil
 		// This structure cannot be copied without a call to ::clone().
 		//
 		routine() = default;
-		routine( routine&& ) = default;
 		routine( const routine& ) = delete;
-		routine& operator=( routine&& ) = default;
 		routine& operator=( const routine& ) = delete;
 
 		// Mutex guarding the whole structure, more information on thread-safety can be found at basic_block.hpp.

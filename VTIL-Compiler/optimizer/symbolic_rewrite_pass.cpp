@@ -92,14 +92,18 @@ namespace vtil::optimizer
 				if ( op.is_register() && op.reg().is_volatile() && !op.reg().is_undefined() )
 					return false;
 
-			// Halt if instruction is accessing to non restricted memory.
+			// Halt if instruction is accessing to non-restricted memory.
 			//
 			if ( ins.base->accesses_memory() )
 			{
-				auto [base, _] = ins.memory_location();
-				if ( !base.is_stack_pointer() && !( vm.read_register( base ) - symbolic::make_register_ex( REG_SP ) ).is_constant() &&
-					 !base.is_image_base() && !( vm.read_register( base ) - symbolic::make_register_ex( REG_IMGBASE ) ).is_constant() )
-					return false;
+				auto [base, offset] = ins.memory_location();
+				if ( !symbolic::pointer::restricted_bases.contains( base ) )
+				{
+					auto ptr = vm.read_register( base ) + offset;
+					for ( auto& [k, v] : vm.memory_state )
+						if ( k.can_overlap( ptr ) && !( k - ptr ).has_value() )
+							return false;
+				}
 			}
 
 			// Invoke original handler.
