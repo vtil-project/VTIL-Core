@@ -106,9 +106,9 @@ namespace vtil
 		//
 		bool is_volatile() const { return explicit_volatile || base->is_volatile; }
 
-		// Returns the access size of the instruction.
+		// Returns the access size of the instruction in number of bits.
 		//
-		size_t access_size() const { return operands.empty() ? 0 : operands[ base->access_size_index ].size(); }
+		bitcnt_t access_size() const { return operands.empty() ? 0 : operands[ base->access_size_index ].bit_count(); }
 
 		// Returns the memory location this instruction references.
 		//

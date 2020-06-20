@@ -100,8 +100,8 @@ namespace vtil::optimizer
 					return arr;
 				}();
 
-				stack_vector<int> read_sp;
-				stack_vector<int> write_sp;
+				stack_vector<size_t> read_sp;
+				stack_vector<size_t> write_sp;
 				for ( auto [op, type, idx] : zip( it->operands, it->base->operand_types, iindices() ) )
 				{
 					// Skip if memory location since it's virtual $sp in that case.
@@ -154,7 +154,7 @@ namespace vtil::optimizer
 
 						// Replace every read.
 						//
-						for ( auto index : read_sp )
+						for ( size_t index : read_sp )
 						{
 							it->operands[ index ].reg().local_id = tmp.local_id;
 							it->operands[ index ].reg().flags = tmp.flags;

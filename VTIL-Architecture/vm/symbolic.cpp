@@ -71,7 +71,7 @@ namespace vtil
 	//
 	symbolic::expression symbolic_vm::read_memory( const symbolic::expression& pointer, size_t byte_count )
 	{
-		bitcnt_t bcnt = byte_count * 8;
+		bitcnt_t bcnt = math::narrow_cast<bitcnt_t>( byte_count * 8 );
 		return memory_state.read_v( pointer, bcnt );
 	}
 

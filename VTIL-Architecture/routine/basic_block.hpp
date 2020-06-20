@@ -416,7 +416,7 @@ namespace vtil
 				//
 				int64_t padding_size = stack_alignment - misalignment;
 				shift_sp( -padding_size );
-				str( REG_SP, sp_offset, operand( 0, padding_size * 8 ) );
+				str( REG_SP, sp_offset, operand( 0, math::narrow_cast<bitcnt_t>( padding_size * 8 ) ) );
 			}
 
 			// Shift and write the operand.

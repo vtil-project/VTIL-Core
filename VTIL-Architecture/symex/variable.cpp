@@ -247,10 +247,10 @@ namespace vtil::symbolic
 					// Check if within boundaries, set bit count and return if so.
 					//
 					bitcnt_t low_offset = details.bit_offset;
-					bitcnt_t high_offset = low_offset + ( bitcnt_t ) it->access_size() * 8;
+					bitcnt_t high_offset = low_offset + it->access_size();
 					if ( low_offset < mem->bit_count && high_offset > 0 )
 					{
-						details.bit_count = ( bitcnt_t ) it->access_size() * 8;
+						details.bit_count = it->access_size();
 						return details;
 					}
 				}

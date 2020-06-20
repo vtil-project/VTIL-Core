@@ -139,9 +139,9 @@ namespace vtil
 
         // Conversion to human-readable format.
         //
-	    std::string to_string( size_t access_size ) const
+	    std::string to_string( bitcnt_t access_size ) const
 	    {
-            char suffix = format::suffix_map[ access_size ];
+            char suffix = format::suffix_map[ access_size / 8 ];
             return suffix ? name + suffix : name;
 	    }
 

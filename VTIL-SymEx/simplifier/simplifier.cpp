@@ -204,7 +204,7 @@ namespace vtil::symbolic
 				// Toggle temporary disable bit and invoke resize.
 				//
 				temp_disable = true;
-				( +exp_new )->resize( *exp->rhs->get(), exp->op == math::operator_id::cast );
+				( +exp_new )->resize( math::narrow_cast<bitcnt_t>( *exp->rhs->get() ), exp->op == math::operator_id::cast );
 				temp_disable = false;
 
 				// If operand was simplified or if the complexity reduced, indicate success. 

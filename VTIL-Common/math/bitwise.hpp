@@ -30,6 +30,7 @@
 #include <math.h>
 #include <optional>
 #include <type_traits>
+#include <numeric>
 #include "../util/reducable.hpp"
 #include "../io/asserts.hpp"
 
@@ -46,6 +47,18 @@ namespace vtil::math
     //
     template<typename T>
     static constexpr bitcnt_t bitcnt = sizeof( T ) * 8;
+
+    // Narrows the given type in a safe manner.
+    //
+    template<typename T, typename T2>
+    static T narrow_cast( T2 o )
+    {
+        if constexpr ( std::is_signed_v<T2> ^ std::is_signed_v<T> )
+            fassert( 0 <= o && o <= std::numeric_limits<T>::max() );
+        else
+            fassert( std::numeric_limits<T>::min() <= o && o <= std::numeric_limits<T>::max() );
+        return ( T ) o;
+    }
 
     // Extracts the sign bit from the given value.
     //

@@ -93,7 +93,7 @@ namespace vtil::optimizer
 					if ( !( ptr.flags & register_stack_pointer ) )
 						used = true;
 					else
-						used = aux::is_used( { it, {  ptr, ( bitcnt_t ) it->access_size() * 8 } }, xblock, &ctrace );
+						used = aux::is_used( { it, {  ptr, it->access_size() } }, xblock, &ctrace );
 				}
 			}
 

@@ -225,7 +225,7 @@ namespace vtil::symbolic
 					//
 					else
 					{
-						bitcnt_t rhs_mask = value.known_one() | value.unknown_mask();
+						uint64_t rhs_mask = value.known_one() | value.unknown_mask();
 						auto rhs_v = std::move( rhs );
 						*this = ( ~( ( +rhs_v )->resize( new_size, false ) ) ) & expression{ rhs_mask, new_size };
 					}

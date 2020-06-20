@@ -261,7 +261,7 @@ namespace vtil
 			//
 			if ( ( flags & register_physical ) )
 				#pragma warning(suppress: 4267)
-				return prefix + amd64::name( amd64::extend( local_id ) ) + suffix;
+				return prefix + amd64::name( amd64::extend( math::narrow_cast<uint8_t>( local_id ) ) ) + suffix;
 			else
 				return prefix + "vr" + std::to_string( local_id ) + suffix;
 		}

@@ -196,7 +196,7 @@ namespace vtil
 					// Resolve tested expression into operand and address by-bit.
 					//
 					operand res = cvt( *exp.lhs, true );
-					res.reg().bit_offset += *offset;
+					res.reg().bit_offset += math::narrow_cast<bitcnt_t>( *offset );
 					res.reg().bit_count = 1;
 					return res;
 				}

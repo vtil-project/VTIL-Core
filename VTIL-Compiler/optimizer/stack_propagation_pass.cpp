@@ -138,7 +138,7 @@ namespace vtil::optimizer
 				// Lazy-trace the value.
 				//
 				symbolic::pointer ptr = { ltracer.cached_tracer::trace_p( { it, REG_SP } ) + it->memory_location().second };
-				symbolic::variable var = { it, { ptr, bitcnt_t( it->access_size() * 8 ) } };
+				symbolic::variable var = { it, { ptr, it->access_size() } };
 				symbolic::expression exp = xblock ? ltracer.rtrace( var ) : ltracer.cached_tracer::trace( var );
 
 				// Resize and pack variables.

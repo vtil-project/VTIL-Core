@@ -198,7 +198,7 @@ namespace vtil
 				//
 				const bitcnt_t rl = 0;
 				const bitcnt_t rh = size;
-				const bitcnt_t wl = wl_b.value() * 8;
+				const bitcnt_t wl = math::narrow_cast<bitcnt_t>( wl_b.value() * 8 );
 				const bitcnt_t wh = wl + it->second.size();
 
 				// If write is below or at our pointer:
@@ -253,7 +253,7 @@ namespace vtil
 				{
 					// Calculate the size of the overlapping region.
 					//
-					int64_t overlap_cnt = std::min( rh, wh ) - wl;
+					bitcnt_t overlap_cnt = std::min( rh, wh ) - wl;
 
 					// If write misses our range, skip.
 					// RL  RH

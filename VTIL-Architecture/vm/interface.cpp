@@ -235,7 +235,7 @@ namespace vtil
 					auto [base, offset] = it->memory_location();
 					write_memory(
 						read_register( base ) + offset,
-						symbolic::make_undefined_ex( it->access_size() ? it->access_size() * 8 : 64 )
+						symbolic::make_undefined_ex( it->access_size() ? it->access_size() : 64 )
 					);
 				}
 			}
