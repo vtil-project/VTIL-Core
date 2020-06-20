@@ -61,11 +61,13 @@ namespace vtil
 		{
 			std::lock_guard _g{ o.mtx }, _g2{ mtx };
 			database = o.database;
+			return *this;
 		}
 		multivariate& operator=( multivariate&& o )
 		{
 			std::lock_guard _g{ mtx };
 			database = std::move( o.database );
+			return *this;
 		}
 
 		// Functional getter, if variant is already in the database will return
