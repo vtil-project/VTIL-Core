@@ -107,32 +107,32 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="common\auxiliaries.cpp" />
-    <ClCompile Include="passes\bblock_extension_pass.cpp" />
-    <ClCompile Include="passes\dead_code_elimination_pass.cpp" />
-    <ClCompile Include="passes\istack_ref_substitution_pass.cpp" />
-    <ClCompile Include="passes\mov_propagation_pass.cpp" />
-    <ClCompile Include="passes\branch_correction_pass.cpp" />
-    <ClCompile Include="passes\register_renaming_pass.cpp" />
-    <ClCompile Include="passes\stack_pinning_pass.cpp" />
-    <ClCompile Include="passes\stack_propagation_pass.cpp" />
-    <ClCompile Include="passes\symbolic_rewrite_pass.cpp" />
+    <ClCompile Include="optimizer\bblock_extension_pass.cpp" />
+    <ClCompile Include="optimizer\branch_correction_pass.cpp" />
+    <ClCompile Include="optimizer\dead_code_elimination_pass.cpp" />
+    <ClCompile Include="optimizer\istack_ref_substitution_pass.cpp" />
+    <ClCompile Include="optimizer\mov_propagation_pass.cpp" />
+    <ClCompile Include="optimizer\register_renaming_pass.cpp" />
+    <ClCompile Include="optimizer\stack_pinning_pass.cpp" />
+    <ClCompile Include="optimizer\stack_propagation_pass.cpp" />
+    <ClCompile Include="optimizer\symbolic_rewrite_pass.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="common\apply_all.hpp" />
     <ClInclude Include="common\auxiliaries.hpp" />
     <ClInclude Include="common\interface.hpp" />
-    <ClInclude Include="passes\bblock_extension_pass.hpp" />
-    <ClInclude Include="passes\dead_code_elimination_pass.hpp" />
-    <ClInclude Include="passes\istack_ref_substitution_pass.hpp" />
-    <ClInclude Include="passes\mov_propagation_pass.hpp" />
-    <ClInclude Include="passes\branch_correction_pass.hpp" />
-    <ClInclude Include="passes\register_renaming_pass.hpp" />
-    <ClInclude Include="passes\stack_pinning_pass.hpp" />
-    <ClInclude Include="passes\stack_propagation_pass.hpp" />
-    <ClInclude Include="passes\symbolic_rewrite_pass.hpp" />
+    <ClInclude Include="optimizer\bblock_extension_pass.hpp" />
+    <ClInclude Include="optimizer\branch_correction_pass.hpp" />
+    <ClInclude Include="optimizer\dead_code_elimination_pass.hpp" />
+    <ClInclude Include="optimizer\istack_ref_substitution_pass.hpp" />
+    <ClInclude Include="optimizer\mov_propagation_pass.hpp" />
+    <ClInclude Include="optimizer\register_renaming_pass.hpp" />
+    <ClInclude Include="optimizer\stack_pinning_pass.hpp" />
+    <ClInclude Include="optimizer\stack_propagation_pass.hpp" />
+    <ClInclude Include="optimizer\symbolic_rewrite_pass.hpp" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="includes\vtil\optimizer" />
+    <None Include="includes\vtil\compiler" />
     <None Include="VTIL-Compiler.licenseheader" />
   </ItemGroup>
   <ItemGroup>

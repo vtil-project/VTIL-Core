@@ -27,15 +27,15 @@
 //
 #pragma once
 #include "interface.hpp"
-#include "../passes/stack_pinning_pass.hpp"
-#include "../passes/istack_ref_substitution_pass.hpp"
-#include "../passes/bblock_extension_pass.hpp"
-#include "../passes/stack_propagation_pass.hpp"
-#include "../passes/dead_code_elimination_pass.hpp"
-#include "../passes/mov_propagation_pass.hpp"
-#include "../passes/symbolic_rewrite_pass.hpp"
-#include "../passes/branch_correction_pass.hpp"
-#include "../passes/register_renaming_pass.hpp"
+#include "../optimizer/stack_pinning_pass.hpp"
+#include "../optimizer/istack_ref_substitution_pass.hpp"
+#include "../optimizer/bblock_extension_pass.hpp"
+#include "../optimizer/stack_propagation_pass.hpp"
+#include "../optimizer/dead_code_elimination_pass.hpp"
+#include "../optimizer/mov_propagation_pass.hpp"
+#include "../optimizer/symbolic_rewrite_pass.hpp"
+#include "../optimizer/branch_correction_pass.hpp"
+#include "../optimizer/register_renaming_pass.hpp"
 
 namespace vtil::optimizer
 {

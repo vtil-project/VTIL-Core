@@ -2,15 +2,15 @@ project(VTIL-Compiler)
 
 add_library(${PROJECT_NAME} STATIC
     common/auxiliaries.cpp
-    passes/stack_pinning_pass.cpp
-    passes/istack_ref_substitution_pass.cpp
-    passes/bblock_extension_pass.cpp
-    passes/stack_propagation_pass.cpp
-    passes/dead_code_elimination_pass.cpp
-    passes/mov_propagation_pass.cpp
-    passes/symbolic_rewrite_pass.cpp
-    passes/branch_correction_pass.cpp
-    passes/register_renaming_pass.cpp
+    optimization/stack_pinning_pass.cpp
+    optimization/istack_ref_substitution_pass.cpp
+    optimization/bblock_extension_pass.cpp
+    optimization/stack_propagation_pass.cpp
+    optimization/dead_code_elimination_pass.cpp
+    optimization/mov_propagation_pass.cpp
+    optimization/symbolic_rewrite_pass.cpp
+    optimization/branch_correction_pass.cpp
+    optimization/register_renaming_pass.cpp
 )
 
 target_include_directories(${PROJECT_NAME} PUBLIC includes)

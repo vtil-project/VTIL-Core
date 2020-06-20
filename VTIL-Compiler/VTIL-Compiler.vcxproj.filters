@@ -1,67 +1,49 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <ClCompile Include="passes\bblock_extension_pass.cpp">
-      <Filter>Optimizer Passes</Filter>
-    </ClCompile>
-    <ClCompile Include="passes\istack_ref_substitution_pass.cpp">
-      <Filter>Optimizer Passes</Filter>
-    </ClCompile>
-    <ClCompile Include="passes\stack_pinning_pass.cpp">
-      <Filter>Optimizer Passes</Filter>
-    </ClCompile>
-    <ClCompile Include="passes\stack_propagation_pass.cpp">
-      <Filter>Optimizer Passes</Filter>
-    </ClCompile>
-    <ClCompile Include="passes\mov_propagation_pass.cpp">
-      <Filter>Optimizer Passes</Filter>
-    </ClCompile>
-    <ClCompile Include="passes\dead_code_elimination_pass.cpp">
-      <Filter>Optimizer Passes</Filter>
-    </ClCompile>
     <ClCompile Include="common\auxiliaries.cpp">
       <Filter>Common</Filter>
     </ClCompile>
-    <ClCompile Include="passes\symbolic_rewrite_pass.cpp">
-      <Filter>Optimizer Passes</Filter>
+    <ClCompile Include="optimizer\bblock_extension_pass.cpp">
+      <Filter>Optimization Passes</Filter>
     </ClCompile>
-    <ClCompile Include="passes\register_renaming_pass.cpp">
-      <Filter>Optimizer Passes</Filter>
+    <ClCompile Include="optimizer\branch_correction_pass.cpp">
+      <Filter>Optimization Passes</Filter>
     </ClCompile>
-    <ClCompile Include="passes\branch_correction_pass.cpp">
-      <Filter>Optimizer Passes</Filter>
+    <ClCompile Include="optimizer\dead_code_elimination_pass.cpp">
+      <Filter>Optimization Passes</Filter>
+    </ClCompile>
+    <ClCompile Include="optimizer\istack_ref_substitution_pass.cpp">
+      <Filter>Optimization Passes</Filter>
+    </ClCompile>
+    <ClCompile Include="optimizer\mov_propagation_pass.cpp">
+      <Filter>Optimization Passes</Filter>
+    </ClCompile>
+    <ClCompile Include="optimizer\register_renaming_pass.cpp">
+      <Filter>Optimization Passes</Filter>
+    </ClCompile>
+    <ClCompile Include="optimizer\stack_pinning_pass.cpp">
+      <Filter>Optimization Passes</Filter>
+    </ClCompile>
+    <ClCompile Include="optimizer\stack_propagation_pass.cpp">
+      <Filter>Optimization Passes</Filter>
+    </ClCompile>
+    <ClCompile Include="optimizer\symbolic_rewrite_pass.cpp">
+      <Filter>Optimization Passes</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Includes">
       <UniqueIdentifier>{6307ebe6-d515-4f15-a927-44dacb7a337c}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Optimizer Passes">
-      <UniqueIdentifier>{93550fd4-29f0-496a-ba4a-c90fcf11efb1}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Common">
       <UniqueIdentifier>{5ad32c73-c84f-45a2-ba7b-e4170f51b3d3}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Optimization Passes">
+      <UniqueIdentifier>{93550fd4-29f0-496a-ba4a-c90fcf11efb1}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="passes\mov_propagation_pass.hpp">
-      <Filter>Optimizer Passes</Filter>
-    </ClInclude>
-    <ClInclude Include="passes\stack_propagation_pass.hpp">
-      <Filter>Optimizer Passes</Filter>
-    </ClInclude>
-    <ClInclude Include="passes\dead_code_elimination_pass.hpp">
-      <Filter>Optimizer Passes</Filter>
-    </ClInclude>
-    <ClInclude Include="passes\stack_pinning_pass.hpp">
-      <Filter>Optimizer Passes</Filter>
-    </ClInclude>
-    <ClInclude Include="passes\bblock_extension_pass.hpp">
-      <Filter>Optimizer Passes</Filter>
-    </ClInclude>
-    <ClInclude Include="passes\istack_ref_substitution_pass.hpp">
-      <Filter>Optimizer Passes</Filter>
-    </ClInclude>
     <ClInclude Include="common\apply_all.hpp">
       <Filter>Common</Filter>
     </ClInclude>
@@ -71,21 +53,39 @@
     <ClInclude Include="common\interface.hpp">
       <Filter>Common</Filter>
     </ClInclude>
-    <ClInclude Include="passes\symbolic_rewrite_pass.hpp">
-      <Filter>Optimizer Passes</Filter>
+    <ClInclude Include="optimizer\bblock_extension_pass.hpp">
+      <Filter>Optimization Passes</Filter>
     </ClInclude>
-    <ClInclude Include="passes\register_renaming_pass.hpp">
-      <Filter>Optimizer Passes</Filter>
+    <ClInclude Include="optimizer\branch_correction_pass.hpp">
+      <Filter>Optimization Passes</Filter>
     </ClInclude>
-    <ClInclude Include="passes\branch_correction_pass.hpp">
-      <Filter>Optimizer Passes</Filter>
+    <ClInclude Include="optimizer\dead_code_elimination_pass.hpp">
+      <Filter>Optimization Passes</Filter>
+    </ClInclude>
+    <ClInclude Include="optimizer\istack_ref_substitution_pass.hpp">
+      <Filter>Optimization Passes</Filter>
+    </ClInclude>
+    <ClInclude Include="optimizer\mov_propagation_pass.hpp">
+      <Filter>Optimization Passes</Filter>
+    </ClInclude>
+    <ClInclude Include="optimizer\register_renaming_pass.hpp">
+      <Filter>Optimization Passes</Filter>
+    </ClInclude>
+    <ClInclude Include="optimizer\stack_pinning_pass.hpp">
+      <Filter>Optimization Passes</Filter>
+    </ClInclude>
+    <ClInclude Include="optimizer\stack_propagation_pass.hpp">
+      <Filter>Optimization Passes</Filter>
+    </ClInclude>
+    <ClInclude Include="optimizer\symbolic_rewrite_pass.hpp">
+      <Filter>Optimization Passes</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="includes\vtil\optimizer">
+    <None Include="VTIL-Compiler.licenseheader" />
+    <None Include="includes\vtil\compiler">
       <Filter>Includes</Filter>
     </None>
-    <None Include="VTIL-Compiler.licenseheader" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="CMakeLists.txt" />
