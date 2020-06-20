@@ -139,6 +139,7 @@
     <ClInclude Include="util\constexpr_random.hpp" />
     <ClInclude Include="util\copy_on_write.hpp" />
     <ClInclude Include="util\critical_section.hpp" />
+    <ClInclude Include="util\multivariate.hpp" />
     <ClInclude Include="util\dynamic_size.hpp" />
     <ClInclude Include="util\conditional_lock.hpp" />
     <ClInclude Include="util\lt_typeid.hpp" />

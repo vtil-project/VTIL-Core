@@ -48,6 +48,10 @@ namespace vtil
 		//
 		std::lock_guard g{ this->mutex };
 
+		// Copy the context data.
+		//
+		copy->context = this->context;
+
 		// Copy calling conventions.
 		//
 		copy->routine_convention = this->routine_convention;

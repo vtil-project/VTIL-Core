@@ -253,6 +253,10 @@ namespace vtil
 		basic_block* label_begin( vip_t vip );
 		basic_block* label_end();
 
+		// Multivariate runtime context.
+		//
+		mutable multivariate context = {};
+
 		// Wrap the std::list fundamentals.
 		//
 		auto size() const { return stream.size(); }

@@ -85,6 +85,10 @@ namespace vtil
 		//
 		std::atomic<size_t> local_opt_count = { 0 };
 
+		// Multivariate runtime context.
+		//
+		mutable multivariate context = {};
+
 		// Helpers for the allocation of unique internal registers.
 		//
 		register_desc alloc( bitcnt_t size )
