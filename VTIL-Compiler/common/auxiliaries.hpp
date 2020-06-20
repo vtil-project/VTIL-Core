@@ -59,7 +59,7 @@ namespace vtil::optimizer::aux
 
 	// Helper to check if the given symbolic variable's value is preserved upto [dst].
 	//
-	bool is_alive( const symbolic::variable& var, const il_const_iterator& dst, tracer* tracer );
+	bool is_alive( const symbolic::variable& var, const il_const_iterator& dst, bool rec, tracer* tracer );
 
 	// Revives the value of the given variable to be used by the point specified.
 	//

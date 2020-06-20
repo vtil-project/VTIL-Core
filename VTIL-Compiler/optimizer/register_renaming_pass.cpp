@@ -101,7 +101,7 @@ namespace vtil::optimizer
 
 					// If it does not access source, skip.
 					//
-					if ( auto details = src.accessed_by( i, &tracer ) )
+					if ( auto details = src.accessed_by( i, nullptr ) )
 					{
 						// If unknown access, fail.
 						//
@@ -127,7 +127,7 @@ namespace vtil::optimizer
 					// If destination is used by the instruction, fail.
 					// Can be ignored if mask is cleared.
 					//
-					if ( dst.accessed_by( i, &tracer ) && query::rlocal( mask ) )
+					if ( dst.accessed_by( i, nullptr ) && query::rlocal( mask ) )
 						return fail();
 
 					// Skip if mask is not cleared.
@@ -137,7 +137,7 @@ namespace vtil::optimizer
 
 					// If dst is used after this point, fail.
 					//
-					return aux::is_used( dst.bind( i ), xblock, &tracer ) ? fail() : true;
+					return aux::is_used( dst.bind( i ), xblock, nullptr ) ? fail() : true;
 				} )
 				.first();
 

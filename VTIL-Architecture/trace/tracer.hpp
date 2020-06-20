@@ -42,6 +42,8 @@ namespace vtil
 	//
 	struct tracer
 	{
+		bool recursive_flag = false;
+
 		// Traces a variable across the basic block it belongs to and generates a symbolic expression 
 		// that describes it's value at the bound point. The provided variable should not contain a 
 		// pointer with out-of-block expressions.

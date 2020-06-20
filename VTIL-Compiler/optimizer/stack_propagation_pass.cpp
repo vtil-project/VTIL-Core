@@ -65,7 +65,10 @@ namespace vtil::optimizer
 		{
 			// Invoke default tracer and store the result.
 			//
+			bool recursive_flag_prev = recursive_flag;
+			recursive_flag = true;
 			symbolic::expression result = cached_tracer::trace( std::move( lookup ) );
+			recursive_flag = recursive_flag_prev;
 			
 			// If result is a variable:
 			//
@@ -194,7 +197,7 @@ namespace vtil::optimizer
 
 					// If value is not alive, try hijacking the value declaration.
 					//
-					if ( !aux::is_alive( rvar, it, &ctracer ) )
+					if ( !aux::is_alive( rvar, it, xblock, &ctracer ) )
 					{
 						// Must be a valid (and non-end) iterator.
 						//

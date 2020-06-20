@@ -68,7 +68,7 @@ namespace vtil::symbolic
 
 	// Calculates the displacement between two pointers and fills the access_details accordingly.
 	//
-	static void fill_displacement( access_details* details, const pointer& p1, const pointer& p2, tracer* tracer )
+	static void fill_displacement( access_details* details, const pointer& p1, const pointer& p2, tracer* tracer, bool xblock )
 	{
 		// If valid tracer provided:
 		//
@@ -144,7 +144,7 @@ namespace vtil::symbolic
 
 				// Recurse with the new pointers.
 				//
-				return fill_displacement( details, pn1, pn2, nullptr );
+				return fill_displacement( details, pn1, pn2, nullptr, xblock );
 			}
 		}
 
@@ -154,10 +154,28 @@ namespace vtil::symbolic
 		if ( p1.can_overlap( p2 ) )
 		{
 			details->bit_count = -1;
+
+			// If offset is constant:
+			//
 			if ( auto disp = p1 - p2 )
-				details->bit_offset = math::narrow_cast<bitcnt_t>( *disp * 8 );
+			{
+				details->bit_offset = math::narrow_cast< bitcnt_t >( *disp * 8 );
+			}
+			// If pointer does not strictly overlap and cross-block and tracer 
+			// is given, try again after cross-tracing.
+			//
+			else if ( xblock && tracer && !p1.can_overlap_s( p2 ) )
+			{
+				pointer p1r = { tracer->rtrace_exp( p1.base ) };
+				pointer p2r = { tracer->rtrace_exp( p2.base ) };
+				return fill_displacement( details, p1r, p2r, nullptr, false );
+			}
+			// If all fails, declare unknown.
+			//
 			else
+			{
 				details->unknown = 1;
+			}
 		}
 		// Otherwise declare no-overlap.
 		//
@@ -170,7 +188,7 @@ namespace vtil::symbolic
 
 	// Implement generic access check for ::read_by & ::written_by, write and read must not be both set to true.
 	//
-	static access_details test_access( const variable& var, const il_const_iterator& it, tracer* tracer, bool write, bool read )
+	static access_details test_access( const variable& var, const il_const_iterator& it, tracer* tracer, bool write, bool read, bool xblock )
 	{
 		fassert( !( write && read ) );
 
@@ -228,7 +246,7 @@ namespace vtil::symbolic
 				// Calculate displacement.
 				//
 				access_details details;
-				fill_displacement( &details, ptr, mem->base, tracer );
+				fill_displacement( &details, ptr, mem->base, tracer, xblock );
 
 				// If pointers can indeed overlap:
 				//
@@ -398,7 +416,7 @@ namespace vtil::symbolic
 					// Calculate the displacement, if constant below 0, declare trashed.
 					//
 					access_details details;
-					fill_displacement( &details, mem.base, pointer{ limit }, tracer );
+					fill_displacement( &details, mem.base, pointer{ limit }, tracer, xblock );
 					if ( !details.is_unknown() && ( details.bit_offset + var.bit_count() ) <= 0 )
 					{
 						if ( !read )
@@ -690,22 +708,22 @@ namespace vtil::symbolic
 	// access details as described by access_details. Tracer is used for
 	// pointer resolving, if nullptr passed will use default tracer.
 	//
-	access_details variable::read_by( const il_const_iterator& it, tracer* tr ) const
+	access_details variable::read_by( const il_const_iterator& it, tracer* tr, bool xblock ) const
 	{
 		tracer default_tracer;
 		if ( !tr ) tr = &default_tracer;
-		return test_access( *this, it, tr ? tr : &default_tracer, false, true );
+		return test_access( *this, it, tr ? tr : &default_tracer, false, true, xblock );
 	}
-	access_details variable::written_by( const il_const_iterator& it, tracer* tr ) const
+	access_details variable::written_by( const il_const_iterator& it, tracer* tr, bool xblock ) const
 	{
 		tracer default_tracer;
 		if ( !tr ) tr = &default_tracer;
-		return test_access( *this, it, tr ? tr : &default_tracer, true, false );
+		return test_access( *this, it, tr ? tr : &default_tracer, true, false, xblock );
 	}
-	access_details variable::accessed_by( const il_const_iterator& it, tracer* tr ) const
+	access_details variable::accessed_by( const il_const_iterator& it, tracer* tr, bool xblock ) const
 	{
 		tracer default_tracer;
 		if ( !tr ) tr = &default_tracer;
-		return test_access( *this, it, tr ? tr : &default_tracer, false, false );
+		return test_access( *this, it, tr ? tr : &default_tracer, false, false, xblock );
 	}
 };

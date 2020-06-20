@@ -158,7 +158,7 @@ namespace vtil::optimizer::aux
 
 					// Skip if variable is not written to by this instruction.
 					//
-					auto details = pvar.written_by( it, tracer );
+					auto details = pvar.written_by( it, tracer, !is_restricted );
 					if ( !details ) return;
 
 					// If also read or if unknown access, skip.
@@ -181,7 +181,7 @@ namespace vtil::optimizer::aux
 
 					// Skip if variable is not read by this instruction.
 					//
-					auto details = pvar.read_by( it, tracer );
+					auto details = pvar.read_by( it, tracer, !is_restricted );
 					if ( !details ) return false;
 
 					// If unknown access, continue.
@@ -200,7 +200,7 @@ namespace vtil::optimizer::aux
 					{
 						// Use the symbolic variable API.
 						//
-						if ( auto details = pvar.accessed_by( it, tracer ) )
+						if ( auto details = pvar.accessed_by( it, tracer, !is_restricted ) )
 						{
 							// If unknown, assume used.
 							//
@@ -382,7 +382,7 @@ namespace vtil::optimizer::aux
 
 	// Helper to check if the given symbolic variable's value is preserved upto [dst].
 	//
-	bool is_alive( const symbolic::variable& var, const il_const_iterator& dst, tracer* tracer )
+	bool is_alive( const symbolic::variable& var, const il_const_iterator& dst, bool rec, tracer* tracer )
 	{
 		// If register:
 		//
@@ -442,7 +442,7 @@ namespace vtil::optimizer::aux
 				// := Project back to the iterator type.
 				.unproject()
 				// >> Skip until we find a write into the variable queried.
-				.where( [ & ] ( const il_const_iterator& i ) { return var.written_by( i, tracer ); } )
+				.where( [ & ] ( const il_const_iterator& i ) { return var.written_by( i, tracer, rec ); } )
 				// <= Return first match.
 				.first();
 

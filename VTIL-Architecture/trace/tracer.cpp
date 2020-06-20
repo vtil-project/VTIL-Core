@@ -410,7 +410,7 @@ namespace vtil
 
 			// If variable is being written to, break.
 			//
-			if ( details = lookup.written_by( lookup.at, this ) )
+			if ( details = lookup.written_by( lookup.at, this, recursive_flag ) )
 			{
 				// If unknown access, return unknown.
 				//
@@ -512,7 +512,11 @@ namespace vtil
 	//
 	symbolic::expression tracer::rtrace( symbolic::variable lookup, int64_t limit )
 	{
-		return rtrace_primitive( lookup, this, {}, limit + 1 );
+		bool recursive_flag_prev = recursive_flag;
+		recursive_flag = true;
+		auto exp = rtrace_primitive( lookup, this, {}, limit + 1 );
+		recursive_flag = recursive_flag_prev;
+		return exp;
 	}
 	
 	// Wrappers around trace and rtrace that can trace an entire expression.

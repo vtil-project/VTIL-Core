@@ -165,7 +165,7 @@ namespace vtil::optimizer
 
 					// Skip if value is dead.
 					//
-					if ( !aux::is_alive( var, it, &ctracer ) )
+					if ( !aux::is_alive( var, it, xblock, &ctracer ) )
 						continue;
 
 					// Push to swap buffer.

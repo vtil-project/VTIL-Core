@@ -189,4 +189,12 @@ namespace vtil::symbolic
 		return ( ( flags & o.flags ) == flags ) ||
 			   ( ( flags & o.flags ) == o.flags );
 	}
+
+	// Same as can_overlap but will return false if flags do not overlap.
+	//
+	bool pointer::can_overlap_s( const pointer& o ) const
+	{
+		return ( ( flags & o.flags ) == flags ) &&
+			   ( ( flags & o.flags ) == o.flags );
+	}
 };

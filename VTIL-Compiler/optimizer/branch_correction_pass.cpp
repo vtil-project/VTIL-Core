@@ -151,7 +151,7 @@ namespace vtil::optimizer
 
 				// Check if alive, if not revive, else return as is.
 				//
-				if ( aux::is_alive( var_reg, branch, &ctracer ) )
+				if ( aux::is_alive( var_reg, branch, xblock, &ctracer ) )
 					return std::async( std::launch::deferred, [ op = operand{ var_reg.reg() } ]() { return op; } );
 				else
 					return std::async( std::launch::deferred, [ = ]() -> operand { return aux::revive_register( var_reg, branch ); } );
