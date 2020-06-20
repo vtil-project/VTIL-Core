@@ -70,6 +70,9 @@
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
+    <PostBuildEvent>
+      <Command>lib.exe /out:"$(ProjectDir)..\$(Platform)\$(Configuration)\VTIL.lib" "$(ProjectDir)..\$(Platform)\$(Configuration)\VTIL-Architecture.lib" "$(ProjectDir)..\$(Platform)\$(Configuration)\VTIL-Common.lib" "$(ProjectDir)..\$(Platform)\$(Configuration)\VTIL-Compiler.lib" "$(ProjectDir)..\$(Platform)\$(Configuration)\VTIL-SymEx.lib"</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -91,7 +94,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
     <PostBuildEvent>
-      <Command>lib.exe /out:"$(ProjectDir)..\$(Platform)\$(Configuration)\VTIL.lib" "$(ProjectDir)..\$(Platform)\$(Configuration)\VTIL-Architecture.lib" "$(ProjectDir)..\$(Platform)\$(Configuration)\VTIL-Common.lib" "$(ProjectDir)..\$(Platform)\$(Configuration)\VTIL-Optimizer.lib" "$(ProjectDir)..\$(Platform)\$(Configuration)\VTIL-SymEx.lib"</Command>
+      <Command>lib.exe /out:"$(ProjectDir)..\$(Platform)\$(Configuration)\VTIL.lib" "$(ProjectDir)..\$(Platform)\$(Configuration)\VTIL-Architecture.lib" "$(ProjectDir)..\$(Platform)\$(Configuration)\VTIL-Common.lib" "$(ProjectDir)..\$(Platform)\$(Configuration)\VTIL-Compiler.lib" "$(ProjectDir)..\$(Platform)\$(Configuration)\VTIL-SymEx.lib"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -109,9 +112,8 @@
       <Project>{ec6b8f7f-730c-4086-b143-4664cc16df8f}</Project>
       <LinkLibraryDependencies>true</LinkLibraryDependencies>
     </ProjectReference>
-    <ProjectReference Include="..\VTIL-Optimizer\VTIL-Optimizer.vcxproj">
+    <ProjectReference Include="..\VTIL-Compiler\VTIL-Compiler.vcxproj">
       <Project>{f960486b-2db4-44af-91bb-0f19f228abcf}</Project>
-      <LinkLibraryDependencies>true</LinkLibraryDependencies>
     </ProjectReference>
     <ProjectReference Include="..\VTIL-SymEx\VTIL-SymEx.vcxproj">
       <Project>{fe3202ce-d05c-4e04-ae9b-d30305d8ce31}</Project>

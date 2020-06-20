@@ -85,7 +85,7 @@
     <None Include="includes\vtil\optimizer">
       <Filter>Includes</Filter>
     </None>
-    <None Include="VTIL-Optimizer.licenseheader" />
+    <None Include="VTIL-Compiler.licenseheader" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="CMakeLists.txt" />

@@ -10,4 +10,4 @@ target_include_directories(${PROJECT_NAME} INTERFACE includes)
 
 # Mark all other VTIL targets as a dependency of VTIL
 #
-target_link_libraries(${PROJECT_NAME} INTERFACE VTIL-Architecture VTIL-SymEx VTIL-Common VTIL-Optimizer) 
+target_link_libraries(${PROJECT_NAME} INTERFACE VTIL-Architecture VTIL-SymEx VTIL-Common VTIL-Compiler) 

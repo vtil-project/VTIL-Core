@@ -1,4 +1,4 @@
-project(VTIL-Optimizer)
+project(VTIL-Compiler)
 
 add_library(${PROJECT_NAME} STATIC
     common/auxiliaries.cpp

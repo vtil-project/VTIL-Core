@@ -15,7 +15,7 @@
     <ProjectGuid>{F960486B-2DB4-44AF-91BB-0F19F228ABCF}</ProjectGuid>
     <RootNamespace>VTILOptimizer</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
-    <ProjectName>VTIL-Optimizer</ProjectName>
+    <ProjectName>VTIL-Compiler</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
@@ -133,7 +133,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="includes\vtil\optimizer" />
-    <None Include="VTIL-Optimizer.licenseheader" />
+    <None Include="VTIL-Compiler.licenseheader" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="CMakeLists.txt" />
