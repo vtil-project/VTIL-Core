@@ -31,6 +31,7 @@
 #include <type_traits>
 #include "../util/concept.hpp"
 #include "../util/lt_typeid.hpp"
+#include "../util/dynamic_size.hpp"
 
 // [Configuration]
 // Determine the way we format the instructions.
@@ -204,6 +205,19 @@ namespace vtil::format
 			//
 			else
 				return impl::buffer_string( std::move( x ) );
+		}
+		// If container:
+		//
+		else if constexpr ( is_random_access_v<T> )
+		{
+			size_t n = dynamic_size( x );
+			std::string result = "{";
+			for ( size_t i = 0; i < n; i++ )
+			{
+				result += as_string( deref_n( x, i ) );
+				if ( ( i + 1 ) != n ) result += ", ";
+			}
+			return impl::buffer_string( result + "}" );
 		}
 		// If none matched, forcefully convert into [type @ pointer].
 		//
