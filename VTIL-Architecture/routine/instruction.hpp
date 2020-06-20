@@ -73,6 +73,10 @@ namespace vtil
 		//
 		bool explicit_volatile = false;
 
+		// Multivariate runtime context.
+		//
+		mutable multivariate context = {};
+
 		// Basic constructor, non-default constructor asserts the constructed
 		// instruction is valid according to the instruction descriptor.
 		//
