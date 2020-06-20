@@ -570,20 +570,26 @@ namespace vtil::optimizer::aux
 						{
 							if ( exp.equals( cnd_out ) )
 							{
-								exp = { state, 1 };
+								exp = { state, exp.size() };
 								confirmed = true;
 							}
 							else if ( exp.equals( ~cnd_out ) )
 							{
-								exp = { !state, 1 };
+								exp = { state ^ 1, exp.size() };
 								confirmed = true;
 							}
 						}
 						else if ( exp.is_variable() && exp.uid.get<symbolic::variable>().is_memory() )
 						{
 							auto& var = exp.uid.get<symbolic::variable>();
+						
+							bool xblock_org = xblock;
+							xblock = false;
 							symbolic::pointer exp_ptr = var.mem().decay().clone().transform( transform_cc );
-							exp = trace( symbolic::variable{ var.at, { exp_ptr, var.mem().bit_count } } );
+							xblock = xblock_org;
+
+							if ( exp_ptr != var.mem().base )
+								exp = trace( symbolic::variable{ std::next( var.at ), { exp_ptr, var.mem().bit_count } } );
 						}
 					};
 
