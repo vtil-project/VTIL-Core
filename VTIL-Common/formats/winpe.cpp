@@ -39,8 +39,8 @@ namespace vtil
 	static constexpr uint16_t OPT_HDR32_MAGIC = 0x010B;
 	static constexpr uint16_t OPT_HDR64_MAGIC = 0x020B;
 
-	static constexpr uint32_t NUM_DATA_DIRECTORIES = 16;
-	static constexpr uint32_t LEN_SECTION_NAME = 8;
+	static constexpr size_t NUM_DATA_DIRECTORIES = 16;
+	static constexpr size_t LEN_SECTION_NAME = 8;
 
 	// File target machine
 	//
@@ -551,7 +551,7 @@ namespace vtil
 		//
 		auto scn_header = nt_headers->get_section( index );
 		return {
-			.name = { scn_header->name, scn_header->name + strnlen_s( scn_header->name, LEN_SECTION_NAME ) },
+			.name = { scn_header->name, scn_header->name + ( scn_header->name[ LEN_SECTION_NAME - 1 ] ? strlen( scn_header->name ) : LEN_SECTION_NAME ) },
 			.valid = true,
 			.read = ( bool ) scn_header->characteristics.mem_read,
 			.write = ( bool ) scn_header->characteristics.mem_write,
@@ -573,7 +573,8 @@ namespace vtil
 		// Fill section descriptor and return.
 		//
 		auto scn_header = nt_headers->get_section( index );
-		strcpy_s( ( char* ) scn_header->name, LEN_SECTION_NAME, desc.name.data() );
+		memset( scn_header->name, 0, LEN_SECTION_NAME );
+		memcpy( scn_header->name, desc.name.data(), std::min( desc.name.length(), LEN_SECTION_NAME ) );
 		scn_header->characteristics.mem_read = desc.read;
 		scn_header->characteristics.mem_write = desc.write;
 		scn_header->characteristics.mem_execute = desc.execute;

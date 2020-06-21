@@ -26,6 +26,7 @@
 // POSSIBILITY OF SUCH DAMAGE.        
 //
 #pragma once
+#include <vector>
 #include "image_descriptor.hpp"
 
 namespace vtil
