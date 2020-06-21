@@ -27,7 +27,7 @@
 //
 #include "winpe.hpp"
 #include "../io/asserts.hpp"
-#include <cstring>
+#include <string.h>
 
 namespace vtil
 {
