@@ -160,6 +160,8 @@ namespace vtil::format
 	template<typename T>
 	static std::string as_string( T&& x )
 	{
+		using base_type = std::decay_t<T>;
+
 		if constexpr ( impl::std_to_string<T>::apply() )
 		{
 			return std::to_string( x );
@@ -167,6 +169,19 @@ namespace vtil::format
 		else if constexpr ( impl::has_to_string<T>::apply() )
 		{
 			return x.to_string();
+		}
+		else if constexpr ( std::is_same_v<base_type, std::string> || 
+							std::is_same_v<base_type, const char*> )
+		{
+			return x;
+		}
+		else if constexpr ( std::is_same_v<base_type, std::wstring> )
+		{
+			return std::string( x.begin(), x.end() );
+		}
+		else if constexpr ( std::is_same_v<base_type, const wchar_t*> )
+		{
+			return as_string( std::wstring{ x } );
 		}
 		else
 		{
