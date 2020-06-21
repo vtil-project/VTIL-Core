@@ -143,7 +143,7 @@ namespace vtil::symbolic
 
 		// Returns whether the variable is valid or not.
 		//
-		bool is_valid() const;
+		bool is_valid( bool force = false ) const;
 
 		// Swaps the current iterator.
 		//

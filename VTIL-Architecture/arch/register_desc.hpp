@@ -119,17 +119,17 @@ namespace vtil
 		register_desc( uint32_t flags, uint64_t id, bitcnt_t bit_count, bitcnt_t bit_offset = 0 )
 			: flags( flags ), local_id( id ), bit_count( bit_count ), bit_offset( bit_offset ) 
 		{ 
-			fassert( is_valid() ); 
+			is_valid( true );
 		}
 
 		// Returns whether the descriptor is valid or not.
 		//
-		bool is_valid() const 
-		{ 
+		bool is_valid( bool force = false ) const
+		{
+#define validate(...) { if( force ) fassert(__VA_ARGS__); else return false; }
 			// Validate bit count and offset.
 			//
-			if ( bit_count == 0 || ( bit_count + bit_offset ) > 64 )
-				return false;
+			validate( bit_count != 0 && ( bit_count + bit_offset ) <= 64 );
 
 			// Handle special registers:
 			//
@@ -141,13 +141,11 @@ namespace vtil
 			{
 				// Should be physical, non-volatile and writable.
 				//
-				if ( is_volatile() || is_read_only() || !is_physical() )
-					return false;
+				validate( !is_volatile() && is_physical() && !is_read_only() );
 
 				// Must have no local identifier.
 				//
-				if ( local_id != 0 )
-					return false;
+				validate( local_id == 0 );
 			}
 			// If register holds the flags:
 			//
@@ -155,13 +153,11 @@ namespace vtil
 			{
 				// Should be physical, non-volatile and writable.
 				//
-				if ( is_volatile() || is_read_only() || !is_physical() )
-					return false;
+				validate( !is_volatile() && is_physical() && !is_read_only() );
 
 				// Must have no local identifier.
 				//
-				if ( local_id != 0 )
-					return false;
+				validate( local_id == 0 );
 			}
 			// If register holds the image base:
 			//
@@ -169,13 +165,11 @@ namespace vtil
 			{
 				// Should be virtual, non-volatile and read-only.
 				//
-				if ( is_volatile() || !is_virtual() || !is_read_only() )
-					return false;
+				validate( !is_volatile() && is_virtual() && is_read_only() );
 
 				// Must have no local identifier.
 				//
-				if ( local_id != 0 )
-					return false;
+				validate( local_id == 0 );
 			}
 			// If register holds the [undefined] special:
 			//
@@ -183,24 +177,24 @@ namespace vtil
 			{
 				// Should be virtual, volatile and non-read-only.
 				//
-				if ( !is_volatile() || !is_virtual() || is_read_only() )
-					return false;
+				validate( is_volatile() && is_virtual() && !is_read_only() );
 
 				// Must have no local identifier.
 				//
-				if ( local_id != 0 )
-					return false;
+				validate( local_id == 0 );
 			}
 			// Otherwise must have no special flags.
 			//
-			else if( special_flags != 0 )
+			else
 			{
-				return false;
+				validate( special_flags == 0 );
 			}
 
 			// If register is physical, it can't be local.
 			//
-			return !is_physical() || !is_local();
+			validate( !is_physical() || !is_local() );
+			return true;
+#undef validate
 		}
 
 		// Simple helpers to determine some properties.
@@ -260,7 +254,6 @@ namespace vtil
 			// Otherwise use the default naming.
 			//
 			if ( ( flags & register_physical ) )
-				#pragma warning(suppress: 4267)
 				return prefix + amd64::name( amd64::extend( math::narrow_cast<uint8_t>( local_id ) ) ) + suffix;
 			else
 				return prefix + "vr" + std::to_string( local_id ) + suffix;

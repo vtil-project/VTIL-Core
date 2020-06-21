@@ -86,12 +86,12 @@ namespace vtil
 					 bool explicit_volatile = false ) :
 			base( base ), operands( operands ), explicit_volatile( explicit_volatile )
 		{
-			fassert( is_valid() );
+			is_valid( true );
 		}
 
 		// Returns whether the instruction is valid or not.
 		//
-		bool is_valid() const;
+		bool is_valid( bool force = false ) const;
 
 		// Makes the instruction explicitly volatile.
 		//

@@ -32,28 +32,26 @@ namespace vtil
 {
 	// Returns whether the instruction is valid or not.
 	//
-	bool instruction::is_valid() const
+	bool instruction::is_valid( bool force ) const
 	{
+#define validate(...) { if( force ) fassert(__VA_ARGS__); else return false; }
+
 		// Instruction must have a base descriptor assigned.
 		//
-		if ( !base )
-			return false;
+		validate( base );
 
 		// Validate operand count.
 		//
-		if ( operands.size() != base->operand_count() )
-			return false;
+		validate( operands.size() == base->operand_count() );
 
 		// Validate operand types against the expected type.
 		//
 		for ( int i = 0; i < base->operand_types.size(); i++ )
 		{
-			if ( !operands[ i ].is_valid() )
-				return false;
-			if ( base->operand_types[ i ] == operand_type::read_imm && !operands[ i ].is_immediate() )
-				return false;
-			if ( base->operand_types[ i ] == operand_type::read_reg && !operands[ i ].is_register() )
-				return false;
+			validate( operands[ i ].is_valid() );
+			validate( base->operand_types[ i ] != operand_type::read_imm || operands[ i ].is_immediate() );
+			validate( base->operand_types[ i ] != operand_type::read_reg || operands[ i ].is_register() );
+			validate( base->operand_types[ i ] <  operand_type::write || operands[ i ].is_register() );
 		}
 
 		// Validate memory operands.
@@ -62,23 +60,17 @@ namespace vtil
 		{
 			const operand& mem_base = operands[ base->memory_operand_index ];
 			const operand& mem_offset = operands[ base->memory_operand_index + 1 ];
-			if ( !mem_base.is_register() || mem_base.bit_count() != 64 )
-				return false;
-			if ( !mem_offset.is_immediate() )
-				return false;
+			validate( mem_base.is_register() && mem_base.bit_count() == 64 );
+			validate( mem_offset.is_immediate() );
 		}
 
 		// Validate branching operands.
 		//
 		for ( auto& list : { base->branch_operands_rip, base->branch_operands_vip } )
-		{
 			for ( int idx : list )
-			{
-				if ( operands[ idx ].bit_count() != 64 )
-					return false;
-			}
-		}
+				validate( operands[ idx ].bit_count() == 64 );
 		return true;
+#undef validate
 	}
 
 	// Returns the memory location this instruction references.

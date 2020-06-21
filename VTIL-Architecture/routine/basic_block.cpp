@@ -135,7 +135,7 @@ namespace vtil
 	//
 	basic_block::iterator basic_block::insert( const const_iterator& it_const, instruction&& ins )
 	{
-		fassert( ins.is_valid() );
+		ins.is_valid( true );
 
 		// If label stack is not empty and instruction has an invalid vip, use the last label pushed.
 		//
