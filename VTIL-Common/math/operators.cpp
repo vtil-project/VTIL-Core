@@ -191,21 +191,29 @@ namespace vtil::math
         // If invalid operation, return invalid.
         //
         auto* desc = descriptor_of( op );
+        
+        bool known;
         switch ( desc ? desc->operand_count : 0 )
         {
             case 1:
                 if ( rhs.is_valid() )
+                {
+                    known = rhs.is_known();
                     break;
+                }
             case 2:
                 if ( rhs.is_valid() && lhs.is_valid() )
+                {
+                    known = lhs.is_known() && rhs.is_known();
                     break;
+                }
             default:
                 return {};
         }
 
         // If no unknown bits, redirect to more efficient math::evaluate().
         //
-        if ( lhs.is_known() && rhs.is_known() )
+        if ( known )
         {
             auto [val, size] = evaluate( op, lhs.size(), lhs.known_one(), rhs.size(), rhs.known_one() );
             return { val, size };
@@ -449,7 +457,7 @@ namespace vtil::math
             case operator_id::popcnt:
                 // Cannot be calculated with unknown values, return unknown of expected size.
                 //
-                return bit_vector( popcnt( lhs.known_one() | lhs.unknown_mask() ) ).resize( bit_index_size );
+                return bit_vector( popcnt( rhs.known_one() | rhs.unknown_mask() ) ).resize( bit_index_size );
 
             case operator_id::bit_test:
                 // If we can get the index being tested as constant, try to evaluate. 
