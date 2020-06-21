@@ -192,8 +192,8 @@ namespace vtil
 			auto [scn, _] = rva_to_section( rva );
 			if ( !scn ) return nullptr;
 			auto offset = scn.translate( rva );
-			if ( !scn ) return nullptr;
-			return ( T* ) ( ( uint8_t* ) data() + offset );
+			if ( !offset ) return nullptr;
+			return ( T* ) ( ( uint8_t* ) data() + *offset );
 		}
 		template<typename T = void>
 		const T* rva_to_ptr( uint64_t rva ) const
