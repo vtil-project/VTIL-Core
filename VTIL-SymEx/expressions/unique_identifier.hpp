@@ -118,6 +118,9 @@ namespace vtil::symbolic
 			//
 			compare_value = [ ] ( const unique_identifier& a, const unique_identifier& b )
 			{
+				if ( a.hash_value < b.hash_value ) return -1;
+				if ( a.hash_value > b.hash_value ) return +1;
+
 				auto& ta = a.get<T>();
 				auto& tb = b.get<T>();
 				if ( ta == tb ) return  0;
@@ -159,7 +162,7 @@ namespace vtil::symbolic
 		//
 		operator bool() const { return ( bool ) value; }
 
-		// Simple comparison operators.
+		// Simple comparison operators, will go through hash first.
 		//
 		bool operator==( const unique_identifier& o ) const;
 		bool operator<( const unique_identifier& o ) const;
