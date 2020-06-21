@@ -1,8 +1,5 @@
 language: cpp
 
-compiler:
-  - clang
-
 os: linux
 dist: bionic
 
@@ -20,10 +17,6 @@ before_script:
   # Install latest LLVM from LLVM repository
   - sudo bash -c "$(wget -O - https://apt.llvm.org/llvm.sh)"
   - sudo DEBIAN_FRONTEND=noninteractive apt-get -yq install libc++-10-dev libc++abi-10-dev
-
-  # Setup env variables to use Clang 10
-  - CC=/usr/bin/clang-10
-  - CCX=/usr/bin/clang++-10
 
   # Run CMake generator
   - /usr/bin/cmake --version # print so we can see which version travis is using
