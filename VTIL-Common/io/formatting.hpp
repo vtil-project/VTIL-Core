@@ -115,7 +115,7 @@ namespace vtil::format
 			{
 				if ( in.starts_with( str ) )
 					return fix_type_name( in.substr( strlen( str ) ) );
-				for ( int i = 0; i < in.size(); i++ )
+				for ( size_t i = 0; i < in.size(); i++ )
 				{
 					if ( in[ i ] == '<' && in.substr( i + 1 ).starts_with( str ) )
 						in = in.substr( 0, i + 1 ) + in.substr( i + 1 + strlen( str ) );

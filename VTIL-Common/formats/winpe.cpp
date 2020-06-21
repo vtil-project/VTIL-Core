@@ -28,6 +28,7 @@
 #include "winpe.hpp"
 #include "../io/asserts.hpp"
 #include <string.h>
+#include "../math/bitwise.hpp"
 
 namespace vtil
 {
@@ -495,7 +496,7 @@ namespace vtil
 
 		auto get_next() { return ( reloc_block_t* ) ( ( char* ) this + this->size_block ); }
 		auto get_next() const { return ( const reloc_block_t* ) ( ( char* ) this + this->size_block ); }
-		uint32_t num_entries() const { return ( reloc_entry_t* ) get_next() - &entries[ 0 ]; }
+		size_t num_entries() const { return ( reloc_entry_t* ) get_next() - &entries[ 0 ]; }
 	};
 
 	struct reloc_directory_t
@@ -677,16 +678,16 @@ namespace vtil
 		if ( is_pe64() )
 		{
 			auto& opt_header = ( ( dos_header_t* ) this->data() )->get_nt_headers<true>()->optional_header;
-			opt_header.size_code += aligned_size;
-			opt_header.size_image += aligned_size;
-			opt_header.size_headers += sizeof( section_header_t );
+			opt_header.size_code += math::narrow_cast<uint32_t>( aligned_size );
+			opt_header.size_image += math::narrow_cast<uint32_t>( aligned_size );
+			opt_header.size_headers += ( uint32_t ) sizeof( section_header_t );
 		}
 		else
 		{
 			auto& opt_header = ( ( dos_header_t* ) this->data() )->get_nt_headers<false>()->optional_header;
-			opt_header.size_code += aligned_size;
-			opt_header.size_image += aligned_size;
-			opt_header.size_headers += sizeof( section_header_t );
+			opt_header.size_code += math::narrow_cast<uint32_t>( aligned_size );
+			opt_header.size_image += math::narrow_cast<uint32_t>( aligned_size );
+			opt_header.size_headers += ( uint32_t ) sizeof( section_header_t );
 		}
 
 		// Append a section and write the characteristics.
@@ -699,10 +700,10 @@ namespace vtil
 
 		// Append location data and return.
 		//
-		in_out.virtual_address =  scn->virtual_address =  rva_sec;
-		in_out.physical_address = scn->ptr_raw_data =     img_original_size;
-		in_out.physical_size =    scn->size_raw_data =    aligned_size;
-		in_out.virtual_size =     scn->virtual_size =     aligned_size;
+		in_out.virtual_address =  scn->virtual_address =  math::narrow_cast<uint32_t>( rva_sec );
+		in_out.physical_address = scn->ptr_raw_data =     math::narrow_cast<uint32_t>( img_original_size );
+		in_out.physical_size =    scn->size_raw_data =    math::narrow_cast<uint32_t>( aligned_size );
+		in_out.virtual_size =     scn->virtual_size =     math::narrow_cast<uint32_t>( aligned_size );
 	}
 
 	bool pe_image::is_relocated( uint64_t rva ) const
@@ -726,7 +727,7 @@ namespace vtil
 			for ( auto block = block_begin; block < block_end; block = block->get_next() )
 			{
 				// For each entry:
-				for ( int i = 0; i < block->num_entries(); i++ )
+				for ( size_t i = 0; i < block->num_entries(); i++ )
 				{
 					// Push to list if basic reloc
 					if ( block->entries[ i ].type == rel_based_dir64 )
