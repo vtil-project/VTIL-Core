@@ -117,7 +117,10 @@
     <ClInclude Include="amd64\assembler.hpp" />
     <ClInclude Include="amd64\disassembler.hpp" />
     <ClInclude Include="amd64\register_details.hpp" />
+    <ClInclude Include="formats\image_descriptor.hpp" />
+    <ClInclude Include="formats\winpe.hpp" />
     <ClInclude Include="includes\vtil\common" />
+    <ClInclude Include="includes\vtil\formats" />
     <ClInclude Include="includes\vtil\io" />
     <ClInclude Include="includes\vtil\math" />
     <ClInclude Include="includes\vtil\amd64" />
@@ -161,6 +164,7 @@
     <ClCompile Include="amd64\assembler.cpp" />
     <ClCompile Include="amd64\disassembler.cpp" />
     <ClCompile Include="amd64\register_details.cpp" />
+    <ClCompile Include="formats\winpe.cpp" />
     <ClCompile Include="io\logger.cpp" />
     <ClCompile Include="math\operators.cpp" />
     <ClCompile Include="util\critical_section.cpp" />

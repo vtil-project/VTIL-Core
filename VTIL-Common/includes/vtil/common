@@ -4,3 +4,4 @@
 #include <vtil/utility>
 #include <vtil/query>
 #include <vtil/math>
+#include <vtil/formats>

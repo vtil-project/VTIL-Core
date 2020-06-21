@@ -20,6 +20,9 @@
     <Filter Include="Queries">
       <UniqueIdentifier>{91e43426-e8a8-4753-8d61-374c3c62f081}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Formats">
+      <UniqueIdentifier>{7f12883a-3282-4d93-b13f-879b436bfd64}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="amd64\register_details.hpp">
@@ -148,6 +151,15 @@
     <ClInclude Include="util\multivariate.hpp">
       <Filter>Utility</Filter>
     </ClInclude>
+    <ClInclude Include="formats\winpe.hpp">
+      <Filter>Formats</Filter>
+    </ClInclude>
+    <ClInclude Include="formats\image_descriptor.hpp">
+      <Filter>Formats</Filter>
+    </ClInclude>
+    <ClInclude Include="includes\vtil\formats">
+      <Filter>Includes</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="amd64\register_details.cpp">
@@ -170,6 +182,9 @@
     </ClCompile>
     <ClCompile Include="amd64\disassembler.cpp">
       <Filter>amd64</Filter>
+    </ClCompile>
+    <ClCompile Include="formats\winpe.cpp">
+      <Filter>Formats</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

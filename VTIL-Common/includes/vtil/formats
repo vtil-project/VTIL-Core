@@ -1,0 +1,3 @@
+#pragma once
+#include "../../formats/image_descriptor.hpp"
+#include "../../formats/winpe.hpp"

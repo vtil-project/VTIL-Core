@@ -8,6 +8,7 @@ add_library(${PROJECT_NAME} STATIC
     math/operators.cpp
     util/critical_section.cpp
     util/variant.cpp
+    formats/winpe.cpp
 )
 
 target_include_directories(${PROJECT_NAME} PUBLIC includes)
