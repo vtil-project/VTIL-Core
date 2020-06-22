@@ -37,10 +37,9 @@
 // |--------------------------------------------------------------------------|
 //
 #include "amd64_assembler.hpp"
-#include <keystone/keystone.h>
 #include <stdexcept>
 
-namespace keystone
+namespace vtil::amd64::keystone
 {
 	ks_struct* get_handle()
 	{

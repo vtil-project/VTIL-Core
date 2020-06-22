@@ -48,9 +48,56 @@
 
 namespace vtil::arm64
 {
+	// TODO: abstract, we can share initial fields/logic with amd64
+	// 
 	struct instruction
 	{
+		// Data copied from base of [cs_insn].
+		//
+		uint32_t id = 0;
+		uint64_t address = 0;
+		std::vector<uint8_t> bytes;
+		std::string mnemonic;
+		std::string operand_string;
 
+		// Data copied from [cs_insn::detail].
+		//
+		std::set<uint16_t> regs_read;
+		std::set<uint16_t> regs_write;
+		std::set<uint8_t> groups;
+
+		// Data copied from [cs_insn::detail::arm64]
+		//
+		arm64_cc cc = ARM64_CC_INVALID;
+		bool update_flags = false;
+		bool writeback = false;
+		std::vector<cs_arm64_op> operands;
+
+		// Returns human readable disassembly.
+		//
+		std::string to_string() const
+		{
+			return format::str( "%p: %s\t%s", address, mnemonic, operand_string );
+		}
+
+		// Helper to check if instruction is of type <x86_INS_*, {X86_OP_*...}>.
+		//
+		bool is( uint32_t idx, const std::vector<arm64_op_type>& operand_types ) const
+		{
+			if ( id != idx ) return false;
+			if ( operands.size() != operand_types.size() ) return false;
+			for ( int i = 0; i < operands.size(); i++ )
+				if ( operands[ i ].type != operand_types[ i ] )
+					return false;
+			return true;
+		}
+
+		// Helper to check if instruction belongs to the given group.
+		//
+		bool in_group( uint8_t group_searched ) const
+		{
+			return std::find( groups.begin(), groups.end(), group_searched ) != groups.end();
+		}
 	};
 
 	namespace capstone

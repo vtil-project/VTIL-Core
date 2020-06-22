@@ -66,25 +66,25 @@ namespace vtil::amd64
 
 		// Data copied from [cs_insn::detail::x86]
 		//
-		uint8_t prefix[ 4 ];
+		uint8_t prefix[ 4 ] = { 0 };
 		std::vector<uint8_t> opcode;
 		
-		uint8_t rex;
-		uint8_t addr_size;
-		uint8_t modrm;
-		uint8_t sib;
-		int64_t disp;
+		uint8_t rex = 0;
+		uint8_t addr_size = 0;
+		uint8_t modrm = 0;
+		uint8_t sib = 0;
+		int64_t disp = 0;
 		
-		x86_reg sib_index;
-		int8_t sib_scale;
-		x86_reg sib_base;
+		x86_reg sib_index = X86_REG_INVALID;
+		int8_t sib_scale = 0;
+		x86_reg sib_base = X86_REG_INVALID;
 
-		x86_xop_cc xop_cc;
-		x86_sse_cc sse_cc;
-		x86_avx_cc avx_cc;
+		x86_xop_cc xop_cc = X86_XOP_CC_INVALID;
+		x86_sse_cc sse_cc = X86_SSE_CC_INVALID;
+		x86_avx_cc avx_cc = X86_AVX_CC_INVALID;
 
-		bool avx_sae;
-		x86_avx_rm avx_rm;
+		bool avx_sae = false;
+		x86_avx_rm avx_rm = X86_AVX_RM_INVALID;
 
 		union
 		{

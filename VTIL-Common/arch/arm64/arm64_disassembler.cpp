@@ -58,8 +58,56 @@ namespace vtil::arm64::capstone
 
 	std::vector<vtil::arm64::instruction> disasm(const void* bytes, uint64_t address, size_t size, size_t count)
 	{
-		// TODO:
-		// 
-		return std::vector<vtil::arm64::instruction>();
+		// Disasemble the instruction.
+		//
+		cs_insn* ins;
+		count = cs_disasm
+		(
+			get_handle(),
+			( uint8_t* ) bytes,
+			size ? size : -1,
+			address,
+			size ? 0 : count,
+			&ins
+		);
+
+		// Convert each output into vtil::arm64 format and push it to a vector.
+		//
+		std::vector<vtil::arm64::instruction> vec;
+		for ( int i = 0; i < count; i++ )
+		{
+			vtil::arm64::instruction out;
+			cs_insn& in = ins[ i ];
+
+			// Copy cs_insn base.
+			//
+			out.id = in.id;
+			out.address = in.address;
+			out.mnemonic = in.mnemonic;
+			out.operand_string = in.op_str;
+			out.bytes = { in.bytes, in.bytes + in.size };
+
+			// Copy cs_insn::detail.
+			//
+			out.regs_read = { in.detail->regs_read, in.detail->regs_read + in.detail->regs_read_count };
+			out.regs_write = { in.detail->regs_write, in.detail->regs_write + in.detail->regs_write_count };
+			out.groups = { in.detail->groups, in.detail->groups + in.detail->groups_count };
+
+			// Copy cs_insn::detail::arm64.
+			//
+			out.cc = in.detail->arm64.cc;
+			out.update_flags = in.detail->arm64.update_flags;
+			out.writeback = in.detail->arm64.writeback;
+			out.operands = { in.detail->arm64.operands, in.detail->arm64.operands + in.detail->arm64.op_count };
+
+			// Push it to up the vector.
+			//
+			vec.push_back( std::move( out ) );
+		}
+
+		// Free the output from Capstone and return the vector.
+		//
+		cs_free( ins, count );
+		return vec;
 	}
 }

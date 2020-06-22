@@ -39,11 +39,11 @@
 #pragma once
 #include <string>
 #include <vector>
+#include <keystone/keystone.h>
 
 // Simple wrapper around Keystone disassembler.
 //
-struct ks_struct;
-namespace keystone
+namespace vtil::amd64::keystone
 {
 	ks_struct* get_handle();
 	std::vector<uint8_t> assemble( const std::string& src, uint64_t va = 0 );
