@@ -134,7 +134,7 @@ namespace vtil
 
 		// Construct a fully formed register.
 		//
-		register_desc( uint32_t flags, uint64_t id, bitcnt_t bit_count, bitcnt_t bit_offset = 0, register_arch architecture = register_generic )
+		register_desc( uint32_t flags, uint64_t id, bitcnt_t bit_count, bitcnt_t bit_offset = 0, uint64_t architecture = register_generic )
 			: flags( flags ), local_id( id ), bit_count( bit_count ), bit_offset( bit_offset ), architecture( architecture )
 		{ 
 			is_valid( true );
