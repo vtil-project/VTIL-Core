@@ -67,13 +67,13 @@ namespace vtil
 		//
 		std::atomic<uint64_t> last_internal_id = { 0 };
 
-		// Calling convention of the routine.
+		// Calling convention of the routine. (TODO: Remove hard-coded amd64 ref)
 		//
-		call_convention routine_convention = preserve_all_convention;
+		call_convention routine_convention = amd64::preserve_all_convention;
 
-		// Calling convention of a non-specialized VXCALL.
+		// Calling convention of a non-specialized VXCALL. (TODO: Remove hard-coded amd64 ref)
 		//
-		call_convention subroutine_convention = default_call_convention;
+		call_convention subroutine_convention = amd64::default_call_convention;
 
 		// Convention of specialized calls, maps the vip of the VXCALL instruction onto the convention used.
 		//
