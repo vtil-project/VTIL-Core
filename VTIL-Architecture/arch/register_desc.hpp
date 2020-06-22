@@ -319,7 +319,12 @@ namespace vtil
 		register_desc operator()( x86_reg value )
 		{
 			auto [base, offset, size] = amd64::resolve_mapping( value );
-			return { register_physical, ( uint64_t ) base, size * 8, offset * 8, register_amd64 };
+			if ( base == X86_REG_RSP )
+				return { register_physical | register_stack_pointer, 0, size, offset };
+			else if ( base == X86_REG_EFLAGS )
+				return { register_physical | register_flags,         0, size, offset };
+			else
+				return { register_physical, ( uint64_t ) base, size * 8, offset * 8, register_amd64 };
 		}
 	};
 	template<>
@@ -328,7 +333,13 @@ namespace vtil
 		register_desc operator()( arm64_reg value )
 		{
 			auto [base, offset, size] = arm64::resolve_mapping( value );
-			return { register_physical, ( uint64_t ) base, size * 8, offset * 8, register_arm64 };
+
+			if ( base == ARM64_REG_SP )
+				return { register_physical | register_stack_pointer, 0, size, offset };
+			else if ( base == ARM64_REG_NZCV )
+				return { register_physical | register_flags,         0, size, offset };
+			else
+				return { register_physical, ( uint64_t ) base, size * 8, offset * 8, register_arm64 };
 		}
 	};
 
