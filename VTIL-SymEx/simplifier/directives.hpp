@@ -210,7 +210,7 @@ namespace vtil::symbolic::directive
         { A-(B-C),                                            !(A+C)-B },
         { A-(B-C),                                            !(A-B)+C },
         { (B+C)-A,                                            !(B-A)+C },
-        { (B-C)-A,                                            !B-(A+C) },
+        { (B-C)-A,                                            B-!(A+C) },
         { (B-C)-A,                                            !(B-A)-C },
 
         // OR:
