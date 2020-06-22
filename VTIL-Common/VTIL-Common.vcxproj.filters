@@ -19,7 +19,7 @@
     </Filter>
     <Filter Include="Formats">
       <UniqueIdentifier>{7f12883a-3282-4d93-b13f-879b436bfd64}</UniqueIdentifier>
-	</Filter>
+    </Filter>
     <Filter Include="Architecture">
       <UniqueIdentifier>{8925c2a1-a825-414d-84b4-a0aedd0926c9}</UniqueIdentifier>
     </Filter>
@@ -156,7 +156,7 @@
     </ClInclude>
     <ClInclude Include="includes\vtil\formats">
       <Filter>Includes</Filter>
-	</ClInclude>
+    </ClInclude>
     <ClInclude Include="arch\amd64\amd64_assembler.hpp">
       <Filter>Architecture\amd64</Filter>
     </ClInclude>
@@ -216,6 +216,9 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="VTIL-Common.licenseheader" />
+    <None Include="includes\vtil\arm64">
+      <Filter>Includes</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Text Include="CMakeLists.txt" />

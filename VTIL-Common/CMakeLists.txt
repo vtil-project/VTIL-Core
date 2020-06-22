@@ -1,9 +1,12 @@
 project(VTIL-Common)
 
 add_library(${PROJECT_NAME} STATIC
-    amd64/assembler.cpp
-    amd64/disassembler.cpp
-    amd64/register_details.cpp
+    arch/amd64/amd64_assembler.cpp
+    arch/amd64/amd64_disassembler.cpp
+    arch/amd64/amd64_register_details.cpp
+    arch/arm64/arm64_assembler.cpp
+    arch/arm64/arm64_disassembler.cpp
+    arch/arm64/arm64_register_details.cpp
     io/logger.cpp
     math/operators.cpp
     util/critical_section.cpp

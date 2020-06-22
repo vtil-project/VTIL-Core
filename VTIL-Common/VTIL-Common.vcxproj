@@ -179,6 +179,7 @@
     <ClCompile Include="util\variant.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="includes\vtil\arm64" />
     <None Include="VTIL-Common.licenseheader" />
   </ItemGroup>
   <ItemGroup>
