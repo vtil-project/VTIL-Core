@@ -245,13 +245,13 @@ namespace vtil::optimizer
 		{
 			it->base = ins;
 			it->operands = { it->operands[ 0 ], op };
-			fassert( it->is_valid() );
+			it->is_valid( true );
 		}
 		for ( auto [it, ins, var] : ins_revive_swap_buffer )
 		{
 			it->base = ins;
 			it->operands = { it->operands[ 0 ], aux::revive_register( var, it ) };
-			fassert( it->is_valid() );
+			it->is_valid( true );
 		}
 		return ins_swap_buffer.size() + ins_revive_swap_buffer.size();
 	}

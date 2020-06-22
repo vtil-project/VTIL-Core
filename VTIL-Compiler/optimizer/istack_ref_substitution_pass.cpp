@@ -66,7 +66,7 @@ namespace vtil::optimizer
 
 					// Validate modification and increment counter.
 					//
-					fassert( it->is_valid() );
+					it->is_valid( true );
 					counter++;
 				}
 			} );

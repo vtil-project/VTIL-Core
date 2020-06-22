@@ -182,7 +182,7 @@ namespace vtil::optimizer
 								reg.flags = dst.reg().flags;
 								reg.bit_offset += dst.reg().bit_offset - src.reg().bit_offset;
 							}
-							fassert( ins.is_valid() );
+							ins.is_valid( true );
 						} );
 
 					// Nop the origin instruction.
