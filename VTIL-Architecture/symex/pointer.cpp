@@ -171,12 +171,7 @@ namespace vtil::symbolic
 		for ( size_t n = 1; n < xpointer.size(); n++ )
 			if ( ( xpointer[ n ] - o.xpointer[ n ] ) != delta )
 				return std::nullopt;
-
-#if VTIL_SYM_PTR_SAFE_DISP
-		return ( pointer.decay() - o.pointer.decay() ).get<true>();
-#else
-		return delta;
-#endif
+		return ( base.decay() - o.base.decay() ).get<true>();
 	}
 
 	// Checks whether the two pointers can overlap in terms of real destination, 
