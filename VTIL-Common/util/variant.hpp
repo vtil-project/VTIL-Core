@@ -171,7 +171,7 @@ namespace vtil
 
 		// Assignment by move/copy both reset current value and redirect to constructor.
 		//
-		variant& operator=( variant&& vo ) { reset(); return *new ( this ) variant( std::move( vo ) ); }
+		variant& operator=( variant&& vo ) noexcept { reset(); return *new ( this ) variant( std::move( vo ) ); }
 		variant& operator=( const variant& o ) { reset(); return *new ( this ) variant( o ); }
 
 		// Variant does not have a value if the copy field is null.

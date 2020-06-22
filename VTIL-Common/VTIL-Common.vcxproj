@@ -61,7 +61,8 @@
     <ClCompile>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
-      <SDLCheck>true</SDLCheck>
+      <SDLCheck>
+      </SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeaderFile>
@@ -114,11 +115,15 @@
     </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="amd64\assembler.hpp" />
-    <ClInclude Include="amd64\disassembler.hpp" />
-    <ClInclude Include="amd64\register_details.hpp" />
     <ClInclude Include="formats\image_descriptor.hpp" />
     <ClInclude Include="formats\winpe.hpp" />
+    <ClInclude Include="arch\amd64\amd64_assembler.hpp" />
+    <ClInclude Include="arch\amd64\amd64_disassembler.hpp" />
+    <ClInclude Include="arch\amd64\amd64_register_details.hpp" />
+    <ClInclude Include="arch\arm64\arm64_assembler.hpp" />
+    <ClInclude Include="arch\arm64\arm64_disassembler.hpp" />
+    <ClInclude Include="arch\arm64\arm64_register_details.hpp" />
+    <ClInclude Include="arch\register_mapping.hpp" />
     <ClInclude Include="includes\vtil\common" />
     <ClInclude Include="includes\vtil\formats" />
     <ClInclude Include="includes\vtil\io" />
@@ -161,10 +166,13 @@
     <ClInclude Include="util\variant.hpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="amd64\assembler.cpp" />
-    <ClCompile Include="amd64\disassembler.cpp" />
-    <ClCompile Include="amd64\register_details.cpp" />
     <ClCompile Include="formats\winpe.cpp" />
+    <ClCompile Include="arch\amd64\amd64_assembler.cpp" />
+    <ClCompile Include="arch\amd64\amd64_disassembler.cpp" />
+    <ClCompile Include="arch\amd64\amd64_register_details.cpp" />
+    <ClCompile Include="arch\arm64\arm64_assembler.cpp" />
+    <ClCompile Include="arch\arm64\arm64_disassembler.cpp" />
+    <ClCompile Include="arch\arm64\arm64_register_details.cpp" />
     <ClCompile Include="io\logger.cpp" />
     <ClCompile Include="math\operators.cpp" />
     <ClCompile Include="util\critical_section.cpp" />

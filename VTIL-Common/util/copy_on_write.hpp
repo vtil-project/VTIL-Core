@@ -133,8 +133,8 @@ namespace vtil
 
 		// Construction and assignment operator for rvalue references.
 		//
-		shared_reference( shared_reference&& ref ) : reference( std::exchange( ref.reference, {} ) ), is_locked( ref.is_locked ), is_owning( ref.is_owning ){}
-		shared_reference& operator=( shared_reference&& o ) { reference = std::exchange( o.reference, {} ); is_locked = o.is_locked; is_owning = o.is_owning; return *this; }
+		shared_reference( shared_reference&& ref ) noexcept : reference( std::exchange( ref.reference, {} ) ), is_locked( ref.is_locked ), is_owning( ref.is_owning ) {}
+		shared_reference& operator=( shared_reference&& o ) noexcept { reference = std::exchange( o.reference, {} ); is_locked = o.is_locked; is_owning = o.is_owning; return *this; }
 
 		// Simple validity checks.
 		//

@@ -53,7 +53,7 @@ namespace vtil
 			std::lock_guard _g{ o.mtx };
 			database = o.database;
 		}
-		multivariate( multivariate&& o )
+		multivariate( multivariate&& o ) noexcept
 		{
 			database = std::move( o.database );
 		}
@@ -63,7 +63,7 @@ namespace vtil
 			database = o.database;
 			return *this;
 		}
-		multivariate& operator=( multivariate&& o )
+		multivariate& operator=( multivariate&& o ) noexcept
 		{
 			std::lock_guard _g{ mtx };
 			database = std::move( o.database );
