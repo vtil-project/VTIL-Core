@@ -168,7 +168,7 @@ namespace vtil
 				REG_FLAGS,
 
 				/* SIMD */
-				{ register_physical, ARM64_REG_V0,  128 }, { register_physical, ARM64_REG_V1,  128 },
+				/*{ register_physical, ARM64_REG_V0,  128 }, { register_physical, ARM64_REG_V1,  128 },
 				{ register_physical, ARM64_REG_V2,  128 }, { register_physical, ARM64_REG_V3,  128 },
 				{ register_physical, ARM64_REG_V4,  128 }, { register_physical, ARM64_REG_V5,  128 },
 				{ register_physical, ARM64_REG_V6,  128 }, { register_physical, ARM64_REG_V7,  128 },
@@ -183,7 +183,7 @@ namespace vtil
 				{ register_physical, ARM64_REG_V24, 128 }, { register_physical, ARM64_REG_V25, 128 },
 				{ register_physical, ARM64_REG_V26, 128 }, { register_physical, ARM64_REG_V27, 128 },
 				{ register_physical, ARM64_REG_V28, 128 }, { register_physical, ARM64_REG_V28, 128 },
-				{ register_physical, ARM64_REG_V30, 128 }, { register_physical, ARM64_REG_V31, 128 }
+				{ register_physical, ARM64_REG_V30, 128 }, { register_physical, ARM64_REG_V31, 128 }*/
 			},
 
 			/*.param_registers =*/ {
@@ -206,7 +206,7 @@ namespace vtil
 				REG_FLAGS,
 
 				/* SIMD */
-				{ register_physical, ARM64_REG_V0,  128 }, { register_physical, ARM64_REG_V1,  128 },
+				/*{ register_physical, ARM64_REG_V0,  128 }, { register_physical, ARM64_REG_V1,  128 },
 				{ register_physical, ARM64_REG_V2,  128 }, { register_physical, ARM64_REG_V3,  128 },
 				{ register_physical, ARM64_REG_V4,  128 }, { register_physical, ARM64_REG_V5,  128 },
 				{ register_physical, ARM64_REG_V6,  128 }, { register_physical, ARM64_REG_V7,  128 },
@@ -221,7 +221,7 @@ namespace vtil
 				{ register_physical, ARM64_REG_V24, 128 }, { register_physical, ARM64_REG_V25, 128 },
 				{ register_physical, ARM64_REG_V26, 128 }, { register_physical, ARM64_REG_V27, 128 },
 				{ register_physical, ARM64_REG_V28, 128 }, { register_physical, ARM64_REG_V28, 128 },
-				{ register_physical, ARM64_REG_V30, 128 }, { register_physical, ARM64_REG_V31, 128 }
+				{ register_physical, ARM64_REG_V30, 128 }, { register_physical, ARM64_REG_V31, 128 }*/
 			},
 
 			/*.retval_registers =*/ {
@@ -244,7 +244,7 @@ namespace vtil
 				REG_FLAGS,
 
 				/* SIMD */
-				{ register_physical, ARM64_REG_V0,  128 }, { register_physical, ARM64_REG_V1,  128 },
+				/*{ register_physical, ARM64_REG_V0,  128 }, { register_physical, ARM64_REG_V1,  128 },
 				{ register_physical, ARM64_REG_V2,  128 }, { register_physical, ARM64_REG_V3,  128 },
 				{ register_physical, ARM64_REG_V4,  128 }, { register_physical, ARM64_REG_V5,  128 },
 				{ register_physical, ARM64_REG_V6,  128 }, { register_physical, ARM64_REG_V7,  128 },
@@ -259,7 +259,7 @@ namespace vtil
 				{ register_physical, ARM64_REG_V24, 128 }, { register_physical, ARM64_REG_V25, 128 },
 				{ register_physical, ARM64_REG_V26, 128 }, { register_physical, ARM64_REG_V27, 128 },
 				{ register_physical, ARM64_REG_V28, 128 }, { register_physical, ARM64_REG_V28, 128 },
-				{ register_physical, ARM64_REG_V30, 128 }, { register_physical, ARM64_REG_V31, 128 }
+				{ register_physical, ARM64_REG_V30, 128 }, { register_physical, ARM64_REG_V31, 128 }*/
 			},
 
 			/*.frame_register =*/
@@ -286,7 +286,7 @@ namespace vtil
 				{ register_physical, ARM64_REG_X18, 64 }, REG_FLAGS,
 
 				/* SIMD */
-				{ register_physical, ARM64_REG_V0,  128 }, { register_physical, ARM64_REG_V1,  128 },
+				/*{ register_physical, ARM64_REG_V0,  128 }, { register_physical, ARM64_REG_V1,  128 },
 				{ register_physical, ARM64_REG_V2,  128 }, { register_physical, ARM64_REG_V3,  128 },
 				{ register_physical, ARM64_REG_V4,  128 }, { register_physical, ARM64_REG_V5,  128 },
 				{ register_physical, ARM64_REG_V6,  128 }, { register_physical, ARM64_REG_V7,  128 },
@@ -297,7 +297,7 @@ namespace vtil
 				{ register_physical, ARM64_REG_V24, 128 }, { register_physical, ARM64_REG_V25, 128 },
 				{ register_physical, ARM64_REG_V26, 128 }, { register_physical, ARM64_REG_V27, 128 },
 				{ register_physical, ARM64_REG_V28, 128 }, { register_physical, ARM64_REG_V28, 128 },
-				{ register_physical, ARM64_REG_V30, 128 }, { register_physical, ARM64_REG_V31, 128 },
+				{ register_physical, ARM64_REG_V30, 128 }, { register_physical, ARM64_REG_V31, 128 },*/
 			},
 
 			/*.param_registers =*/ {
@@ -307,15 +307,15 @@ namespace vtil
 				{ register_physical, ARM64_REG_X6,  64 }, { register_physical, ARM64_REG_X7,  64 },
 
 				/* SIMD */
-				{ register_physical, ARM64_REG_V0,  128 }, { register_physical, ARM64_REG_V1,  128 },
+				/*{ register_physical, ARM64_REG_V0,  128 }, { register_physical, ARM64_REG_V1,  128 },
 				{ register_physical, ARM64_REG_V2,  128 }, { register_physical, ARM64_REG_V3,  128 },
 				{ register_physical, ARM64_REG_V4,  128 }, { register_physical, ARM64_REG_V5,  128 },
-				{ register_physical, ARM64_REG_V6,  128 }, { register_physical, ARM64_REG_V7,  128 },
+				{ register_physical, ARM64_REG_V6,  128 }, { register_physical, ARM64_REG_V7,  128 },*/
 			},
 
 			/*.retval_registers =*/ {
 				{ register_physical, ARM64_REG_X0, 64 },
-				{ register_physical, ARM64_REG_V0, 128 },
+				/*{ register_physical, ARM64_REG_V0, 128 },*/
 			},
 
 			/*.frame_register =*/
@@ -342,7 +342,7 @@ namespace vtil
 				{ register_physical, ARM64_REG_X18, 64 }, REG_FLAGS,
 
 				/* SIMD */
-				{ register_physical, ARM64_REG_V0,  128 }, { register_physical, ARM64_REG_V1,  128 },
+				/*{ register_physical, ARM64_REG_V0,  128 }, { register_physical, ARM64_REG_V1,  128 },
 				{ register_physical, ARM64_REG_V2,  128 }, { register_physical, ARM64_REG_V3,  128 },
 				{ register_physical, ARM64_REG_V4,  128 }, { register_physical, ARM64_REG_V5,  128 },
 				{ register_physical, ARM64_REG_V6,  128 }, { register_physical, ARM64_REG_V7,  128 },
@@ -353,7 +353,7 @@ namespace vtil
 				{ register_physical, ARM64_REG_V24, 128 }, { register_physical, ARM64_REG_V25, 128 },
 				{ register_physical, ARM64_REG_V26, 128 }, { register_physical, ARM64_REG_V27, 128 },
 				{ register_physical, ARM64_REG_V28, 128 }, { register_physical, ARM64_REG_V28, 128 },
-				{ register_physical, ARM64_REG_V30, 128 }, { register_physical, ARM64_REG_V31, 128 },
+				{ register_physical, ARM64_REG_V30, 128 }, { register_physical, ARM64_REG_V31, 128 },*/
 			},
 
 			/*.param_registers =*/ {
@@ -363,18 +363,18 @@ namespace vtil
 				{ register_physical, ARM64_REG_X6,  64 }, { register_physical, ARM64_REG_X7,  64 },
 
 				/* SIMD */
-				{ register_physical, ARM64_REG_V0,  128 }, { register_physical, ARM64_REG_V1,  128 },
+				/*{ register_physical, ARM64_REG_V0,  128 }, { register_physical, ARM64_REG_V1,  128 },
 				{ register_physical, ARM64_REG_V2,  128 }, { register_physical, ARM64_REG_V3,  128 },
 				{ register_physical, ARM64_REG_V4,  128 }, { register_physical, ARM64_REG_V5,  128 },
-				{ register_physical, ARM64_REG_V6,  128 }, { register_physical, ARM64_REG_V7,  128 },
+				{ register_physical, ARM64_REG_V6,  128 }, { register_physical, ARM64_REG_V7,  128 },*/
 			},
 
 			/*.retval_registers =*/ {
 				{ register_physical, ARM64_REG_X0, 64 },
-				{ register_physical, ARM64_REG_V0, 128 },
+				/*{ register_physical, ARM64_REG_V0, 128 },
 				{ register_physical, ARM64_REG_V1, 128 },
 				{ register_physical, ARM64_REG_V2, 128 },
-				{ register_physical, ARM64_REG_V3, 128 },
+				{ register_physical, ARM64_REG_V3, 128 },*/
 			},
 
 			/*.frame_register =*/
