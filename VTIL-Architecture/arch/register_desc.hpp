@@ -238,7 +238,7 @@ namespace vtil
 		//
 		bool overlaps( const register_desc& o ) const 
 		{ 
-			if ( local_id != o.local_id || flags != o.flags ) 
+			if ( combined_id != o.combined_id || flags != o.flags )
 				return false;
 			return get_mask() & o.get_mask();
 		}

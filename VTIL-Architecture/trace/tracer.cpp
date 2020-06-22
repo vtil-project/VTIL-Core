@@ -444,7 +444,8 @@ namespace vtil
 						reg.flags,
 						reg.local_id,
 						bit_count,
-						reg.bit_offset + bit_offset
+						reg.bit_offset + bit_offset,
+						reg.architecture
 					};
 					return tracer::trace( { it, tmp } );
 				};

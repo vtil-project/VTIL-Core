@@ -156,7 +156,7 @@ namespace vtil::optimizer
 						//
 						for ( size_t index : read_sp )
 						{
-							it->operands[ index ].reg().local_id = tmp.local_id;
+							it->operands[ index ].reg().combined_id = tmp.combined_id;
 							it->operands[ index ].reg().flags = tmp.flags;
 						}
 						

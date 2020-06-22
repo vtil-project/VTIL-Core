@@ -136,7 +136,7 @@ namespace vtil::symbolic
 				if ( var.is_register() )
 				{
 					const variable::register_t& reg = var.reg();
-					uint64_t pseudo_pointer = make_hash( reg.flags, reg.bit_offset, reg.local_id, k ).as64();
+					uint64_t pseudo_pointer = make_hash( reg.flags, reg.bit_offset, reg.combined_id, k ).as64();
 					return pseudo_pointer & math::fill( reg.bit_count );
 				}
 				else

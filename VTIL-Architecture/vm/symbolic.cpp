@@ -34,7 +34,7 @@ namespace vtil
 	symbolic::expression symbolic_vm::read_register( const register_desc& desc )
 	{
 		bitcnt_t size = size_register( desc );
-		register_desc full = { desc.flags, desc.local_id, size, 0 };
+		register_desc full = { desc.flags, desc.local_id, size, 0, desc.architecture };
 
 		auto it = register_state.find( full );
 		if ( it == register_state.end() )
@@ -52,7 +52,7 @@ namespace vtil
 	void symbolic_vm::write_register( const register_desc& desc, symbolic::expression value )
 	{
 		bitcnt_t size = size_register( desc );
-		register_desc full = { desc.flags, desc.local_id, size, 0 };
+		register_desc full = { desc.flags, desc.local_id, size, 0, desc.architecture };
 
 		if ( desc.bit_count == size && desc.bit_offset == 0 )
 		{

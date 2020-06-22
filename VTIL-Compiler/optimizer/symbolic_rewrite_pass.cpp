@@ -41,14 +41,14 @@ namespace vtil::optimizer
 
 		// Determine the temporary sizes in the block.
 		//
-		std::map<std::pair<uint64_t, size_t>, bitcnt_t> temp_sizes;
+		std::map<std::pair<uint64_t, uint64_t>, bitcnt_t> temp_sizes;
 		for ( auto& ins : blk->stream )
 		{
 			for ( auto& op : ins.operands )
 			{
 				if ( op.is_register() && op.reg().is_local() )
 				{
-					bitcnt_t& sz = temp_sizes[ { op.reg().flags, op.reg().local_id } ];
+					bitcnt_t& sz = temp_sizes[ { op.reg().flags, op.reg().combined_id } ];
 					sz = std::max( sz, op.reg().bit_count + op.reg().bit_offset );
 				}
 			}
@@ -60,7 +60,7 @@ namespace vtil::optimizer
 		lambda_vm<symbolic_vm> vm;
 		vm.hooks.size_register = [ & ] ( const register_desc& reg )
 		{
-			if ( auto it = temp_sizes.find( { reg.flags, reg.local_id } );
+			if ( auto it = temp_sizes.find( { reg.flags, reg.combined_id } );
 				      it != temp_sizes.end() )
 			{
 				// Pick the minimum size from preferred sizes.

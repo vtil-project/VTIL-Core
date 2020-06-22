@@ -95,7 +95,7 @@ namespace vtil
 				auto& self = lookup.reg();
 				auto& other = pair.first.reg();
 				return self.flags == other.flags &&
-					self.local_id == other.local_id &&
+					self.combined_id == other.combined_id &&
 					self.bit_offset == other.bit_offset &&
 					self.bit_count >= other.bit_count;
 			};

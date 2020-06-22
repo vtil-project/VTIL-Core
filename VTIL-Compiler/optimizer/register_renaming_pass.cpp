@@ -178,7 +178,7 @@ namespace vtil::optimizer
 
 								// Swap with destination register.
 								//
-								reg.local_id = dst.reg().local_id;
+								reg.combined_id = dst.reg().combined_id;
 								reg.flags = dst.reg().flags;
 								reg.bit_offset += dst.reg().bit_offset - src.reg().bit_offset;
 							}
