@@ -77,9 +77,9 @@ namespace vtil::symbolic
 		// Default constructor and copy/move.
 		//
 		expression() = default;
-		expression( expression&& exp ) = default;
+		expression( expression&& exp ) noexcept = default;
 		expression( const expression & exp ) = default;
-		expression& operator=( expression&& exp )= default;
+		expression& operator=( expression&& exp ) noexcept = default;
 		expression& operator=( const expression & exp ) = default;
 
 		// Construct from constants.
@@ -256,9 +256,9 @@ namespace vtil::symbolic
 		boxed_expression() = default;
 		boxed_expression( expression&& o ) : expression( std::move( o ) ) {};
 		boxed_expression( const expression& o ) : expression( o ) {};
-		boxed_expression( boxed_expression&& o ) = default;
+		boxed_expression( boxed_expression&& o ) noexcept = default;
 		boxed_expression( const boxed_expression& o ) = default;
-		boxed_expression& operator=( boxed_expression&& o ) = default;
+		boxed_expression& operator=( boxed_expression&& o ) noexcept = default;
 		boxed_expression& operator=( const boxed_expression& o ) = default;
 
 		// Explicit function to decay back to expression type.

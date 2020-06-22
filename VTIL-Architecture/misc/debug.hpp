@@ -81,7 +81,7 @@ namespace vtil::debug
 				fassert( op.is_immediate() );
 
 				if ( ins.base->memory_operand_index  != -1 &&
-					 &ins.operands[ ins.base->memory_operand_index + 1 ] == &op &&
+					 &ins.operands[ size_t( ins.base->memory_operand_index ) + 1 ] == &op &&
 					 ins.operands[ ins.base->memory_operand_index ].reg().is_stack_pointer() )
 				{
 					if ( op.imm().i64 >= 0 )
@@ -150,7 +150,9 @@ namespace vtil::debug
 						}
 					}
 
-					auto dasm = capstone::disasm( bytes.data(), it->vip == invalid_vip ? 0 : it->vip, bytes.size() );
+					// TODO: Remove forced amd64 disasm
+					// 
+					auto dasm = vtil::amd64::capstone::disasm( bytes.data(), it->vip == invalid_vip ? 0 : it->vip, bytes.size() );
 					for ( auto& ins : dasm )
 						log<CON_YLW>( "; %s\n", ins );
 					no_disasm = true;
