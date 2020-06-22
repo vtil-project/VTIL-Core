@@ -45,6 +45,7 @@ namespace vtil::optimizer
 		size_t counter = 0;
 		while ( blk->next.size() == 1 &&
 				blk->next[ 0 ]->prev.size() == 1 &&
+				blk->next[ 0 ] != blk &&
 				blk->stream.back().base->is_branching_virt() )
 		{
 			// Pop the branching instruction.
