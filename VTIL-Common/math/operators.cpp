@@ -101,9 +101,9 @@ namespace vtil::math
         // Handle __cast and __ucast.
         //
         if ( id == operator_id::ucast )
-            return { zero_extend( lhs, math::narrow_cast<bitcnt_t>( rhs ) ), math::narrow_cast<bitcnt_t>( rhs ) };
+            return { zero_extend( lhs, narrow_cast<bitcnt_t>( rhs ) ), narrow_cast<bitcnt_t>( rhs ) };
         if ( id == operator_id::cast )
-            return { sign_extend( lhs, math::narrow_cast<bitcnt_t>( rhs ) ), math::narrow_cast<bitcnt_t>( rhs ) };
+            return { sign_extend( lhs, narrow_cast<bitcnt_t>( rhs ) ), narrow_cast<bitcnt_t>( rhs ) };
 
         // Calculate the result of the operation.
         //
@@ -211,7 +211,7 @@ namespace vtil::math
                 return {};
         }
 
-        // If no unknown bits, redirect to more efficient math::evaluate().
+        // If no unknown bits, redirect to more efficient evaluate().
         //
         if ( known )
         {
@@ -445,13 +445,13 @@ namespace vtil::math
             case operator_id::ucast:
                 // Get new size from RHS as constant, and resize LHS to be of size [RHS] with zero extension if relevant.
                 //
-                if ( auto new_size = rhs.get() )  return bit_vector( lhs ).resize( math::narrow_cast<bitcnt_t>( *new_size ), false );
+                if ( auto new_size = rhs.get() )  return bit_vector( lhs ).resize( narrow_cast<bitcnt_t>( *new_size ), false );
                 else                              unreachable();
 
             case operator_id::cast:
                 // Get new size from RHS as constant, and resize LHS to be of size [RHS] with sign extension if relevant.
                 //
-                if ( auto new_size = rhs.get() )  return bit_vector( lhs ).resize( math::narrow_cast<bitcnt_t>( *new_size ), true );
+                if ( auto new_size = rhs.get() )  return bit_vector( lhs ).resize( narrow_cast<bitcnt_t>( *new_size ), true );
                 else                              unreachable();
 
             case operator_id::popcnt:
