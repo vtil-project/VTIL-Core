@@ -223,7 +223,7 @@ namespace vtil::format
 		}
 		// If container:
 		//
-		else if constexpr ( is_random_access_v<T> )
+		else if constexpr ( is_random_access_v<T> && !impl::has_to_string<T>::apply() )
 		{
 			size_t n = dynamic_size( x );
 			std::string result = "{";
