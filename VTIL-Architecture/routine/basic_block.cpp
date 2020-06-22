@@ -272,7 +272,7 @@ namespace vtil
 	{
 		// TODO: Remove forced amd64 mode
 		// 
-		auto res = vtil::amd64::keystone::assemble( assembly );
+		auto res = amd64::assemble( assembly );
 		fassert( !res.empty() );
 		for ( uint8_t byte : res )
 			vemit( byte );

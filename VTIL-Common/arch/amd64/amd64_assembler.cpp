@@ -39,9 +39,9 @@
 #include "amd64_assembler.hpp"
 #include <stdexcept>
 
-namespace vtil::amd64::keystone
+namespace vtil::amd64
 {
-	ks_struct* get_handle()
+	ks_struct* get_ks_handle()
 	{
 		// Keystone engine is not created until the first call.
 		//
@@ -63,7 +63,7 @@ namespace vtil::amd64::keystone
 		size_t size;
 		size_t count;
 		unsigned char* encode = nullptr;
-		if ( ks_asm( get_handle(), ( ".code64;" + src ).data(), va, &encode, &size, &count ) )
+		if ( ks_asm( get_ks_handle(), ( ".code64;" + src ).data(), va, &encode, &size, &count ) )
 		{
 			// Free (if relevant) and return on failure.
 			//

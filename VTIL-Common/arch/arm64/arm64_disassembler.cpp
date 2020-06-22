@@ -39,9 +39,9 @@
 #include "arm64_disassembler.hpp"
 #include <stdexcept>
 
-namespace vtil::arm64::capstone
+namespace vtil::arm64
 {
-	csh get_handle()
+	csh get_cs_handle()
 	{
 		// Capstone engine is not created until the first call.
 		//
@@ -56,14 +56,14 @@ namespace vtil::arm64::capstone
 		return handle;
 	}
 
-	std::vector<vtil::arm64::instruction> disasm(const void* bytes, uint64_t address, size_t size, size_t count)
+	std::vector<instruction> disasm(const void* bytes, uint64_t address, size_t size, size_t count)
 	{
 		// Disasemble the instruction.
 		//
 		cs_insn* ins;
 		count = cs_disasm
 		(
-			get_handle(),
+			get_cs_handle(),
 			( uint8_t* ) bytes,
 			size ? size : -1,
 			address,
@@ -73,10 +73,10 @@ namespace vtil::arm64::capstone
 
 		// Convert each output into vtil::arm64 format and push it to a vector.
 		//
-		std::vector<vtil::arm64::instruction> vec;
+		std::vector<instruction> vec;
 		for ( int i = 0; i < count; i++ )
 		{
-			vtil::arm64::instruction out;
+			instruction out;
 			cs_insn& in = ins[ i ];
 
 			// Copy cs_insn base.

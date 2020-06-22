@@ -43,8 +43,8 @@
 
 // Simple wrapper around Keystone assembler.
 //
-namespace vtil::arm64::keystone
+namespace vtil::arm64
 {
-	ks_struct* get_handle();
+	ks_struct* get_ks_handle();
 	std::vector<uint8_t> assemble( const std::string& src, uint64_t va = 0 );
 };

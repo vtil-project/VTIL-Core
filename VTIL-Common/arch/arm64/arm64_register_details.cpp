@@ -416,7 +416,7 @@ namespace vtil::arm64
 	{
 		// Else lookup the name from capstone.
 		//
-		return cs_reg_name( capstone::get_handle(), arm64_reg( _reg ) );
+		return cs_reg_name( get_cs_handle(), arm64_reg( _reg ) );
 	}
 
 	// Remaps the given register at given specifications.

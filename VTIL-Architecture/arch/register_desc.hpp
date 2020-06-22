@@ -29,10 +29,20 @@
 #include <string>
 #include <vtil/math>
 #include <vtil/utility>
-#include <vtil/amd64> // TODO: Remove me.
+#include <vtil/amd64>
+#include <vtil/arm64>
 
 namespace vtil
 {
+	// Architecture of the specific register.
+	//
+	enum register_arch : uint8_t
+	{
+		register_generic = 0,
+		register_amd64 =   0,
+		register_arm64 =   1
+	};
+
 	// Flags that describe the properties of the register.
 	//
 	enum register_flag : uint32_t
@@ -96,7 +106,15 @@ namespace vtil
 		// of the full 64-bit range as otherwise we'd have to reserve some magic numbers for flags and stack pointer. 
 		// Due to this reason, flags should also be compared when doing comparison.
 		//
-		uint64_t local_id = 0;
+		union
+		{
+			struct
+			{
+				uint64_t local_id     : 56;
+				uint64_t architecture : 8;
+			};
+			uint64_t combined_id = 0;
+		};
 		
 		// Size of the register in bits.
 		//
@@ -116,8 +134,8 @@ namespace vtil
 
 		// Construct a fully formed register.
 		//
-		register_desc( uint32_t flags, uint64_t id, bitcnt_t bit_count, bitcnt_t bit_offset = 0 )
-			: flags( flags ), local_id( id ), bit_count( bit_count ), bit_offset( bit_offset ) 
+		register_desc( uint32_t flags, uint64_t id, bitcnt_t bit_count, bitcnt_t bit_offset = 0, register_arch architecture = register_generic )
+			: flags( flags ), local_id( id ), bit_count( bit_count ), bit_offset( bit_offset ), architecture( architecture )
 		{ 
 			is_valid( true );
 		}
@@ -225,6 +243,9 @@ namespace vtil
 			return get_mask() & o.get_mask();
 		}
 
+		// Returns the architecture this register belongs to.
+		//
+
 		// Conversion to human-readable format.
 		// - Note: Do not move this to a source file since we want the template we're using to be overriden!
 		//
@@ -254,14 +275,23 @@ namespace vtil
 			// Otherwise use the default naming.
 			//
 			if ( ( flags & register_physical ) )
-				return prefix + amd64::name( amd64::extend( math::narrow_cast<uint8_t>( local_id ) ) ) + suffix;
-			else
-				return prefix + "vr" + std::to_string( local_id ) + suffix;
+			{
+				switch ( architecture )
+				{
+					case register_amd64:
+						return prefix + amd64::name( amd64::extend( math::narrow_cast<uint8_t>( local_id ) ) ) + suffix;
+					case register_arm64:
+						return prefix + arm64::name( arm64::extend( math::narrow_cast<uint8_t>( local_id ) ) ) + suffix;
+					default:
+						unreachable();
+				}
+			}
+			return prefix + "vr" + std::to_string( local_id ) + suffix;
 		}
 
 		// Declare reduction.
 		//
-		REDUCE_TO( bit_count, local_id, flags, bit_offset );
+		REDUCE_TO( bit_count, combined_id, flags, bit_offset );
 	};
 
 	// Should be overriden by the user to describe conversion of the
@@ -282,6 +312,24 @@ namespace vtil
 	{
 		template<typename T>
 		auto operator()( T&& v ) { return std::forward<T>( v ); }
+	};
+	template<>
+	struct register_cast<x86_reg>
+	{
+		register_desc operator()( x86_reg value )
+		{
+			auto [base, offset, size] = amd64::resolve_mapping( value );
+			return { register_physical, ( uint64_t ) base, size * 8, offset * 8, register_amd64 };
+		}
+	};
+	template<>
+	struct register_cast<arm64_reg>
+	{
+		register_desc operator()( arm64_reg value )
+		{
+			auto [base, offset, size] = arm64::resolve_mapping( value );
+			return { register_physical, ( uint64_t ) base, size * 8, offset * 8, register_arm64 };
+		}
 	};
 
 	// VTIL special registers.

@@ -100,9 +100,6 @@ namespace vtil::arm64
 		}
 	};
 
-	namespace capstone
-	{
-		csh get_handle();
-		std::vector<instruction> disasm( const void* bytes, uint64_t address, size_t size = 0, size_t count = 1 );
-	};
+	csh get_cs_handle();
+	std::vector<instruction> disasm( const void* bytes, uint64_t address, size_t size = 0, size_t count = 1 );
 }
