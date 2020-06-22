@@ -2588,6 +2588,20 @@ namespace vtil::symbolic::directive
 		{ __uless_eq( A - B, ~B ),                                         __ugreat_eq( A, B ) },
 		{ __ugreat( A - B, ~B ),                                           __uless( A, B ) },
 		{ __ugreat_eq( A + B, B ),                                         __uless_eq( A, ~B ) },
+        { A<=A,                                                            1 },
+        { A<A,                                                             0 },
+        { A==A,                                                            1 },
+        { A!=A,                                                            0 },
+        { A>A,                                                             0 },
+        { A>=A,                                                            1 },
+		{ __uless( A, A ),                                                 0 },
+		{ __uless_eq( A, A ),                                              1 },
+		{ __ugreat( A, A ),                                                0 },
+		{ __ugreat_eq( A, A ),                                             1 },
+        { A==~A,                                                           0 },
+        { A!=~A,                                                           1 },
+        { A==-A,                                                           0 },
+        { A!=-A,                                                           1 },
     };
 
 	constexpr auto overflow = [ ] ( auto a, auto b ) { return ((a<0)==(b<0))&((a<0)!=((a+b)<0)); };
