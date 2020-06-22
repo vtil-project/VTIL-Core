@@ -143,16 +143,18 @@ namespace vtil::debug
 					std::vector<uint8_t> bytes;
 					for ( auto it2 = it; it2 != blk->end(); it2++ )
 					{
-						if ( it2->base->name == "vemit" )
-						{
-							uint8_t* bs = ( uint8_t* ) &it2->operands[ 0 ].imm().u64;
-							bytes.insert( bytes.end(), bs, bs + it2->operands[ 0 ].size() );
-						}
+						if ( it2->base->name != "vemit" )
+							break;
+						uint8_t* bs = ( uint8_t* ) &it2->operands[ 0 ].imm().u64;
+						bytes.insert( bytes.end(), bs, bs + it2->operands[ 0 ].size() );
 					}
 
-					auto dasm = capstone::disasm( bytes.data(), it->vip == invalid_vip ? 0 : it->vip, bytes.size() );
-					for ( auto& ins : dasm )
-						log<CON_YLW>( "; %s\n", ins );
+					if ( bytes.size() )
+					{
+						auto dasm = capstone::disasm( bytes.data(), it->vip == invalid_vip ? 0 : it->vip, bytes.size() );
+						for ( auto& ins : dasm )
+							log<CON_YLW>( "; %s\n", ins );
+					}
 					no_disasm = true;
 				}
 			}
