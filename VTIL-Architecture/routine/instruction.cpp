@@ -34,7 +34,7 @@ namespace vtil
 	//
 	bool instruction::is_valid( bool force ) const
 	{
-#define validate(...) { if( force ) fassert(__VA_ARGS__); else return false; }
+#define validate(...) { if( force ) fassert(__VA_ARGS__); else if( !(__VA_ARGS__) ) return false; }
 
 		// Instruction must have a base descriptor assigned.
 		//

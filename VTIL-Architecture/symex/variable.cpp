@@ -462,7 +462,7 @@ namespace vtil::symbolic
 	//
 	bool variable::is_valid( bool force ) const
 	{
-#define validate(...) { if( force ) fassert(__VA_ARGS__); else return false; }
+#define validate(...) { if( force ) fassert(__VA_ARGS__); else if( !(__VA_ARGS__) ) return false; }
 		// If register:
 		//
 		if ( auto* reg = std::get_if<register_t>( &descriptor ) )

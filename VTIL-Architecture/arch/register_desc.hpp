@@ -126,7 +126,7 @@ namespace vtil
 		//
 		bool is_valid( bool force = false ) const
 		{
-#define validate(...) { if( force ) fassert(__VA_ARGS__); else return false; }
+#define validate(...) { if( force ) fassert(__VA_ARGS__); else if( !(__VA_ARGS__) ) return false; }
 			// Validate bit count and offset.
 			//
 			validate( bit_count != 0 && ( bit_count + bit_offset ) <= 64 );
