@@ -38,7 +38,7 @@ namespace vtil::debug
 {
 	static void dump( const instruction& ins, const instruction* prev = nullptr )
 	{
-		using namespace vtil::logger;
+		using namespace logger;
 		
 		// Print stack pointer offset
 		//
@@ -151,9 +151,12 @@ namespace vtil::debug
 
 					// TODO: Remove forced amd64 disasm
 					// 
-					auto dasm = vtil::amd64::capstone::disasm( bytes.data(), it->vip == invalid_vip ? 0 : it->vip, bytes.size() );
-					for ( auto& ins : dasm )
-						log<CON_YLW>( "; %s\n", ins );
+					if ( bytes.size() )
+					{
+						auto dasm = amd64::disasm( bytes.data(), it->vip == invalid_vip ? 0 : it->vip, bytes.size() );
+						for ( auto& ins : dasm )
+							log<CON_YLW>( "; %s\n", ins );
+					}
 					no_disasm = true;
 				}
 			}

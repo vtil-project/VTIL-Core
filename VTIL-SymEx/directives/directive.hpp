@@ -164,7 +164,7 @@ namespace vtil::symbolic::directive
         // Default/copy/move constructors.
         //
         instance() {};
-        instance( instance&& ) noexcept = default;
+        instance( instance&& ) = default;
         instance( const instance& ) = default;
         instance& operator=( instance&& o ) = default;
         instance& operator=( const instance& o ) = default;

@@ -57,7 +57,7 @@ namespace vtil::symbolic
 		// Default constructor/copy/move.
 		//
 		unique_identifier() : value( std::nullopt ) {};
-		unique_identifier( unique_identifier&& ) noexcept = default;
+		unique_identifier( unique_identifier&& ) = default;
 		unique_identifier& operator=( unique_identifier&& ) = default;
 		unique_identifier( const unique_identifier& ) = default;
 		unique_identifier& operator=( const unique_identifier& ) = default;
