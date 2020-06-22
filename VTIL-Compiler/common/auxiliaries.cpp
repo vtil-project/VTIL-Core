@@ -606,18 +606,10 @@ namespace vtil::optimizer::aux
 
 				if ( cc )
 				{
-					// Make sure first condition is the simplest.
-					//
-					if ( cc.complexity > (~cc).complexity )
-					{
-						cc = ~cc;
-						std::swap( dst1, dst2 );
-					}
-
 					return {
 						.is_vm_exit = real,
 						.is_jcc = true,
-						.cc = cc.resize( 1 ),
+						.cc = cc,
 						.destinations = { dst1, dst2 }
 					};
 				}

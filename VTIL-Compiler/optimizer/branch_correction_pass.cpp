@@ -184,9 +184,12 @@ namespace vtil::optimizer
 				//
 				if ( !fail )
 				{
+					operand cc_op = op_cc.get();
+					cc_op.reg().bit_count = 1;
+
 					branch->base = &ins::js;
 					branch->operands = { 
-						op_cc.get(),
+						cc_op,
 						dsts[ 0 ].get(),
 						dsts[ 1 ].get()
 					};

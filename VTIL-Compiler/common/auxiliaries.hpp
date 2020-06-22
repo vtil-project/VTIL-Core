@@ -66,6 +66,7 @@ namespace vtil::optimizer::aux
 	register_desc revive_register( const symbolic::variable& var, const il_iterator& it );
 
 	// Extracts the details of the branch taken at the end of the block where possible.
+	// - CC&1 responsibility is left to the caller.
 	//
 	branch_info analyze_branch( const basic_block* blk, tracer* tracer, bool xblock, bool pack = true );
 }
