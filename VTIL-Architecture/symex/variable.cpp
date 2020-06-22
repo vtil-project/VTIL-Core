@@ -492,6 +492,8 @@ namespace vtil::symbolic
 			// Bit count should be within (0, 64] and byte-addressable.
 			//
 			validate( 0 < mem.bit_count && mem.bit_count <= 64 && ( mem.bit_count & 7 ) == 0 );
+
+			return true;
 		}
 #undef validate
 	}

@@ -732,7 +732,7 @@ namespace vtil
 					// Push to list if basic reloc
 					if ( block->entries[ i ].type == rel_based_dir64 )
 					{
-						uint64_t rva_reloc = block->base_rva + block->entries[ i ].offset;
+						uint64_t rva_reloc = uint64_t(block->base_rva) + block->entries[ i ].offset;
 						if ( rva_reloc <= rva && rva < ( rva_reloc + 8 ) )
 							return true;
 					}

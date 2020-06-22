@@ -84,9 +84,9 @@ namespace vtil::symbolic
 
 		// Default copy/move.
 		//
-		pointer( pointer&& ) = default;
+		pointer( pointer&& ) noexcept = default;
 		pointer( const pointer& ) = default;
-		pointer& operator=( pointer&& ) = default;
+		pointer& operator=( pointer&& ) noexcept = default;
 		pointer& operator=( const pointer& ) = default;
 
 		// Construct from symbolic expression.

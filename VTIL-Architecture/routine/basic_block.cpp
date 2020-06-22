@@ -270,7 +270,9 @@ namespace vtil
 	//
 	basic_block* basic_block::vemits( const std::string& assembly )
 	{
-		auto res = keystone::assemble( assembly );
+		// TODO: Remove forced amd64 mode
+		// 
+		auto res = vtil::amd64::keystone::assemble( assembly );
 		fassert( !res.empty() );
 		for ( uint8_t byte : res )
 			vemit( byte );

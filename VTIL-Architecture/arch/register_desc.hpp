@@ -90,13 +90,13 @@ namespace vtil
 	{
 		// Flags of the current register, as described in "enum register_flag".
 		//
-		uint32_t flags;
+		uint32_t flags = 0;
 
 		// Arbitrary identifier, is intentionally not universally unique to let ids of user registers make use
 		// of the full 64-bit range as otherwise we'd have to reserve some magic numbers for flags and stack pointer. 
 		// Due to this reason, flags should also be compared when doing comparison.
 		//
-		uint64_t local_id;
+		uint64_t local_id = 0;
 		
 		// Size of the register in bits.
 		//
@@ -104,7 +104,7 @@ namespace vtil
 
 		// Offset at which we read from the full 64-bit version.
 		//
-		bitcnt_t bit_offset;
+		bitcnt_t bit_offset = 0;
 
 		// Default constructor / move / copy.
 		//
