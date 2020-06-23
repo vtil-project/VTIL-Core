@@ -75,7 +75,7 @@ namespace vtil
 			riterator_base( container_type* ref, const iterator_type& i ) 
 				: container( ref ), iterator_type( i ) {}
 			template<typename X, typename Y> riterator_base( const riterator_base<X, Y>& o ) 
-				: container( o.container ), iterator_type( Y( o ) ), is_path_restricted( is_path_restricted ), paths_allowed( paths_allowed ) {}
+				: container( o.container ), iterator_type( Y( o ) ), is_path_restricted( o.is_path_restricted ), paths_allowed( o.paths_allowed ) {}
 
 			// Override equality operators to check container first.
 			//
