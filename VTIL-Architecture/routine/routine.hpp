@@ -69,7 +69,7 @@ namespace vtil
 
 		// Calling convention of the routine. (TODO: Remove hard-coded amd64 ref)
 		//
-		call_convention routine_convention = amd64::preserve_all_convention;
+		call_convention routine_convention = amd64::default_call_convention;
 
 		// Calling convention of a non-specialized VXCALL. (TODO: Remove hard-coded amd64 ref)
 		//
