@@ -30,6 +30,87 @@
 
 namespace vtil
 {
+	// Explores the given path, reserved for internal use.
+	//
+	void routine::explore_path( const basic_block* src, const basic_block* dst )
+	{
+		// Acquire the routine mutex.
+		//
+		std::lock_guard g{ this->mutex };
+
+		// Insert self-referential links.
+		//
+		path_cache[ 0 ][ dst ][ dst ].insert( dst );
+		path_cache[ 1 ][ dst ][ dst ].insert( dst );
+
+		// If source is given:
+		//
+		if ( src )
+		{
+			// If foward path is already explored, skip.
+			//
+			if ( path_cache[ 0 ][ src ].contains( dst ) )
+				return;
+
+			// Insert direct links.
+			//
+			auto& fwd = path_cache[ 0 ][ src ][ dst ];
+			fwd.insert( src ); fwd.insert( dst );
+			auto& bwd = path_cache[ 1 ][ dst ][ src ];
+			bwd.insert( src ); bwd.insert( dst );
+
+			// Forward propagate.
+			//
+			std::array clone = { path_cache[ 0 ], path_cache[ 1 ] };
+			for ( auto& [prev, level2] : clone[ 0 ] )
+			{
+				for ( auto& [next, paths] : level2 )
+				{
+					if ( next == src )
+					{
+						auto& propagated_link = path_cache[ 0 ][ prev ][ dst ];
+						propagated_link.insert( paths.begin(), paths.end() );
+						propagated_link.insert( dst );
+					}
+				}
+			}
+			// Backwards propagate.
+			//
+			for ( auto& [prev, level2] : clone[ 1 ] )
+			{
+				for ( auto& [next, paths] : level2 )
+				{
+					if ( prev == dst )
+					{
+						auto& propagated_link = path_cache[ 1 ][ src ][ next ];
+						propagated_link.insert( paths.begin(), paths.end() );
+						propagated_link.insert( src );
+					}
+				}
+			}
+		}
+
+		// Recurse.
+		//
+		for ( auto next : dst->next )
+			explore_path( dst, next );
+	}
+
+	// Flushes the path cache, reserved for internal use.
+	//
+	void routine::flush_paths()
+	{
+		// Acquire the routine mutex.
+		//
+		std::lock_guard g{ this->mutex };
+
+		// Invoke from entry point.
+		//
+		path_cache[ 0 ].clear();
+		path_cache[ 1 ].clear();
+		explore_path( nullptr, entry_point );
+	}
+
 	// Routine structures free all basic blocks they own upon their destruction.
 	//
 	routine::~routine()
@@ -60,6 +141,8 @@ namespace vtil
 
 		// Copy internally tracked stats.
 		//
+		copy->path_cache[ 0 ] = this->path_cache[ 0 ];
+		copy->path_cache[ 1 ] = this->path_cache[ 1 ];
 		copy->local_opt_count = this->local_opt_count.load();
 		copy->last_internal_id = this->last_internal_id.load();
 

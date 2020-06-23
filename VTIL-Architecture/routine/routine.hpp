@@ -58,6 +58,10 @@ namespace vtil
 		//
 		std::map<vip_t, basic_block*> explored_blocks;
 
+		// Cache of paths from block A to block B.
+		//
+		std::map<const basic_block*, std::map<const basic_block*, std::set<const basic_block*>>> path_cache[ 2 ];
+
 		// Reference to the first block, entry point.
 		// - Can be accessed without acquiring the mutex as it will be assigned strictly once.
 		//
@@ -125,6 +129,14 @@ namespace vtil
 			std::lock_guard _g( mutex );
 			spec_subroutine_conventions[ vip ] = cc;
 		}
+
+		// Explores the given path, reserved for internal use.
+		//
+		void explore_path( const basic_block* src, const basic_block* dst );
+
+		// Flushes the path cache, reserved for internal use.
+		//
+		void flush_paths();
 
 		// Routine structures free all basic blocks they own upon their destruction.
 		//

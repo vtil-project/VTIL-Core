@@ -108,8 +108,8 @@ namespace vtil::symbolic
 
 						// Determine all paths and path restrict the iterator.
 						//
-						auto pathset_1 = il_const_iterator::path_to( var.at.container, o1, false );
-						auto pathset_2 = il_const_iterator::path_to( var.at.container, o2, false );
+						auto pathset_1 = o1->owner->path_cache[ 1 ][ o1 ][ var.at.container ];
+						auto pathset_2 = o2->owner->path_cache[ 1 ][ o2 ][ var.at.container ];
 						var.at.is_path_restricted = true;
 
 						// If only one of the paths are valid for backwards iteration:

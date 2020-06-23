@@ -221,6 +221,10 @@ namespace vtil
 			}
 		}
 		rtn->last_internal_id = last_internal_id;
+
+		// Flush paths.
+		//
+		rtn->flush_paths();
 	}
 
 	// Serialization of VTIL instructions.

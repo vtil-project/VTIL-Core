@@ -50,6 +50,10 @@ namespace vtil
 		blk->owner->entry_point = blk;
 		blk->owner->explored_blocks[ entry_vip ] = blk;
 
+		// Append the path.
+		//
+		blk->owner->explore_path( nullptr, blk );
+
 		// Return the block
 		//
 		return blk;
@@ -85,6 +89,10 @@ namespace vtil
 		//
 		next.push_back( entry );
 		entry->prev.push_back( this );
+
+		// Append the path.
+		//
+		owner->explore_path( this, entry );
 		return result;
 	}
 
