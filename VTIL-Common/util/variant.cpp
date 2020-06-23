@@ -179,7 +179,7 @@ namespace vtil
 		else
 		{
 			is_inline = false;
-#ifdef _MSC_VER
+#ifdef _WIN64
 			return ext = _aligned_malloc( size, align );
 #else
 			return ext = aligned_alloc( align, size );
@@ -202,7 +202,7 @@ namespace vtil
 			//
 			if ( !is_inline )
 			{
-#ifdef _MSC_VER
+#ifdef _WIN64
 				_aligned_free( ext );
 #else
 				free( ext );
