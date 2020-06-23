@@ -231,38 +231,6 @@ namespace vtil::symbolic
 				}
 				break;
 			}
-			case directive_op_desc::imm_lsb:
-			{
-				// Translate right hand side.
-				//
-				if ( auto exp = translate( sym, dir->rhs, bit_cnt, speculative_condition, max_depth ) )
-				{
-					// Assert immediate.
-					//
-					fassert( exp->is_constant() );
-
-					// Return the bit index.
-					//
-					return expression{ math::lsb( *exp->get<uint64_t>() ), 8 };
-				}
-				break;
-			}
-			case directive_op_desc::imm_msb:
-			{
-				// Translate right hand side.
-				//
-				if ( auto exp = translate( sym, dir->rhs, bit_cnt, speculative_condition, max_depth ) )
-				{
-					// Assert immediate.
-					//
-					fassert( exp->is_constant() );
-
-					// Return the bit index.
-					//
-					return expression{ math::msb( *exp->get<uint64_t>() ), 8 };
-				}
-				break;
-			}
 			case directive_op_desc::unreachable:
 			{
 				// Print an error.

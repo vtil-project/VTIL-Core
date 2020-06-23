@@ -84,6 +84,8 @@ namespace vtil::math
         ucast,          // uintRHS_t(LHS)
         cast,           // intRHS_t(LHS)
         popcnt,         // POPCNT(RHS)
+        bitscan_fwd,    // BitScanForward(RHS)
+        bitscan_rev,    // BitScanReverse(RHS)
         bit_test,       // [LHS>>RHS]&1
         mask,           // RHS.mask()
         bit_count,      // RHS.bitcount()
@@ -192,6 +194,8 @@ namespace vtil::math
         {    0,       false,    2,    false,          nullptr,    "__ucast"     },
         {   -1,       true,     2,    false,          nullptr,    "__cast"      },
         {   +1,       false,    1,    false,          nullptr,    "__popcnt"    },
+        {   +1,       false,    1,    false,          nullptr,    "__bsf"       },
+        {   +1,       false,    1,    false,          nullptr,    "__bsr"       },
         {   +1,       false,    2,    false,          nullptr,    "__bt"        },
         {   +1,       false,    1,    false,          nullptr,    "__mask"      },
         {    0,       false,    1,    false,          nullptr,    "__bcnt"      },

@@ -91,10 +91,6 @@ namespace vtil::symbolic::directive
             mask_one,
             // - __mask_unk(x), will generate the mask for known zero bits.
             mask_zero,
-            // - __imm_msb(x), will return the most significant bit set for an immediate in terms of [1-64].
-            imm_msb,
-            // - __imm_lsb(x), will return the least significant bit set for an immediate in terms of [1-64].
-            imm_lsb,
 
 
             // Evaluation-time Message
@@ -138,8 +134,6 @@ namespace vtil::symbolic::directive
                 case mask_unknown:  return "{mask=? " + rhs + "}";
                 case mask_one:      return "{mask=1 " + rhs + "}";
                 case mask_zero:     return "{mask=0 " + rhs + "}";
-                case imm_msb:       return "msb(" + rhs + ")";
-                case imm_lsb:       return "lsb(" + rhs + ")";
                 case unreachable:   return "unreachable()";
                 case warning:       return "{warning(), " + rhs + "}";
                 default:            unreachable();
@@ -257,8 +251,6 @@ namespace vtil::symbolic::directive
     static instance __mask_unk( const instance& a ) { return { tagged<directive_op_desc::mask_unknown>, a }; }
     static instance __mask_knw1( const instance& a ) { return { tagged<directive_op_desc::mask_one>, a }; }
     static instance __mask_knw0( const instance& a ) { return { tagged<directive_op_desc::mask_zero>, a }; }
-    static instance __imm_msb( const instance& a ) { return { tagged<directive_op_desc::imm_msb>, a }; }
-    static instance __imm_lsb( const instance& a ) { return { tagged<directive_op_desc::imm_lsb>, a }; }
 };
 
 // Implement comparison operators between [directive::directive_op_desc] x [math::operator_id].

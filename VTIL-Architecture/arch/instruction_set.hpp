@@ -89,6 +89,8 @@ namespace vtil
         //  -- Bitwise instructions
         //
         //    POPCNT     Reg                                                 | OP1 = popcnt OP1
+        //    BSF        Reg                                                 | OP1 = OP1 ? BitScanForward OP1 + 1 : 0
+        //    BSR        Reg                                                 | OP1 = OP1 ? BitScanReverse OP1 + 1 : 0
         //    NOT        Reg                                                 | OP1 = ~OP1
         //    SHR        Reg,    Reg/Imm                                     | OP1 >>= OP2
         //    SHL        Reg,    Reg/Imm                                     | OP1 <<= OP2
@@ -101,6 +103,8 @@ namespace vtil
         /*------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
         /*                                          [Name]        [Operands...]                                     [ASizeOp]   [Volatile]  [Operator]               [BranchOps] [MemOps]     */
         static const instruction_desc popcnt =      { "popcnt",   { o::readwrite                                 }, 1,          false,      op::popcnt,              {},          {}          };
+        static const instruction_desc bsf =         { "bsf",      { o::readwrite                                 }, 1,          false,      op::bitscan_fwd,         {},          {}          };
+        static const instruction_desc bsr =         { "bsr",      { o::readwrite                                 }, 1,          false,      op::bitscan_rev,         {},          {}          };
         static const instruction_desc bnot =        { "not",      { o::readwrite                                 }, 1,          false,      op::bitwise_not,         {},          {}          };
         static const instruction_desc bshr =        { "shr",      { o::readwrite,  o::read_any                   }, 1,          false,      op::shift_right,         {},          {}          };
         static const instruction_desc bshl =        { "shl",      { o::readwrite,  o::read_any                   }, 1,          false,      op::shift_left,          {},          {}          };
@@ -180,8 +184,8 @@ namespace vtil
     static const instruction_desc instruction_list[] = 
     {
         ins::mov, ins::movsx, ins::str, ins::ldd, ins::ifs, ins::neg, ins::add, ins::sub, ins::mul, ins::imul,
-        ins::mulhi, ins::imulhi, ins::div, ins::idiv, ins::rem, ins::irem, ins::popcnt, ins::bnot, 
-        ins::bshr, ins::bshl,ins::bxor, ins::bor, ins::band, ins::bror, ins::brol, ins::tg, 
+        ins::mulhi, ins::imulhi, ins::div, ins::idiv, ins::rem, ins::irem, ins::popcnt, ins::bsf, ins::bsr, 
+        ins::bnot, ins::bshr, ins::bshl,ins::bxor, ins::bor, ins::band, ins::bror, ins::brol, ins::tg, 
         ins::tge, ins::te, ins::tne, ins::tle, ins::tl, ins::tug, ins::tuge, ins::tule, ins::tul, ins::js, 
         ins::jmp, ins::vexit, ins::vxcall, ins::nop, ins::vemit, ins::vpinr, ins::vpinw, ins::vpinrm,
         ins::vpinwm

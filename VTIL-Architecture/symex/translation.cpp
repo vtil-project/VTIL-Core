@@ -222,6 +222,8 @@ namespace vtil
 				return tmp;
 			}
 			case math::operator_id::popcnt:
+			case math::operator_id::bitscan_fwd:
+			case math::operator_id::bitscan_rev:
 			{
 				// Translate the right hand side into a register.
 				//

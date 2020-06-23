@@ -39,7 +39,9 @@ namespace vtil::math
         {
             // - Operators that work with bit-indices.
             //
-            case operator_id::popcnt:         return bit_index_size;
+            case operator_id::popcnt:
+            case operator_id::bitscan_fwd:
+            case operator_id::bitscan_rev:
             case operator_id::bit_count:      return bit_index_size;
 
             // - Unary and parameterized unary-like operators.
@@ -148,6 +150,8 @@ namespace vtil::math
             // - Special operators.                                                          
             //                                                                                  
             case operator_id::popcnt:           result = popcnt( rhs );                                             break;
+            case operator_id::bitscan_fwd:      result = lsb( rhs );                                             break;
+            case operator_id::bitscan_rev:      result = msb( rhs );                                             break;
             case operator_id::bit_test:         result = ( lhs >> rhs ) & 1;                                        break;
             case operator_id::mask:             result = fill( bcnt_rhs );                                          break;
             case operator_id::bit_count:        result = bcnt_rhs;                                                  break;
@@ -458,6 +462,12 @@ namespace vtil::math
                 // Cannot be calculated with unknown values, return unknown of expected size.
                 //
                 return bit_vector( popcnt( rhs.known_one() | rhs.unknown_mask() ) ).resize( bit_index_size );
+
+            case operator_id::bitscan_fwd:
+            case operator_id::bitscan_rev:
+                // Cannot be calculated with unknown values, return unknown of expected size.
+                //
+                return bit_vector( bit_index_size );
 
             case operator_id::bit_test:
                 // If we can get the index being tested as constant, try to evaluate. 

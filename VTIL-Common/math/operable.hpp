@@ -201,6 +201,8 @@ DEFINE_OPERATION( urem( T1&& a, T2&& b )             { return { std::forward<T1>
 DEFINE_OPERATION( __ucast( T1&& a, T2&& b )          { return { std::forward<T1>( a ), vtil::math::operator_id::ucast, std::forward<T2>( b ) }; }                                               );
 DEFINE_OPERATION( __cast( T1&& a, T2&& b )           { return { std::forward<T1>( a ), vtil::math::operator_id::cast, std::forward<T2>( b ) }; }                                                );
 DEFINE_OPERATION( __popcnt( T1&& a )                 { return { vtil::math::operator_id::popcnt, std::forward<T2>( a ) }; }                                                                     );
+DEFINE_OPERATION( __bsf( T1&& a )                    { return { vtil::math::operator_id::bitscan_fwd, std::forward<T2>( a ) }; }                                                                );
+DEFINE_OPERATION( __bsr( T1&& a )                    { return { vtil::math::operator_id::bitscan_rev, std::forward<T2>( a ) }; }                                                                );
 DEFINE_OPERATION( __bt( T1&& a, T2&& b )             { return { std::forward<T1>( a ), vtil::math::operator_id::bit_test, std::forward<T2>( b ) }; }                                            );
 DEFINE_OPERATION( __mask( T1&& a )                   { return { vtil::math::operator_id::mask, std::forward<T2>( a ) }; }                                                                       );
 DEFINE_OPERATION( __bcnt( T1&& a )                   { return { vtil::math::operator_id::bit_count, std::forward<T2>( a ) }; }                                                                  );

@@ -347,6 +347,8 @@ namespace vtil
 		WRAP_LAZY( rem );
 		WRAP_LAZY( irem );
 		WRAP_LAZY( popcnt );
+		WRAP_LAZY( bsf );
+		WRAP_LAZY( bsr );
 		WRAP_LAZY( bnot );
 		WRAP_LAZY( bshr );
 		WRAP_LAZY( bshl );

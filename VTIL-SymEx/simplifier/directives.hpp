@@ -173,8 +173,8 @@ namespace vtil::symbolic::directive
         // Lower unsigned immediate rem/div/mul into and/shr/shl where possible.
         //
         { urem(A,U),                                          __iff(__popcnt(U)==1, A&!(U-1)) },
-        { udiv(A,U),                                          __iff(__popcnt(U)==1, A>>!(__imm_msb(U)-1)) },
-        { umul(A,U),                                          __iff(__popcnt(U)==1, A<<!(__imm_msb(U)-1)) },
+        { udiv(A,U),                                          __iff(__popcnt(U)==1, A>>!(__bsf(U)-1)) },
+        { umul(A,U),                                          __iff(__popcnt(U)==1, A<<!(__bsf(U)-1)) },
 
         // Penetrate shrinked expression with shift left.
         // - This is an exceptional case and has to be addressed due to the fact
