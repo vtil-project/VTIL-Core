@@ -62,6 +62,7 @@ namespace vtil
 			const operand& mem_offset = operands[ base->memory_operand_index + 1 ];
 			validate( mem_base.is_register() && mem_base.bit_count() == 64 );
 			validate( mem_offset.is_immediate() );
+			validate( access_size() && !( access_size() & 7 ) );
 		}
 
 		// Validate branching operands.
