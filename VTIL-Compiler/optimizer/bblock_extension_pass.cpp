@@ -115,6 +115,7 @@ namespace vtil::optimizer
 			blk->owner->explored_blocks.erase( blk_next->entry_vip );
 			delete blk_next;
 			counter++;
+			blk->owner->flush_paths();
 		}
 
 		// Recurse into destinations:

@@ -230,6 +230,7 @@ namespace vtil::optimizer
 
 			// Return counter as is.
 			//
+			rtn->flush_paths();
 			return cnt;
 		}
 		return 0;
