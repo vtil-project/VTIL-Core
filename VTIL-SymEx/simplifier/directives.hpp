@@ -305,6 +305,11 @@ namespace vtil::symbolic::directive
         { ~__rotl(A,C),                                       __rotl(!~A,C) },
         { ~__rotr(A,C),                                       __rotr(!~A,C) },
 
+        // Lower unsigned immediate rem/div/mul into and/shr/shl where possible.
+        //
+        { urem(A,U), __iff(__popcnt(U)==1, A&!(U-1)) },
+        { udiv(A,U), __iff(__popcnt(U)==1, A>>!(__imm_msb(U)-1)) },
+        { umul(A,U), __iff(__popcnt(U)==1, A<<!(__imm_msb(U)-1)) },
 
         // Manually added comparison simplifiers:
         //
