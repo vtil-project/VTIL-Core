@@ -358,6 +358,11 @@ namespace vtil::symbolic
 				//
 				fassert( exp_new );
 
+				// Make sure the size matches.
+				//
+				if ( exp_new->size() != exp->size() )
+					error( "Directive '%s' => '%s' left the simplifier unbalanced.", from->to_string(), to->to_string() );
+
 #if VTIL_SYMEX_SIMPLIFY_VERBOSE
 				// Log state and return the expression.
 				//
