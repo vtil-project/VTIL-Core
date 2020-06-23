@@ -102,8 +102,8 @@ namespace vtil
 				// Trace the path.
 				//
 				std::set<const container_type*> trace = forward 
-					? src->owner->path_cache[ 0 ][ container ][ dst ]
-					: src->owner->path_cache[ 1 ][ dst ][ container ];
+					? container->owner->path_cache[ 0 ][ container ][ dst ]
+					: container->owner->path_cache[ 1 ][ dst ][ container ];
 				
 				// If path is already restricted:
 				//
