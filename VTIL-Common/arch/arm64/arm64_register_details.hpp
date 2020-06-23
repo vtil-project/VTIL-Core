@@ -52,17 +52,21 @@ namespace vtil::arm64
 
 	// Gets the offset<0> and size<1> of the mapping for the given register.
 	//
-	register_mapping resolve_mapping(uint8_t _reg);
+	register_mapping resolve_mapping( uint8_t _reg );
 
 	// Gets the base register for the given register.
 	//
-	arm64_reg extend(uint8_t _reg);
+	arm64_reg extend( uint8_t _reg );
 
 	// Converts the enum into human-readable format.
 	//
-	std::string name(uint8_t _reg);
+	std::string name( uint8_t _reg );
 
 	// Remaps the given register at given specifications.
 	//
-	arm64_reg remap(uint8_t _reg, uint8_t offset, uint8_t size);
+	arm64_reg remap( uint8_t _reg, uint8_t offset, uint8_t size );
+
+	// Checks whether the register is a generic register that is handled.
+	//
+	bool is_generic( uint8_t _reg );
 }

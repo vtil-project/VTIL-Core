@@ -65,4 +65,8 @@ namespace vtil::amd64
 	// Remaps the given register at given specifications.
 	//
 	x86_reg remap( uint8_t _reg, uint8_t offset, uint8_t size );
+
+	// Checks whether the register is a generic register that is handled.
+	//
+	bool is_generic( uint8_t _reg );
 };

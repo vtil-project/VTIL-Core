@@ -199,4 +199,11 @@ namespace vtil::amd64
         fassert( offset == 0 );
         return base_register;
     }
+
+    // Checks whether the register is a generic register that is handled.
+    //
+    bool is_generic( uint8_t _reg )
+    {
+        return register_mappings.find( ( x86_reg ) _reg ) != register_mappings.end();
+    }
 };
