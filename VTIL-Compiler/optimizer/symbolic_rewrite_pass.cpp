@@ -146,7 +146,7 @@ namespace vtil::optimizer
 				
 				// Try minimizing expression size.
 				//
-				for ( bitcnt_t size : prefered_exp_sizes )
+				for ( bitcnt_t size : preferred_exp_sizes )
 				{
 					// Skip if above or equal.
 					//
@@ -164,7 +164,7 @@ namespace vtil::optimizer
 
 				// If partially inherited flags register:
 				//
-				if ( k.is_flags() && k.bit_count != 64 && prefered_exp_sizes.contains( 1 ) )
+				if ( k.is_flags() && k.bit_count != 64 && preferred_exp_sizes.contains( 1 ) )
 				{
 					// For each bit:
 					//
@@ -217,8 +217,12 @@ namespace vtil::optimizer
 
 				// Try minimizing expression size.
 				//
-				for ( bitcnt_t size : prefered_exp_sizes )
+				for ( bitcnt_t size : preferred_exp_sizes )
 				{
+					// Skip if not byte-aligned.
+					//
+					if ( size & 7 ) continue;
+
 					// If all bits above [size] are matching with original value, resize.
 					//
 					if ( ( v >> size ).equals( v0 >> size ) )

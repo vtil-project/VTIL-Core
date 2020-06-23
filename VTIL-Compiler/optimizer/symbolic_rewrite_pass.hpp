@@ -40,9 +40,9 @@ namespace vtil::optimizer
 		std::shared_mutex mtx;
 
 		bool force;
-		std::set<bitcnt_t> prefered_exp_sizes;
-		isymbolic_rewrite_pass( bool force, const std::set<bitcnt_t>& prefered_exp_sizes = { 1, 8, 16, 32, 64 } )
-			: force( force ), prefered_exp_sizes( prefered_exp_sizes ) {}
+		std::set<bitcnt_t> preferred_exp_sizes;
+		isymbolic_rewrite_pass( bool force, const std::set<bitcnt_t>& preferred_exp_sizes = { 1, 8, 16, 32, 64 } )
+			: force( force ), preferred_exp_sizes( preferred_exp_sizes ) {}
 
 		size_t pass( basic_block* blk, bool xblock ) override;
 	};
