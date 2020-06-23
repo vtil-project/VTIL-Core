@@ -55,6 +55,14 @@ namespace vtil::symbolic::directive
         { A&A,                                                A },
         { A^0,                                                A },
         { A&-1,                                               A },
+        { A*1,                                                A },
+        { A*1u,                                               A },
+        { A/1,                                                A },
+        { A/1u,                                               A },
+        { __rotl(A,0),                                        A },
+        { __rotr(A,0),                                        A },
+        { A>>0,                                               A },
+        { A<<0,                                               A },
         { A==1,                                               __iff(__bcnt(A)==1u, A) },
         { A!=0,                                               __iff(__bcnt(A)==1u, A) },
 
@@ -69,10 +77,12 @@ namespace vtil::symbolic::directive
         { A+(~A),                                            -1 },
         { A^(~A),                                            -1 },
         { A|(~A),                                            -1 },
-        { __rotl(A,0),                                        A },
-        { __rotr(A,0),                                        A },
-        { A>>0,                                               A },
-        { A<<0,                                               A },
+        { A/A,                                                1 },
+        { udiv(A,A),                                          1 },
+        { A%A,                                                0 },
+        { urem(A,A),                                          0 },
+        { A*0,                                                0 },
+        { A*0u,                                               0 },
         //{ A>>B,                                             __iff(B>=__bcnt(A), 0) },     [Removed as partial evaluator will take care of this]
         //{ A<<B,                                             __iff(B>=__bcnt(A), 0) },     [Removed as partial evaluator will take care of this]
 
@@ -307,9 +317,9 @@ namespace vtil::symbolic::directive
 
         // Lower unsigned immediate rem/div/mul into and/shr/shl where possible.
         //
-        { urem(A,U), __iff(__popcnt(U)==1, A&!(U-1)) },
-        { udiv(A,U), __iff(__popcnt(U)==1, A>>!(__imm_msb(U)-1)) },
-        { umul(A,U), __iff(__popcnt(U)==1, A<<!(__imm_msb(U)-1)) },
+        { urem(A,U),                                          __iff(__popcnt(U)==1, A&!(U-1)) },
+        { udiv(A,U),                                          __iff(__popcnt(U)==1, A>>!(__imm_msb(U)-1)) },
+        { umul(A,U),                                          __iff(__popcnt(U)==1, A<<!(__imm_msb(U)-1)) },
 
         // Manually added comparison simplifiers:
         //
