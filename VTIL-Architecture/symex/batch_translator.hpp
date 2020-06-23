@@ -51,12 +51,17 @@ namespace vtil
 		operand operator<<( const symbolic::expression& exp )
 		{
 			operand& op = translation_cache[ exp ];
-			if ( op.is_valid() ) return op;
-			return op = translate_expression(
-				exp,
-				block,
-				[ & ] ( auto& exp, auto* block ) { return *this << exp; }
-			);
+			if ( !op.is_valid() )
+			{
+				op = translate_expression(
+					exp,
+					block,
+					[ & ] ( auto& exp, auto* block ) { return *this << exp; }
+				);
+			}
+
+			fassert( exp.size() == op.bit_count() );
+			return op;
 		}
 	};
 };
