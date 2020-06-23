@@ -170,6 +170,12 @@ namespace vtil::symbolic::directive
         { U&B,                                                __iff(U==(__mask_unk(B)|__mask_knw1(B)), B) },
         { U&B,                                                __iff(((~__mask_knw0(B))&U)==0u,  0) },
 
+        // Lower unsigned immediate rem/div/mul into and/shr/shl where possible.
+        //
+        { urem(A,U),                                          __iff(__popcnt(U)==1, A&!(U-1)) },
+        { udiv(A,U),                                          __iff(__popcnt(U)==1, A>>!(__imm_msb(U)-1)) },
+        { umul(A,U),                                          __iff(__popcnt(U)==1, A<<!(__imm_msb(U)-1)) },
+
         // Penetrate shrinked expression with shift left.
         // - This is an exceptional case and has to be addressed due to the fact
         //   that when (A>>C) is shrinked, the cast cannot propagate down to A
@@ -314,12 +320,6 @@ namespace vtil::symbolic::directive
         // Missing: shl, shr
         { ~__rotl(A,C),                                       __rotl(!~A,C) },
         { ~__rotr(A,C),                                       __rotr(!~A,C) },
-
-        // Lower unsigned immediate rem/div/mul into and/shr/shl where possible.
-        //
-        { urem(A,U),                                          __iff(__popcnt(U)==1, A&!(U-1)) },
-        { udiv(A,U),                                          __iff(__popcnt(U)==1, A>>!(__imm_msb(U)-1)) },
-        { umul(A,U),                                          __iff(__popcnt(U)==1, A<<!(__imm_msb(U)-1)) },
 
         // Manually added comparison simplifiers:
         //
