@@ -64,13 +64,10 @@ namespace vtil::math
     //
     static constexpr bitcnt_t popcnt( uint64_t x )
     {
-        // https://www.chessprogramming.org/Population_Count#The_PopCount_routine
-        //
-        x = x - ( x >> 1 ) & 0x5555555555555555;
-        x = ( x & 0x3333333333333333 ) + ( ( x >> 2 ) & 0x3333333333333333 );
-        x = ( x + ( x >> 4 ) ) & 0x0f0f0f0f0f0f0f0f;
-        x = ( x * 0x0101010101010101 ) >> 56;
-        return (bitcnt_t) x;
+        bitcnt_t count = 0;
+        for ( bitcnt_t i = 0; i < 64; i++, x >>= 1 )
+            count += ( bitcnt_t ) ( x & 1 );
+        return count;
     }
     static constexpr bitcnt_t msb( uint64_t x )
     {
