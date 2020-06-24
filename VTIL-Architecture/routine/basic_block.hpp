@@ -66,8 +66,8 @@ namespace vtil
 
 			// Path restriction state.
 			//
+			const std::unordered_set<const container_type*>* paths_allowed = nullptr;
 			bool is_path_restricted = false;
-			std::set<const container_type*> paths_allowed;
 
 			// Default constructor and the block-bound constructor.
 			//
@@ -99,30 +99,16 @@ namespace vtil
 			}
 			riterator_base& restrict_path( container_type* dst, bool forward )
 			{
-				// Trace the path.
-				//
-				std::set<const container_type*> trace = forward 
-					? container->owner->path_cache[ 0 ][ container ][ dst ]
-					: container->owner->path_cache[ 1 ][ dst ][ container ];
-				
-				// If path is already restricted:
+				// Path should not be already restricted.
 				//
 				if ( is_path_restricted )
-				{
-					// Any allowed path should be allowed in both now. 
-					//
-					std::set<const container_type*> path_intersection;
-					std::set_intersection( trace.begin(), trace.end(), 
-										   paths_allowed.begin(), paths_allowed.end(), 
-										   std::inserter( path_intersection, path_intersection.begin() ) );
-					paths_allowed = path_intersection;
-				}
-				else
-				{
-					// Set as the current allowed paths list.
-					//
-					paths_allowed = trace;
-				}
+					unreachable();
+				
+				// Set as the current allowed paths list.
+				//
+				paths_allowed = forward
+					? &container->owner->path_cache[ 0 ][ container ][ dst ]
+					: &container->owner->path_cache[ 1 ][ dst ][ container ];
 
 				// Declare the current iterator path restricted.
 				//
@@ -135,7 +121,7 @@ namespace vtil
 			riterator_base& clear_restrictions() 
 			{
 				is_path_restricted = false;
-				paths_allowed.clear();
+				paths_allowed = nullptr;
 				return *this;
 			}
 
@@ -150,7 +136,7 @@ namespace vtil
 				{
 					// Skip if path is restricted and this path is not allowed.
 					//
-					if ( is_path_restricted && paths_allowed.find( dst ) == paths_allowed.end() )
+					if ( is_path_restricted && paths_allowed->find( dst ) == paths_allowed->end() )
 						continue;
 
 					// Otherwise create the new iterator, inheriting the path restrictions 

@@ -60,7 +60,7 @@ namespace vtil
 
 		// Cache of paths from block A to block B.
 		//
-		std::map<const basic_block*, std::map<const basic_block*, std::set<const basic_block*>>> path_cache[ 2 ];
+		std::map<const basic_block*, std::map<const basic_block*, std::unordered_set<const basic_block*>>> path_cache[ 2 ];
 
 		// Reference to the first block, entry point.
 		// - Can be accessed without acquiring the mutex as it will be assigned strictly once.

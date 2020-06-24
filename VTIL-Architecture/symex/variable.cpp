@@ -108,8 +108,8 @@ namespace vtil::symbolic
 
 						// Determine all paths and path restrict the iterator.
 						//
-						auto pathset_1 = o1->owner->path_cache[ 1 ][ o1 ][ var.at.container ];
-						auto pathset_2 = o2->owner->path_cache[ 1 ][ o2 ][ var.at.container ];
+						auto& pathset_1 = o1->owner->path_cache[ 1 ][ o1 ][ var.at.container ];
+						auto& pathset_2 = o2->owner->path_cache[ 1 ][ o2 ][ var.at.container ];
 						var.at.is_path_restricted = true;
 
 						// If only one of the paths are valid for backwards iteration:
@@ -118,8 +118,7 @@ namespace vtil::symbolic
 						{
 							// Set the restriction.
 							//
-							var.at.is_path_restricted = true;
-							var.at.paths_allowed = pathset_1.empty() ? pathset_2 : pathset_1;
+							var.at.paths_allowed = pathset_1.empty() ? &pathset_2 : &pathset_1;
 							exp = tracer->rtrace( std::move( var ) );
 						}
 						// If both paths are valid for backwards iteration:
@@ -128,9 +127,9 @@ namespace vtil::symbolic
 						{
 							// Calculate for both and set if equivalent.
 							//
-							var.at.paths_allowed = pathset_1;
+							var.at.paths_allowed = &pathset_1;
 							auto exp1 = tracer->rtrace( var );
-							var.at.paths_allowed = pathset_2;
+							var.at.paths_allowed = &pathset_2;
 							auto exp2 = tracer->rtrace( var );
 							if ( exp1.equals( exp2 ) )
 								exp = exp1;
