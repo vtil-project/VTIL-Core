@@ -33,19 +33,26 @@ namespace vtil
 {
 	// Internal type definitions.
 	//
-	struct path_hasher
+	struct path_entry
 	{
-		size_t operator()( const std::pair<const basic_block*, const basic_block*>& key ) const noexcept
+		const path_entry* prev;
+		const basic_block* src;
+		const basic_block* dst;
+
+		uint32_t count( const basic_block* srcx, const basic_block* dstx ) const
 		{
-			return ( ( key.first->entry_vip << 48 ) | ( key.first->entry_vip >> 16 ) ) ^ key.second->entry_vip;
+			size_t n = 0;
+			for ( auto it = this; it; it = it->prev )
+				n += it->src == srcx && it->dst == dstx;
+			return n;
 		}
 	};
-	using path_history_t =   std::unordered_map<std::pair<const basic_block*, const basic_block*>, uint32_t, path_hasher>;
+
 	using partial_tracer_t = std::function<symbolic::expression( bitcnt_t offset, bitcnt_t size )>;
 
 	// Forward defs.
 	//
-	static symbolic::expression rtrace_primitive( const symbolic::variable& lookup, tracer* tracer, path_history_t& history, int64_t );
+	static symbolic::expression rtrace_primitive( const symbolic::variable& lookup, tracer* tracer, path_entry* prev_link, int64_t );
 
 	// Given a partial tracer, this routine will determine the full value of the variable
 	// at the given position where a partial write was found.
@@ -153,7 +160,7 @@ namespace vtil
 	// meaning the origin expression was a variable and it infinite-looped during propagation by itself.
     // - Note: New iterator should be a connected block's end.
 	//
-    static std::pair<bool, symbolic::expression> propagate( const symbolic::expression& ref, const il_const_iterator& it, tracer* tracer, path_history_t* history, int64_t limit )
+    static std::pair<bool, symbolic::expression> propagate( const symbolic::expression& ref, const il_const_iterator& it, tracer* tracer, path_entry* prev_link, int64_t limit )
     {
         using namespace logger;
 
@@ -237,8 +244,8 @@ namespace vtil
             // Trace the variable in the destination block, fail if it fails.
             //
 			symbolic::expression var_traced;
-			if ( history )
-				var_traced = rtrace_primitive( var, tracer, *history, limit );
+			if ( prev_link )
+				var_traced = rtrace_primitive( var, tracer, prev_link, limit );
 			else
 				var_traced = tracer->trace( var );
             if ( !var_traced )
@@ -273,7 +280,7 @@ namespace vtil
 
 	// Internal implementation of ::rtrace with a path history.
 	//
-	static symbolic::expression rtrace_primitive( const symbolic::variable& lookup, tracer* tracer, path_history_t& history, int64_t limit )
+	static symbolic::expression rtrace_primitive( const symbolic::variable& lookup, tracer* tracer, path_entry* prev_link, int64_t limit )
 	{
 		using namespace logger;
 
@@ -314,11 +321,9 @@ namespace vtil
 				//
 				for ( auto& it : it_list )
 				{
-					uint32_t& visit_counter = history[ { lookup.at.container, it.container } ];
-
 					// If we've taken this path more than twice, skip it.
 					//
-					if ( visit_counter >= 2 )
+					if ( prev_link->count( lookup.at.container, it.container ) >= 2 )
 					{
 #if VTIL_OPT_TRACE_VERBOSE
 						// Log skipping of path.
@@ -335,9 +340,12 @@ namespace vtil
 #endif
 					// Propagate each variable onto to the destination block, if total fail, skip path.
 					//
-					visit_counter++;
-					auto [total_fail, exp] = propagate( default_result, it, tracer, &history, limit );
-					visit_counter--;
+					path_entry entry = {
+						.prev = prev_link,
+						.src = lookup.at.container,
+						.dst = it.container
+					};
+					auto [total_fail, exp] = propagate( default_result, it, tracer, &entry, limit );
 					if ( total_fail )
 						continue;
 
@@ -384,7 +392,7 @@ namespace vtil
 				// If result is null, use default result if the call was not from propagate(),
 				// determined by history having entries set.
 				//
-				if ( !result && history.empty() ) 
+				if ( !result && prev_link->prev == nullptr ) 
 					result = std::move( default_result );
 			}
 		}
@@ -530,9 +538,8 @@ namespace vtil
 	{
 		bool recursive_flag_prev = recursive_flag;
 		recursive_flag = true;
-		path_history_t history = {};
-		history.reserve( lookup.at.container ? lookup.at.container->owner->explored_blocks.size() : 2 );
-		auto exp = rtrace_primitive( lookup, this, history, limit + 1 );
+		path_entry list_head = { nullptr, nullptr, nullptr };
+		auto exp = rtrace_primitive( lookup, this, &list_head, limit + 1 );
 		recursive_flag = recursive_flag_prev;
 		return exp;
 	}
