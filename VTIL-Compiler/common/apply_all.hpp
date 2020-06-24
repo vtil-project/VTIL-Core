@@ -108,4 +108,5 @@ namespace vtil::optimizer
 	// Combined pass for each optimization.
 	//
 	static constexpr spawn_state<collective_pass> apply_all = {};
+	static constexpr spawn_state<apply_each<profile_pass, collective_pass>> apply_all_profiled = {};
 };
