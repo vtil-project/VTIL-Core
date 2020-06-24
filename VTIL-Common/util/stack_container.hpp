@@ -135,6 +135,10 @@ namespace vtil
 		template <typename T2>
 		stack_buffered_allocator( const stack_buffered_allocator<T2, real_type>& o ) 
 			: state( ( stack_buffer_state<T, real_type>* ) o.state ) {}
+		//
+		template <typename T2>
+		stack_buffered_allocator( stack_buffered_allocator<T2, real_type>&& o ) 
+			: state( ( stack_buffer_state<T, real_type>* ) o.state ) {}
 
 		// Allocators are only equivalent if the internal state references
 		// the same stack buffer.

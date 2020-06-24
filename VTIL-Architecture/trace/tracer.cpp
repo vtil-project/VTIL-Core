@@ -33,12 +33,12 @@ namespace vtil
 {
 	// Internal type definitions.
 	//
-	using path_history_t =   std::map<std::pair<const basic_block*, const basic_block*>, uint32_t>;
+	using path_history_t =   stack_map<std::pair<const basic_block*, const basic_block*>, uint32_t>;
 	using partial_tracer_t = std::function<symbolic::expression( bitcnt_t offset, bitcnt_t size )>;
 
 	// Forward defs.
 	//
-	static symbolic::expression rtrace_primitive( const symbolic::variable& lookup, tracer* tracer, const path_history_t& history, int64_t );
+	static symbolic::expression rtrace_primitive( const symbolic::variable& lookup, tracer* tracer, path_history_t& history, int64_t );
 
 	// Given a partial tracer, this routine will determine the full value of the variable
 	// at the given position where a partial write was found.
@@ -113,7 +113,8 @@ namespace vtil
 	//
 	static void transform_variables( symbolic::expression& inout, const std::function<symbolic::expression(const symbolic::variable&)>& fn )
 	{
-		std::map<symbolic::variable, symbolic::expression> cache;
+		std::unordered_map<symbolic::variable, symbolic::expression, hasher<>> cache;
+		cache.reserve( inout.depth );
 		inout.transform( [ &cache, &fn ] ( symbolic::expression& exp )
 		{
 			// Skip if not variable.
@@ -140,13 +141,12 @@ namespace vtil
 	}
 
 
-
     // Propagates all variables in the reference expression onto the new iterator, if no history pointer given will do trace instead of rtrace.
 	// Returns an additional boolean parameter that indicates, if the propagation failed, it was due to a total failure or not; total failure
 	// meaning the origin expression was a variable and it infinite-looped during propagation by itself.
     // - Note: New iterator should be a connected block's end.
 	//
-    static std::pair<bool, symbolic::expression> propagate( const symbolic::expression& ref, const il_const_iterator& it, tracer* tracer, const path_history_t* history, int64_t limit )
+    static std::pair<bool, symbolic::expression> propagate( const symbolic::expression& ref, const il_const_iterator& it, tracer* tracer, path_history_t* history, int64_t limit )
     {
         using namespace logger;
 
@@ -160,8 +160,12 @@ namespace vtil
 
         // For each unique variable:
         //
-        std::set<symbolic::unique_identifier> variables;
+		std::set<symbolic::unique_identifier> variables;
         ref.count_unique_variables( &variables );
+
+		std::unordered_map<symbolic::unique_identifier, symbolic::expression, hasher<>> propagation_result;
+		propagation_result.reserve( variables.size() );
+
         for ( auto& uid : variables )
         {
             // Move the variable to reference the previous block.
@@ -238,14 +242,22 @@ namespace vtil
             if ( var.is_register() && var.reg().is_stack_pointer() )
                 var_traced = var_traced + it.container->sp_offset;
 
-            // Rewrite the expression
+            // Save the result.
             //
-            exp.transform( [ & ] ( symbolic::expression& exp )
-            {
-                if ( exp.is_variable() && exp.uid == uid )
-                    exp = var_traced;
-            } );
+			propagation_result[ uid ] = var_traced;
         }
+
+		// Rewrite the expression.
+		//
+		exp.transform( [ & ] ( symbolic::expression& exp )
+		{
+			if ( exp.is_variable() )
+			{
+				auto it = propagation_result.find( exp.uid );
+				if( it != propagation_result.end() )
+					exp = it->second;
+			}
+		} );
 
         // Return the result.
         //
@@ -254,7 +266,7 @@ namespace vtil
 
 	// Internal implementation of ::rtrace with a path history.
 	//
-	static symbolic::expression rtrace_primitive( const symbolic::variable& lookup, tracer* tracer, const path_history_t& history, int64_t limit )
+	static symbolic::expression rtrace_primitive( const symbolic::variable& lookup, tracer* tracer, path_history_t& history, int64_t limit )
 	{
 		using namespace logger;
 
@@ -291,15 +303,11 @@ namespace vtil
 				symbolic::expression default_result = {};
 				std::swap( result, default_result );
 
-				// Create a local copy of the visited list.
-				//
-				path_history_t history_local = { history };
-
 				// For each path:
 				//
 				for ( auto& it : it_list )
 				{
-					uint32_t& visit_counter = history_local[ { lookup.at.container, it.container } ];
+					uint32_t& visit_counter = history[ { lookup.at.container, it.container } ];
 
 					// If we've taken this path more than twice, skip it.
 					//
@@ -321,7 +329,7 @@ namespace vtil
 					// Propagate each variable onto to the destination block, if total fail, skip path.
 					//
 					visit_counter++;
-					auto [total_fail, exp] = propagate( default_result, it, tracer, &history_local, limit );
+					auto [total_fail, exp] = propagate( default_result, it, tracer, &history, limit );
 					visit_counter--;
 					if ( total_fail )
 						continue;
@@ -515,7 +523,8 @@ namespace vtil
 	{
 		bool recursive_flag_prev = recursive_flag;
 		recursive_flag = true;
-		auto exp = rtrace_primitive( lookup, this, {}, limit + 1 );
+		path_history_t history = {};
+		auto exp = rtrace_primitive( lookup, this, history, limit + 1 );
 		recursive_flag = recursive_flag_prev;
 		return exp;
 	}
