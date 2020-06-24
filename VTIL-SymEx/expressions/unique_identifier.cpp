@@ -32,19 +32,13 @@ namespace vtil::symbolic
 	// Conversion to human-readable format.
 	// - Note: Will cache the return value in string_cast as lambda capture if non-const-qualified.
 	//
-	std::string unique_identifier::to_string()
+	const std::string& unique_identifier::to_string() const
 	{
 		if ( !value )
 			return "null";
-		std::string str = string_cast( value );
-		string_cast = [ str ] ( auto& ) { return str; };
-		return str;
-	}
-	std::string unique_identifier::to_string() const
-	{
-		if ( !value )
-			return "null";
-		return string_cast( value );
+		if ( name_getter.index() == 0 )
+			name_getter = std::get<1>( name_getter )( value );
+		return std::get<0>( name_getter );
 	}
 
 	// Simple comparison operators.
