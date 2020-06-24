@@ -70,6 +70,24 @@ namespace vtil
 			return *this;
 		}
 
+		// Purges the object of the given type from the store.
+		//
+		template<typename T>
+		const void purge() const
+		{
+			std::lock_guard _g{ mtx };
+			database.erase( lt_typeid<T>::value );
+		}
+
+		// Checks if we have the type in the store.
+		//
+		template<typename T>
+		const bool has() const
+		{
+			std::lock_guard _g{ mtx };
+			return database.contains( lt_typeid<T>::value );
+		}
+
 		// Functional getter, if variant is already in the database will return
 		// a reference to the stored data as is, otherwise will construct an empty 
 		// T{} and place it in the database before referencing, eventhough the const use
