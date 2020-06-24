@@ -177,7 +177,7 @@ namespace vtil::optimizer
 						fail = true;
 						break;
 					}
-					out = std::move(op);
+					out = std::move( op );
 				}
 
 				// If we converted all succesfully:
