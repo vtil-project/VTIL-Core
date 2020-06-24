@@ -69,11 +69,9 @@ namespace vtil
 		{
 			if ( virtual_address <= rva && rva < ( virtual_address + virtual_size ) )
 			{
-				uint64_t offset = rva - physical_address;
+				uint64_t offset = rva - virtual_address;
 				if ( offset < physical_size )
-				{
 					return offset + physical_address;
-				}
 			}
 			return std::nullopt;
 		}
