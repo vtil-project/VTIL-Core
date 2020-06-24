@@ -52,11 +52,31 @@ namespace vtil
         
         // Locks the cache.
         //
-        std::shared_mutex mtx;
+        mutable std::shared_mutex mtx;
 
         // Hooks default tracer and does a cache lookup before invokation.
         //
         symbolic::expression trace( symbolic::variable lookup ) override;
+
+        // Default construtor.
+        //
+        cached_tracer() {}
+
+        // Define copy/move.
+        //
+        cached_tracer( const cached_tracer& o )
+        {
+            std::shared_lock _g{ o.mtx };
+            cache = o.cache;
+        }
+        cached_tracer& operator=( const cached_tracer& o )
+        {
+            std::unique_lock _gu{ mtx };
+            std::shared_lock _gs{ o.mtx };
+            cache = o.cache;
+        }
+        cached_tracer( cached_tracer&& ) = default;
+        cached_tracer& operator=( cached_tracer&& ) = default;
 
         // Flushes the cache.
         //

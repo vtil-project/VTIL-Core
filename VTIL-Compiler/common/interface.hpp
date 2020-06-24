@@ -226,20 +226,23 @@ namespace vtil::optimizer
 	{
 		size_t pass( basic_block* blk, bool xblock = false ) override
 		{
+			if ( !xblock )
+				logger::log( "Block %08x => %-64s |", blk->entry_vip, T{}.name() );
 			auto t0 = std::chrono::steady_clock::now();
 			size_t cnt = T::pass( blk, xblock );
 			auto t1 = std::chrono::steady_clock::now();
 			if ( !xblock )
-				logger::log( "Block %08x => %-64s | Took %-8.2fms (N=%d).\n", blk->entry_vip, T{}.name(), ( t1 - t0 ).count() * 1e-6f, cnt );
+				logger::log( " Took %-8.2fms (N=%d).\n", ( t1 - t0 ).count() * 1e-6f, cnt );
 			return cnt;
 		}
 
 		size_t xpass( routine* rtn ) override
 		{
+			logger::log( "Routine => %-64s            |", T{}.name() );
 			auto t0 = std::chrono::steady_clock::now();
 			size_t cnt = T::xpass( rtn );
 			auto t1 = std::chrono::steady_clock::now();
-			logger::log( "Routine => %-64s            | Took %-8.2fms (N=%d).\n", T{}.name(), ( t1 - t0 ).count() * 1e-6f, cnt );
+			logger::log( " Took %-8.2fms (N=%d).\n", ( t1 - t0 ).count() * 1e-6f, cnt );
 			return cnt;
 		}
 	};
