@@ -39,7 +39,7 @@ namespace vtil
 		const basic_block* src;
 		const basic_block* dst;
 
-		uint32_t count( const basic_block* srcx, const basic_block* dstx ) const
+		size_t count( const basic_block* srcx, const basic_block* dstx ) const
 		{
 			size_t n = 0;
 			for ( auto it = this; it; it = it->prev )
@@ -168,10 +168,6 @@ namespace vtil
         scope_padding _p( 1 );
 #endif
 
-        // Copy the reference expression.
-        //
-        symbolic::expression exp = ref;
-
         // For each unique variable:
         //
 		std::set<symbolic::unique_identifier> variables;
@@ -249,7 +245,7 @@ namespace vtil
 			else
 				var_traced = tracer->trace( var );
             if ( !var_traced )
-				return { exp.is_variable(), {} };
+				return { ref.is_variable(), {} };
 
             // If we are tracing the value of RSP, add the stack pointer delta between blocks.
             //
@@ -261,6 +257,10 @@ namespace vtil
 			propagation_result[ uid ] = var_traced;
         }
 
+		// Copy the reference expression.
+		//
+		symbolic::expression exp = ref;
+
 		// Rewrite the expression.
 		//
 		exp.transform( [ & ] ( symbolic::expression& exp )
@@ -271,7 +271,7 @@ namespace vtil
 				if( it != propagation_result.end() )
 					exp = it->second;
 			}
-		} );
+		}, true, false );
 
         // Return the result.
         //
@@ -401,7 +401,7 @@ namespace vtil
 		//
 		log<CON_BRG>( "= %s\n", result );
 #endif
-		return result;
+		return result.simplify();
 	}
 
 	// Traces a variable across the basic block it belongs to and generates a symbolic expression 
