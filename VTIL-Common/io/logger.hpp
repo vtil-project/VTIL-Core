@@ -181,13 +181,9 @@ namespace vtil::logger
 		//
 		if ( state->mute ) return 0;
 
-		// Set to defualt color.
-		//
-		set_color( CON_DEF );
-		int out_cnt = 0;
-
 		// If we should pad this output:
 		//
+		int out_cnt = 0;
 		if ( state->padding > 0 )
 		{
 			// If it was not carried from previous:
@@ -223,9 +219,14 @@ namespace vtil::logger
 		// If string literal with no parameters, use puts instead.
 		//
 		if ( sizeof...( ps ) == 0 )
-			return out_cnt + fputs( fmt, VTIL_LOGGER_DST );
+			out_cnt += fputs( fmt, VTIL_LOGGER_DST );
 		else
-			return out_cnt + fprintf( VTIL_LOGGER_DST, fmt, format::fix_parameter<params>( std::forward<params>( ps ) )... );
+			out_cnt += fprintf( VTIL_LOGGER_DST, fmt, format::fix_parameter<params>( std::forward<params>( ps ) )... );
+
+		// Reset to defualt color.
+		//
+		set_color( CON_DEF );
+		return out_cnt;
 	}
 	template<console_color color = CON_DEF, typename... params>
 	static int log( const char* fmt, params&&... ps )
