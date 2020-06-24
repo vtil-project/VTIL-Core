@@ -2,16 +2,58 @@ project(VTIL-Common)
 
 add_library(${PROJECT_NAME} STATIC
     arch/amd64/amd64_assembler.cpp
+    arch/amd64/amd64_assembler.hpp
     arch/amd64/amd64_disassembler.cpp
+    arch/amd64/amd64_disassembler.hpp
     arch/amd64/amd64_register_details.cpp
+    arch/amd64/amd64_register_details.hpp
     arch/arm64/arm64_assembler.cpp
+    arch/arm64/arm64_assembler.hpp
     arch/arm64/arm64_disassembler.cpp
+    arch/arm64/arm64_disassembler.hpp
     arch/arm64/arm64_register_details.cpp
-    io/logger.cpp
-    math/operators.cpp
-    util/critical_section.cpp
-    util/variant.cpp
+    arch/arm64/arm64_register_details.hpp
+    arch/register_mapping.hpp
+    formats/image_descriptor.hpp
     formats/winpe.cpp
+    formats/winpe.hpp
+    io/asserts.hpp
+    io/formatting.hpp
+    io/logger.cpp
+    io/logger.hpp
+    math/bitwise.hpp
+    math/operable.hpp
+    math/operators.cpp
+    math/operators.hpp
+    query/fixed_iterator.hpp
+    query/query_descriptor.hpp
+    query/range_iterator.hpp
+    query/range_iterator_contract.hpp
+    query/recursive_view.hpp
+    query/view.hpp
+    util/concept.hpp
+    util/conditional_lock.hpp
+    util/constexpr_random.hpp
+    util/copy_on_write.hpp
+    util/critical_section.cpp
+    util/critical_section.hpp
+    util/dynamic_size.hpp
+    util/fnv128.hpp
+    util/fnv64.hpp
+    util/hashable.hpp
+    util/lt_typeid.hpp
+    util/mul128.hpp
+    util/multivariate.hpp
+    util/numeric_iterator.hpp
+    util/optional_reference.hpp
+    util/range.hpp
+    util/reducable.hpp
+    util/reverse_iterator.hpp
+    util/sinkhole.hpp
+    util/stack_container.hpp
+    util/variant.cpp
+    util/variant.hpp
+    util/zip.hpp
 )
 
 target_include_directories(${PROJECT_NAME} PUBLIC includes)
