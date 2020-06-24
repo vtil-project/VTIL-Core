@@ -34,10 +34,10 @@ namespace vtil::symbolic
 	//
 	const std::string& unique_identifier::to_string() const
 	{
-		static std::string null_name = "null";
+		static const std::string null_name = "null";
 		if ( !value )
 			return null_name;
-		if ( name_getter.index() == 0 )
+		if ( name_getter.index() == 1 )
 			name_getter = std::get<1>( name_getter )( value );
 		return std::get<0>( name_getter );
 	}
