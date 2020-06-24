@@ -205,6 +205,7 @@ namespace vtil
 
 		// Wrap get_section to make the interface iterable.
 		//
+		size_t size() const { return get_section_count(); }
 		section_iterator begin() const { return { this, 0 }; }
 		section_iterator_end_tag_t end() const { return {}; }
 		section_descriptor operator[]( size_t n ) const { return get_section( n ); }
