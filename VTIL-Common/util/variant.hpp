@@ -54,7 +54,7 @@
 // Determine the maximum size of types we should inline.
 //
 #ifndef VTIL_VARIANT_INLINE_LIMIT
-	#define VTIL_VARIANT_INLINE_LIMIT 0x100
+	#define VTIL_VARIANT_INLINE_LIMIT 16
 #endif
 
 namespace vtil

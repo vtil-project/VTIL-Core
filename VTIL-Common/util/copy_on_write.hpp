@@ -76,7 +76,7 @@ namespace vtil
 
 		template <typename T, typename... params>
 		inline static std::shared_ptr<T> make_shared( params&&... args )
-		{ 
+		{
 			std::shared_ptr<T> out = std::make_shared<T>( std::forward<params>( args )... );
 
 			// Billion dollar company yes?

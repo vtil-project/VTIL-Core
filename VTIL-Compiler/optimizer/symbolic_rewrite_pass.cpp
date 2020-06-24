@@ -205,8 +205,9 @@ namespace vtil::optimizer
 			// For each memory state:
 			// -- TODO: Simplify memory state, merge if simplifies, discard if left as is.
 			//
-			for ( auto [k, v] : vm.memory_state )
+			for ( const auto& [k, _v] : vm.memory_state )
 			{
+				auto v = _v;
 				symbolic::expression v0 = symbolic::make_memory_ex( k, v.size() );
 
 				// If value is unchanged, skip.
