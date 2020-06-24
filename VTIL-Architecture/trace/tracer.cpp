@@ -33,7 +33,14 @@ namespace vtil
 {
 	// Internal type definitions.
 	//
-	using path_history_t =   std::map<std::pair<const basic_block*, const basic_block*>, uint32_t>;
+	struct path_hasher
+	{
+		size_t operator()( const std::pair<const basic_block*, const basic_block*>& key ) const noexcept
+		{
+			return _rotl64( key.first->entry_vip, 48 ) ^ key.second->entry_vip;
+		}
+	};
+	using path_history_t =   std::unordered_map<std::pair<const basic_block*, const basic_block*>, uint32_t, path_hasher>;
 	using partial_tracer_t = std::function<symbolic::expression( bitcnt_t offset, bitcnt_t size )>;
 
 	// Forward defs.
@@ -524,6 +531,7 @@ namespace vtil
 		bool recursive_flag_prev = recursive_flag;
 		recursive_flag = true;
 		path_history_t history = {};
+		history.reserve( lookup.at.container ? lookup.at.container->owner->explored_blocks.size() : 2 );
 		auto exp = rtrace_primitive( lookup, this, history, limit + 1 );
 		recursive_flag = recursive_flag_prev;
 		return exp;
