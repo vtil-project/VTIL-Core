@@ -36,7 +36,6 @@ namespace vtil::optimizer
 	{
 		// Acquire shared mutex and create cached tracer.
 		//
-		std::shared_lock lock{ mtx };
 		cached_tracer ctracer = {};
 
 		// Determine the temporary sizes in the block.
@@ -141,7 +140,7 @@ namespace vtil::optimizer
 
 				// If register value is not used after this instruction, skip from emitted state.
 				//
-				if ( !aux::is_used( { std::prev( limit ), k }, xblock, &ctracer ) )
+				if ( !aux::is_used( { std::prev( limit ), k }, false, &ctracer ) )
 					continue;
 				
 				// Try minimizing expression size.
@@ -324,8 +323,6 @@ namespace vtil::optimizer
 		// Acquire a unique lock and rewrite the stream. Purge simplifier cache since block 
 		// iterators are now invalidated making the cache also invalid.
 		//
-		lock.unlock();
-		std::unique_lock _g{ mtx };
 		blk->stream = temporary_block.stream;
 		blk->last_temporary_index = temporary_block.last_temporary_index;
 		symbolic::purge_simplifier_cache();
