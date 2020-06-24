@@ -37,7 +37,7 @@ namespace vtil
 	{
 		size_t operator()( const std::pair<const basic_block*, const basic_block*>& key ) const noexcept
 		{
-			return _rotl64( key.first->entry_vip, 48 ) ^ key.second->entry_vip;
+			return ( ( key.first->entry_vip << 48 ) | ( key.first->entry_vip >> 16 ) ) ^ key.second->entry_vip;
 		}
 	};
 	using path_history_t =   std::unordered_map<std::pair<const basic_block*, const basic_block*>, uint32_t, path_hasher>;
