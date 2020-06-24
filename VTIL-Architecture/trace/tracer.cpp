@@ -33,7 +33,7 @@ namespace vtil
 {
 	// Internal type definitions.
 	//
-	using path_history_t =   stack_map<std::pair<const basic_block*, const basic_block*>, uint32_t>;
+	using path_history_t =   std::map<std::pair<const basic_block*, const basic_block*>, uint32_t>;
 	using partial_tracer_t = std::function<symbolic::expression( bitcnt_t offset, bitcnt_t size )>;
 
 	// Forward defs.
