@@ -30,6 +30,7 @@
 #include <functional>
 #include <type_traits>
 #include "../io/asserts.hpp"
+#include "object_pool.hpp"
 
 // Define _AddressOfReturnAddress() for compilers that do not have it.
 //
@@ -73,11 +74,10 @@ namespace vtil
 		template<typename T, typename... params>
 		using enable_if_constructor = typename std::enable_if_t<should_invoke_constructor<T, params...>()>;
 
-
 		template <typename T, typename... params>
 		inline static std::shared_ptr<T> make_shared( params&&... args )
 		{
-			std::shared_ptr<T> out = std::make_shared<T>( std::forward<params>( args )... );
+			std::shared_ptr<T> out = std::allocate_shared<T>( object_pool<T>{}, std::forward<params>( args )... );
 
 			// Billion dollar company yes?
 			//
@@ -145,26 +145,6 @@ namespace vtil
 		// to a copy-on-write reference as is.
 		//
 		shared_reference& lock() { is_locked = true; is_owning = false; return *this; }
-
-		// Unlocks the current reference, should be called before storing the reference.
-		//
-		shared_reference& unlock()
-		{ 
-			// If reference is locked, we need to copy it.
-			//
-			if ( is_locked )
-			{
-				// Create a copy and change reference to point at it.
-				//
-				reference = impl::make_shared<T>( *reference );
-				
-				// Mark as unlocked and owning.
-				//
-				is_locked = true;
-				is_owning = true;
-			}
-			return *this; 
-		}
 
 		// Converts this reference to an owning one if it is not one already and 
 		// returns the pointer to the base type with no const-qualifiers.

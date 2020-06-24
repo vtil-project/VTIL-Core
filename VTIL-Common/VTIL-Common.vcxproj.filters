@@ -178,6 +178,12 @@
     <ClInclude Include="arch\arm64\arm64_register_details.hpp">
       <Filter>Architecture\arm64</Filter>
     </ClInclude>
+    <ClInclude Include="util\colony.hpp">
+      <Filter>Utility</Filter>
+    </ClInclude>
+    <ClInclude Include="util\object_pool.hpp">
+      <Filter>Utility</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="io\logger.cpp">

@@ -54,6 +54,8 @@ add_library(${PROJECT_NAME} STATIC
     util/variant.cpp
     util/variant.hpp
     util/zip.hpp
+    util/colony.hpp
+    util/object_pool.hpp
 )
 
 target_include_directories(${PROJECT_NAME} PUBLIC includes)

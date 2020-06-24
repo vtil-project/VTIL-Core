@@ -143,6 +143,7 @@
     <ClInclude Include="query\range_iterator_contract.hpp" />
     <ClInclude Include="query\recursive_view.hpp" />
     <ClInclude Include="query\view.hpp" />
+    <ClInclude Include="util\colony.hpp" />
     <ClInclude Include="util\concept.hpp" />
     <ClInclude Include="util\constexpr_random.hpp" />
     <ClInclude Include="util\copy_on_write.hpp" />
@@ -156,6 +157,7 @@
     <ClInclude Include="util\hashable.hpp" />
     <ClInclude Include="util\mul128.hpp" />
     <ClInclude Include="util\numeric_iterator.hpp" />
+    <ClInclude Include="util\object_pool.hpp" />
     <ClInclude Include="util\optional_reference.hpp" />
     <ClInclude Include="util\range.hpp" />
     <ClInclude Include="util\reducable.hpp" />
