@@ -62,15 +62,23 @@ namespace vtil::math
 
     // Implement platform-indepdenent popcnt/msb/lsb.
     //
-    static constexpr bitcnt_t popcnt( uint64_t x )
+    static bitcnt_t popcnt( uint64_t x )
     {
+#ifdef _MSC_VER
+        return ( bitcnt_t ) __popcnt64( x );
+#else
         bitcnt_t count = 0;
         for ( bitcnt_t i = 0; i < 64; i++, x >>= 1 )
             count += ( bitcnt_t ) ( x & 1 );
         return count;
+#endif
     }
-    static constexpr bitcnt_t msb( uint64_t x )
+    static bitcnt_t msb( uint64_t x )
     {
+#ifdef _MSC_VER
+        unsigned long idx;
+        return _BitScanReverse64( &idx, x ) ? ( bitcnt_t ) idx + 1 : 0;
+#else
         // Return index + 1 on success:
         //
         for ( bitcnt_t i = 63; i >= 0; i-- )
@@ -79,9 +87,14 @@ namespace vtil::math
         // Zero otherwise.
         //
         return 0;
+#endif
     }
-    static constexpr bitcnt_t lsb( uint64_t x )
+    static bitcnt_t lsb( uint64_t x )
     {
+#ifdef _MSC_VER
+        unsigned long idx;
+        return _BitScanForward64( &idx, x ) ? ( bitcnt_t ) idx + 1 : 0;
+#else
         // Return index + 1 on success:
         //
         for ( bitcnt_t i = 0; i <= 63; i++ )
@@ -90,6 +103,7 @@ namespace vtil::math
         // Zero otherwise.
         //
         return 0;
+#endif
     }
 
     // Generate a mask for the given variable size and offset.
