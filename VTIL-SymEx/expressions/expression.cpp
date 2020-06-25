@@ -490,7 +490,6 @@ namespace vtil::symbolic
 					case math::operator_id::bitwise_or:
 					case math::operator_id::bitwise_xor:
 					case math::operator_id::umultiply_high:
-					case math::operator_id::umultiply:
 					case math::operator_id::udivide:
 					case math::operator_id::uremainder:
 					case math::operator_id::umax_value:
@@ -529,6 +528,16 @@ namespace vtil::symbolic
 						bitcnt_t op_size = optimistic_size( lhs, rhs );
 						if ( lhs->size() != op_size ) ( +lhs )->resize( op_size, true );
 						if ( rhs->size() != op_size ) ( +rhs )->resize( op_size, true );
+						break;
+					}
+
+					// Convert unsigned multiply to signed multiply.
+					//
+					case math::operator_id::umultiply:
+					{
+						if ( lhs->size() != value.size() ) ( +lhs )->resize( value.size(), true );
+						if ( rhs->size() != value.size() ) ( +rhs )->resize( value.size(), true );
+						op = math::operator_id::multiply;
 						break;
 					}
 
