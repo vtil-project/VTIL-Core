@@ -156,6 +156,7 @@ namespace vtil::optimizer
 				{
 					// Restrict iterator paths.
 					//
+					it_begin.clear_restrictions();
 					it_begin.restrict_path( it.container, true );
 
 					// => Begin forwards recursive query:
