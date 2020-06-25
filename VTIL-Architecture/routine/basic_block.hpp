@@ -136,7 +136,7 @@ namespace vtil
 				{
 					// Skip if path is restricted and this path is not allowed.
 					//
-					if ( is_path_restricted && paths_allowed->find( dst ) == paths_allowed->end() )
+					if ( is_path_restricted && ( !paths_allowed || paths_allowed->find( dst ) == paths_allowed->end() ) )
 						continue;
 
 					// Otherwise create the new iterator, inheriting the path restrictions 
