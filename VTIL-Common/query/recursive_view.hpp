@@ -164,7 +164,7 @@ namespace vtil::query
 		using fn_container_filter = std::function<bool( const container_type* src, const container_type * dst, bool first_time )>;
 		fn_container_filter filter = {};
 
-		// Special iterator saved by the root to mark the 
+		// Special iterator saved by the root to mark the
 		// beginning of it's iteration so loops can properly
 		// lead to it.
 		//
@@ -176,20 +176,7 @@ namespace vtil::query
 		// is determined by whether the container we're trying to
 		// visit is in this list or not.
 		//
-		struct visit_entry
-		{
-			visit_entry* prev = nullptr;
-			const void* visited = nullptr;
-		
-			bool contains( const void* p ) const
-			{
-				for ( auto it = this; it; it = it->prev )
-					if ( visited == p )
-						return true;
-				return false;
-			}
-		};
-		visit_entry visit_list = {};
+		std::set<const void*> visited = {};
 
 		// Maps the each local variable on caller stack to the recursive copies.
 		//
@@ -240,7 +227,7 @@ namespace vtil::query
 				// iterator's container visited.
 				//
 				it0 = {};
-				visit_list.visited = view.query.iterator.container;
+				visited.insert( view.query.iterator.container );
 			}
 		}
 
@@ -326,18 +313,18 @@ namespace vtil::query
 					{
 						// If we did not already visit it:
 						//
-						bool first_visit = !visit_list.contains( desc.iterator.container );
+						bool first_visit = visited.find( desc.iterator.container ) == visited.end();
 						if ( filter( view.query.iterator.container, desc.iterator.container, first_visit ) )
 						{
+
 							// Create another recursive view with the new query.
 							//
 							recursive_view view_new = clone();
 							view_new.view.query = desc;
 
-							// Mark the container visited and link the entries.
+							// Mark the container visited.
 							//
-							view_new.visit_list.prev = visit_list.visited ? &visit_list : visit_list.prev;
-							view_new.visit_list.visited = first_visit ? desc.iterator.container : nullptr;
+							if ( first_visit ) view_new.visited.insert( desc.iterator.container );
 
 							// If iterator belongs to the same container as the root:
 							//
@@ -382,8 +369,8 @@ namespace vtil::query
 		}
 
 		// [Collection method]
-		// Collects each entry in std::vector<> and saves that in the 
-		// recursive_result structure. Continues appending paths and 
+		// Collects each entry in std::vector<> and saves that in the
+		// recursive_result structure. Continues appending paths and
 		// results in that structure until stream is finished.
 		//
 		auto collect()
@@ -401,9 +388,9 @@ namespace vtil::query
 		}
 
 		// [Collection method]
-		// Collects first entry in std::vector<>, saves that in the 
-		// recursive_result structure and stops if applicable. 
-		// Otherwise continues appending paths in that structure 
+		// Collects first entry in std::vector<>, saves that in the
+		// recursive_result structure and stops if applicable.
+		// Otherwise continues appending paths in that structure
 		// until a valid entry is hit.
 		//
 		auto first()
