@@ -554,11 +554,9 @@ namespace vtil::symbolic
 				complexity = ( lhs->complexity + rhs->complexity ) * 2;
 				fassert( complexity != 0 );
 
-				// If bitshift / rotation, punish additionally.
+				// Multiply with operator complexity coefficient.
 				//
-				if ( op == math::operator_id::shift_left || op == math::operator_id::shift_right ||
-					 op == math::operator_id::rotate_left || op == math::operator_id::rotate_right )
-					complexity *= 2;
+				complexity *= desc->complexity_coeff;
 
 				hash_t operand_hashes[] = { lhs->hash(), rhs->hash() };
 				// If operator is commutative, sort the array so that the
