@@ -347,11 +347,18 @@ namespace vtil::math
             // ####################################################################################################################################
             case operator_id::add:
             {
+                    bitcnt_t out_size = std::max( lhs.size(), rhs.size() );
+
+                    // Return unknown if no bits are known from one side.
+                    //
+                    if( lhs.unknown_mask() == lhs.value_mask() ||
+                        rhs.unknown_mask() == rhs.value_mask() )
+                        return bit_vector( out_size );
+
                     // Create the temp holding the new bit vector.
                     //
                     uint64_t known_mask = 0;
                     uint64_t unknown_mask = 0;
-                    bitcnt_t out_size = std::max( lhs.size(), rhs.size() );
 
                     // For each bit in the output size:
                     //

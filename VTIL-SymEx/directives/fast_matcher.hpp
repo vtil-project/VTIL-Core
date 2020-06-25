@@ -36,11 +36,11 @@ namespace vtil::symbolic::directive
 	//
 	struct symbol_table_t
 	{
-		expression::reference lookup_table[ number_of_lookup_indices ];
+		const expression::reference* lookup_table[ number_of_lookup_indices ] = { 0 };
 
 		// Adds the mapping of a variable to an expression.
 		//
-		bool add( const instance::reference& dir, const expression::reference& exp )
+		bool add( const instance::reference& dir, const expression::reference* exp )
 		{
 			// If it's the first time this variable is being used:
 			//
@@ -51,11 +51,11 @@ namespace vtil::symbolic::directive
 				switch ( dir->mtype )
 				{
 					case match_any:                                                                   break;
-					case match_variable:               if ( !exp->is_variable() )   return false;     break;
-					case match_constant:               if ( !exp->is_constant() )   return false;     break;
-					case match_expression:             if ( !exp->is_expression() ) return false;     break;
-					case match_non_constant:           if ( !exp->unknown_mask() )  return false;     break;
-					case match_non_expression:         if ( exp->is_expression() )  return false;     break;
+					case match_variable:               if ( !(*exp)->is_variable() )   return false;  break;
+					case match_constant:               if ( !(*exp)->is_constant() )   return false;  break;
+					case match_expression:             if ( !(*exp)->is_expression() ) return false;  break;
+					case match_non_constant:           if ( !(*exp)->unknown_mask() )  return false;  break;
+					case match_non_expression:         if ( (*exp)->is_expression() )  return false;  break;
 					default: unreachable();
 				}
 
@@ -68,13 +68,13 @@ namespace vtil::symbolic::directive
 			{
 				// Check if saved expression is equivalent, if not fail.
 				//
-				return lookup_table[ dir->lookup_index ]->is_identical( *exp );
+				return (*lookup_table[ dir->lookup_index ])->is_identical( **exp );
 			}
 		}
 
 		// Translates a variable to the matching expression.
 		//
-		expression::reference translate( const instance::reference& dir ) const
+		const expression::reference& translate( const instance::reference& dir ) const
 		{
 			// Assert the looked up type is variable.
 			//
@@ -82,7 +82,7 @@ namespace vtil::symbolic::directive
 
 			// Translate using the lookup table.
 			//
-			return lookup_table[ dir->lookup_index ];
+			return *lookup_table[ dir->lookup_index ];
 		}
 	};
 
@@ -113,7 +113,7 @@ namespace vtil::symbolic::directive
 			{
 				// If we could not add to the table / match the existing entry, erase the iterator off the results.
 				//
-				if ( !it->add( dir, exp ) )
+				if ( !it->add( dir, &exp ) )
 					results->erase( it );
 			}
 			// If directive is a constant:
