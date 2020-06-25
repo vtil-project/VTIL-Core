@@ -45,7 +45,7 @@ namespace vtil::optimizer
 			// If iterator is at a str instruction and we're 
 			// looking up the stored operand, return without tracing.
 			//
-			if ( !lookup.at.is_end() && *lookup.at->base == ins::str &&
+			if ( !lookup.at.is_end() && lookup.at->base == &ins::str &&
 				 lookup.is_register() && lookup.at->operands[ 2 ].is_register() &&
 				 lookup.reg() == lookup.at->operands[ 2 ].reg() &&
 				 !lookup.reg().is_stack_pointer() )
@@ -110,7 +110,7 @@ namespace vtil::optimizer
 			.where( [ ] ( instruction& ins ) { return !ins.is_volatile(); } )
 		
 			// | Filter to LDD instructions referencing stack:
-			.where( [ ] ( instruction& ins ) { return *ins.base == ins::ldd && ins.memory_location().first.is_stack_pointer(); } )
+			.where( [ ] ( instruction& ins ) { return ins.base == &ins::ldd && ins.memory_location().first.is_stack_pointer(); } )
 
 			// := Project back to iterator type.
 			.unproject()

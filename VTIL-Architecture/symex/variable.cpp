@@ -290,7 +290,7 @@ namespace vtil::symbolic
 
 				// If exiting the virtual machine:
 				//
-				if ( *it->base == ins::vexit )
+				if ( it->base == &ins::vexit )
 				{
 					// If retval register, indicate read from:
 					//
@@ -403,7 +403,7 @@ namespace vtil::symbolic
 
 				// If vmexit, declared trashed if below or at the shadow space:
 				//
-				if ( *it->base == ins::vexit ? it.container->owner->routine_convention.purge_stack : cc.purge_stack )
+				if ( it->base == &ins::vexit ? it.container->owner->routine_convention.purge_stack : cc.purge_stack )
 				{
 					// Determine the limit of the stack memory owned by this routine.
 					//

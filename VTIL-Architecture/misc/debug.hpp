@@ -174,7 +174,7 @@ namespace vtil::debug
 
 				// Skip if nop.
 				//
-				if ( *it->base == ins::nop ) continue;
+				if ( it->base == &ins::nop ) continue;
 			}
 
 			log<CON_BLU>( "%04d: ", ins_idx );

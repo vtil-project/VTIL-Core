@@ -102,7 +102,7 @@ namespace vtil::optimizer
 		//
 		if ( branch_info.is_jcc && 
 			 lbranch_info.is_jcc && 
-			 *branch->base == ins::jmp )
+			 branch->base == &ins::jmp )
 		{
 			// Attempts to revive an expression via cache.
 			//
@@ -202,7 +202,7 @@ namespace vtil::optimizer
 		//
 		if ( branch_info.destinations.size() == 1 &&
 			 branch_info.destinations[ 0 ].is_constant() &&
-			 ( *branch->base == ins::jmp || *branch->base == ins::vxcall || *branch->base == ins::vexit ) &&
+			 ( branch->base == &ins::jmp || branch->base == &ins::vxcall || branch->base == &ins::vexit ) &&
 			 branch->operands[ 0 ].is_register() )
 		{
 

@@ -50,7 +50,7 @@ namespace vtil::optimizer
 
 			// If at move:
 			//
-			if ( *lookup.at->base == ins::mov )
+			if ( lookup.at->base == &ins::mov )
 			{
 				// If destination is overlapping lookup variable:
 				//

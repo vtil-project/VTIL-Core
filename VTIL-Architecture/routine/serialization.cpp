@@ -249,8 +249,18 @@ namespace vtil
 		//
 		std::string name;
 		deserialize( in, name );
-		out.base = std::find( std::begin( instruction_list ), std::end( instruction_list ), name );
-		if( out.base == std::end( instruction_list ) )
+
+		out.base = nullptr;
+		for ( auto ins : instruction_list )
+		{
+			if ( ins->name == name )
+			{
+				out.base = ins;
+				break;
+			}
+		}
+		
+		if ( !out.base )
 			throw std::runtime_error( "Failed resolving instruction." );
 
 		// Read rest as is and validate.

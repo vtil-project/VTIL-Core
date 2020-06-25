@@ -368,7 +368,7 @@ namespace vtil::optimizer::aux
 				{
 					// If block is complete and is exiting vm, report not used.
 					//
-					if ( var.at.container->is_complete() && *var.at.container->stream.back().base == ins::vexit )
+					if ( var.at.container->is_complete() && var.at.container->stream.back().base == &ins::vexit )
 						return false;
 					return !var.is_register() || !var.reg().is_local();
 				}
@@ -628,13 +628,13 @@ namespace vtil::optimizer::aux
 
 		// Discover all targets and return.
 		//
-		if ( *branch->base == ins::jmp )
+		if ( branch->base == &ins::jmp )
 			return discover( branch->operands[ 0 ], false );
-		if ( *branch->base == ins::vexit )
+		if ( branch->base == &ins::vexit )
 			return discover( branch->operands[ 0 ], true );
-		if ( *branch->base == ins::vxcall )
+		if ( branch->base == &ins::vxcall )
 			return discover( branch->operands[ 0 ], true );
-		if ( *branch->base == ins::js )
+		if ( branch->base == &ins::js )
 		{
 			// If condition can be resolved in compile time:
 			//

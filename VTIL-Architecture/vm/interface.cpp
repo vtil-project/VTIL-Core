@@ -68,8 +68,8 @@ namespace vtil
 
 		// If MOV/MOVSX:
 		//
-		if ( bool cast_signed = *ins.base == ins::movsx;
-			 *ins.base == ins::mov || cast_signed )
+		if ( bool cast_signed = ins.base == &ins::movsx;
+			 ins.base == &ins::mov || cast_signed )
 		{
 			// Convert source operand, resize according to the destination size and
 			// signed-ness of the instruction and write the read value to the register.
@@ -82,7 +82,7 @@ namespace vtil
 		}
 		// If LDD:
 		//
-		else if ( *ins.base == ins::ldd )
+		else if ( ins.base == &ins::ldd )
 		{
 			// Query base pointer without using the wrapper to skip SP adjustment and 
 			// add offset. Read the value and resize to written size.
@@ -103,7 +103,7 @@ namespace vtil
 		}
 		// If STR:
 		//
-		else if ( *ins.base == ins::str )
+		else if ( ins.base == &ins::str )
 		{
 			// Read the source operand and byte-align.
 			//
@@ -184,7 +184,7 @@ namespace vtil
 		}
 		// If NOP:
 		//
-		else if ( *ins.base == ins::nop )
+		else if ( ins.base == &ins::nop )
 		{
 			// No operation.
 			//

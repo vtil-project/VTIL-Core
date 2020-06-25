@@ -36,8 +36,8 @@ namespace vtil::optimizer
 	//
 	static bool is_semantic_nop( const instruction& ins )
 	{
-		if ( *ins.base == ins::mov ||
-			 *ins.base == ins::movsx )
+		if ( ins.base == &ins::mov ||
+			 ins.base == &ins::movsx )
 		{
 			if ( ins.operands[ 0 ] == ins.operands[ 1 ] )
 				return true;
@@ -117,7 +117,7 @@ namespace vtil::optimizer
 		//
 		for ( auto it = blk->begin(); it != blk->end(); )
 		{
-			if ( !it->is_volatile() && *it->base == ins::nop )
+			if ( !it->is_volatile() && it->base == &ins::nop )
 				it = blk->erase( it );
 			else
 				it++;

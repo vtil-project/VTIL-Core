@@ -36,9 +36,9 @@ namespace vtil
 	{
 		std::array<const instruction_desc*, ( size_t ) math::operator_id::max> tbl;
 		tbl.fill( nullptr );
-		for ( auto& x : instruction_list )
-			if ( x.symbolic_operator != math::operator_id::invalid )
-				tbl[ ( size_t ) x.symbolic_operator ] = &x;
+		for ( auto* x : instruction_list )
+			if ( x->symbolic_operator != math::operator_id::invalid )
+				tbl[ ( size_t ) x->symbolic_operator ] = x;
 		return tbl;
 	}( );
 	static const instruction_desc* map_operator( math::operator_id op )
