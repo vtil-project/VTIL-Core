@@ -32,7 +32,7 @@ namespace vtil
 {
 	// Hooks default tracer and does a cache lookup before invokation.
 	//
-	symbolic::expression cached_tracer::trace( symbolic::variable lookup )
+	symbolic::expression cached_tracer::trace( const symbolic::variable& lookup )
 	{
 		using namespace logger;
 

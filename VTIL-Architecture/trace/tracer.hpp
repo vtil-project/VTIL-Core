@@ -48,18 +48,18 @@ namespace vtil
 		// that describes it's value at the bound point. The provided variable should not contain a 
 		// pointer with out-of-block expressions.
 		//
-		virtual symbolic::expression trace( symbolic::variable lookup );
+		virtual symbolic::expression trace( const symbolic::variable& lookup );
 
 		// Traces a variable across the entire routine and tries to generates a symbolic expression
 		// for it at the specified point of the block, limit determines the maximum number of blocks 
 		// to trace backwards, any negative number implies infinite since it won't reach 0.
 		//
-		virtual symbolic::expression rtrace( symbolic::variable lookup, int64_t limit = -1 );
+		virtual symbolic::expression rtrace( const symbolic::variable& lookup, int64_t limit = -1 );
 
 		// Wrappers around the functions above that return expressions with the registers packed.
 		//
-		symbolic::expression trace_p( symbolic::variable lookup ) { return symbolic::variable::pack_all( trace( std::move( lookup ) ) ); }
-		symbolic::expression rtrace_p( symbolic::variable lookup, int64_t limit = -1 ) { return symbolic::variable::pack_all( rtrace( std::move( lookup ), limit ) ); }
+		symbolic::expression trace_p( const symbolic::variable& lookup ) { return symbolic::variable::pack_all( trace( lookup ) ); }
+		symbolic::expression rtrace_p( const symbolic::variable& lookup, int64_t limit = -1 ) { return symbolic::variable::pack_all( rtrace( lookup, limit ) ); }
 
 		// Wrappers around trace(_p) and rtrace(_p) that can trace an entire expression.
 		//
@@ -70,6 +70,6 @@ namespace vtil
 
 		// Operator() wraps basic tracing with packing.
 		//
-		auto operator()( symbolic::variable lookup ) { return trace_p( std::move( lookup ) ); }
+		auto operator()( const symbolic::variable& lookup ) { return trace_p( lookup ); }
 	};
 };

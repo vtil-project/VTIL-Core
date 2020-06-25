@@ -37,10 +37,10 @@ namespace vtil::optimizer
 	{
 		bool bypass = false;
 
-		symbolic::expression trace( symbolic::variable lookup ) override
+		symbolic::expression trace( const symbolic::variable& lookup ) override
 		{
 			if( bypass )
-				return cached_tracer::trace( std::move( lookup ) );
+				return cached_tracer::trace( lookup );
 
 			// If iterator is at a str instruction and we're 
 			// looking up the stored operand, return without tracing.
@@ -56,18 +56,18 @@ namespace vtil::optimizer
 			// Fallback to default tracer.
 			//
 			bypass = true;
-			auto result = cached_tracer::trace( std::move( lookup ) );
+			auto result = cached_tracer::trace( lookup );
 			bypass = false;
 			return result;
 		}
 
-		symbolic::expression rtrace( symbolic::variable lookup, int64_t limit = -1 ) override
+		symbolic::expression rtrace( const symbolic::variable& lookup, int64_t limit = -1 ) override
 		{
 			// Invoke default tracer and store the result.
 			//
 			bool recursive_flag_prev = recursive_flag;
 			recursive_flag = true;
-			symbolic::expression result = cached_tracer::trace( std::move( lookup ) );
+			symbolic::expression result = cached_tracer::trace( lookup );
 			recursive_flag = recursive_flag_prev;
 			
 			// If result is a variable:
