@@ -165,12 +165,6 @@ namespace vtil::debug
 				no_disasm = false;
 			}
 
-			log<CON_BLU>( "%04d: ", ins_idx );
-			if ( it->vip == invalid_vip )
-				log<CON_DEF>( "[ PSEUDO ] " );
-			else
-				log<CON_DEF>( "[%08x] ", ( uint32_t ) it->vip );
-
 			// Print string context if any.
 			//
 			if ( it->context.has<std::string>() )
@@ -183,6 +177,11 @@ namespace vtil::debug
 				if ( *it->base == ins::nop ) continue;
 			}
 
+			log<CON_BLU>( "%04d: ", ins_idx );
+			if ( it->vip == invalid_vip )
+				log<CON_DEF>( "[ PSEUDO ] " );
+			else
+				log<CON_DEF>( "[%08x] ", ( uint32_t ) it->vip );
 			dump( *it, it.is_begin() ? nullptr : &*std::prev( it ) );
 		}
 
