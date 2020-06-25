@@ -254,7 +254,7 @@ namespace vtil
 
             // Save the result.
             //
-			propagation_result[ uid ] = var_traced;
+			propagation_result[ uid ] = std::move( var_traced );
         }
 
 		// Copy the reference expression.
@@ -383,7 +383,7 @@ namespace vtil
 							{
 								if ( exp.is_variable() )
 									exp.uid.get<symbolic::variable>().is_branch_dependant = true;
-							}, false );
+							}, true, false );
 						}
 						break;
 					}
