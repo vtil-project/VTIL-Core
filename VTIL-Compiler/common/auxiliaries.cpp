@@ -152,7 +152,7 @@ namespace vtil::optimizer::aux
 
 						// If displacement is an immediate value and is below 0, declare discarded.
 						//
-						if ( disp && *disp < 0 )
+						if ( disp && *disp <= 0 )
 							query::rlocal( variable_mask ) = 0;
 					}
 
