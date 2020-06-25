@@ -195,12 +195,12 @@ namespace vtil
 	{
 		// Append 0x20 bytes for _DEBUG binaries to compensate for std::_Container_proxy;
 		//
+		static constexpr size_t align_mask = alignof( T ) - 1;
 #ifdef _DEBUG
 		static constexpr size_t buffer_size = N * sizeof( typename T::value_type ) + ( 0x20 + sizeof( T ) + align_mask ) * 2;
 #else
 		static constexpr size_t buffer_size = N * sizeof( typename T::value_type );
 #endif
-		static constexpr size_t align_mask = alignof( T ) - 1;
 
 		// Buffer aligned to match the alignment of T. 
 		//
