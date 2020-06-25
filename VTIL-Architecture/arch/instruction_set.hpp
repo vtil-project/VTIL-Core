@@ -28,6 +28,7 @@
 #pragma once
 #include <vector>
 #include <vtil/math>
+#include <array>
 #include "instruction_desc.hpp"
 
 namespace vtil
@@ -181,13 +182,17 @@ namespace vtil
 
     // List of all instructions.
     //
-    static const instruction_desc const* instruction_list[] = 
+    static const auto& get_instruction_list()
     {
-        &ins::mov, &ins::movsx, &ins::str, &ins::ldd, &ins::ifs, &ins::neg, &ins::add, &ins::sub, &ins::mul, &ins::imul,
-        &ins::mulhi, &ins::imulhi, &ins::div, &ins::idiv, &ins::rem, &ins::irem, &ins::popcnt, &ins::bsf, &ins::bsr, 
-        &ins::bnot, &ins::bshr, &ins::bshl,&ins::bxor, &ins::bor, &ins::band, &ins::bror, &ins::brol, &ins::tg, 
-        &ins::tge, &ins::te, &ins::tne, &ins::tle, &ins::tl, &ins::tug, &ins::tuge, &ins::tule, &ins::tul, &ins::js, 
-        &ins::jmp, &ins::vexit, &ins::vxcall, &ins::nop, &ins::vemit, &ins::vpinr, &ins::vpinw, &ins::vpinrm,
-        &ins::vpinwm
-    };
+        static std::array instruction_list =
+        {
+            &ins::mov, &ins::movsx, &ins::str, &ins::ldd, &ins::ifs, &ins::neg, &ins::add, &ins::sub, &ins::mul, &ins::imul,
+            &ins::mulhi, &ins::imulhi, &ins::div, &ins::idiv, &ins::rem, &ins::irem, &ins::popcnt, &ins::bsf, &ins::bsr,
+            &ins::bnot, &ins::bshr, &ins::bshl,&ins::bxor, &ins::bor, &ins::band, &ins::bror, &ins::brol, &ins::tg,
+            &ins::tge, &ins::te, &ins::tne, &ins::tle, &ins::tl, &ins::tug, &ins::tuge, &ins::tule, &ins::tul, &ins::js,
+            &ins::jmp, &ins::vexit, &ins::vxcall, &ins::nop, &ins::vemit, &ins::vpinr, &ins::vpinw, &ins::vpinrm,
+            &ins::vpinwm
+        };
+        return instruction_list;
+    }
 };

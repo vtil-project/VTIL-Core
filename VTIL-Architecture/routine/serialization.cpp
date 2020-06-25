@@ -251,7 +251,7 @@ namespace vtil
 		deserialize( in, name );
 
 		out.base = nullptr;
-		for ( auto ins : instruction_list )
+		for ( auto ins : get_instruction_list() )
 		{
 			if ( ins->name == name )
 			{
