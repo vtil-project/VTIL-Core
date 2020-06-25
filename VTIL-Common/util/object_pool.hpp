@@ -122,7 +122,7 @@ namespace vtil
 			bucket->mtx.unlock();
 		}
 
-		// Default allocation.
+		// Default construction, conversion is no-op.
 		//
 		object_pool() = default;
 		template <typename T2>
