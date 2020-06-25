@@ -64,11 +64,11 @@ namespace vtil::symbolic
 		switch ( type )
 		{
 			case memory_type::free:
-				return { [ ]( auto& ptr, bitcnt_t size ) { return make_memory_ex( ptr, size ); } };
+				return { [ ] ( auto& ptr, bitcnt_t size ) -> expression { return make_memory_ex( ptr, size ); } };
 			case memory_type::relaxed:
-				return { [ ] ( auto& ptr, bitcnt_t size ) { return make_undefined_ex( size ); } };
+				return { [ ] ( auto& ptr, bitcnt_t size ) -> expression { return make_undefined_ex( size ); } };
 			default:
-				return { [ ] ( auto& ptr , bitcnt_t size ) { unreachable(); return expression{}; } };
+				return { [ ] ( auto& ptr, bitcnt_t size ) -> expression { unreachable(); return expression{}; } };
 		}
 	}
 };

@@ -170,6 +170,19 @@ namespace vtil::debug
 				log<CON_DEF>( "[ PSEUDO ] " );
 			else
 				log<CON_DEF>( "[%08x] ", ( uint32_t ) it->vip );
+
+			// Print string context if any.
+			//
+			if ( it->context.has<std::string>() )
+			{
+				const std::string& cmt = it->context;
+				log<CON_GRN>( "// %s\n", cmt );
+
+				// Skip if nop.
+				//
+				if ( *it->base == ins::nop ) continue;
+			}
+
 			dump( *it, it.is_begin() ? nullptr : &*std::prev( it ) );
 		}
 
