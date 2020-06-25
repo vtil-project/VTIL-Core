@@ -101,7 +101,7 @@ namespace vtil::symbolic
 	{
 		// Determine pointer strength and the flags.
 		//
-		strenght = +1;
+		strength = +1;
 		base.evaluate( [ & ] ( const unique_identifier& uid )
 		{
 			// If variable is a register that is a restricted base pointer:
@@ -116,7 +116,7 @@ namespace vtil::symbolic
 			//
 			else
 			{
-				strenght = -1;
+				strength = -1;
 			}
 
 			// Return dummy result.
