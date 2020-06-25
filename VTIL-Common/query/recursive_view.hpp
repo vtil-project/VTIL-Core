@@ -176,7 +176,20 @@ namespace vtil::query
 		// is determined by whether the container we're trying to
 		// visit is in this list or not.
 		//
-		std::set<const void*> visited = {};
+		struct visit_entry
+		{
+			visit_entry* prev = nullptr;
+			const void* visited = nullptr;
+		
+			bool contains( const void* p ) const
+			{
+				for ( auto it = this; it; it = it->prev )
+					if ( visited == p )
+						return true;
+				return false;
+			}
+		};
+		visit_entry visit_list = {};
 
 		// Maps the each local variable on caller stack to the recursive copies.
 		//
@@ -227,7 +240,7 @@ namespace vtil::query
 				// iterator's container visited.
 				//
 				it0 = {};
-				visited.insert( view.query.iterator.container );
+				visit_list.visited = view.query.iterator.container;
 			}
 		}
 
@@ -311,22 +324,20 @@ namespace vtil::query
 					std::vector desc_list = view.query.recurse();
 					for ( auto& desc : desc_list )
 					{
-						auto visited_copy = visited;
-
 						// If we did not already visit it:
 						//
-						bool first_visit = visited_copy.find( desc.iterator.container ) == visited_copy.end();
+						bool first_visit = !visit_list.contains( desc.iterator.container );
 						if ( filter( view.query.iterator.container, desc.iterator.container, first_visit ) )
 						{
-							// Mark the container visited.
-							//
-							visited_copy.insert( desc.iterator.container );
-
 							// Create another recursive view with the new query.
 							//
 							recursive_view view_new = clone();
 							view_new.view.query = desc;
-							view_new.visited = visited_copy;
+
+							// Mark the container visited and link the entries.
+							//
+							view_new.visit_list.prev = visit_list.visited ? &visit_list : visit_list.prev;
+							view_new.visit_list.visited = first_visit ? desc.iterator.container : nullptr;
 
 							// If iterator belongs to the same container as the root:
 							//
