@@ -98,6 +98,12 @@ namespace vtil::symbolic::directive
         { ~(A-1),                                             -A },
         { 0-A,                                                -A },
 
+        // MUL conversion.
+        //
+        { A+A,                                                A*2 },
+        { A*U-A,                                              A*(U-1) },
+        { A*U+A,                                              A*(U+1) },
+
         // Invert comparison.
         //
         { ~(A>B),                                             A<=B },
@@ -169,12 +175,6 @@ namespace vtil::symbolic::directive
         { U|B,                                                __iff(((~__mask_knw0(B))&(~U))==0u,  U) },
         { U&B,                                                __iff(U==(__mask_unk(B)|__mask_knw1(B)), B) },
         { U&B,                                                __iff(((~__mask_knw0(B))&U)==0u,  0) },
-
-        // Lower unsigned immediate rem/div/mul into and/shr/shl where possible.
-        //
-        { urem(A,U),                                          __iff(__popcnt(U)==1, A&!(U-1)) },
-        { udiv(A,U),                                          __iff(__popcnt(U)==1, A>>!(__bsf(U)-1)) },
-        { umul(A,U),                                          __iff(__popcnt(U)==1, A<<!(__bsf(U)-1)) },
 
         // Penetrate shrinked expression with shift left.
         // - This is an exceptional case and has to be addressed due to the fact
@@ -320,6 +320,13 @@ namespace vtil::symbolic::directive
         // Missing: shl, shr
         { ~__rotl(A,C),                                       __rotl(!~A,C) },
         { ~__rotr(A,C),                                       __rotr(!~A,C) },
+
+        // Lower immediate urem/udiv/mul into and/shr/shl where possible.
+        //
+        { A*U,                                                __iff(__popcnt(U)==1, A<<!(__bsf(U)-1)) },
+        { A+(A<<U),                                           A*!(1 +(1<<U)) },
+        { urem(A,U),                                          __iff(__popcnt(U)==1, A&!(U-1)) },
+        { udiv(A,U),                                          __iff(__popcnt(U)==1, A>>!(__bsf(U)-1)) },
 
         // Manually added comparison simplifiers:
         //
