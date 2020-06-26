@@ -48,6 +48,10 @@ namespace vtil::optimizer
 		//
 		cached_tracer local_tracer = {};
 		auto lbranch_info = aux::analyze_branch( blk, &local_tracer, false, false );
+		ctracer.mtx.lock();
+		for ( auto& [k, v] : local_tracer.cache )
+			ctracer.cache[ k ] = v;
+		ctracer.mtx.unlock();
 		auto branch_info = aux::analyze_branch( blk, &ctracer, xblock );
 
 		// If branching to real, assert single next block.
@@ -181,27 +185,14 @@ namespace vtil::optimizer
 				if ( !fail )
 				{
 					operand cc_op = op_cc.get();
+					cc_op.reg().bit_count = 1;
 
-					if ( cc_op.is_immediate() )
-					{
-						branch->base = &ins::jmp;
-						branch->operands = {
-							( cc_op.imm().u64 & 1 )
-							? dsts[ 0 ].get()
-							: dsts[ 1 ].get()
-						};
-					}
-					else
-					{
-						cc_op.reg().bit_count = 1;
-
-						branch->base = &ins::js;
-						branch->operands = {
-							cc_op,
-							dsts[ 0 ].get(),
-							dsts[ 1 ].get()
-						};
-					}
+					branch->base = &ins::js;
+					branch->operands = {
+						cc_op,
+						dsts[ 0 ].get(),
+						dsts[ 1 ].get()
+					};
 					cnt++;
 				}
 			}

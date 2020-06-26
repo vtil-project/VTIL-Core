@@ -494,9 +494,8 @@ namespace vtil::optimizer::aux
 		//
 		const auto trace = [ & ] ( symbolic::variable&& lookup )
 		{
-			auto exp = xblock
-				? tracer->rtrace( std::move( lookup ) )
-				: tracer->trace( std::move( lookup ) );
+			auto exp = tracer->trace( std::move( lookup ) );
+			if ( xblock ) exp = tracer->rtrace_exp( std::move( exp ) );
 			if ( pack )   exp = symbolic::variable::pack_all( exp );
 			return exp;
 		};
@@ -543,7 +542,7 @@ namespace vtil::optimizer::aux
 						}
 						else if ( ( exp.value.unknown_mask() | exp.value.known_one() ) == 1 )
 						{
-							if ( !cnd_out.is_valid() )
+							if ( !cnd_out.is_valid() && !exp.is_constant() )
 								cnd_out = exp;
 						}
 						else if ( exp.is_variable() && exp.uid.get<symbolic::variable>().is_memory() )
@@ -595,7 +594,7 @@ namespace vtil::optimizer::aux
 					};
 
 					dst.enumerate( explore_cc_space );
-					dst.transform( transform_cc );
+					if ( cnd_out ) dst.transform( transform_cc );
 					if ( !confirmed ) cnd_out = {};
 				};
 

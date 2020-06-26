@@ -136,14 +136,9 @@ namespace vtil
 			if ( !exp.is_variable() )
 				return;
 
-			// Skip if variable is position indepdendent.
-			//
-			symbolic::variable& var = exp.uid.get<symbolic::variable>();
-			if ( !var.at.is_valid() || !var.at.is_begin() )
-				return;
-
 			// If transformation is not already cached, transform it.
 			//
+			symbolic::variable& var = exp.uid.get<symbolic::variable>();
 			auto& cached_result = cache[ var ];
 			if ( !cached_result )
 				cached_result = fn( var );
@@ -443,7 +438,7 @@ namespace vtil
 					//
 					log<CON_RED>( "[Unknown symbolic state.]\n" );
 #endif
-					return symbolic::variable{ std::next( it ), lookup.descriptor }.to_expression();
+					return lookup.to_expression();
 				}
 				break;
 			}

@@ -114,15 +114,22 @@ namespace vtil
 				symbolic::expression result = *it->second;
 				lock = {};
 
-				result.transform( [ & ] ( symbolic::expression& exp )
+				if ( result )
 				{
-					if ( exp.is_variable() )
+					result.transform( [ & ] ( symbolic::expression& exp )
 					{
-						auto& var = exp.uid.get<symbolic::variable>();
-						if ( !var.at.is_begin() )
-							exp = tracer::trace( var );
-					}
-				} );
+						if ( exp.is_variable() )
+						{
+							auto& var = exp.uid.get<symbolic::variable>();
+							if ( !var.at.is_begin() )
+								exp = tracer::trace( var );
+						}
+					} );
+				}
+				else
+				{
+					result = tracer::trace( lookup );
+				}
 
 				return result;
 			}

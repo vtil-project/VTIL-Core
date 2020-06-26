@@ -643,6 +643,11 @@ namespace vtil::symbolic
 	//
 	bool expression::equals( const expression& other ) const
 	{
+		// Propagate invalid.
+		//
+		if ( !is_valid() )            return !other.is_valid();
+		else if ( !other.is_valid() ) return false;
+
 		// If identical, return true.
 		//
 		if ( is_identical( other ) )
@@ -713,6 +718,11 @@ namespace vtil::symbolic
 	//
 	bool expression::is_identical( const expression& other ) const
 	{
+		// Propagate invalid.
+		//
+		if ( !is_valid() )            return !other.is_valid();
+		else if ( !other.is_valid() ) return false;
+
 		// If hash mismatch, return false without checking anything.
 		//
 		if ( hash() != other.hash() )
