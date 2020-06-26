@@ -79,6 +79,18 @@ namespace vtil::symbolic
 		//
 		if ( value.size() == new_size ) return *this;
 
+		// If expression is lazy, delay it.
+		//
+		if ( is_lazy )
+		{
+			if ( signed_cast )
+				*this = __cast( *this, new_size );
+			else
+				*this = __ucast( *this, new_size );
+			update( false );
+			return *this;
+		}
+
 		// Try to convert signed casts into unsigned ones:
 		//
 		if ( signed_cast )
@@ -385,6 +397,15 @@ namespace vtil::symbolic
 	//
 	expression& expression::update( bool auto_simplify )
 	{
+		// Propagate lazyness.
+		//
+		if ( ( lhs && lhs->is_lazy ) ||
+			 ( rhs && rhs->is_lazy ) )
+		{
+			auto_simplify = false;
+			is_lazy = true;
+		}
+
 		// If it's not a full expression tree:
 		//
 		if ( !is_expression() )
@@ -613,6 +634,10 @@ namespace vtil::symbolic
 	//
 	expression& expression::simplify( bool prettify )
 	{
+		// Reset lazyness.
+		//
+		is_lazy = false;
+
 		// By changing the prototype of simplify_expression from f(expression&) to
 		// f(expression::reference&), we gain an important performance benefit that is
 		// a significantly less amount of copies made. Cache will also store references 
