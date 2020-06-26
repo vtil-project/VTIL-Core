@@ -142,6 +142,12 @@ namespace vtil::optimizer
 				//
 				if ( !aux::is_used( { std::prev( limit ), k }, false, &ctracer ) )
 					continue;
+
+				// Simplify value and check unchanged-state again.
+				//
+				v.simplify();
+				if ( v0.equals( v ) )
+					continue;
 				
 				// Try minimizing expression size.
 				//
@@ -207,7 +213,7 @@ namespace vtil::optimizer
 			//
 			for ( const auto& [k, _v] : vm.memory_state )
 			{
-				auto v = _v;
+				auto v = _v.simplify();
 				symbolic::expression v0 = symbolic::make_memory_ex( k, v.size() );
 
 				// If value is unchanged, skip.

@@ -402,6 +402,11 @@ namespace vtil::symbolic
 		if ( ( lhs && lhs->is_lazy ) ||
 			 ( rhs && rhs->is_lazy ) )
 		{
+			if ( lhs && lhs->is_lazy )
+				( +lhs )->is_lazy = false;
+			if ( rhs && rhs->is_lazy )
+				( +rhs )->is_lazy = false;
+
 			auto_simplify = false;
 			is_lazy = true;
 		}
@@ -677,6 +682,12 @@ namespace vtil::symbolic
 		//
 		if ( is_identical( other ) )
 			return true;
+
+		// Filter by known bits.
+		//
+		if ( ( other.known_one() & known_zero() ) ||
+			 ( other.known_zero() & known_one() ))
+			return false;
 
 		// Simplify both expressions.
 		//

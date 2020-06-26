@@ -97,7 +97,7 @@ namespace vtil::symbolic
 
 	// Construct from symbolic expression.
 	//
-	pointer::pointer( expression&& _base ) : base( std::move( _base ) )
+	pointer::pointer( const expression& _base ) : base( _base.simplify() )
 	{
 		// Determine pointer strength and the flags.
 		//
@@ -145,7 +145,7 @@ namespace vtil::symbolic
 					uint64_t pseudo_pointer = combine_hash( var.hash(), hash_t{ k } ).as64();
 					return pseudo_pointer & math::fill( mem.bit_count );
 				}
-			} ).value_or( invalid_xpointer );
+			} ).value_or( invalid_xpointer ) >> 1;
 		}
 	}
 

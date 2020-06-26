@@ -73,7 +73,7 @@ namespace vtil
 	{
 		bitcnt_t bcnt = math::narrow_cast<bitcnt_t>( byte_count * 8 );
 		symbolic::expression exp = memory_state.read_v( 
-			pointer.simplify(), 
+			pointer, 
 			bcnt 
 		);
 		return lazy_io ? exp.make_lazy() : exp.simplify();
@@ -84,7 +84,7 @@ namespace vtil
 	void symbolic_vm::write_memory( const symbolic::expression& pointer, symbolic::expression value )
 	{
 		memory_state.write( 
-			pointer.simplify(), 
+			pointer, 
 			value.resize( ( value.size() + 7 ) & ~7 ) 
 		);
 	}

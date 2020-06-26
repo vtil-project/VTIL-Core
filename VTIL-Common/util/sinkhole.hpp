@@ -171,12 +171,25 @@ namespace vtil
 
 			// Iterace each entry in the range:
 			//
-			auto it_min = value_map.lower_bound( offset_fn{}( weaken_pointer{}( ptr ), -64 / 8 ) );
+			pointer_unit min_ptr = offset_fn{}( weaken_pointer{}( ptr ), -64 / 8 );
+			auto it_min = value_map.lower_bound( min_ptr );
 			if ( it_min == value_map.end() ) return std::nullopt;
-			auto it_max = value_map.upper_bound( offset_fn{}( ptr, size / 8 ) );
+
+			pointer_unit max_ptr = offset_fn{}( ptr, size / 8 );
+			auto it_max = value_map.upper_bound( max_ptr );
 			if ( it_min == it_max ) return std::nullopt;
+
 			for ( auto it = it_min; it != it_max; it++ )
 			{
+				// If we've reached the end, rotate back to the beginning,
+				// this handles overflows in pointers.
+				//
+				/*if ( it == value_map.end() )
+				{
+					it = value_map.begin();
+					it_max = value_map.lower_bound( min_ptr );
+				}*/
+				
 				// Calculate displacement, if unknown return unknown.
 				// = [RL - WL]
 				//

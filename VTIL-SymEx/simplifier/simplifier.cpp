@@ -156,7 +156,7 @@ namespace vtil::symbolic
 		//
 		if ( exp->value.is_known() )
 		{
-			exp = expression{ exp->value.known_one(), exp->value.size() };
+			*+exp = expression{ exp->value.known_one(), exp->value.size() };
 #if VTIL_SYMEX_SIMPLIFY_VERBOSE
 			log<CON_CYN>( "= %s [By evaluation]\n", *exp );
 #endif
