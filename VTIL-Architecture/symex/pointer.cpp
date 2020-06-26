@@ -128,7 +128,7 @@ namespace vtil::symbolic
 		//
 		for ( auto [xptr, key] : zip( xpointer, xpointer_keys ) )
 		{
-			xptr = base.get( [ k = uint64_t( key ) ]( const unique_identifier& uid )
+			xptr = base.get( [ k = uint64_t( key >> 1 ) ]( const unique_identifier& uid )
 			{
 				// Hash the identifier of the value with the current key and mask it.
 				//
@@ -145,7 +145,7 @@ namespace vtil::symbolic
 					uint64_t pseudo_pointer = combine_hash( var.hash(), hash_t{ k } ).as64();
 					return pseudo_pointer & math::fill( mem.bit_count );
 				}
-			} ).value_or( invalid_xpointer ) >> 1;
+			} ).value_or( invalid_xpointer );
 		}
 	}
 
