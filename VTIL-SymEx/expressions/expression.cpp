@@ -402,11 +402,6 @@ namespace vtil::symbolic
 		if ( ( lhs && lhs->is_lazy ) ||
 			 ( rhs && rhs->is_lazy ) )
 		{
-			if ( lhs && lhs->is_lazy )
-				( +lhs )->is_lazy = false;
-			if ( rhs && rhs->is_lazy )
-				( +rhs )->is_lazy = false;
-
 			auto_simplify = false;
 			is_lazy = true;
 		}
@@ -632,6 +627,17 @@ namespace vtil::symbolic
 			//
 			if ( auto_simplify ) simplify();
 		}
+
+		// Clear lazyness from children.
+		//
+		if ( is_lazy )
+		{
+			if ( lhs && lhs->is_lazy )
+				( +lhs )->is_lazy = false;
+			if ( rhs && rhs->is_lazy )
+				( +rhs )->is_lazy = false;
+		}
+
 		return *this;
 	}
 
