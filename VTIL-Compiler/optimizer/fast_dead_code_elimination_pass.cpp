@@ -57,9 +57,9 @@ namespace vtil::optimizer
 
 		// Run local DCE to ensure less redundancy.
 		//
-		size_t counter = pass( blk );
+		size_t counter = fast_local_dead_code_elimination_pass{}( blk );
 
-		// Mask off register reads in this block immediately, to ensure validity of predecessors.
+		// Mask off register reads in this block immediately, to ensure validity of successors.
 		//
 		auto& reg_read_masks = reg_map[ blk ];
 		for ( auto it = blk->begin(); !it.is_end(); it++ )
@@ -112,6 +112,8 @@ namespace vtil::optimizer
 			//
 			auto &ins = *last_iter;
 
+			auto removed = false;
+
 			// If volatile, continue.
 			//
 			if ( !ins.is_volatile())
@@ -145,6 +147,7 @@ namespace vtil::optimizer
 								// If we don't have a read mask, we can remove this instruction.
 								//
 								++counter;
+								removed = true;
 								blk->erase( last_iter );
 								break;
 							}
@@ -166,6 +169,9 @@ namespace vtil::optimizer
 					}
 				}
 			}
+
+			if (removed)
+				continue;
 
 			// For every read in this instruction...
 			//
@@ -287,6 +293,8 @@ namespace vtil::optimizer
 				mem_read_masks[{reg_id, disp}] &= ~math::fill( ins.access_size());
 			}
 
+			auto removed = false;
+
 			// If volatile, continue to read access.
 			//
 			if ( !ins.is_volatile())
@@ -321,6 +329,7 @@ namespace vtil::optimizer
 							//
 							++counter;
 							blk->erase( last_iter );
+							removed = true;
 							break;
 						}
 
@@ -340,6 +349,9 @@ namespace vtil::optimizer
 					}
 				}
 			}
+
+			if (removed)
+				continue;
 
 			// For every read in this instruction...
 			//

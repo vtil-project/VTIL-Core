@@ -32,7 +32,7 @@
 
 namespace vtil::optimizer
 {
-	size_t optimizer::fast_propagation_pass::pass( basic_block *blk, bool xblock )
+	size_t fast_propagation_pass::pass( basic_block *blk, bool xblock )
 	{
 		size_t counter = 0;
 
@@ -109,6 +109,9 @@ namespace vtil::optimizer
 						++counter;
 					}
 				}
+
+				// I have no idea why this is needed. The code below it should handle this but ?????
+				//
 
 				reg_cache.erase( register_id( ins.operands[ 0 ].reg() ) );
 				if ( ins.operands[ 0 ].reg().is_stack_pointer() )

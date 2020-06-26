@@ -28,11 +28,13 @@
 #pragma once
 #include <vtil/arch>
 #include "../common/interface.hpp"
+#include "fast_dead_code_elimination_pass.hpp"
 
 namespace vtil::optimizer
 {
-	// Fast but pessimistic memory propagation pass. Does not eliminate stores; instead, forwards the stored value when possible.
+	// Fast but pessimistic local memory propagation pass. Does not eliminate stores; instead, forwards the stored value when possible.
 	//
+
 	struct fast_propagation_pass : pass_interface<>
 	{
 		size_t pass( basic_block* blk, bool xblock = false ) override;
