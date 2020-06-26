@@ -152,6 +152,17 @@ namespace vtil::symbolic
 			return false;
 		}
 
+		// If expression has known value, return as is.
+		//
+		if ( exp->value.is_known() )
+		{
+			exp = expression{ exp->value.known_one(), exp->value.size() };
+#if VTIL_SYMEX_SIMPLIFY_VERBOSE
+			log<CON_CYN>( "= %s [By evaluation]\n", *exp );
+#endif
+			return true;
+		}
+
 #if VTIL_SYMEX_SIMPLIFY_VERBOSE
 		// Log the input.
 		//
