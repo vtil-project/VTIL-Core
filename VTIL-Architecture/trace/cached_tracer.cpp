@@ -109,7 +109,7 @@ namespace vtil
 		{
 			// If recursive flag is set, fix the expression:
 			//
-			if ( recursive_flag )
+			/*if ( recursive_flag )
 			{
 				symbolic::expression result = *it->second;
 				lock = {};
@@ -132,7 +132,7 @@ namespace vtil
 				}
 
 				return result;
-			}
+			}*/
 
 			const symbolic::expression& result = *it->second;
 #if VTIL_OPT_TRACE_VERBOSE
