@@ -11,8 +11,12 @@ add_library(${PROJECT_NAME} STATIC
     optimizer/branch_correction_pass.hpp
     optimizer/dead_code_elimination_pass.cpp
     optimizer/dead_code_elimination_pass.hpp
+    optimizer/fast_dead_code_elimination_pass.cpp
+    optimizer/fast_dead_code_elimination_pass.hpp
     optimizer/istack_ref_substitution_pass.cpp
     optimizer/istack_ref_substitution_pass.hpp
+    optimizer/fast_propagation_pass.cpp
+    optimizer/fast_propagation_pass.hpp
     optimizer/mov_propagation_pass.cpp
     optimizer/mov_propagation_pass.hpp
     optimizer/register_renaming_pass.cpp

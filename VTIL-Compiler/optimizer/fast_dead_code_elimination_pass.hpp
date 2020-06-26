@@ -31,32 +31,58 @@
 
 namespace vtil::optimizer
 {
+	struct register_id
+	{
+		uint64_t combined_id;
+		uint64_t flags;
+
+		bool operator==( const register_id &other ) const
+		{
+			return other.combined_id == combined_id && other.flags == flags;
+		}
+
+		bool operator!=( const register_id &other ) const
+		{
+			return other.combined_id != combined_id || other.flags != flags;
+		}
+
+		explicit register_id( vtil::register_desc reg ) : combined_id( reg.combined_id ), flags( reg.flags )
+		{}
+	};
+}
+
+namespace std
+{
+	template<>
+	struct hash<vtil::optimizer::register_id>
+	{
+		size_t operator()( const vtil::optimizer::register_id& id ) const
+		{
+			return (id.flags << 32u) | id.combined_id;
+		}
+	};
+}
+
+namespace vtil::optimizer
+{
 	// Removes every non-volatile instruction whose effects are
 	// ignored or overwritten.
 	//
-	struct dead_code_elimination_pass : pass_interface<true>
+	struct fast_dead_code_elimination_pass : pass_interface<>
 	{
-		cached_tracer ctrace;
-		std::unordered_set<basic_block*> visited;
+		std::unordered_set< basic_block* > sealed;
+		std::unordered_map< basic_block*, std::unordered_map< register_id, uint64_t > > reg_map;
 
-		size_t pass( basic_block* blk, bool xblock = false ) override;
-
-		// Cross block logic should execute from the bottom.
-		//
-		size_t cpass( basic_block* blk )
-		{
-			if ( visited.contains( blk ) )
-				return 0;
-			visited.insert( blk );
-			size_t count = 0;
-			for ( basic_block* block : blk->next )
-				count += cpass( block );
-			count += pass( blk, true );
-			return count;
-		}
+		size_t fast_xblock_dce( basic_block* blk );
+		size_t pass( basic_block* blk, bool xblock = false ) { return 0; }
 		size_t xpass( routine* rtn ) override
 		{
-			return cpass( rtn->entry_point );
+			return fast_xblock_dce( rtn->entry_point );
 		}
+	};
+
+	struct fast_local_dead_code_elimination_pass : pass_interface<>
+	{
+		size_t pass( basic_block* blk, bool xblock = false ) override;
 	};
 };
