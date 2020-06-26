@@ -240,7 +240,7 @@ namespace vtil
 		// Constructor does not exist. Should be created either using
 		// ::begin(...) or ->fork(...).
 		//
-		static basic_block* begin( vip_t entry_vip );
+		static basic_block* begin( vip_t entry_vip, architecture_identifier arch_id = architecture_amd64 );
 		basic_block* fork( vip_t entry_vip );
 
 		// Helpers for the allocation of unique temporary registers.

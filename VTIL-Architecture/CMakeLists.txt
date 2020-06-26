@@ -6,6 +6,7 @@ add_library(${PROJECT_NAME} STATIC
     arch/instruction_set.hpp
     arch/operands.hpp
     arch/register_desc.hpp
+    arch/identifier.hpp
     misc/debug.hpp
     routine/basic_block.cpp
     routine/basic_block.hpp

@@ -11,6 +11,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="arch\identifier.hpp" />
     <ClInclude Include="arch\instruction_desc.hpp" />
     <ClInclude Include="arch\instruction_set.hpp" />
     <ClInclude Include="arch\operands.hpp" />

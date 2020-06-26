@@ -123,7 +123,7 @@ namespace vtil
 	//
 	routine* routine::clone() const
 	{
-		routine* copy = new routine{};
+		routine* copy = new routine{ this->arch_id };
 
 		// Acquire the routine mutex.
 		//

@@ -84,6 +84,9 @@
     <ClInclude Include="routine\call_convention.hpp">
       <Filter>Instruction Stream</Filter>
     </ClInclude>
+    <ClInclude Include="arch\identifier.hpp">
+      <Filter>Architecture</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="arch\instruction_desc.cpp">

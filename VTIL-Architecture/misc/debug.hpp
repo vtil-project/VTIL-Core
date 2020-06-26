@@ -149,13 +149,20 @@ namespace vtil::debug
 						bytes.insert( bytes.end(), bs, bs + it2->operands[ 0 ].size() );
 					}
 
-					// TODO: Remove forced amd64 disasm
-					// 
 					if ( bytes.size() )
 					{
-						auto dasm = amd64::disasm( bytes.data(), it->vip == invalid_vip ? 0 : it->vip, bytes.size() );
-						for ( auto& ins : dasm )
-							log<CON_YLW>( "; %s\n", ins );
+						if ( it.container->owner->arch_id == architecture_amd64 )
+						{
+							auto dasm = amd64::disasm( bytes.data(), it->vip == invalid_vip ? 0 : it->vip, bytes.size() );
+							for ( auto& ins : dasm )
+								log<CON_YLW>( "; %s\n", ins );
+						}
+						else
+						{
+							auto dasm = arm64::disasm( bytes.data(), it->vip == invalid_vip ? 0 : it->vip, bytes.size() );
+							for ( auto& ins : dasm )
+								log<CON_YLW>( "; %s\n", ins );
+						}
 					}
 					no_disasm = true;
 				}

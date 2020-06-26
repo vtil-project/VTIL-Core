@@ -33,7 +33,17 @@
 namespace vtil
 {
 	using magic_t = uint64_t;
-	static constexpr magic_t vtil_magic = 'LITV' | ( 0xDEAD0000ull << 32 );
+
+#pragma pack(push, 1)
+	struct file_header
+	{
+		uint32_t magic_1 = 'LITV';
+		architecture_identifier arch_id;
+		uint8_t zero_pad = 0;				// Intentionally left zero to make sure non-binary streams fail.
+		uint16_t magic_2 = 0xDEAD;
+	};
+	static_assert( sizeof( file_header ) == 8, "Invalid file header size." );
+#pragma pack(pop)
 
 	// Serialization of VTIL calling conventions.
 	//
@@ -124,9 +134,9 @@ namespace vtil
 	//
 	void serialize( std::ostream& out, const routine* rtn )
 	{
-		// Write the magic.
+		// Write the file header.
 		//
-		serialize( out, vtil_magic );
+		serialize( out, file_header{ .arch_id = rtn->arch_id } );
 
 		// Write the entry point VIP.
 		//
@@ -154,16 +164,18 @@ namespace vtil
 	}
 	void deserialize( std::istream& in, routine*& rtn )
 	{
-		// Read and validate the magic.
+		// Read and validate the file header.
 		//
-		magic_t magic;
-		deserialize( in, magic );
-		if ( magic != vtil_magic )
-			throw std::runtime_error( "VTIL magic mismatch." );
+		file_header hdr;
+		deserialize( in, hdr );
+		if ( hdr.magic_1 != file_header{}.magic_1 ||
+			 hdr.zero_pad != file_header{}.zero_pad ||
+			 hdr.magic_2 != file_header{}.magic_2 )
+			throw std::runtime_error( "Invalid VTIL header." );
 
 		// Create a new routine.
 		//
-		rtn = new routine;
+		rtn = new routine( hdr.arch_id );
 
 		// Read the entry point VIP.
 		//

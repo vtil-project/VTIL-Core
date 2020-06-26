@@ -31,18 +31,10 @@
 #include <vtil/utility>
 #include <vtil/amd64>
 #include <vtil/arm64>
+#include "identifier.hpp"
 
 namespace vtil
 {
-	// Architecture of the specific register.
-	//
-	enum register_arch : uint8_t
-	{
-		register_generic = 0,
-		register_amd64 =   0,
-		register_arm64 =   1
-	};
-
 	// Flags that describe the properties of the register.
 	//
 	enum register_flag : uint32_t
@@ -134,7 +126,7 @@ namespace vtil
 
 		// Construct a fully formed register.
 		//
-		register_desc( uint32_t flags, uint64_t id, bitcnt_t bit_count, bitcnt_t bit_offset = 0, uint64_t architecture = register_generic )
+		register_desc( uint32_t flags, uint64_t id, bitcnt_t bit_count, bitcnt_t bit_offset = 0, uint64_t architecture = 0 )
 			: flags( flags ), local_id( id ), bit_count( bit_count ), bit_offset( bit_offset ), architecture( architecture )
 		{ 
 			is_valid( true );
@@ -278,9 +270,9 @@ namespace vtil
 			{
 				switch ( architecture )
 				{
-					case register_amd64:
+					case architecture_amd64:
 						return prefix + amd64::name( amd64::extend( math::narrow_cast<uint8_t>( local_id ) ) ) + suffix;
-					case register_arm64:
+					case architecture_arm64:
 						return prefix + arm64::name( arm64::extend( math::narrow_cast<uint8_t>( local_id ) ) ) + suffix;
 					default:
 						unreachable();
@@ -320,11 +312,11 @@ namespace vtil
 		{
 			auto [base, offset, size] = amd64::resolve_mapping( value );
 			if ( base == X86_REG_RSP )
-				return { register_physical | register_stack_pointer, 0, size * 8, offset * 8        };
-			else if ( base == X86_REG_EFLAGS )
-				return { register_physical | register_flags,         0, size * 8, offset * 8        };
+				return { register_physical | register_stack_pointer, 0, size * 8, offset * 8            };
+			else if ( base == X86_REG_EFLAGS )													       
+				return { register_physical | register_flags,         0, size * 8, offset * 8            };
 			else
-				return { register_physical, ( uint64_t ) base, size * 8, offset * 8, register_amd64 };
+				return { register_physical, ( uint64_t ) base, size * 8, offset * 8, architecture_amd64 };
 		}
 	};
 	template<>
@@ -334,11 +326,11 @@ namespace vtil
 		{
 			auto [base, offset, size] = arm64::resolve_mapping( value );
 			if ( base == ARM64_REG_SP )
-				return { register_physical | register_stack_pointer, 0, size * 8, offset * 8        };
+				return { register_physical | register_stack_pointer, 0, size * 8, offset * 8            };
 			else if ( base == ARM64_REG_NZCV )
-				return { register_physical | register_flags,         0, size * 8, offset * 8        };
+				return { register_physical | register_flags,         0, size * 8, offset * 8            };
 			else
-				return { register_physical, ( uint64_t ) base, size * 8, offset * 8, register_arm64 };
+				return { register_physical, ( uint64_t ) base, size * 8, offset * 8, architecture_arm64 };
 		}
 	};
 

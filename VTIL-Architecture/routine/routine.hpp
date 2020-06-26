@@ -31,6 +31,7 @@
 #include <type_traits>
 #include <functional>
 #include <vtil/utility>
+#include "../arch/identifier.hpp"
 #include "instruction.hpp"
 #include "call_convention.hpp"
 
@@ -44,15 +45,22 @@ namespace vtil
 	//
 	struct routine
 	{
-		// This structure cannot be copied without a call to ::clone().
-		//
-		routine() = default;
-		routine( const routine& ) = delete;
-		routine& operator=( const routine& ) = delete;
-
 		// Mutex guarding the whole structure, more information on thread-safety can be found at basic_block.hpp.
 		//
 		mutable critical_section mutex;
+
+		// Physical architecture routine is bound to.
+		//
+		architecture_identifier arch_id;
+
+		// Constructed from architecture identifier.
+		//
+		routine( architecture_identifier arch_id ) : arch_id( arch_id ) {};
+
+		// This structure cannot be copied without a call to ::clone().
+		//
+		routine( const routine& ) = delete;
+		routine& operator=( const routine& ) = delete;
 
 		// Cache of explored blocks, mapping virtual instruction pointer to the basic block structure.
 		//

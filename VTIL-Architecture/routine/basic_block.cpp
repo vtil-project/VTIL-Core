@@ -26,14 +26,15 @@
 // POSSIBILITY OF SUCH DAMAGE.        
 //
 #include "basic_block.hpp"
-#include <vtil/amd64> // TODO: Remove me
+#include <vtil/amd64>
+#include <vtil/arm64>
 
 namespace vtil
 {
 	// Constructor does not exist. Should be created either using
 	// ::begin(...) or ->fork(...).
 	//
-	basic_block* basic_block::begin( vip_t entry_vip )
+	basic_block* basic_block::begin( vip_t entry_vip, architecture_identifier arch_id )
 	{
 		// Caller must provide a valid virtual instruction pointer.
 		//
@@ -46,7 +47,7 @@ namespace vtil
 
 		// Create the routine and assign this block as the entry-point
 		//
-		blk->owner = new routine;
+		blk->owner = new routine{ arch_id };
 		blk->owner->entry_point = blk;
 		blk->owner->explored_blocks[ entry_vip ] = blk;
 
@@ -143,7 +144,17 @@ namespace vtil
 	//
 	basic_block::iterator basic_block::insert( const const_iterator& it_const, instruction&& ins )
 	{
+		// Validate instruction.
+		//
 		ins.is_valid( true );
+
+		// Validate registers are of matching architecture.
+		//
+		for ( auto& op : ins.operands )
+		{
+			if ( op.is_register() && op.reg().is_physical() )
+				fassert( op.reg().architecture == owner->arch_id );
+		}
 
 		// If label stack is not empty and instruction has an invalid vip, use the last label pushed.
 		//
@@ -278,11 +289,17 @@ namespace vtil
 	//
 	basic_block* basic_block::vemits( const std::string& assembly )
 	{
-		// TODO: Remove forced amd64 mode
-		// 
-		auto res = amd64::assemble( assembly );
-		fassert( !res.empty() );
-		for ( uint8_t byte : res )
+		std::vector<uint8_t> bytes;
+
+		switch ( owner->arch_id )
+		{
+			case architecture_amd64: bytes = amd64::assemble( assembly ); break;
+			case architecture_arm64: bytes = arm64::assemble( assembly ); break;
+			default: unreachable();
+		}
+
+		fassert( !bytes.empty() );
+		for ( uint8_t byte : bytes )
 			vemit( byte );
 		return this;
 	}
