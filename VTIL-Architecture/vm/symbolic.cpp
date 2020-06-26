@@ -37,14 +37,14 @@ namespace vtil
 		register_desc full = { desc.flags, desc.local_id, size, 0, desc.architecture };
 
 		auto it = register_state.find( full );
-		if ( it == register_state.end() )
-		{
-			symbolic::expression exp = symbolic::variable{ full }.to_expression( false );
-			if ( desc.bit_offset ) exp = exp >> desc.bit_offset;
-			return exp.resize( desc.bit_count );
-		}
+		symbolic::expression exp = it == register_state.end()
+			? symbolic::variable{ full }.to_expression( false )
+			: it->second;
 
-		return ( it->second >> desc.bit_offset ).resize( desc.bit_count );
+		if ( lazy_io ) exp.make_lazy();
+		if ( desc.bit_offset ) exp = exp >> desc.bit_offset;
+		exp.resize( desc.bit_count );
+		return lazy_io ? exp : exp.simplify();
 	}
 
 	// Writes to the register.
@@ -72,13 +72,30 @@ namespace vtil
 	symbolic::expression symbolic_vm::read_memory( const symbolic::expression& pointer, size_t byte_count )
 	{
 		bitcnt_t bcnt = math::narrow_cast<bitcnt_t>( byte_count * 8 );
-		return memory_state.read_v( pointer, bcnt );
+		symbolic::expression exp = memory_state.read_v( 
+			pointer.simplify(), 
+			bcnt 
+		);
+		return lazy_io ? exp.make_lazy() : exp.simplify();
 	}
 
 	// Writes the given expression to the memory.
 	//
 	void symbolic_vm::write_memory( const symbolic::expression& pointer, symbolic::expression value )
 	{
-		memory_state.write( pointer, value.resize( ( value.size() + 7 ) & ~7 ) );
+		memory_state.write( 
+			pointer.simplify(), 
+			value.resize( ( value.size() + 7 ) & ~7 ) 
+		);
+	}
+
+	// Override execute to enforce lazyness.
+	//
+	bool symbolic_vm::execute( const instruction& ins )
+	{
+		lazy_io = true;
+		bool state = vm_interface::execute( ins );
+		lazy_io = false;
+		return state;
 	}
 };
