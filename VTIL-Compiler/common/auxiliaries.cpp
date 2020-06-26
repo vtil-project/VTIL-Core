@@ -494,8 +494,9 @@ namespace vtil::optimizer::aux
 		//
 		const auto trace = [ & ] ( symbolic::variable&& lookup )
 		{
-			auto exp = tracer->trace( std::move( lookup ) );
-			if ( xblock ) exp = tracer->rtrace_exp( std::move( exp ) );
+			auto exp = xblock
+				? tracer->rtrace( std::move( lookup ) )
+				: tracer->trace( std::move( lookup ) );
 			if ( pack )   exp = symbolic::variable::pack_all( exp );
 			return exp;
 		};

@@ -273,7 +273,7 @@ namespace vtil::symbolic
 				// Recurse, and indicate success.
 				//
 				simplify_expression( exp, pretty, max_depth - 1 );
-				exp_new->simplify_hint = true;
+				( +exp )->simplify_hint = true;
 				cache_entry = *exp;
 				success_flag = true;
 				return true;

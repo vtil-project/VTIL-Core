@@ -107,6 +107,26 @@ namespace vtil
 		auto it = cache.find( lookup );
 		if ( it != cache.end() )
 		{
+			// If recursive flag is set, fix the expression:
+			//
+			if ( recursive_flag )
+			{
+				symbolic::expression result = *it->second;
+				lock = {};
+
+				result.transform( [ & ] ( symbolic::expression& exp )
+				{
+					if ( exp.is_variable() )
+					{
+						auto& var = exp.uid.get<symbolic::variable>();
+						if ( !var.at.is_begin() )
+							exp = tracer::trace( var );
+					}
+				} );
+
+				return result;
+			}
+
 			const symbolic::expression& result = *it->second;
 #if VTIL_OPT_TRACE_VERBOSE
 			// Log result.
