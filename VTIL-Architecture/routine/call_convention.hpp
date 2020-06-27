@@ -26,7 +26,7 @@
 // POSSIBILITY OF SUCH DAMAGE.        
 //
 #pragma once
-#include <set>
+#include <vector>
 #include "../arch/register_desc.hpp"
 
 namespace vtil
@@ -39,17 +39,17 @@ namespace vtil
 		// List of registers that may change as a result of the routine execution but
 		// will be considered trashed.
 		//
-		std::set<register_desc> volatile_registers = {};
+		std::vector<register_desc> volatile_registers = {};
 
 		// List of regsiters that this routine wlil read from as a way of taking arguments.
 		// - Any additional arguments will be passed at [$sp + shadow_space + n*8]
 		//
-		std::set<register_desc> param_registers = {};
+		std::vector<register_desc> param_registers = {};
 
 		// List of registers that are used to store the return value of the routine and
 		// thus will change during routine execution but must be considered "used" by return.
 		//
-		std::set<register_desc> retval_registers = {};
+		std::vector<register_desc> retval_registers = {};
 
 		// Register that is generally used to store the stack frame if relevant.
 		//
