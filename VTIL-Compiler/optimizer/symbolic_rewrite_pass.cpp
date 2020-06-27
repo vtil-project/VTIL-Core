@@ -133,7 +133,7 @@ namespace vtil::optimizer
 			{
 				// If value is unchanged, skip.
 				//
-				auto k = pair.first; auto v = pair.second;
+				auto k = pair.first; auto v = pair.second.simplify();
 				symbolic::expression v0 = symbolic::make_register_ex( k );
 				if ( v0.equals( v ) )
 					continue;
@@ -141,12 +141,6 @@ namespace vtil::optimizer
 				// If register value is not used after this instruction, skip from emitted state.
 				//
 				if ( !aux::is_used( { std::prev( limit ), k }, false, &ctracer ) )
-					continue;
-
-				// Simplify value and check unchanged-state again.
-				//
-				v.simplify();
-				if ( v0.equals( v ) )
 					continue;
 				
 				// Try minimizing expression size.
