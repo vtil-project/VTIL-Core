@@ -165,6 +165,7 @@
     <ClInclude Include="util\reverse_iterator.hpp" />
     <ClInclude Include="util\sinkhole.hpp" />
     <ClInclude Include="util\stack_container.hpp" />
+    <ClInclude Include="util\tuple_visit.hpp" />
     <ClInclude Include="util\zip.hpp" />
     <ClInclude Include="util\variant.hpp" />
   </ItemGroup>

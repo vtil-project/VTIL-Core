@@ -56,6 +56,7 @@ add_library(${PROJECT_NAME} STATIC
     util/zip.hpp
     util/colony.hpp
     util/object_pool.hpp
+    util/tuple_visit.hpp
 )
 
 target_include_directories(${PROJECT_NAME} PUBLIC includes)

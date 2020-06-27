@@ -184,6 +184,9 @@
     <ClInclude Include="util\object_pool.hpp">
       <Filter>Utility</Filter>
     </ClInclude>
+    <ClInclude Include="util\tuple_visit.hpp">
+      <Filter>Utility</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="io\logger.cpp">
