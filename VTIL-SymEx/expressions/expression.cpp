@@ -79,18 +79,6 @@ namespace vtil::symbolic
 		//
 		if ( value.size() == new_size ) return *this;
 
-		// If expression is lazy, delay it.
-		//
-		if ( is_lazy )
-		{
-			if ( signed_cast )
-				*this = __cast( *this, new_size );
-			else
-				*this = __ucast( *this, new_size );
-			update( false );
-			return *this;
-		}
-
 		// Try to convert signed casts into unsigned ones:
 		//
 		if ( signed_cast )
@@ -127,6 +115,25 @@ namespace vtil::symbolic
 				//
 				return *this;
 			}*/
+		}
+
+		// If expression is lazy, delay it.
+		//
+		if ( is_lazy )
+		{
+			if ( is_constant() )
+			{
+				value = value.resize( new_size, signed_cast );
+			}
+			else
+			{
+				if ( signed_cast )
+					*this = __cast( *this, new_size );
+				else
+					*this = __ucast( *this, new_size );
+			}
+			update( false );
+			return *this;
 		}
 
 		switch ( op )
