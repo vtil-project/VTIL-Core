@@ -223,7 +223,7 @@ namespace vtil::math
         {   +1,       false,    2,    false,          "u<",       "uless",       1      },
     };
     static_assert( std::size( descriptors ) == size_t( operator_id::max ), "Operator descriptor table is invalid." );
-    static const operator_desc* descriptor_of( operator_id id ) 
+    static constexpr const operator_desc* descriptor_of( operator_id id ) 
     { 
         return ( operator_id::invalid < id && id < operator_id::max ) ? &descriptors[ ( size_t ) id ] : nullptr; 
     }

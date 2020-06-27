@@ -58,25 +58,25 @@ namespace vtil::math
 
         // Default constructor and the constructor for constant values.
         //
-        operable() = default;
+        constexpr operable() = default;
         template<typename T = uint64_t, std::enable_if_t<std::is_integral_v<T>, int> = 0>
-        operable( T value, bitcnt_t bit_count = sizeof( T ) * 8 ) : value( uint64_t( value ), bit_count ) {}
+        constexpr operable( T value, bitcnt_t bit_count = sizeof( T ) * 8 ) : value( uint64_t( value ), bit_count ) {}
 
         // Gets the value represented, and nullopt if value has unknown bits.
         //
         template<typename type>
-        std::optional<type> get() const { return value.get<type>(); }
+        constexpr std::optional<type> get() const { return value.get<type>(); }
         template<bool as_signed = false, typename type = std::conditional_t<as_signed, int64_t, uint64_t>>
-        std::optional<type> get() const { return value.get<type>(); }
+        constexpr std::optional<type> get() const { return value.get<type>(); }
 
         // Redirect certain helpers to bit_vector.
         //
-        bitcnt_t size() const { return value.size(); }
-        uint64_t known_mask() const { return value.known_mask(); }
-        uint64_t unknown_mask() const { return value.unknown_mask(); }
-        uint64_t known_one() const { return value.known_one(); }
-        uint64_t known_zero() const { return value.known_zero(); }
-        bool is_constant() const { return value.is_known(); }
+        constexpr bitcnt_t size() const { return value.size(); }
+        constexpr uint64_t known_mask() const { return value.known_mask(); }
+        constexpr uint64_t unknown_mask() const { return value.unknown_mask(); }
+        constexpr uint64_t known_one() const { return value.known_one(); }
+        constexpr uint64_t known_zero() const { return value.known_zero(); }
+        constexpr bool is_constant() const { return value.is_known(); }
 
         // Resizes the constant, must be overriden by the base type to handle unknowns.
         //
@@ -116,7 +116,7 @@ namespace vtil::math
 
     // Can be overriden externally to allow aliases.
     //
-    template<typename T1>
+    template<typename T1, typename = void>
     struct resolve_alias { using type = T1; };
 
     // Removes all qualifiers and resolves the base if aliased.
@@ -126,17 +126,16 @@ namespace vtil::math
 
     // Returns the result of the cross-operation between two types, void if not cross-operable.
     //
-    template<typename T1, typename T2,
-        typename base_type_1 = strip_operable_t<T1>,
-        typename base_type_2 = strip_operable_t<T2>,
-        std::enable_if_t<is_xoperable<base_type_1, base_type_2>(), int> = 0
-    >
-    struct xop_result
+    template<typename T1, typename T2, typename = void>
+    struct xop_result;
+
+    template<typename T1, typename T2>
+    struct xop_result<T1, T2, std::enable_if_t<is_xoperable<strip_operable_t<T1>, strip_operable_t<T2>>()>>
     {
         using type = std::conditional_t<
-            is_custom_operable_v<base_type_1>,
-            base_type_1,
-            base_type_2
+            is_custom_operable_v<strip_operable_t<T1>>,
+            strip_operable_t<T1>,
+            strip_operable_t<T2>
         >;
     };
 
@@ -173,8 +172,8 @@ namespace vtil::math
 // Operations with operable types
 //
 #define DEFINE_OPERATION(...)																				\
-template<typename T1, typename T2 = T1, typename result_t = typename vtil::math::xop_result<T1, T2>::type>	\
-static result_t __VA_ARGS__
+template<typename T1, typename T2 = int, typename result_t = typename vtil::math::xop_result<T1, T2>::type>	\
+static constexpr result_t __VA_ARGS__
 
 #undef __max // Seriously stdlib?
 #undef __min
@@ -200,12 +199,12 @@ DEFINE_OPERATION( udiv( T1&& a, T2&& b )             { return { std::forward<T1>
 DEFINE_OPERATION( urem( T1&& a, T2&& b )             { return { std::forward<T1>( a ), vtil::math::operator_id::uremainder, std::forward<T2>( b ) }; }                                          );
 DEFINE_OPERATION( __ucast( T1&& a, T2&& b )          { return { std::forward<T1>( a ), vtil::math::operator_id::ucast, std::forward<T2>( b ) }; }                                               );
 DEFINE_OPERATION( __cast( T1&& a, T2&& b )           { return { std::forward<T1>( a ), vtil::math::operator_id::cast, std::forward<T2>( b ) }; }                                                );
-DEFINE_OPERATION( __popcnt( T1&& a )                 { return { vtil::math::operator_id::popcnt, std::forward<T2>( a ) }; }                                                                     );
-DEFINE_OPERATION( __bsf( T1&& a )                    { return { vtil::math::operator_id::bitscan_fwd, std::forward<T2>( a ) }; }                                                                );
-DEFINE_OPERATION( __bsr( T1&& a )                    { return { vtil::math::operator_id::bitscan_rev, std::forward<T2>( a ) }; }                                                                );
+DEFINE_OPERATION( __popcnt( T1&& a )                 { return { vtil::math::operator_id::popcnt, std::forward<T1>( a ) }; }                                                                     );
+DEFINE_OPERATION( __bsf( T1&& a )                    { return { vtil::math::operator_id::bitscan_fwd, std::forward<T1>( a ) }; }                                                                );
+DEFINE_OPERATION( __bsr( T1&& a )                    { return { vtil::math::operator_id::bitscan_rev, std::forward<T1>( a ) }; }                                                                );
 DEFINE_OPERATION( __bt( T1&& a, T2&& b )             { return { std::forward<T1>( a ), vtil::math::operator_id::bit_test, std::forward<T2>( b ) }; }                                            );
-DEFINE_OPERATION( __mask( T1&& a )                   { return { vtil::math::operator_id::mask, std::forward<T2>( a ) }; }                                                                       );
-DEFINE_OPERATION( __bcnt( T1&& a )                   { return { vtil::math::operator_id::bit_count, std::forward<T2>( a ) }; }                                                                  );
+DEFINE_OPERATION( __mask( T1&& a )                   { return { vtil::math::operator_id::mask, std::forward<T1>( a ) }; }                                                                       );
+DEFINE_OPERATION( __bcnt( T1&& a )                   { return { vtil::math::operator_id::bit_count, std::forward<T1>( a ) }; }                                                                  );
 DEFINE_OPERATION( __if( T1&& a, T2&& b )             { return { std::forward<T1>( a ), vtil::math::operator_id::value_if, std::forward<T2>( b ) }; }                                            );
 DEFINE_OPERATION( __max( T1&& a, T2&& b )            { return { std::forward<T1>( a ), vtil::math::operator_hint_sign<T1,T2>(vtil::math::operator_id::max_value), std::forward<T2>( b ) }; }    );
 DEFINE_OPERATION( __min( T1&& a, T2&& b )            { return { std::forward<T1>( a ), vtil::math::operator_hint_sign<T1,T2>(vtil::math::operator_id::min_value), std::forward<T2>( b ) }; }    );
