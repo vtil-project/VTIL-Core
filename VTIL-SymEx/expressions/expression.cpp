@@ -491,6 +491,20 @@ namespace vtil::symbolic
 					value = math::evaluate_partial( op, lhs->value, rhs->value );
 				}
 
+				// Speculative simplification, if value is known replace with a constant, this 
+				// is a major performance boost with lazy expressions as child copies and large 
+				// destruction chains are completely avoided. Lazy expressions are meant to
+				// delay complex simplification rather than block all simplification so this
+				// step is totally fine.
+				//
+				if ( ( is_lazy || auto_simplify ) && value.is_known() )
+				{
+					lhs = {}; rhs = {};
+					op = math::operator_id::invalid;
+					is_lazy = false;
+					return update( false );
+				}
+
 				// Handle size mismatches.
 				//
 				const auto optimistic_size = [ ] ( symbolic::expression::reference& lhs,
