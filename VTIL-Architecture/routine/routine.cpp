@@ -61,8 +61,7 @@ namespace vtil
 
 			// Forward propagate.
 			//
-			std::array clone = { path_cache[ 0 ], path_cache[ 1 ] };
-			for ( auto& [prev, level2] : clone[ 0 ] )
+			for ( auto& [prev, level2] : path_cache[ 0 ] )
 			{
 				for ( auto& [next, paths] : level2 )
 				{
@@ -76,7 +75,7 @@ namespace vtil
 			}
 			// Backwards propagate.
 			//
-			for ( auto& [prev, level2] : clone[ 1 ] )
+			for ( auto& [prev, level2] : path_cache[ 1 ] )
 			{
 				for ( auto& [next, paths] : level2 )
 				{
