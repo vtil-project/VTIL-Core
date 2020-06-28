@@ -32,9 +32,8 @@
 
 namespace vtil::symbolic::directive
 {
-	extern const std::vector<std::pair<instance::reference, instance::reference>> boolean_simplifiers;
-	extern const std::vector<std::pair<instance::reference, instance::reference>> boolean_joiners;
-
+	const dynamic_directive_table& get_boolean_joiners( math::operator_id op );
+	const dynamic_directive_table& get_boolean_simplifiers( math::operator_id op );
     /*
     Auto generated using:
 

@@ -34,7 +34,7 @@
 // Determine whether we should log the details of the simplification process.
 //
 #ifndef VTIL_SYMEX_SIMPLIFY_VERBOSE
-	#define VTIL_SYMEX_SIMPLIFY_VERBOSE 0
+	#define VTIL_SYMEX_SIMPLIFY_VERBOSE 1
 #endif
 
 namespace vtil::symbolic

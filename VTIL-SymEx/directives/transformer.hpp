@@ -40,7 +40,7 @@ namespace vtil::symbolic
 	//   or a null reference if it would fail.
 	//
 	expression::reference translate( const directive::symbol_table_t& sym,
-									 const directive::instance::reference& dir,
+									 const directive::instance* dir,
 									 bitcnt_t bit_cnt,
 									 bool speculative_condition,
 									 int64_t max_depth );
@@ -49,7 +49,7 @@ namespace vtil::symbolic
 	// and returns the first instance that matches query.
 	//
 	expression::reference transform( const expression::reference& exp, 
-									 const directive::instance::reference& from, const directive::instance::reference& to,
+									 const directive::instance* from, const directive::instance* to,
 									 const expression_filter_t& filter,
 									 int64_t max_depth );
 };

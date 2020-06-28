@@ -42,33 +42,6 @@ namespace vtil::symbolic
 		}
 	};
 
-
-	// Implement lookup-table based dynamic tables.
-	//
-	using static_directive_table_entry =  std::pair<directive::instance::reference, directive::instance::reference>;
-	using dynamic_directive_table_entry = std::pair<const directive::instance*,     const directive::instance*>;
-
-	using dynamic_directive_table =      std::vector<dynamic_directive_table_entry>;
-	using organized_directive_table =    std::array<dynamic_directive_table, ( size_t ) math::operator_id::max>;
-
-	template<typename T>
-	static organized_directive_table build_dynamic_table( const T& container )
-	{
-		organized_directive_table table;
-		for ( auto [table, op] : zip( table, iindices() ) )
-			for( auto& directive : container )
-				if ( directive.first->op == ( math::operator_id )op )
-					table.emplace_back( directive.first.get(), directive.second.get() );
-		return table;
-	};
-
-	static auto& get_boolean_joiners( math::operator_id op ) { static auto tbl = build_dynamic_table( directive::boolean_joiners ); return tbl[ ( size_t ) op ]; }
-	static auto& get_pack_descriptors( math::operator_id op ) { static auto tbl = build_dynamic_table( directive::pack_descriptors ); return tbl[ ( size_t ) op ]; }
-	static auto& get_join_descriptors( math::operator_id op ) { static auto tbl = build_dynamic_table( directive::join_descriptors ); return tbl[ ( size_t ) op ]; }
-	static auto& get_unpack_descriptors( math::operator_id op ) { static auto tbl = build_dynamic_table( directive::unpack_descriptors ); return tbl[ ( size_t ) op ]; }
-	static auto& get_boolean_simplifiers( math::operator_id op ) { static auto tbl = build_dynamic_table( directive::boolean_simplifiers ); return tbl[ ( size_t ) op ]; }
-	static auto& get_universal_simplifiers( math::operator_id op ) { static auto tbl = build_dynamic_table( directive::universal_simplifiers ); return tbl[ ( size_t ) op ]; }
-
 	// Simplifier cache and its accessor.
 	//
 	static thread_local simplifier_cache_t simplifier_cache;
@@ -107,14 +80,14 @@ namespace vtil::symbolic
 		
 		// Enumerate each pack descriptor:
 		//
-		for ( auto [dir_src, dir_dst] : get_pack_descriptors( exp->op )  )
+		for ( auto [dir_src, dir_dst] : directive::get_pack_descriptors( exp->op )  )
 		{
 			// If we can transform the expression by the directive set:
 			//
-			if ( auto exp_new = transform( exp, *dir_src, *dir_dst, {}, -1 ) )
+			if ( auto exp_new = transform( exp, dir_src, dir_dst, {}, -1 ) )
 			{
 #if VTIL_SYMEX_SIMPLIFY_VERBOSE
-				log<CON_PRP>( "[Pack] %s => %s\n", *dir_src, *dir_dst );
+				log<CON_PRP>( "[Pack] %s => %s\n", dir_src, dir_dst );
 				log<CON_GRN>( "= %s\n", *exp );
 #endif
 				exp = exp_new;
@@ -368,14 +341,14 @@ namespace vtil::symbolic
 
 		// Enumerate each universal simplifier:
 		//
-		for ( auto [dir_src, dir_dst] : get_universal_simplifiers( exp->op ) )
+		for ( auto [dir_src, dir_dst] : directive::get_universal_simplifiers( exp->op ) )
 		{
 			// If we can transform the expression by the directive set:
 			//
-			if ( auto exp_new = transform( exp, *dir_src, *dir_dst, {}, max_depth ) )
+			if ( auto exp_new = transform( exp, dir_src, dir_dst, {}, max_depth ) )
 			{
 #if VTIL_SYMEX_SIMPLIFY_VERBOSE
-				log<CON_GRN>( "[Simplify] %s => %s\n", *dir_src, *dir_dst );
+				log<CON_GRN>( "[Simplify] %s => %s\n", dir_src->to_string(), dir_dst->to_string() );
 				log<CON_GRN>( "= %s [By simplify directive]\n", *exp_new );
 #endif
 				// Recurse, set the hint and return the simplified instance.
@@ -395,14 +368,14 @@ namespace vtil::symbolic
 		{
 			// Enumerate each universal simplifier:
 			//
-			for ( auto [dir_src, dir_dst] : get_boolean_simplifiers( exp->op ) )
+			for ( auto [dir_src, dir_dst] : directive::get_boolean_simplifiers( exp->op ) )
 			{
 				// If we can transform the expression by the directive set:
 				//
-				if ( auto exp_new = transform( exp, *dir_src, *dir_dst, {}, max_depth ) )
+				if ( auto exp_new = transform( exp, dir_src, dir_dst, {}, max_depth ) )
 				{
 #if VTIL_SYMEX_SIMPLIFY_VERBOSE
-					log<CON_GRN>( "[Simplify] %s => %s\n", *dir_src, *dir_dst );
+					log<CON_GRN>( "[Simplify] %s => %s\n", dir_src->to_string(), dir_dst->to_string() );
 					log<CON_GRN>( "= %s [By simplify directive]\n", *exp_new );
 #endif
 					// Recurse, set the hint and return the simplified instance.
@@ -419,14 +392,14 @@ namespace vtil::symbolic
 
 		// Enumerate each join descriptor:
 		//
-		for ( auto [dir_src, dir_dst] : get_join_descriptors( exp->op ) )
+		for ( auto [dir_src, dir_dst] : directive::get_join_descriptors( exp->op ) )
 		{
 			// If we can transform the expression by the directive set:
 			//
-			if ( auto exp_new = transform( exp, *dir_src, *dir_dst, filter, max_depth ) )
+			if ( auto exp_new = transform( exp, dir_src, dir_dst, filter, max_depth ) )
 			{
 #if VTIL_SYMEX_SIMPLIFY_VERBOSE
-				log<CON_GRN>( "[Join] %s => %s\n", *dir_src, *dir_dst );
+				log<CON_GRN>( "[Join] %s => %s\n", dir_src->to_string(), dir_dst->to_string() );
 				log<CON_GRN>( "= %s [By join directive]\n", *exp_new );
 				log<CON_YLW>( "Complexity: %lf => %lf\n", exp->complexity, exp_new->complexity );
 #endif
@@ -447,14 +420,14 @@ namespace vtil::symbolic
 		{
 			// Enumerate each join descriptor:
 			//
-			for ( auto [dir_src, dir_dst] : get_boolean_joiners( exp->op ) )
+			for ( auto [dir_src, dir_dst] : directive::get_boolean_joiners( exp->op ) )
 			{
 				// If we can transform the expression by the directive set:
 				//
-				if ( auto exp_new = transform( exp, *dir_src, *dir_dst, filter, max_depth ) )
+				if ( auto exp_new = transform( exp, dir_src, dir_dst, filter, max_depth ) )
 				{
 #if VTIL_SYMEX_SIMPLIFY_VERBOSE
-					log<CON_GRN>( "[Join] %s => %s\n", *dir_src, *dir_dst );
+					log<CON_GRN>( "[Join] %s => %s\n", dir_src->to_string(), dir_dst->to_string() );
 					log<CON_GRN>( "= %s [By join directive]\n", *exp_new );
 					log<CON_YLW>( "Complexity: %lf => %lf\n", exp->complexity, exp_new->complexity );
 #endif
@@ -476,15 +449,15 @@ namespace vtil::symbolic
 		{
 			// Enumerate each unpack descriptor:
 			//
-			for ( auto [dir_src, dir_dst] : get_unpack_descriptors( exp->op ) )
+			for ( auto [dir_src, dir_dst] : directive::get_unpack_descriptors( exp->op ) )
 			{
 				// If we can transform the expression by the directive set:
 				//
-				if ( auto exp_new = transform( exp, *dir_src, *dir_dst, 
+				if ( auto exp_new = transform( exp, dir_src, dir_dst, 
 					 [ & ] ( auto& exp_new ) { simplify_expression( exp_new, true, max_depth - 1 ); return exp_new->complexity < exp->complexity; }, max_depth ) )
 				{
 #if VTIL_SYMEX_SIMPLIFY_VERBOSE
-					log<CON_YLW>( "[Unpack] %s => %s\n", *dir_src, *dir_dst );
+					log<CON_YLW>( "[Unpack] %s => %s\n", dir_src->to_string(), dir_dst->to_string() );
 					log<CON_GRN>( "= %s [By unpack directive]\n", *exp_new );
 #endif
 

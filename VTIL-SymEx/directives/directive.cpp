@@ -29,14 +29,6 @@
 
 namespace vtil::symbolic::directive
 {
-	// Constructor for directive representing the result of an unary operator.
-	//
-	instance::instance( math::operator_id op, const instance& e1 ) : rhs( e1 ), op( op ) {}
-
-	// Constructor for directive representing the result of a binary operator.
-	//
-	instance::instance( const instance& e1, math::operator_id op, const instance& e2 ) : lhs( e1 ), rhs( e2 ), op( op ) {}
-
 	// Enumerates each unique variable.
 	//
 	void instance::enum_variables( const std::function<void( const instance& )>& fn, std::unordered_set<const char*>* s ) const
@@ -44,8 +36,8 @@ namespace vtil::symbolic::directive
 		std::unordered_set<const char*> tmp;
 		if ( !s ) s = &tmp;
 
-		if ( lhs ) lhs->enum_variables( fn, s );
-		if ( rhs ) rhs->enum_variables( fn, s );
+		if ( lhs() ) lhs()->enum_variables( fn, s );
+		if ( rhs() ) rhs()->enum_variables( fn, s );
 		else if ( !is_constant() )
 		{
 			if ( s->find( id ) == s->end() )
@@ -65,11 +57,11 @@ namespace vtil::symbolic::directive
 		// Handle expression operators.
 		//
 		if ( auto desc = math::descriptor_of( op ) )
-			return desc->to_string( lhs ? lhs->to_string() : "", rhs->to_string() );
+			return desc->to_string( lhs() ? lhs()->to_string() : "", rhs()->to_string() );
 
 		// Handle directive operators.
 		//
-		return directive_op_desc{ op }.to_string( lhs ? lhs->to_string() : "", rhs->to_string() );
+		return directive_op_desc{ op }.to_string( lhs() ? lhs()->to_string() : "", rhs()->to_string() );
 	}
 
 	// Simple equivalence check.
@@ -88,10 +80,10 @@ namespace vtil::symbolic::directive
 
 		// Strict operand checking (Commutative rule not applied).
 		//
-		if ( !rhs ) return !o.rhs;
-		else if ( !o.rhs || !rhs->equals( *o.rhs ) ) return false;
-		if ( !lhs ) return !o.lhs;
-		else if ( !o.lhs || !lhs->equals( *o.lhs ) ) return false;
+		if ( !rhs() ) return !o.rhs();
+		else if ( !o.rhs() || !rhs()->equals( *o.rhs() ) ) return false;
+		if ( !lhs() ) return !o.lhs();
+		else if ( !o.lhs() || !lhs()->equals( *o.lhs() ) ) return false;
 		return true;
 	}
 };
