@@ -112,6 +112,8 @@
     <ClCompile Include="optimizer\bblock_extension_pass.cpp" />
     <ClCompile Include="optimizer\branch_correction_pass.cpp" />
     <ClCompile Include="optimizer\dead_code_elimination_pass.cpp" />
+    <ClCompile Include="optimizer\fast_dead_code_elimination_pass.cpp" />
+    <ClCompile Include="optimizer\fast_propagation_pass.cpp" />
     <ClCompile Include="optimizer\istack_ref_substitution_pass.cpp" />
     <ClCompile Include="optimizer\mov_propagation_pass.cpp" />
     <ClCompile Include="optimizer\register_renaming_pass.cpp" />
@@ -126,6 +128,8 @@
     <ClInclude Include="optimizer\bblock_extension_pass.hpp" />
     <ClInclude Include="optimizer\branch_correction_pass.hpp" />
     <ClInclude Include="optimizer\dead_code_elimination_pass.hpp" />
+    <ClInclude Include="optimizer\fast_dead_code_elimination_pass.hpp" />
+    <ClInclude Include="optimizer\fast_propagation_pass.hpp" />
     <ClInclude Include="optimizer\istack_ref_substitution_pass.hpp" />
     <ClInclude Include="optimizer\mov_propagation_pass.hpp" />
     <ClInclude Include="optimizer\register_renaming_pass.hpp" />

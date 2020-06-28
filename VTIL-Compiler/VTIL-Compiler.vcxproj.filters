@@ -31,6 +31,8 @@
     <ClCompile Include="optimizer\symbolic_rewrite_pass.cpp">
       <Filter>Optimization Passes</Filter>
     </ClCompile>
+    <ClCompile Include="optimizer\fast_dead_code_elimination_pass.cpp" />
+    <ClCompile Include="optimizer\fast_propagation_pass.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Includes">
@@ -80,6 +82,8 @@
     <ClInclude Include="optimizer\symbolic_rewrite_pass.hpp">
       <Filter>Optimization Passes</Filter>
     </ClInclude>
+    <ClInclude Include="optimizer\fast_dead_code_elimination_pass.hpp" />
+    <ClInclude Include="optimizer\fast_propagation_pass.hpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="VTIL-Compiler.licenseheader" />

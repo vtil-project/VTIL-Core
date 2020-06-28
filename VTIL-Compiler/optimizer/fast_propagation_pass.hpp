@@ -32,10 +32,12 @@
 
 namespace vtil::optimizer
 {
-	// Fast but pessimistic local memory propagation pass. Does not eliminate stores; instead, forwards the stored value when possible.
-	//
+	struct fast_reg_propagation_pass : pass_interface<>
+	{
+		size_t pass( basic_block* blk, bool xblock = false ) override;
+	};
 
-	struct fast_propagation_pass : pass_interface<>
+	struct fast_mem_propagation_pass : pass_interface<>
 	{
 		size_t pass( basic_block* blk, bool xblock = false ) override;
 	};
