@@ -30,7 +30,6 @@
 #include <vtil/utility>
 #include <type_traits>
 #include <unordered_set>
-#include <variant>
 
 namespace vtil::symbolic::directive
 {
@@ -146,38 +145,45 @@ namespace vtil::symbolic::directive
 
     // Operable directive instance, used to describe a simplifier directive.
     //
-	struct instance : math::operable<void>
-	{
-		// If symbolic variable, the identifier of the variable
-		// and type of expressions it can match.
-		//
-		const char* id = nullptr;
-		matching_type mtype = match_any;
-		int lookup_index = 0;
+    struct instance : math::operable<instance>
+    {
+        using reference = shared_reference<instance>;
 
-		// The operation we're matching and the operands.
-		//
-		math::operator_id op = math::operator_id::invalid;
-
-		// Default/copy/move constructors.
-		//
-		constexpr instance() {};
-		constexpr instance( instance&& o ) = default;
-		constexpr instance( const instance& o ) = default;
-		constexpr instance& operator=( instance&& o ) = default;
-		constexpr instance& operator=( const instance& o ) = default;
-		
-		// Variable constructor.
+        // If symbolic variable, the identifier of the variable
+        // and type of expressions it can match.
         //
-		constexpr instance( int64_t c )
-			: operable( c ) { }
-		constexpr instance( const char* id, int lookup_index, matching_type mtype = match_any )
-			: id( id ), lookup_index( lookup_index ), mtype( mtype ) { }
+        const char* id = nullptr;
+        matching_type mtype = match_any;
+        int lookup_index = 0;
 
-        // Virtual function to return operands, nullptr by default.
+        // The operation we're matching and the operands.
         //
-		virtual const instance* lhs() const { return nullptr; }
-		virtual const instance* rhs() const { return nullptr; }
+        math::operator_id op = math::operator_id::invalid;
+        reference lhs = {};
+        reference rhs = {};
+
+        // Default/copy/move constructors.
+        //
+        instance() {};
+        instance( instance&& ) = default;
+        instance( const instance& ) = default;
+        instance& operator=( instance&& o ) = default;
+        instance& operator=( const instance& o ) = default;
+
+        // Variable constructor.
+        //
+        template<typename T = uint64_t, std::enable_if_t<std::is_integral_v<T>, int> = 0>
+        instance( T value ) : operable( int64_t( value ) ) {}
+        instance( const char* id, int lookup_index, matching_type mtype = match_any ) : 
+            id( id ), lookup_index( lookup_index ), mtype( mtype ) { }
+
+        // Constructor for directive representing the result of an unary operator.
+        //
+        instance( math::operator_id _op, const instance& e1 );
+
+        // Constructor for directive representing the result of a binary operator.
+        //
+        instance( const instance& e1, math::operator_id _op, const instance& e2 );
 
         // Enumerates each unique variable.
         //
@@ -190,39 +196,7 @@ namespace vtil::symbolic::directive
         // Simple equivalence check.
         //
         bool equals( const instance& o ) const;
-	};
-
-    template<typename TL = instance, typename TR = instance>
-    struct operation : instance
-	{
-		// Inlined values for LHS and RHS.
-		//
-		TL inline_lhs;
-		TR inline_rhs;
-
-		const instance* lhs() const override { return ( inline_lhs.op != math::operator_id::invalid || inline_lhs.id || inline_lhs.value.is_known() ) ? &inline_lhs : nullptr; }
-		const instance* rhs() const override { return &inline_rhs; }
-
-		// Default/copy/move constructors.
-		//
-		constexpr operation() {};
-		constexpr operation( operation&& o ) = default;
-		constexpr operation( const operation& o ) = default;
-		constexpr operation& operator=( operation&& o ) = default;
-		constexpr operation& operator=( const operation & o ) = default;
-
-		// Variable constructor.
-        //
-		constexpr operation( TL lhs, math::operator_id op, TR rhs )
-			: inline_lhs( lhs ), inline_rhs( rhs )
-		{
-			instance::op = op;
-		}
-		constexpr operation( math::operator_id op, TR rhs ) : inline_lhs( {} ), inline_rhs( rhs )
-		{
-			instance::op = op;
-		}
-	};
+    };
 
     /*
        The encoding below must be used when saving this file:
@@ -245,21 +219,21 @@ namespace vtil::symbolic::directive
 
     // Symbolic variables to be used in rule creation:
     //
-    static constexpr instance A = { "α", 0 };
-    static constexpr instance B = { "β", 1 };
-    static constexpr instance C = { "δ", 2 };
-    static constexpr instance D = { "ε", 3 };
-    static constexpr instance E = { "ζ", 4 };
-    static constexpr instance F = { "η", 5 };
-    static constexpr instance G = { "λ", 6 };
+    static const instance A = { "α", 0 };
+    static const instance B = { "β", 1 };
+    static const instance C = { "δ", 2 };
+    static const instance D = { "ε", 3 };
+    static const instance E = { "ζ", 4 };
+    static const instance F = { "η", 5 };
+    static const instance G = { "λ", 6 };
 
     // Special variables, one per type:
     // 
-    static constexpr instance V = { "Π", 7, match_variable };
-    static constexpr instance U = { "Σ", 8, match_constant };
-    static constexpr instance Q = { "Ω", 9, match_expression };
-    static constexpr instance W = { "Ψ", 10, match_non_constant };
-    static constexpr instance X = { "Θ", 11, match_non_expression };
+    static const instance V = { "Π", 7, match_variable };
+    static const instance U = { "Σ", 8, match_constant };
+    static const instance Q = { "Ω", 9, match_expression };
+    static const instance W = { "Ψ", 10, match_non_constant };
+    static const instance X = { "Θ", 11, match_non_expression };
 
     // To avoid string comparison each directive variable gets assigned a 
     // lookup table index. This is an arbitrary constant to avoid heap 
@@ -267,99 +241,16 @@ namespace vtil::symbolic::directive
     //
     static constexpr uint32_t number_of_lookup_indices = 12;
 
-    // Implement lookup-table based dynamic tables.
+    // Operable-like directive operators.
     //
-    using dynamic_directive_table_entry = std::pair<const instance*, const instance*>;
-    using dynamic_directive_table = std::vector<dynamic_directive_table_entry>;
-    using organized_directive_table = std::array<dynamic_directive_table, ( size_t ) math::operator_id::max>;
-
-    template<typename T>
-    static organized_directive_table create_dynamic_table( const T& container )
-    {
-        organized_directive_table table;
-        tuple_visit( container, [ & ] ( auto&& pair )
-        {
-            table[ ( size_t ) pair.first.op ].emplace_back(
-                ( const instance* ) &pair.first,
-                ( const instance* ) &pair.second
-            );
-        } );
-        return table;
-    };
-
-    using directive_pair = std::pair<std::unique_ptr<instance>, std::unique_ptr<instance>>;
-
-    template<typename T>
-    static directive_pair make_directive( T&& pair )
-    {
-        using T1 = typename std::tuple_element_t<0, T>;
-        using T2 = typename std::tuple_element_t<1, T>;
-
-        return directive_pair{
-            std::unique_ptr<instance>{ ( instance* ) new T1( pair.first )  },
-            std::unique_ptr<instance>{ ( instance* ) new T2( pair.second ) }
-        };
-    }
-
-    template<typename... Tx>
-    struct directive_store
-    {
-        using container_type = std::array<directive_pair, sizeof...( Tx )>;
-
-        container_type entries;
-        directive_store( Tx&&... n )
-            : entries{ make_directive( std::forward<Tx>( n ) )... } {}
-
-        auto begin() { return entries.begin(); }
-        auto end() { return entries.end(); }
-        auto begin() const { return entries.begin(); }
-        auto end() const { return entries.end(); }
-        auto size() const { return entries.size(); }
-    };
-};
-
-// Overload xop_result to propagate the types of operands.
-//
-namespace vtil::math
-{
-    template<typename T1, typename T2>
-    struct xop_result<T1, T2, std::enable_if_t<std::is_base_of_v<symbolic::directive::instance, strip_operable_t<T1>> ||
-        std::is_base_of_v<symbolic::directive::instance, strip_operable_t<T2>>>>
-    {
-        using lhs_t = std::conditional_t<
-            std::is_base_of_v<symbolic::directive::instance, strip_operable_t<T1>>,
-            strip_operable_t<T1>,
-            symbolic::directive::instance
-        >;
-        using rhs_t = std::conditional_t<
-            std::is_base_of_v<symbolic::directive::instance, strip_operable_t<T2>>,
-            strip_operable_t<T2>,
-            symbolic::directive::instance
-        >;
-        using type = typename symbolic::directive::operation<lhs_t, rhs_t>;
-    };
-};
-
-// Special operations with directives.
-//
-namespace vtil::symbolic::directive
-{
-    #define DEFINE_OPERATION(...)																				\
-    template<typename T1, typename T2 = int, typename result_t = typename vtil::math::xop_result<T1, T2>::type>	\
-    static constexpr result_t __VA_ARGS__
-
-    DEFINE_OPERATION( s( T1&& a ) { return { tagged<directive_op_desc::try_simplify>, std::forward<T1>( a ) }; }                              );
-    DEFINE_OPERATION( __mask_unk( T1&& a ) { return { tagged<directive_op_desc::mask_unknown>, std::forward<T1>( a ) }; }                     );
-    DEFINE_OPERATION( __mask_knw1( T1&& a ) { return { tagged<directive_op_desc::mask_one>, std::forward<T1>( a ) }; }                        );
-    DEFINE_OPERATION( __mask_knw0( T1&& a ) { return { tagged<directive_op_desc::mask_zero>, std::forward<T1>( a ) }; }                       );
-    DEFINE_OPERATION( __iff( T1&& a, T2&& b ) { return { std::forward<T1>( a ), tagged<directive_op_desc::iff>, std::forward<T2>( b ) }; }    );
-    DEFINE_OPERATION( __or( T1&& a, T2&& b ) { return { std::forward<T1>( a ), tagged<directive_op_desc::or_also>, std::forward<T2>( b ) }; } );
-
-    template<typename TL, typename TR, typename result_t = typename vtil::math::xop_result<operation<TL, TR>, int>::type>
-    static constexpr result_t operator!( operation<TL, TR> a ) { return { tagged<directive_op_desc::simplify>, std::move( a ) }; };
-    static constexpr operation<> __unreachable() { return { 0ull, tagged<directive_op_desc::unreachable>, 0ull }; }
-
-    #undef DEFINE_OPERATION
+    static instance s( const instance& a ) { return { tagged<directive_op_desc::try_simplify>, a }; }
+    static instance operator!( const instance& a ) { return { tagged<directive_op_desc::simplify>, a }; }
+    static instance __iff( const instance& a, const instance& b ) { return { a, tagged<directive_op_desc::iff>, b }; }
+    static instance __or( const instance& a, const instance& b ) { return { a, tagged<directive_op_desc::or_also>, b }; }
+    static instance __unreachable() { return { 0ull, tagged<directive_op_desc::unreachable>, 0ull }; }
+    static instance __mask_unk( const instance& a ) { return { tagged<directive_op_desc::mask_unknown>, a }; }
+    static instance __mask_knw1( const instance& a ) { return { tagged<directive_op_desc::mask_one>, a }; }
+    static instance __mask_knw0( const instance& a ) { return { tagged<directive_op_desc::mask_zero>, a }; }
 };
 
 // Implement comparison operators between [directive::directive_op_desc] x [math::operator_id].

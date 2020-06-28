@@ -40,7 +40,7 @@ namespace vtil::symbolic::directive
  
 		// Adds the mapping of a variable to an expression. 
 		// 
-		bool add( const instance* dir, const expression::reference& exp )
+		bool add( const instance::reference& dir, const expression::reference& exp ) 
 		{ 
 			// If it's the first time this variable is being used: 
 			// 
@@ -70,12 +70,11 @@ namespace vtil::symbolic::directive
 				// 
 				return lookup_table[ dir->lookup_index ]->is_identical( *exp ); 
 			} 
-		}
-		bool add( const instance& dir, const expression::reference& exp ) { return add( &dir, exp ); }
+		} 
  
 		// Translates a variable to the matching expression. 
 		// 
-		expression::reference translate( const instance* dir ) const
+		expression::reference translate( const instance::reference& dir ) const 
 		{ 
 			// Assert the looked up type is variable. 
 			// 
@@ -84,8 +83,7 @@ namespace vtil::symbolic::directive
 			// Translate using the lookup table. 
 			// 
 			return lookup_table[ dir->lookup_index ]; 
-		}
-		expression::reference translate( const instance& dir ) const { return translate( &dir ); }
+		} 
 	}; 
  
 	// Tries to match the the given expression with the directive and fills the  
@@ -93,7 +91,7 @@ namespace vtil::symbolic::directive
 	// 
 	template<typename T, std::enable_if_t<std::is_same_v<typename T::value_type, symbol_table_t>, int> = 0> 
 	static size_t fast_match( T* results, 
-							  const instance* dir,
+							  const instance::reference& dir, 
 							  const expression::reference& exp, 
 							  size_t index = 0 ) 
 	{ 
@@ -137,7 +135,7 @@ namespace vtil::symbolic::directive
 			// 
 			const math::operator_desc* desc = exp->get_op_desc(); 
 			if ( desc->operand_count == 1 ) 
-				return fast_match( results, dir->rhs(), exp->rhs, index ); 
+				return fast_match( results, dir->rhs, exp->rhs, index ); 
  
 			// If operator is commutative: 
 			// 
@@ -149,12 +147,12 @@ namespace vtil::symbolic::directive
  
 				// Try matching the directive's RHS with expression's RHS. 
 				// 
-				if ( size_t n = fast_match( results, dir->rhs(), exp->rhs, index ) ) 
+				if ( size_t n = fast_match( results, dir->rhs, exp->rhs, index ) ) 
 				{ 
 					// For each result produced, try matching the directive's LHS with expression's LHS. 
 					// 
 					while ( n-- ) 
-						fast_match( results, dir->lhs(), exp->lhs, index + n ); 
+						fast_match( results, dir->lhs, exp->lhs, index + n ); 
 				} 
  
 				// Push the saved table into the results and update the iterator. 
@@ -164,12 +162,12 @@ namespace vtil::symbolic::directive
  
 				// Try matching the directive's LHS with expression's RHS. 
 				// 
-				if ( size_t n = fast_match( results, dir->lhs(), exp->rhs, index ) ) 
+				if ( size_t n = fast_match( results, dir->lhs, exp->rhs, index ) ) 
 				{ 
 					// For each result produced, try matching the directive's RHS with expression's LHS. 
 					// 
 					while ( n-- ) 
-						fast_match( results, dir->rhs(), exp->lhs, index + n ); 
+						fast_match( results, dir->rhs, exp->lhs, index + n ); 
 				} 
 			} 
 			// If operator is not commutative: 
@@ -178,12 +176,12 @@ namespace vtil::symbolic::directive
 			{ 
 				// Try matching the directive's RHS with expression's RHS. 
 				// 
-				if ( size_t n = fast_match( results, dir->rhs(), exp->rhs, index ) ) 
+				if ( size_t n = fast_match( results, dir->rhs, exp->rhs, index ) ) 
 				{ 
 					// For each result produced, try matching the directive's LHS with expression's LHS. 
 					// 
 					while ( n-- ) 
-						fast_match( results, dir->lhs(), exp->lhs, index + n ); 
+						fast_match( results, dir->lhs, exp->lhs, index + n ); 
 				} 
 			} 
 		} 
@@ -198,13 +196,4 @@ namespace vtil::symbolic::directive
 		// 
 		return ( results->size() + 1 ) - size_0; 
 	} 
-	
-	template<typename T, std::enable_if_t<std::is_same_v<typename T::value_type, symbol_table_t>, int> = 0> 
-	static size_t fast_match( T* results,
-							  const instance& dir,
-							  const expression::reference& exp,
-							  size_t index = 0 )
-	{
-		return fast_match( results, &dir, exp, index );
-	}
 };
