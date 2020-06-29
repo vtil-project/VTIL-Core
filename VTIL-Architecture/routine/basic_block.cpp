@@ -152,7 +152,7 @@ namespace vtil
 		//
 		for ( auto& op : ins.operands )
 		{
-			if ( op.is_register() && op.reg().is_physical() )
+			if ( op.is_register() && op.reg().is_physical() && !op.reg().is_special() )
 				fassert( op.reg().architecture == owner->arch_id );
 		}
 
