@@ -195,6 +195,11 @@ namespace vtil::symbolic::directive
         { __ucast(A,B)|(__ucast((0x1+~(A>>U)), B)<<C),       __iff((B>__bcnt(A))&(U==(__bcnt(A)-1))&(C==__bcnt(A))&(__bcnt(A)!=1), __cast(A,B)) },
         { __ucast(A,B)|((~(__ucast(A,B)>>U)+0x1)<<C),        __iff((B>__bcnt(A))&(U==(__bcnt(A)-1))&(C==__bcnt(A))&(__bcnt(A)!=1), __cast(A,B)) },
         { (((((~(A>>B))|-0x2)+0x1)<<U)|A),                   __iff((U==(B+1))&(__bcnt(A)!=1), __cast(__ucast(A,U),__bcnt(A))) },
+
+        // Prefer immediates with their real sign.
+        //
+        { A+U,                                               __iff(U<0, A-!(-U)) },
+        { A-U,                                               __iff(U<0, A+!(-U)) },
     };
 
     // Describes the way operands of two operators join each other.
@@ -327,6 +332,18 @@ namespace vtil::symbolic::directive
         { A+(A<<U),                                           A*!(1 + (1<<U)) },
         { urem(A,U),                                          __iff(__popcnt(U)==1, A&!(U-1)) },
         { udiv(A,U),                                          __iff(__popcnt(U)==1, A>>!(__bsf(U)-1)) },
+
+        // MBA directives:
+        //
+        { A+(B|C),                                            !(A+B+C)-s(B&C) },
+        { A+(B&C),                                            !(A+B+C)-s(B^C) },
+        { A+(B^C),                                            !(A+B+C)-s(B&C) },
+        { (B|C)-A,                                            !(B+C-A)-s(B&C) },
+        { (B&C)-A,                                            !(B+C-A)-s(B^C) },
+        { (B^C)-A,                                            !(B+C-A)-s(B&C) },
+        { A-(B|C),                                            !(A-B-C)+s(B&C) },
+        { A-(B&C),                                            !(A-B-C)+s(B^C) },
+        { A-(B^C),                                            !(A-B-C)+s(B&C) },
 
         // Manually added comparison simplifiers:
         //
