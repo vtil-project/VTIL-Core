@@ -29,7 +29,7 @@
 
 namespace vtil::symbolic::directive
 {
-    const std::vector<std::pair<instance::reference, instance::reference>> boolean_simplifiers =
+    std::vector<std::pair<instance::reference, instance::reference>> boolean_simplifiers =
     {
 #ifndef __INTELLISENSE__
         { ((A>B)&(A>C)),                                                   __iff((B>C), (A>B)) },
@@ -544,6 +544,42 @@ namespace vtil::symbolic::directive
         { ((A!=B)|(C<=A)),                                                 __iff((B==C), 0x1) },
         { ((A!=B)|(C<=A)),                                                 __iff((B<C), (A!=B)) },
         { ((A!=B)&(C<A)),                                                  __iff((B==C), (A>B)) },
+#endif
+        { (__uless(B, A)&__uless(C, A)),                                   __iff(__ugreat(B, (C-0x1)), __ugreat(A, B)) },
+
+        // Manually added:
+        //
+		{ __uless( A + B, B ),                                             __uless( ~A, B ) },
+		{ __uless_eq( A + B, B ),                                          __uless_eq( -A, B ) },
+		{ __ugreat( A + B, B ),                                            __ugreat( -A, B ) },
+		{ __ugreat_eq( A + B, B ),                                         __ugreat_eq( ~A, B ) },
+		{ __uless( A + B, B ),                                             __ugreat( A, ~B ) },
+		{ __uless_eq( A - B, ~B ),                                         __ugreat_eq( A, B ) },
+		{ __ugreat( A - B, ~B ),                                           __uless( A, B ) },
+		{ __ugreat_eq( A + B, B ),                                         __uless_eq( A, ~B ) },
+        { A<=A,                                                            1 },
+        { A<A,                                                             0 },
+        { A==A,                                                            1 },
+        { A!=A,                                                            0 },
+        { A>A,                                                             0 },
+        { A>=A,                                                            1 },
+		{ __uless( A, A ),                                                 0 },
+		{ __uless_eq( A, A ),                                              1 },
+		{ __ugreat( A, A ),                                                0 },
+		{ __ugreat_eq( A, A ),                                             1 },
+        { A==~A,                                                           0 },
+        { A!=~A,                                                           1 },
+        { A==-A,                                                           0 },
+        { A!=-A,                                                           1 },
+    };
+
+    // We split the boolean_simplifiers due to the sheer size of the vector, if we leave
+    // everything to the main initalization function of the vector, we may hit a stack
+    // overflow. By splitting to about ~512 simplifiers per vector we can avoid this issue.
+    // 
+    std::vector<std::pair<instance::reference, instance::reference>> boolean_simplifiers_01 =
+    {
+#ifndef __INTELLISENSE__
         { ((A!=B)|(C<A)),                                                  __iff((B>C), 0x1) },
         { ((A!=B)|(C<A)),                                                  __iff((B==C), (A!=B)) },
         { ((A!=B)|(C<A)),                                                  __iff((B<=C), (A!=B)) },
@@ -1057,6 +1093,12 @@ namespace vtil::symbolic::directive
         { (__ugreat_eq(B, A)|__uless_eq(A, C)),                            __iff(__ugreat_eq(B, C), __uless_eq(A, B)) },
         { (__ugreat_eq(B, A)&__uless(A, C)),                               __iff((B==C), __uless(A, B)) },
         { (__ugreat_eq(B, A)&__uless(A, C)),                               __iff(__uless(B, C), __uless_eq(A, B)) },
+#endif
+    };
+
+    std::vector<std::pair<instance::reference, instance::reference>> boolean_simplifiers_02 =
+    {
+#ifndef __INTELLISENSE__
         { (__ugreat_eq(B, A)|__uless(A, C)),                               __iff((B==C), __uless_eq(A, B)) },
         { (__ugreat_eq(B, A)|__uless(A, C)),                               __iff(__ugreat(B, C), __uless_eq(A, B)) },
         { (__ugreat_eq(B, A)|__uless(A, C)),                               __iff(__ugreat_eq(B, C), __uless_eq(A, B)) },
@@ -1570,6 +1612,12 @@ namespace vtil::symbolic::directive
         { (__ugreat_eq(A, B)|(A!=C)),                                      __iff(__uless(B, (C+0x1)), 0x1) },
         { (__ugreat_eq(A, B)|__ugreat(A, C)),                              __iff((B==(C+0x1)), __ugreat_eq(A, B)) },
         { (__ugreat_eq(A, B)|__ugreat(A, C)),                              __iff(__uless_eq(B, (C+0x1)), __ugreat_eq(A, B)) },
+#endif
+    };
+
+    std::vector<std::pair<instance::reference, instance::reference>> boolean_simplifiers_03 =
+    {
+#ifndef __INTELLISENSE__
         { (__ugreat_eq(A, B)|__ugreat(A, C)),                              __iff(__uless(B, (C+0x1)), __ugreat_eq(A, B)) },
         { (__ugreat_eq(A, B)|__ugreat_eq(A, C)),                           __iff(__uless(B, (C+0x1)), __ugreat_eq(A, B)) },
         { (__ugreat_eq(A, B)|__uless_eq(A, C)),                            __iff((B==(C+0x1)), 0x1) },
@@ -2083,6 +2131,12 @@ namespace vtil::symbolic::directive
         { ((A>B)&(C<=A)),                                                  __iff((B==(C-0x1)), (A>B)) },
         { ((A>B)|(C<=A)),                                                  __iff((B==(C-0x1)), (A>B)) },
         { ((A>B)|(C<=A)),                                                  __iff((B<=(C-0x1)), (A>B)) },
+#endif
+    };
+
+    std::vector<std::pair<instance::reference, instance::reference>> boolean_simplifiers_04 =
+    {
+#ifndef __INTELLISENSE__
         { ((A>B)|(C<=A)),                                                  __iff((B<(C-0x1)), (A>B)) },
         { ((A>B)&(C<A)),                                                   __iff((B>(C-0x1)), (A>B)) },
         { ((A>B)|(C<A)),                                                   __iff((B==(C-0x1)), (A>B)) },
@@ -2576,33 +2630,14 @@ namespace vtil::symbolic::directive
         { (__uless(B, A)&__uless_eq(C, A)),                                __iff(__ugreat(B, (C-0x1)), __ugreat(A, B)) },
         { (__uless(B, A)&__uless_eq(C, A)),                                __iff(__ugreat_eq(B, (C-0x1)), __ugreat(A, B)) },
 #endif
-        { (__uless(B, A)&__uless(C, A)),                                   __iff(__ugreat(B, (C-0x1)), __ugreat(A, B)) },
-
-        // Manually added:
-        //
-		{ __uless( A + B, B ),                                             __uless( ~A, B ) },
-		{ __uless_eq( A + B, B ),                                          __uless_eq( -A, B ) },
-		{ __ugreat( A + B, B ),                                            __ugreat( -A, B ) },
-		{ __ugreat_eq( A + B, B ),                                         __ugreat_eq( ~A, B ) },
-		{ __uless( A + B, B ),                                             __ugreat( A, ~B ) },
-		{ __uless_eq( A - B, ~B ),                                         __ugreat_eq( A, B ) },
-		{ __ugreat( A - B, ~B ),                                           __uless( A, B ) },
-		{ __ugreat_eq( A + B, B ),                                         __uless_eq( A, ~B ) },
-        { A<=A,                                                            1 },
-        { A<A,                                                             0 },
-        { A==A,                                                            1 },
-        { A!=A,                                                            0 },
-        { A>A,                                                             0 },
-        { A>=A,                                                            1 },
-		{ __uless( A, A ),                                                 0 },
-		{ __uless_eq( A, A ),                                              1 },
-		{ __ugreat( A, A ),                                                0 },
-		{ __ugreat_eq( A, A ),                                             1 },
-        { A==~A,                                                           0 },
-        { A!=~A,                                                           1 },
-        { A==-A,                                                           0 },
-        { A!=-A,                                                           1 },
     };
+
+    const std::vector<std::pair<instance::reference, instance::reference>>& build_boolean_simplifiers()
+    {
+        for ( auto& ref : { boolean_simplifiers_01, boolean_simplifiers_02, boolean_simplifiers_03, boolean_simplifiers_04 } )
+            std::move( ref.begin(), ref.end(), std::back_inserter( boolean_simplifiers ) );
+        return boolean_simplifiers;
+    }
 
 	constexpr auto overflow = [ ] ( auto a, auto b ) { return ((a<0)==(b<0))&((a<0)!=((a+b)<0)); };
 	constexpr auto underflow = [ ] ( auto a, auto b ) { return ((a<0)!=(b<0))&((a<0)!=((a-b)<0)); };

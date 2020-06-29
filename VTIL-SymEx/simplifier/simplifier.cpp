@@ -66,7 +66,7 @@ namespace vtil::symbolic
 	static auto& get_pack_descriptors( math::operator_id op ) { static auto tbl = build_dynamic_table( directive::pack_descriptors ); return tbl[ ( size_t ) op ]; }
 	static auto& get_join_descriptors( math::operator_id op ) { static auto tbl = build_dynamic_table( directive::join_descriptors ); return tbl[ ( size_t ) op ]; }
 	static auto& get_unpack_descriptors( math::operator_id op ) { static auto tbl = build_dynamic_table( directive::unpack_descriptors ); return tbl[ ( size_t ) op ]; }
-	static auto& get_boolean_simplifiers( math::operator_id op ) { static auto tbl = build_dynamic_table( directive::boolean_simplifiers ); return tbl[ ( size_t ) op ]; }
+	static auto& get_boolean_simplifiers( math::operator_id op ) { static auto boolean_simplifiers = directive::build_boolean_simplifiers(); static auto tbl = build_dynamic_table( boolean_simplifiers ); return tbl[ ( size_t ) op ]; }
 	static auto& get_universal_simplifiers( math::operator_id op ) { static auto tbl = build_dynamic_table( directive::universal_simplifiers ); return tbl[ ( size_t ) op ]; }
 
 	// Simplifier cache and its accessor.
