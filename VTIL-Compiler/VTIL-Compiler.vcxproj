@@ -136,6 +136,7 @@
     <ClInclude Include="optimizer\stack_pinning_pass.hpp" />
     <ClInclude Include="optimizer\stack_propagation_pass.hpp" />
     <ClInclude Include="optimizer\symbolic_rewrite_pass.hpp" />
+    <ClInclude Include="validation\pass_validation.hpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="includes\vtil\compiler" />

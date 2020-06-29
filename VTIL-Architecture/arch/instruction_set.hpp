@@ -154,10 +154,10 @@ namespace vtil
         //
         /*------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
         /*                                          [Name]        [Operands...]                                     [ASizeOp]   [Volatile]  [Operator]               [BranchOps] [MemOps]     */
-        inline const instruction_desc js =         { "js",        { o::read_reg,   o::read_any,     o::read_any  }, 2,          false,        {},                     { 2, 3 },    {}          };
-        inline const instruction_desc jmp =        { "jmp",       { o::read_any                                  }, 1,          false,        {},                     { 1 },       {}          };
-        inline const instruction_desc vexit =      { "vexit",     { o::read_any                                  }, 1,          false,        {},                     { -1 },      {}          };
-        inline const instruction_desc vxcall =     { "vxcall",    { o::read_any                                  }, 1,          false,        {},                     { -1 },      {}          };
+        inline const instruction_desc js =         { "js",        { o::read_reg,   o::read_any,     o::read_any  }, 2,          false,      {},                      { 2, 3 },    {}          };
+        inline const instruction_desc jmp =        { "jmp",       { o::read_any                                  }, 1,          false,      {},                      { 1 },       {}          };
+        inline const instruction_desc vexit =      { "vexit",     { o::read_any                                  }, 1,          false,      {},                      { -1 },      {}          };
+        inline const instruction_desc vxcall =     { "vxcall",    { o::read_any                                  }, 1,          false,      {},                      { -1 },      {}          };
         /*------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
 
         //    -- Special instructions
