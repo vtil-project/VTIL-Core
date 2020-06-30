@@ -218,7 +218,8 @@ namespace vtil::symbolic::directive
         { A-(B^C),                                           (A-B-C) + ((B&C)<<1) },
         { A*(B+C),                                           A*B + A*C }, 
         { A*(B-C),                                           A*B - A*C },
-        { A*(B&~C),                                          A*B - (B&C)*A },
+        { A*(B&~C),                                          A*B + (-A)*(B&C) },
+
     };
 
     // Describes the way operands of two operators join each other.
@@ -368,8 +369,8 @@ namespace vtil::symbolic::directive
 
         // MBA joining:
         //
-        //{ A-(A&B),                                           A&!(~A|~B) },
-        //{ A+(B&~A),                                          A|B },
+        { A-(A&B),                                           A&~B },
+        { A+(B&~A),                                          A|B },
         { (A+B)-((A&B)*2),                                   A^B },
         { (A+B)-((A&B)<<1),                                  A^B },
         { (A-B)+((~A&B)*2),                                  A^B },
