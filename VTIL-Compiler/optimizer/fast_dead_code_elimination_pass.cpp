@@ -55,9 +55,7 @@ namespace vtil::optimizer
 		if ( auto it = sealed.find( blk ); it != sealed.end() )
 			return 0;
 
-		// Run local DCE to ensure less redundancy.
-		//
-		size_t counter = fast_local_dead_code_elimination_pass{}( blk );
+		size_t counter = 0;
 
 		// Mask off register reads in this block immediately, to ensure validity of successors.
 		//
@@ -98,9 +96,6 @@ namespace vtil::optimizer
 				reg_read_masks[ reg_id ] |= mask;
 		}
 
-		// Mark read mask according to successors.
-		//
-
 		auto[rbegin, rend] = reverse_iterators( *blk );
 		for ( auto it = rbegin; it != rend; )
 		{
@@ -122,9 +117,9 @@ namespace vtil::optimizer
 				//
 				for ( auto[op, type] : ins.enum_operands())
 				{
-					// If not a global register, continue.
+					// If not a register, continue.
 					//
-					if ( !op.is_register() || !op.reg().is_global() )
+					if ( !op.is_register() )
 						continue;
 
 					// If we're writing to this register, check previous writes and remove dead ones. Break immediately because there's only one written register per instruction.
@@ -170,6 +165,8 @@ namespace vtil::optimizer
 				}
 			}
 
+			// Make sure we're not checking an invalid memory location.
+			//
 			if (removed)
 				continue;
 
@@ -179,12 +176,12 @@ namespace vtil::optimizer
 			{
 				// If not a register, continue.
 				//
-				if ( !op.is_register())
+				if ( !op.is_register() )
 					continue;
 
-				// If we're reading from a non-local register, mark mask.
+				// If we're reading from a register, mark mask.
 				//
-				if ( type != operand_type::write && type != operand_type::invalid && op.reg().is_global() )
+				if ( type != operand_type::write && type != operand_type::invalid )
 					reg_read_masks[register_id( op.reg())] |= op.reg().get_mask();
 			}
 		}
@@ -222,7 +219,6 @@ namespace vtil::optimizer
 		// 3. When a write is fully overwritten, check whether there was a read overlapping that write. If not, the write is dead.
 		//
 		std::unordered_map< register_id, uint64_t > reg_read_masks;
-		std::unordered_map< std::pair< register_id, int64_t >, uint64_t, hasher<> > mem_read_masks;
 
 		// Assume written physical registers and all memory operands set are live at the end of the block.
 		//
@@ -268,31 +264,6 @@ namespace vtil::optimizer
 			//
 			auto &ins = *last_iter;
 
-			// If this is a store...
-			//
-			if ( *ins.base == ins::str )
-			{
-				// Check read mask against current write mask.
-				//
-				auto[reg, disp] = ins.memory_location();
-				auto reg_id = register_id( reg );
-				if ( auto read_it = mem_read_masks.find( { reg_id, disp } ); read_it != mem_read_masks.end())
-				{
-					// If zero, store is dead.
-					//
-					if (( math::fill( ins.access_size()) & read_it->second ) == 0 && !ins.is_volatile())
-					{
-						++counter;
-						blk->erase( last_iter );
-						continue;
-					}
-				}
-
-				// And read mask with access size.
-				//
-				mem_read_masks[{reg_id, disp}] &= ~math::fill( ins.access_size());
-			}
-
 			auto removed = false;
 
 			// If volatile, continue to read access.
@@ -333,12 +304,6 @@ namespace vtil::optimizer
 							break;
 						}
 
-						// Clear out memory read mask for this register.
-						//
-						for ( auto&[accessor, mask] : mem_read_masks )
-							if ( accessor.first == reg_id )
-								mask = -1ULL;
-
 						// Update read mask.
 						//
 						reg_read_masks[reg_id] &= ~write_mask;
@@ -366,29 +331,6 @@ namespace vtil::optimizer
 				//
 				if ( type != operand_type::write && type != operand_type::invalid )
 					reg_read_masks[register_id( op.reg())] |= op.reg().get_mask();
-			}
-
-			// If this is a load...
-			//
-			if ( *ins.base == ins::ldd )
-			{
-				// Clear out read mask for every other register.
-				//
-
-				auto[reg, disp] = ins.memory_location();
-				auto reg_id = register_id( reg );
-
-				for ( auto&[accessor, mask] : mem_read_masks )
-				{
-					// Assume read if not the same register.
-					//
-					if ( accessor.first != reg_id )
-						mask = -1ULL;
-				}
-
-				// Update read mask.
-				//
-				mem_read_masks[{ reg_id, disp }] |= math::fill( ins.access_size());
 			}
 		}
 
