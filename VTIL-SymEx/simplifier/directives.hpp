@@ -200,6 +200,19 @@ namespace vtil::symbolic::directive
         //
         { A+U,                                               __iff(U<0, A-!(-U)) },
         { A-U,                                               __iff(U<0, A+!(-U)) },
+
+        // MUL simplification. A lot of these are special cases where the resulting operation costs *more* than the original. 
+        // We should fix this in the cost code.
+        //
+        { (-A)*(-B),                                         A*B },
+        { A*~B,                                              (-A)*B-A },
+        { (A|~B)*C,                                          (A&B)*C-B*C-C },
+        { (~A|B)*C,                                          (A&B)*C-A*C-C },
+        { (A&~B)*C,                                          (A|B)*C-B*C },
+        { (~A&B)*C,                                          (A|B)*C-A*C },
+        { (~A^B)*C,                                          (A^B)*-C-C },
+        { (A^~B)*C,                                          (A^B)*-C-C },
+        { (A&B)*C+(A|B)*C,                                   A*C+B*C }
     };
 
     // Describes the way operands of two operators join each other.
@@ -325,6 +338,17 @@ namespace vtil::symbolic::directive
         // Missing: shl, shr
         { ~__rotl(A,C),                                       __rotl(!~A,C) },
         { ~__rotr(A,C),                                       __rotr(!~A,C) },
+
+        // MUL:
+        //
+        { (A+B)*C,                                           !(A*C)+(B*C) },
+        { (A+B)*C,                                           (A*C)+!(B*C) },
+        { (A-B)*C,                                           !(A*C)-(B*C) },
+        { (A-B)*C,                                           (A*C)-!(B*C) },
+        { A*(B*C),                                           !(A*C)*B },
+        { A*-B,                                              !(s(-A)*B) },
+        { (A*B)+(A*C),                                       A*!(B+C) },
+        { (A*B)-(A*C),                                       A*!(B-C) },
 
         // Lower immediate urem/udiv/mul into and/shr/shl where possible.
         //
