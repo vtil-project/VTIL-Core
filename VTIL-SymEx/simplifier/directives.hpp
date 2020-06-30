@@ -216,6 +216,7 @@ namespace vtil::symbolic::directive
         { A*(B|C),                                           A*(B+C)-A*(B&C) },
         { A*(B^C),                                           A*(B+C)-A*((B&C)<<1) },
         { A*(B+C),                                           A*B + A*C }, 
+        { A*(B-C),                                           A*B - A*C }, 
     };
 
     // Describes the way operands of two operators join each other.
