@@ -205,8 +205,17 @@ namespace vtil::symbolic::directive
         //
         { (-A)*(-B),                                         A*B },
         { A*~B,                                              (-A)*B-A },
+
+        // MBA Normalization.
+        //
         { A*(B|C),                                           A*(B+C) - A*(B&C) },
         { A*(B^C),                                           A*(B+C) - A*((B&C)<<1) },
+        { A+(B|C),                                           (A+B+C) - (B&C) },
+        { A+(B^C),                                           (A+B+C) - ((B&C)<<1) },
+        { (B|C)-A,                                           (B+C-A) - (B&C) },
+        { (B^C)-A,                                           (B+C-A) - ((B&C)<<1) },
+		{ A-(B|C),                                           (A-B-C) + (B&C) },
+        { A-(B^C),                                           (A-B-C) + ((B&C)<<1) },
         { A*(B+C),                                           A*B + A*C }, 
         { A*(B-C),                                           A*B - A*C },
         { A*(B&~C),                                          A*B - (B&C)*A },
@@ -357,18 +366,15 @@ namespace vtil::symbolic::directive
         { urem(A,U),                                          __iff(__popcnt(U)==1, A&!(U-1)) },
         { udiv(A,U),                                          __iff(__popcnt(U)==1, A>>!(__bsf(U)-1)) },
 
-        // MBA directives:
+        // MBA joining:
         //
-//        { A-(A&B),                                            A&!(~A|~B) },
-        { A+(B|C),                                            !(A+B+C)-s(B&C) },
-        { A+(B&C),                                            !(A+B+C)-s(B|C) },
-        { A+(B^C),                                            !(A+B+C)-s((B&C)<<1) },
-        { (B|C)-A,                                            !(B+C-A)-s(B&C) },
-        { (B&C)-A,                                            !(B+C-A)-s(B|C) },
-        { (B^C)-A,                                            !(B+C-A)-s((B&C)<<1) },
-		{ A-(B|C),                                            !(A-B-C)+s(B&C) },
-        { A-(B&C),                                            !(A-B-C)+s(B|C) },
-        { A-(B^C),                                            !(A-B-C)+s((B&C)<<1) },
+        //{ A-(A&B),                                           A&!(~A|~B) },
+        //{ A+(B&~A),                                          A|B },
+        { (A+B)-((A&B)*2),                                   A^B },
+        { (A+B)-((A&B)<<1),                                  A^B },
+        { (A-B)+((~A&B)*2),                                  A^B },
+        { (A-B)+((~A&B)<<1),                                 A^B },
+        { U-(c(X,U)&B),                                      U&!(~X|~B) },
 
         // Manually added comparison simplifiers:
         //
