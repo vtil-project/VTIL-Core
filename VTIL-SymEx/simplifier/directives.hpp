@@ -206,13 +206,16 @@ namespace vtil::symbolic::directive
         //
         { (-A)*(-B),                                         A*B },
         { A*~B,                                              (-A)*B-A },
-        { (A|~B)*C,                                          (A&B)*C-B*C-C },
+        /*{ (A|~B)*C,                                          (A&B)*C-B*C-C },
         { (~A|B)*C,                                          (A&B)*C-A*C-C },
         { (A&~B)*C,                                          (A|B)*C-B*C },
         { (~A&B)*C,                                          (A|B)*C-A*C },
         { (~A^B)*C,                                          (A^B)*-C-C },
         { (A^~B)*C,                                          (A^B)*-C-C },
-        { (A&B)*C+(A|B)*C,                                   A*C+B*C }
+        { (A&B)*C+(A|B)*C,                                   A*C+B*C },*/
+        { A*(B|C),                                           A*(B+C)-A*(B&C) },
+        { A*(B^C),                                           A*(B+C)-A*((B&C)<<1) },
+        { A*(B+C),                                           A*B + A*C }, 
     };
 
     // Describes the way operands of two operators join each other.
@@ -341,10 +344,10 @@ namespace vtil::symbolic::directive
 
         // MUL:
         //
-        { (A+B)*C,                                           !(A*C)+(B*C) },
-        { (A+B)*C,                                           (A*C)+!(B*C) },
-        { (A-B)*C,                                           !(A*C)-(B*C) },
-        { (A-B)*C,                                           (A*C)-!(B*C) },
+        { (A+B)*C,                                           !(A*C)+s(B*C) },
+        { (A+B)*C,                                           s(A*C)+!(B*C) },
+        { (A-B)*C,                                           !(A*C)-s(B*C) },
+        { (A-B)*C,                                           s(A*C)-!(B*C) },
         { A*(B*C),                                           !(A*C)*B },
         { A*-B,                                              !(s(-A)*B) },
         { (A*B)+(A*C),                                       A*!(B+C) },
