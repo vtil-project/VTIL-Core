@@ -264,7 +264,7 @@ namespace vtil::symbolic::directive
 
         // XOR:
         //
-        { A^(B&C),                                            s(A|(B&C))&s(~(B&!(A&C))) },
+        { A^(B&C),                                            s(~(B&!(A&C)))&s(A|(B&C)) },
         { A^(B|C),                                            s(B|!(A|C))&s(~(A&(B|C))) },
         { A^(B^C),                                            B^!(A^C) },
         { A^(B<<U),                                           !(!(A>>U)^B)<<U|s(A&((1<<U)-1)) },
@@ -336,14 +336,14 @@ namespace vtil::symbolic::directive
         // MBA directives:
         //
         { A+(B|C),                                            !(A+B+C)-s(B&C) },
-        { A+(B&C),                                            !(A+B+C)-s(B^C) },
-        { A+(B^C),                                            !(A+B+C)-s(B&C) },
+        { A+(B&C),                                            !(A+B+C)-s(B|C) },
+        { A+(B^C),                                            !(A+B+C)-s((B&C)<<1) },
         { (B|C)-A,                                            !(B+C-A)-s(B&C) },
-        { (B&C)-A,                                            !(B+C-A)-s(B^C) },
-        { (B^C)-A,                                            !(B+C-A)-s(B&C) },
-        { A-(B|C),                                            !(A-B-C)+s(B&C) },
-        { A-(B&C),                                            !(A-B-C)+s(B^C) },
-        { A-(B^C),                                            !(A-B-C)+s(B&C) },
+        { (B&C)-A,                                            !(B+C-A)-s(B|C) },
+        { (B^C)-A,                                            !(B+C-A)-s((B&C)<<1) },
+		{ A-(B|C),                                            !(A-B-C)+s(B&C) },
+        { A-(B&C),                                            !(A-B-C)+s(B|C) },
+        { A-(B^C),                                            !(A-B-C)+s((B&C)<<1) },
 
         // Manually added comparison simplifiers:
         //
