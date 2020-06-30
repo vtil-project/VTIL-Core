@@ -32,6 +32,8 @@
 #include "../optimizer/bblock_extension_pass.hpp"
 #include "../optimizer/stack_propagation_pass.hpp"
 #include "../optimizer/dead_code_elimination_pass.hpp"
+#include "../optimizer/fast_dead_code_elimination_pass.hpp"
+#include "../optimizer/fast_propagation_pass.hpp"
 #include "../optimizer/mov_propagation_pass.hpp"
 #include "../optimizer/symbolic_rewrite_pass.hpp"
 #include "../optimizer/branch_correction_pass.hpp"
