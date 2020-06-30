@@ -197,18 +197,18 @@ namespace vtil::symbolic
 
 		// Apply each mask if not no-op.
 		//
-		expression::reference exp_new = *uid_base;
-		if ( and_mask != ~0ull )  exp_new = exp_new & symbolic::expression{ and_mask, exp->size() };
-		if ( xor_mask )           exp_new = exp_new ^ symbolic::expression{ xor_mask, exp->size() };
-		if ( or_mask )            exp_new = exp_new | symbolic::expression{ or_mask,  exp->size() };
+		expression exp_new = uid_base->clone().make_lazy();
+		if ( and_mask != ~0ull )  exp_new = exp_new & expression{ and_mask, exp->size() };
+		if ( xor_mask )           exp_new = exp_new ^ expression{ xor_mask, exp->size() };
+		if ( or_mask )            exp_new = exp_new | expression{ or_mask,  exp->size() };
 
 		// If complexity was higher or equal, fail.
 		//
-		if ( exp_new->complexity >= exp->complexity ) return false;
+		if ( exp_new.complexity >= exp->complexity ) return false;
 		
 		// Apply and return.
 		//
-		exp = exp_new;
+		*+exp = exp_new;
 		return true;
 	}
 
