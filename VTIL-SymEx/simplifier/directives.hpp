@@ -206,19 +206,30 @@ namespace vtil::symbolic::directive
         { (-A)*(-B),                                         A*B },
         { A*~B,                                              (-A)*B-A },
 
-        // MBA Normalization.
+        // MBA normalization.
         //
-        { A*(B|C),                                           A*(B+C) - A*(B&C) },
-        { A*(B^C),                                           A*(B+C) - A*((B&C)<<1) },
-        { A+(B|C),                                           (A+B+C) - (B&C) },
-        { A+(B^C),                                           (A+B+C) - ((B&C)<<1) },
-        { (B|C)-A,                                           (B+C-A) - (B&C) },
-        { (B^C)-A,                                           (B+C-A) - ((B&C)<<1) },
-		{ A-(B|C),                                           (A-B-C) + (B&C) },
-        { A-(B^C),                                           (A-B-C) + ((B&C)<<1) },
-        { A*(B+C),                                           A*B + A*C }, 
-        { A*(B-C),                                           A*B - A*C },
-        { A*(B&~C),                                          A*B + (-A)*(B&C) },
+        { A*(B|C),                                           A*(B+C)-A*(B&C) },
+        { A*(B^C),                                           A*(B+C)-A*((B&C)<<1) },
+        { A+(B|C),                                           (A+B+C)-(B&C) },
+        { A+(B^C),                                           (A+B+C)-((B&C)<<1) },
+        { (B|C)-A,                                           (B+C-A)-(B&C) },
+        { (B^C)-A,                                           (B+C-A)-((B&C)<<1) },
+		{ A-(B|C),                                           (A-B-C)+(B&C) },
+        { A-(B^C),                                           (A-B-C)+((B&C)<<1) },
+        { A*(B+C),                                           A*B+A*C }, 
+        { A*(B-C),                                           A*B-A*C },
+        { A*(B&~C),                                          A*B+(-A)*(B&C) },
+           
+        // MBA to bitwise.
+        //
+        { A-(A&B),                                           A&~B },
+        { A+(B&~A),                                          A|B },
+        { (A+B)+((A&B)*-2),                                  A^B },
+        { (A+B)-((A&B)*2),                                   A^B },
+        { (A+B)-((A&B)<<1),                                  A^B },
+        { (A-B)+((~A&B)*2),                                  A^B },
+        { (A-B)+((~A&B)<<1),                                 A^B },
+        { U-(c(X,U)&B),                                      U&!(~X|~B) },
 
     };
 
@@ -360,22 +371,14 @@ namespace vtil::symbolic::directive
         // Lower immediate urem/udiv/mul into and/shr/shl where possible.
         //
         { A*U,                                                __iff(__popcnt(U)==1, A<<!(__bsf(U)-1)) },
+        { B+A*U,                                              __iff(__popcnt(-U)==1, B-(A<<!(__bsf(-U)-1))) },
+
         { A+(A<<U),                                           A*!(1+(1<<U)) },
         { B+(A<<U),                                           B+A*!(1<<U) },
         { B-(A<<U),                                           B-A*!(1<<U) },
         { B*(A<<U),                                           B*A*!(1<<U) },
         { urem(A,U),                                          __iff(__popcnt(U)==1, A&!(U-1)) },
         { udiv(A,U),                                          __iff(__popcnt(U)==1, A>>!(__bsf(U)-1)) },
-
-        // MBA joining:
-        //
-        { A-(A&B),                                           A&~B },
-        { A+(B&~A),                                          A|B },
-        { (A+B)-((A&B)*2),                                   A^B },
-        { (A+B)-((A&B)<<1),                                  A^B },
-        { (A-B)+((~A&B)*2),                                  A^B },
-        { (A-B)+((~A&B)<<1),                                 A^B },
-        { U-(c(X,U)&B),                                      U&!(~X|~B) },
 
         // Manually added comparison simplifiers:
         //
