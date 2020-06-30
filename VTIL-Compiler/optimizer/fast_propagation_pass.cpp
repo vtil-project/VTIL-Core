@@ -134,9 +134,9 @@ namespace vtil::optimizer
 			auto& ins = *it;
 			++it;
 
-			// If this instruction is a store, check for alignment and set cache.
+			// If this instruction writes to memory, check for alignment and set cache.
 			//
-			if ( ins.base == &ins::str )
+			if ( ins.base->writes_memory() )
 			{
 				const auto sz = ins.access_size();
 				auto [reg, offset] = ins.memory_location();
@@ -153,85 +153,101 @@ namespace vtil::optimizer
 					aligned_mem_cache [ reg_id ][ aligned_offset + 8 ].clear();
 					continue;
 				}
-
-				// Create store mask.
+				
+				// If we are a store, attempt propagation.
 				//
-				auto store_mask = math::fill( 64 );
-				store_mask >>= 64ULL - sz;
-				store_mask <<= offset_mod * 8;
-
-				// Do cache lookup. If this mask shadows an existing write, overwrite. Otherwise, add entry to cache.
-				//
-				auto did_write = false;
-				auto& cache_entry = aligned_mem_cache [ reg_id ][ aligned_offset ];
-				for ( auto cache_it = cache_entry.begin(), cache_end = cache_entry.end(); cache_it != cache_end; )
+				if ( ins.base == &ins::str )
 				{
-					auto& [cache_store_offset, cache_store_mask, cache_ins_reg] = *cache_it;
 
-					// Do we overlap this write?
+					// Create store mask.
 					//
-					if ( ( store_mask & cache_store_mask ) != 0 )
+					auto store_mask = math::fill( sz, offset_mod * 8 );
+
+					// Do cache lookup. If this mask shadows an existing write, overwrite. Otherwise, add entry to cache.
+					//
+					auto did_write = false;
+					auto& cache_entry = aligned_mem_cache [ reg_id ][ aligned_offset ];
+					for ( auto cache_it = cache_entry.begin(), cache_end = cache_entry.end(); cache_it != cache_end; )
 					{
-						// Do we *fully* overlap?
+						auto& [cache_store_offset, cache_store_mask, cache_ins_reg] = *cache_it;
+
+						// Do we overlap this write?
 						//
-						if ( ( ~store_mask & cache_store_mask ) == 0 )
+						if ( ( store_mask & cache_store_mask ) != 0 )
 						{
-							// Have we already done an update to an existing cache entry?
+							// Do we *fully* overlap?
 							//
-							if ( did_write )
+							if ( ( ~store_mask & cache_store_mask ) == 0 )
 							{
-								// Erase this entry and continue.
+								// Have we already done an update to an existing cache entry?
 								//
-								cache_it = cache_entry.erase( cache_it );
-								cache_end = cache_entry.end();
-								continue;
+								if ( did_write )
+								{
+									// Erase this entry and continue.
+									//
+									cache_it = cache_entry.erase( cache_it );
+									cache_end = cache_entry.end();
+									continue;
+								}
+								else
+								{
+									// Update the entry with new details.
+									//
+									did_write = true;
+									cache_store_offset = offset_mod;
+									cache_store_mask = store_mask;
+									cache_ins_reg = blk->tmp( 64 );
+
+									// Emit a move here after incrementing the iterator. If it's not used, DCE will kill it.
+									//
+									blk->insert( it, { &ins::mov, { cache_ins_reg, ins.operands [ 2 ] } } );
+								}
 							}
 							else
 							{
-								// Update the entry with new details.
+								// Update this mask to reflect changes made with this store.
 								//
-								did_write = true;
-								cache_store_offset = offset_mod;
-								cache_store_mask = store_mask;
-								cache_ins_reg = blk->tmp( 64 );
-
-								// Emit a move here after incrementing the iterator. If it's not used, DCE will kill it.
-								//
-								blk->insert( it, { &ins::mov, { cache_ins_reg, ins.operands [ 2 ] } } );
+								cache_store_mask &= ~store_mask;
 							}
 						}
-						else
-						{
-							// Update this mask to reflect changes made with this store.
-							//
-							cache_store_mask &= ~store_mask;
-						}
+
+						// Increment iterator.
+						//
+						++cache_it;
 					}
 
-					// Increment iterator.
+					// If we haven't done a write, add us to the cache.
 					//
-					++cache_it;
-				}
+					if ( !did_write )
+					{
+						auto ins_reg = blk->tmp( 64 );
+						blk->insert( it, { &ins::mov, { { ins_reg }, ins.operands [ 2 ] } } );
+						cache_entry.emplace_back( offset_mod, store_mask, ins_reg );
+					}
 
-				// If we haven't done a write, add us to the cache.
-				//
-				if ( !did_write )
+					// Flush cache for other registers.
+					//
+					for ( auto& [id, cache] : aligned_mem_cache )
+						if ( id != reg_id )
+							cache.clear();
+				}
+				else
 				{
-					auto ins_reg = blk->tmp( 64 );
-					blk->insert( it, { &ins::mov, { { ins_reg }, ins.operands [ 2 ] } } );
-					cache_entry.emplace_back( offset_mod, store_mask, ins_reg );
-				}
+					// Otherwise, flush.
+					//
+					aligned_mem_cache [ reg_id ][ aligned_offset ].clear();
 
-				// Flush cache for other registers.
-				//
-				for ( auto& [id, cache] : aligned_mem_cache )
-					if ( id != reg_id )
-						cache.clear();
+					// Flush cache for other registers.
+					//
+					for ( auto& [id, cache] : aligned_mem_cache )
+						if ( id != reg_id )
+							cache.clear();
+				}
 			}
 
 			// Otherwise, check if we are a load that we have cached. If so, grab cache entry, emit a move from every write, and OR them together at the end. After that, 
 			// 
-			else if ( ins.base == &ins::ldd )
+			else if ( ins.base == &ins::ldd && !ins.is_volatile() )
 			{
 				const auto sz = ins.access_size();
 				auto [reg, offset] = ins.memory_location();
@@ -249,9 +265,7 @@ namespace vtil::optimizer
 
 				// Create read mask.
 				//
-				auto read_mask = math::fill( 64 );
-				read_mask >>= 64ULL - sz;
-				read_mask <<= offset_mod * 8;
+				auto read_mask = math::fill( sz, offset_mod * 8 );
 
 				// Do a cache lookup. Find all stores that overlap this load.
 				//
