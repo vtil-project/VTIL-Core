@@ -251,6 +251,10 @@ namespace vtil::symbolic::directive
     static instance __mask_unk( const instance& a ) { return { tagged<directive_op_desc::mask_unknown>, a }; }
     static instance __mask_knw1( const instance& a ) { return { tagged<directive_op_desc::mask_one>, a }; }
     static instance __mask_knw0( const instance& a ) { return { tagged<directive_op_desc::mask_zero>, a }; }
+
+    // Changes the characteristics of the first variable to match the second.
+    //
+    static instance c( const instance& o, const instance& i ) { return { o.id, o.lookup_index, i.mtype }; }
 };
 
 // Implement comparison operators between [directive::directive_op_desc] x [math::operator_id].
