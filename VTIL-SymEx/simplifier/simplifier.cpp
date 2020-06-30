@@ -128,6 +128,90 @@ namespace vtil::symbolic
 		return false;
 	}
 
+	// Checks if the expression can be interpreted as a vector-boolean expression.
+	//
+	static std::pair<bool, const expression*> match_boolean_expression( const expression::reference& exp )
+	{
+		switch ( exp->op )
+		{
+			// If constant / variable, indicate success and return self if variable:
+			//
+			case math::operator_id::invalid:
+			{
+				if ( exp->is_variable() ) return { true, &*exp };
+				else                      return { true, nullptr };
+			}
+
+			// If bitwise not, continue from rhs.
+			//
+			case math::operator_id::bitwise_not:
+				return match_boolean_expression( exp->rhs );
+
+			// Bitwise OR/AND/XOR match both sides, if both were succesful
+			// and had matching/null UIDs, indicate success.
+			//
+			case math::operator_id::bitwise_or:
+			case math::operator_id::bitwise_and:
+			case math::operator_id::bitwise_xor:
+			{
+				auto [m1, p1] = match_boolean_expression( exp->lhs );
+				if ( !m1 ) return { false, nullptr };
+				auto [m2, p2] = match_boolean_expression( exp->rhs );
+				if ( !m2 ) return { false, nullptr };
+
+				if ( !p2 ) return { true, p1 };
+				if ( !p1 ) return { true, p2 };
+
+				if ( p1->uid == p2->uid )
+					return { true, p1 };
+				else
+					return { false, nullptr };
+			}
+
+			// Illegal operation, fail.
+			//
+			default:
+				return { false, nullptr };
+		}
+	}
+
+	// Attempts to normalize a vector-boolean expression into a simpler format.
+	//
+	static bool simplify_boolean_expression( expression::reference& exp )
+	{
+		// If it does not match a basic boolean expression, return false.
+		//
+		auto [is_match, uid_base] = match_boolean_expression( exp );
+		if ( !is_match ) return false;
+
+		// Evaluate for both states.
+		//
+		auto r0 = exp->evaluate( [ & ] ( auto& uid ) { return 0ull; } );
+		auto r1 = exp->evaluate( [ & ] ( auto& uid ) { return ~0ull; } );
+
+		// Calculate normal form AND/OR/XOR masks.
+		//
+		uint64_t and_mask = { ~( r0.known_zero() & r1.known_zero() ) };
+		uint64_t or_mask = { r0.known_one() & r1.known_one() };
+		uint64_t xor_mask = { r0.known_one() & r1.known_zero() };
+
+		// Apply each mask if not no-op.
+		//
+		expression::reference exp_new = *uid_base;
+		if ( and_mask != ~0ull )  exp_new = exp_new & symbolic::expression{ and_mask, exp->size() };
+		if ( xor_mask )           exp_new = exp_new ^ symbolic::expression{ xor_mask, exp->size() };
+		if ( or_mask )            exp_new = exp_new | symbolic::expression{ or_mask,  exp->size() };
+
+		// If complexity was higher or equal, fail.
+		//
+		if ( exp_new->complexity >= exp->complexity ) return false;
+		
+		// Apply and return.
+		//
+		exp = exp_new;
+		return true;
+	}
+
 	// Attempts to simplify the expression given, returns whether the simplification
 	// succeeded or not.
 	//
@@ -256,6 +340,19 @@ namespace vtil::symbolic
 			cache_entry = *exp;
 			( +exp )->simplify_hint = true;
 			return success_flag;
+		}
+
+		// If expression matches a basic boolean expression, simplify through that first:
+		//
+		if ( simplify_boolean_expression( exp ) )
+		{
+			// Recurse, and indicate success.
+			//
+			simplify_expression( exp, pretty, max_depth - 1 );
+			( +exp )->simplify_hint = true;
+			cache_entry = *exp;
+			success_flag = true;
+			return true;
 		}
 
 		// Simplify operands first if not done already.
