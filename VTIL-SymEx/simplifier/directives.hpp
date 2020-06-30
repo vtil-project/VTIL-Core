@@ -335,6 +335,7 @@ namespace vtil::symbolic::directive
 
         // MBA directives:
         //
+        { A-(A&B),                                            A&!(~A|~B) },
         { A+(B|C),                                            !(A+B+C)-s(B&C) },
         { A+(B&C),                                            !(A+B+C)-s(B|C) },
         { A+(B^C),                                            !(A+B+C)-s((B&C)<<1) },
