@@ -353,7 +353,10 @@ namespace vtil::symbolic::directive
         // Lower immediate urem/udiv/mul into and/shr/shl where possible.
         //
         { A*U,                                                __iff(__popcnt(U)==1, A<<!(__bsf(U)-1)) },
-        { A+(A<<U),                                           A*!(1 + (1<<U)) },
+        { A+(A<<U),                                           A*!(1+(1<<U)) },
+        { B+(A<<U),                                           B+A*!(1<<U) },
+        { B-(A<<U),                                           B-A*!(1<<U) },
+        { B*(A<<U),                                           B*A*!(1<<U) },
         { urem(A,U),                                          __iff(__popcnt(U)==1, A&!(U-1)) },
         { udiv(A,U),                                          __iff(__popcnt(U)==1, A>>!(__bsf(U)-1)) },
 
