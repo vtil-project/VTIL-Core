@@ -208,6 +208,7 @@ namespace vtil::symbolic
 		
 		// Apply and return.
 		//
+		exp_new.is_lazy = false;
 		*+exp = exp_new;
 		return true;
 	}
