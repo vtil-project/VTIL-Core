@@ -197,7 +197,7 @@ namespace vtil::symbolic
 
 		// Apply each mask if not no-op.
 		//
-		expression exp_new = uid_base->clone().make_lazy();
+		expression exp_new = uid_base->clone();
 		if ( and_mask != ~0ull )  exp_new = exp_new & expression{ and_mask, exp->size() };
 		if ( xor_mask )           exp_new = exp_new ^ expression{ xor_mask, exp->size() };
 		if ( or_mask )            exp_new = exp_new | expression{ or_mask,  exp->size() };
@@ -208,7 +208,6 @@ namespace vtil::symbolic
 		
 		// Apply and return.
 		//
-		exp_new.is_lazy = false;
 		*+exp = exp_new;
 		return true;
 	}

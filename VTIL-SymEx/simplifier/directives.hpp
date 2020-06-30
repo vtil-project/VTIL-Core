@@ -201,22 +201,15 @@ namespace vtil::symbolic::directive
         { A+U,                                               __iff(U<0, A-!(-U)) },
         { A-U,                                               __iff(U<0, A+!(-U)) },
 
-        // MUL simplification. A lot of these are special cases where the resulting operation costs *more* than the original. 
-        // We should fix this in the cost code.
+        // MUL simplification.
         //
         { (-A)*(-B),                                         A*B },
         { A*~B,                                              (-A)*B-A },
-        /*{ (A|~B)*C,                                          (A&B)*C-B*C-C },
-        { (~A|B)*C,                                          (A&B)*C-A*C-C },
-        { (A&~B)*C,                                          (A|B)*C-B*C },
-        { (~A&B)*C,                                          (A|B)*C-A*C },
-        { (~A^B)*C,                                          (A^B)*-C-C },
-        { (A^~B)*C,                                          (A^B)*-C-C },
-        { (A&B)*C+(A|B)*C,                                   A*C+B*C },*/
-        { A*(B|C),                                           A*(B+C)-A*(B&C) },
-        { A*(B^C),                                           A*(B+C)-A*((B&C)<<1) },
+        { A*(B|C),                                           A*(B+C) - A*(B&C) },
+        { A*(B^C),                                           A*(B+C) - A*((B&C)<<1) },
         { A*(B+C),                                           A*B + A*C }, 
-        { A*(B-C),                                           A*B - A*C }, 
+        { A*(B-C),                                           A*B - A*C },
+        { A*(B&~C),                                          A*B - (B&C)*A },
     };
 
     // Describes the way operands of two operators join each other.
@@ -366,7 +359,7 @@ namespace vtil::symbolic::directive
 
         // MBA directives:
         //
-        { A-(A&B),                                            A&!(~A|~B) },
+//        { A-(A&B),                                            A&!(~A|~B) },
         { A+(B|C),                                            !(A+B+C)-s(B&C) },
         { A+(B&C),                                            !(A+B+C)-s(B|C) },
         { A+(B^C),                                            !(A+B+C)-s((B&C)<<1) },
