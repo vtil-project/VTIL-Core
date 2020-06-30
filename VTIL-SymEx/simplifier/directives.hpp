@@ -205,13 +205,16 @@ namespace vtil::symbolic::directive
         // We should fix this in the cost code.
         //
         { (-A)*(-B),                                         A*B },
+        { A*(B+C),                                           (A*B)+(A*C) },
+        { A*(B-C),                                           (A*B)-!(A*C) },
         { A*~B,                                              (-A)*B-A },
         { (A|~B)*C,                                          (A&B)*C-B*C-C },
         { (~A|B)*C,                                          (A&B)*C-A*C-C },
         { (A&~B)*C,                                          (A|B)*C-B*C },
         { (~A&B)*C,                                          (A|B)*C-A*C },
-        { (~A^B)*C,                                          (A^B)*-C-C },
-        { (A^~B)*C,                                          (A^B)*-C-C },
+        { (A^B)*C,                                           (A|B)*C-(A&B)*C},
+        { (A^~B)*C,                                          ((A^B)*-C)-C },
+        { (A^~B)*C,                                          ((A^B)*-C)-C },
         { (A&B)*C+(A|B)*C,                                   A*C+B*C }
     };
 
