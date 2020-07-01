@@ -33,7 +33,7 @@
 #include <string>
 #include <mutex>
 #include "formatting.hpp"
-#include "../util/critical_section.hpp"
+#include "../util/thread_identifier.hpp"
 
 // If inline assembly is supported use it, otherwise rely on intrinsics to emit INT3.
 //
@@ -84,7 +84,7 @@ namespace vtil::logger
 	{
 		// Lock of the stream.
 		//
-		critical_section lock;
+		std::recursive_mutex lock;
 
 		// Whether prints are muted or not.
 		//

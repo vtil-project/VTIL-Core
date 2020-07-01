@@ -1,7 +1,7 @@
 #pragma once
 #include "../../util/concept.hpp"
 #include "../../util/copy_on_write.hpp"
-#include "../../util/critical_section.hpp"
+#include "../../util/thread_identifier.hpp"
 #include "../../util/lt_typeid.hpp"
 #include "../../util/fnv64.hpp"
 #include "../../util/fnv128.hpp"

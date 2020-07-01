@@ -35,8 +35,8 @@ add_library(${PROJECT_NAME} STATIC
     util/conditional_lock.hpp
     util/constexpr_random.hpp
     util/copy_on_write.hpp
-    util/critical_section.cpp
-    util/critical_section.hpp
+    util/thread_identifier.cpp
+    util/thread_identifier.hpp
     util/dynamic_size.hpp
     util/fnv128.hpp
     util/fnv64.hpp

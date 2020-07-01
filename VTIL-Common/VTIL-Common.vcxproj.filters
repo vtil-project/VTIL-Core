@@ -85,9 +85,6 @@
     <ClInclude Include="query\fixed_iterator.hpp">
       <Filter>Queries</Filter>
     </ClInclude>
-    <ClInclude Include="util\critical_section.hpp">
-      <Filter>Utility</Filter>
-    </ClInclude>
     <ClInclude Include="util\copy_on_write.hpp">
       <Filter>Utility</Filter>
     </ClInclude>
@@ -187,6 +184,9 @@
     <ClInclude Include="util\tuple_visit.hpp">
       <Filter>Utility</Filter>
     </ClInclude>
+    <ClInclude Include="util\thread_identifier.hpp">
+      <Filter>Utility</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="io\logger.cpp">
@@ -194,9 +194,6 @@
     </ClCompile>
     <ClCompile Include="math\operators.cpp">
       <Filter>Math</Filter>
-    </ClCompile>
-    <ClCompile Include="util\critical_section.cpp">
-      <Filter>Utility</Filter>
     </ClCompile>
     <ClCompile Include="util\variant.cpp">
       <Filter>Utility</Filter>
@@ -221,6 +218,9 @@
     </ClCompile>
     <ClCompile Include="formats\winpe.cpp">
       <Filter>Formats</Filter>
+    </ClCompile>
+    <ClCompile Include="util\thread_identifier.cpp">
+      <Filter>Utility</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
