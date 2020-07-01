@@ -29,6 +29,7 @@
 #include <mutex>
 #include <atomic>
 #include "colony.hpp"
+#include "thread_identifier.hpp"
 
 // [Configuration]
 // Determine the number of buckets we allocate.
