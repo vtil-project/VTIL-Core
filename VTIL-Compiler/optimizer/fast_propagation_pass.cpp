@@ -61,7 +61,7 @@ namespace vtil::optimizer
 
 						// Check for operand validity.
 						//
-						if ( ins.base != &ins::mov && op.bit_count() != new_op.bit_count() )
+						if ( op.bit_count() != new_op.bit_count() )
 							continue;
 
 						if ( type == operand_type::read_reg )
@@ -85,34 +85,38 @@ namespace vtil::optimizer
 
 				if (type >= operand_type::write)
 				{
+					auto did_write = false;
 					const auto reg_id = register_id( op.reg() );
-					auto to_write = ins.operands [ 1 ];
-					if ( ins.base == &ins::mov && op.bit_count() == 64 && ( !to_write.is_register() || !to_write.reg().is_stack_pointer() ) )
-					{
-						reg_cache [ reg_id ] = to_write;
-						for ( auto& [id, operand] : reg_cache )
-							if ( operand.is_register() && register_id( operand.reg() ) == reg_id )
-								operand = to_write;
-					}
-					else
-					{
-						reg_cache.erase( reg_id );
-						for ( auto it = reg_cache.begin(), end = reg_cache.end(); it != end; )
-						{
-							auto& [id, operand] = *it;
 
-							if ( operand.is_register() && register_id( operand.reg() ) == reg_id )
-							{
-								it = reg_cache.erase( it );
-								end = reg_cache.end();
-							}
-							else
-							{
-								++it;
-							}
+					// Erase entries we can't propagate due to this move.
+					//
+					for ( auto reg_it = reg_cache.begin(), end = reg_cache.end(); reg_it != end; )
+					{
+						auto& [id, operand] = *reg_it;
+
+						if ( operand.is_register() && register_id( operand.reg() ) == reg_id )
+						{
+							reg_it = reg_cache.erase( reg_it );
+							end = reg_cache.end();
+						}
+						else
+						{
+							++reg_it;
 						}
 					}
 
+					if ( ins.base == &ins::mov && op.bit_count() == 64 )
+					{
+						auto to_write = ins.operands [ 1 ];
+						if ( !to_write.is_register() || ( !to_write.reg().is_volatile() && !to_write.reg().is_stack_pointer() ) )
+						{
+							did_write = true;
+							reg_cache [ reg_id ] = to_write;
+							break;
+						}
+					}
+
+					reg_cache.erase( reg_id );
 					break;
 				}
 			}
@@ -140,7 +144,7 @@ namespace vtil::optimizer
 			{
 				const auto sz = ins.access_size();
 				auto [reg, offset] = ins.memory_location();
-				const auto offset_mod = ( uint64_t ) offset & 0b111ULL;
+				const auto offset_mod = ( 8 + ( offset % 8 ) ) % 8;
 				const int64_t aligned_offset = offset - offset_mod;
 
 				const auto reg_id = register_id( reg );
@@ -251,7 +255,7 @@ namespace vtil::optimizer
 			{
 				const auto sz = ins.access_size();
 				auto [reg, offset] = ins.memory_location();
-				const auto offset_mod = ( uint64_t ) offset & 0b111ULL;
+				const auto offset_mod = ( 8 + ( offset % 8 ) ) % 8;
 				const int64_t aligned_offset = offset - offset_mod;
 
 				// If this instruction is unaligned and can't be reduced to an aligned load with an offset, bail.
@@ -283,7 +287,7 @@ namespace vtil::optimizer
 						//
 						overlap_stores.push_back( &tup );
 
-						// Update read mask.
+						// Update mask.
 						//
 						final_store_mask |= store_mask;
 					}

@@ -183,6 +183,18 @@ namespace vtil::optimizer
 		}
 	};
 
+	// Forces logic pass to return zero no matter what.
+	//
+	template<typename T>
+	struct zero_pass : T
+	{
+		size_t pass( basic_block* blk, bool xblock = false ) override
+		{
+			T::pass( blk, xblock );
+			return 0;
+		}
+	};
+
 	// No-op pass.
 	//
 	struct nop_pass : pass_interface<>
