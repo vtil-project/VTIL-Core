@@ -29,2580 +29,2595 @@
 
 namespace vtil::symbolic::directive
 {
-    const std::vector<std::pair<instance::reference, instance::reference>> boolean_simplifiers =
+    std::vector<std::pair<instance::reference, instance::reference>> boolean_simplifiers
     {
-#ifndef __INTELLISENSE__
-        { ((A>B)&(A>C)),                                                   __iff((B>C), (A>B)) },
-        { ((A>B)&(A>C)),                                                   __iff((B>=C), (A>B)) },
-        { ((A>B)&(A>C)),                                                   __iff((B==C), (A>B)) },
-        { ((A>B)|(A>C)),                                                   __iff((B==C), (A>B)) },
-        { ((A>B)|(A>C)),                                                   __iff((B<=C), (A>B)) },
-        { ((A>B)|(A>C)),                                                   __iff((B<C), (A>B)) },
-        { ((A>B)&(A>=C)),                                                  __iff((B>C), (A>B)) },
-        { ((A>B)&(A>=C)),                                                  __iff((B>=C), (A>B)) },
-        { ((A>B)&(A>=C)),                                                  __iff((B==C), (A>B)) },
-        { ((A>B)|(A>=C)),                                                  __iff((B==C), (A>=B)) },
-        { ((A>B)|(A>=C)),                                                  __iff((B<C), (A>B)) },
-        { ((A>B)&(A==C)),                                                  __iff((B>C), 0x0) },
-        { ((A>B)&(A==C)),                                                  __iff((B>=C), 0x0) },
-        { ((A>B)&(A==C)),                                                  __iff((B==C), 0x0) },
-        { ((A>B)|(A==C)),                                                  __iff((B==C), (A>=B)) },
-        { ((A>B)|(A==C)),                                                  __iff((B<C), (A>B)) },
-        { ((A>B)&(A!=C)),                                                  __iff((B>C), (A>B)) },
-        { ((A>B)&(A!=C)),                                                  __iff((B>=C), (A>B)) },
-        { ((A>B)&(A!=C)),                                                  __iff((B==C), (A>B)) },
-        { ((A>B)|(A!=C)),                                                  __iff((B==C), (A!=B)) },
-        { ((A>B)|(A!=C)),                                                  __iff((B<C), 0x1) },
-        { ((A>B)&(A<=C)),                                                  __iff((B>C), 0x0) },
-        { ((A>B)&(A<=C)),                                                  __iff((B>=C), 0x0) },
-        { ((A>B)&(A<=C)),                                                  __iff((B==C), 0x0) },
-        { ((A>B)|(A<=C)),                                                  __iff((B==C), 0x1) },
-        { ((A>B)|(A<=C)),                                                  __iff((B<=C), 0x1) },
-        { ((A>B)|(A<=C)),                                                  __iff((B<C), 0x1) },
-        { ((A>B)&(A<C)),                                                   __iff((B>C), 0x0) },
-        { ((A>B)&(A<C)),                                                   __iff((B>=C), 0x0) },
-        { ((A>B)&(A<C)),                                                   __iff((B==C), 0x0) },
-        { ((A>B)|(A<C)),                                                   __iff((B==C), (A!=B)) },
-        { ((A>B)|(A<C)),                                                   __iff((B<C), 0x1) },
-        { ((A>=B)&(A>C)),                                                  __iff((B>C), (A>=B)) },
-        { ((A>=B)&(A>C)),                                                  __iff((B==C), (A>B)) },
-        { ((A>=B)|(A>C)),                                                  __iff((B==C), (A>=B)) },
-        { ((A>=B)|(A>C)),                                                  __iff((B<=C), (A>=B)) },
-        { ((A>=B)|(A>C)),                                                  __iff((B<C), (A>=B)) },
-        { ((A>=B)&(A>=C)),                                                 __iff((B>C), (A>=B)) },
-        { ((A>=B)&(A>=C)),                                                 __iff((B>=C), (A>=B)) },
-        { ((A>=B)&(A>=C)),                                                 __iff((B==C), (A>=B)) },
-        { ((A>=B)|(A>=C)),                                                 __iff((B==C), (A>=B)) },
-        { ((A>=B)|(A>=C)),                                                 __iff((B<=C), (A>=B)) },
-        { ((A>=B)|(A>=C)),                                                 __iff((B<C), (A>=B)) },
-        { ((A>=B)&(A==C)),                                                 __iff((B>C), 0x0) },
-        { ((A>=B)&(A==C)),                                                 __iff((B==C), (A==B)) },
-        { ((A>=B)|(A==C)),                                                 __iff((B==C), (A>=B)) },
-        { ((A>=B)|(A==C)),                                                 __iff((B<=C), (A>=B)) },
-        { ((A>=B)|(A==C)),                                                 __iff((B<C), (A>=B)) },
-        { ((A>=B)&(A!=C)),                                                 __iff((B>C), (A>=B)) },
-        { ((A>=B)&(A!=C)),                                                 __iff((B==C), (A>B)) },
-        { ((A>=B)|(A!=C)),                                                 __iff((B==C), 0x1) },
-        { ((A>=B)|(A!=C)),                                                 __iff((B<=C), 0x1) },
-        { ((A>=B)|(A!=C)),                                                 __iff((B<C), 0x1) },
-        { ((A>=B)&(A<=C)),                                                 __iff((B>C), 0x0) },
-        { ((A>=B)&(A<=C)),                                                 __iff((B==C), (A==B)) },
-        { ((A>=B)|(A<=C)),                                                 __iff((B==C), 0x1) },
-        { ((A>=B)|(A<=C)),                                                 __iff((B<=C), 0x1) },
-        { ((A>=B)|(A<=C)),                                                 __iff((B<C), 0x1) },
-        { ((A>=B)&(A<C)),                                                  __iff((B>C), 0x0) },
-        { ((A>=B)&(A<C)),                                                  __iff((B>=C), 0x0) },
-        { ((A>=B)&(A<C)),                                                  __iff((B==C), 0x0) },
-        { ((A>=B)|(A<C)),                                                  __iff((B==C), 0x1) },
-        { ((A>=B)|(A<C)),                                                  __iff((B<=C), 0x1) },
-        { ((A>=B)|(A<C)),                                                  __iff((B<C), 0x1) },
-        { ((A==B)&(A>C)),                                                  __iff((B>C), (A==B)) },
-        { ((A==B)&(A>C)),                                                  __iff((B==C), 0x0) },
-        { ((A==B)&(A>C)),                                                  __iff((B<=C), 0x0) },
-        { ((A==B)&(A>C)),                                                  __iff((B<C), 0x0) },
-        { ((A==B)|(A>C)),                                                  __iff((B==C), (A>=B)) },
-        { ((A==B)&(A>=C)),                                                 __iff((B>C), (A==B)) },
-        { ((A==B)&(A>=C)),                                                 __iff((B>=C), (A==B)) },
-        { ((A==B)&(A>=C)),                                                 __iff((B==C), (A==B)) },
-        { ((A==B)&(A>=C)),                                                 __iff((B<C), 0x0) },
-        { ((A==B)|(A>=C)),                                                 __iff((B==C), (A>=B)) },
-        { ((A==B)&(A==C)),                                                 __iff((B>C), 0x0) },
-        { ((A==B)&(A==C)),                                                 __iff((B==C), (A==B)) },
-        { ((A==B)&(A==C)),                                                 __iff((B!=C), 0x0) },
-        { ((A==B)&(A==C)),                                                 __iff((B<C), 0x0) },
-        { ((A==B)&(A==C)),                                                 __iff(__ugreat(B, C), 0x0) },
-        { ((A==B)&(A==C)),                                                 __iff(__uless(B, C), 0x0) },
-        { ((A==B)|(A==C)),                                                 __iff((B==C), (A==B)) },
-        { ((A==B)&(A!=C)),                                                 __iff((B>C), (A==B)) },
-        { ((A==B)&(A!=C)),                                                 __iff((B==C), 0x0) },
-        { ((A==B)&(A!=C)),                                                 __iff((B!=C), (A==B)) },
-        { ((A==B)&(A!=C)),                                                 __iff((B<C), (A==B)) },
-        { ((A==B)&(A!=C)),                                                 __iff(__ugreat(B, C), (A==B)) },
-        { ((A==B)&(A!=C)),                                                 __iff(__uless(B, C), (A==B)) },
-        { ((A==B)|(A!=C)),                                                 __iff((B==C), 0x1) },
-        { ((A==B)&(A<=C)),                                                 __iff((B>C), 0x0) },
-        { ((A==B)&(A<=C)),                                                 __iff((B==C), (A==B)) },
-        { ((A==B)&(A<=C)),                                                 __iff((B<=C), (A==B)) },
-        { ((A==B)&(A<=C)),                                                 __iff((B<C), (A==B)) },
-        { ((A==B)|(A<=C)),                                                 __iff((B==C), (A<=B)) },
-        { ((A==B)&(A<C)),                                                  __iff((B>C), 0x0) },
-        { ((A==B)&(A<C)),                                                  __iff((B>=C), 0x0) },
-        { ((A==B)&(A<C)),                                                  __iff((B==C), 0x0) },
-        { ((A==B)&(A<C)),                                                  __iff((B<C), (A==B)) },
-        { ((A==B)|(A<C)),                                                  __iff((B==C), (A<=B)) },
-        { ((A==B)&__ugreat(A, C)),                                         __iff((B==C), 0x0) },
-        { ((A==B)&__ugreat(A, C)),                                         __iff(__ugreat(B, C), (A==B)) },
-        { ((A==B)&__ugreat(A, C)),                                         __iff(__uless_eq(B, C), 0x0) },
-        { ((A==B)&__ugreat(A, C)),                                         __iff(__uless(B, C), 0x0) },
-        { ((A==B)|__ugreat(A, C)),                                         __iff((B==C), __ugreat_eq(A, B)) },
-        { ((A==B)&__ugreat_eq(A, C)),                                      __iff((B==C), (A==B)) },
-        { ((A==B)&__ugreat_eq(A, C)),                                      __iff(__ugreat(B, C), (A==B)) },
-        { ((A==B)&__ugreat_eq(A, C)),                                      __iff(__ugreat_eq(B, C), (A==B)) },
-        { ((A==B)&__ugreat_eq(A, C)),                                      __iff(__uless(B, C), 0x0) },
-        { ((A==B)|__ugreat_eq(A, C)),                                      __iff((B==C), __ugreat_eq(A, B)) },
-        { ((A==B)&__uless_eq(A, C)),                                       __iff((B==C), (A==B)) },
-        { ((A==B)&__uless_eq(A, C)),                                       __iff(__ugreat(B, C), 0x0) },
-        { ((A==B)&__uless_eq(A, C)),                                       __iff(__uless_eq(B, C), (A==B)) },
-        { ((A==B)&__uless_eq(A, C)),                                       __iff(__uless(B, C), (A==B)) },
-        { ((A==B)|__uless_eq(A, C)),                                       __iff((B==C), __uless_eq(A, B)) },
-        { ((A==B)&__uless(A, C)),                                          __iff((B==C), 0x0) },
-        { ((A==B)&__uless(A, C)),                                          __iff(__ugreat(B, C), 0x0) },
-        { ((A==B)&__uless(A, C)),                                          __iff(__ugreat_eq(B, C), 0x0) },
-        { ((A==B)&__uless(A, C)),                                          __iff(__uless(B, C), (A==B)) },
-        { ((A==B)|__uless(A, C)),                                          __iff((B==C), __uless_eq(A, B)) },
-        { ((A!=B)&(A>C)),                                                  __iff((B==C), (A>B)) },
-        { ((A!=B)|(A>C)),                                                  __iff((B>C), 0x1) },
-        { ((A!=B)|(A>C)),                                                  __iff((B==C), (A!=B)) },
-        { ((A!=B)|(A>C)),                                                  __iff((B<=C), (A!=B)) },
-        { ((A!=B)|(A>C)),                                                  __iff((B<C), (A!=B)) },
-        { ((A!=B)&(A>=C)),                                                 __iff((B==C), (A>B)) },
-        { ((A!=B)|(A>=C)),                                                 __iff((B>C), 0x1) },
-        { ((A!=B)|(A>=C)),                                                 __iff((B>=C), 0x1) },
-        { ((A!=B)|(A>=C)),                                                 __iff((B==C), 0x1) },
-        { ((A!=B)|(A>=C)),                                                 __iff((B<C), (A!=B)) },
-        { ((A!=B)&(A==C)),                                                 __iff((B==C), 0x0) },
-        { ((A!=B)|(A==C)),                                                 __iff((B>C), (A!=B)) },
-        { ((A!=B)|(A==C)),                                                 __iff((B==C), 0x1) },
-        { ((A!=B)|(A==C)),                                                 __iff((B!=C), (A!=B)) },
-        { ((A!=B)|(A==C)),                                                 __iff((B<C), (A!=B)) },
-        { ((A!=B)|(A==C)),                                                 __iff(__ugreat(B, C), (A!=B)) },
-        { ((A!=B)|(A==C)),                                                 __iff(__uless(B, C), (A!=B)) },
-        { ((A!=B)&(A!=C)),                                                 __iff((B==C), (A!=B)) },
-        { ((A!=B)|(A!=C)),                                                 __iff((B>C), 0x1) },
-        { ((A!=B)|(A!=C)),                                                 __iff((B==C), (A!=B)) },
-        { ((A!=B)|(A!=C)),                                                 __iff((B!=C), 0x1) },
-        { ((A!=B)|(A!=C)),                                                 __iff((B<C), 0x1) },
-        { ((A!=B)|(A!=C)),                                                 __iff(__ugreat(B, C), 0x1) },
-        { ((A!=B)|(A!=C)),                                                 __iff(__uless(B, C), 0x1) },
-        { ((A!=B)&(A<=C)),                                                 __iff((B==C), (A<B)) },
-        { ((A!=B)|(A<=C)),                                                 __iff((B>C), (A!=B)) },
-        { ((A!=B)|(A<=C)),                                                 __iff((B==C), 0x1) },
-        { ((A!=B)|(A<=C)),                                                 __iff((B<=C), 0x1) },
-        { ((A!=B)|(A<=C)),                                                 __iff((B<C), 0x1) },
-        { ((A!=B)&(A<C)),                                                  __iff((B==C), (A<B)) },
-        { ((A!=B)|(A<C)),                                                  __iff((B>C), (A!=B)) },
-        { ((A!=B)|(A<C)),                                                  __iff((B>=C), (A!=B)) },
-        { ((A!=B)|(A<C)),                                                  __iff((B==C), (A!=B)) },
-        { ((A!=B)|(A<C)),                                                  __iff((B<C), 0x1) },
-        { ((A!=B)&__ugreat(A, C)),                                         __iff((B==C), __ugreat(A, B)) },
-        { ((A!=B)|__ugreat(A, C)),                                         __iff((B==C), (A!=B)) },
-        { ((A!=B)|__ugreat(A, C)),                                         __iff(__ugreat(B, C), 0x1) },
-        { ((A!=B)|__ugreat(A, C)),                                         __iff(__uless_eq(B, C), (A!=B)) },
-        { ((A!=B)|__ugreat(A, C)),                                         __iff(__uless(B, C), (A!=B)) },
-        { ((A!=B)&__ugreat_eq(A, C)),                                      __iff((B==C), __ugreat(A, B)) },
-        { ((A!=B)|__ugreat_eq(A, C)),                                      __iff((B==C), 0x1) },
-        { ((A!=B)|__ugreat_eq(A, C)),                                      __iff(__ugreat(B, C), 0x1) },
-        { ((A!=B)|__ugreat_eq(A, C)),                                      __iff(__ugreat_eq(B, C), 0x1) },
-        { ((A!=B)|__ugreat_eq(A, C)),                                      __iff(__uless(B, C), (A!=B)) },
-        { ((A!=B)&__uless_eq(A, C)),                                       __iff((B==C), __uless(A, B)) },
-        { ((A!=B)|__uless_eq(A, C)),                                       __iff((B==C), 0x1) },
-        { ((A!=B)|__uless_eq(A, C)),                                       __iff(__ugreat(B, C), (A!=B)) },
-        { ((A!=B)|__uless_eq(A, C)),                                       __iff(__uless_eq(B, C), 0x1) },
-        { ((A!=B)|__uless_eq(A, C)),                                       __iff(__uless(B, C), 0x1) },
-        { ((A!=B)&__uless(A, C)),                                          __iff((B==C), __uless(A, B)) },
-        { ((A!=B)|__uless(A, C)),                                          __iff((B==C), (A!=B)) },
-        { ((A!=B)|__uless(A, C)),                                          __iff(__ugreat(B, C), (A!=B)) },
-        { ((A!=B)|__uless(A, C)),                                          __iff(__ugreat_eq(B, C), (A!=B)) },
-        { ((A!=B)|__uless(A, C)),                                          __iff(__uless(B, C), 0x1) },
-        { ((A<=B)&(A>C)),                                                  __iff((B==C), 0x0) },
-        { ((A<=B)&(A>C)),                                                  __iff((B<=C), 0x0) },
-        { ((A<=B)&(A>C)),                                                  __iff((B<C), 0x0) },
-        { ((A<=B)|(A>C)),                                                  __iff((B>C), 0x1) },
-        { ((A<=B)|(A>C)),                                                  __iff((B>=C), 0x1) },
-        { ((A<=B)|(A>C)),                                                  __iff((B==C), 0x1) },
-        { ((A<=B)&(A>=C)),                                                 __iff((B==C), (A==B)) },
-        { ((A<=B)&(A>=C)),                                                 __iff((B<C), 0x0) },
-        { ((A<=B)|(A>=C)),                                                 __iff((B>C), 0x1) },
-        { ((A<=B)|(A>=C)),                                                 __iff((B>=C), 0x1) },
-        { ((A<=B)|(A>=C)),                                                 __iff((B==C), 0x1) },
-        { ((A<=B)&(A==C)),                                                 __iff((B==C), (A==B)) },
-        { ((A<=B)&(A==C)),                                                 __iff((B<C), 0x0) },
-        { ((A<=B)|(A==C)),                                                 __iff((B>C), (A<=B)) },
-        { ((A<=B)|(A==C)),                                                 __iff((B>=C), (A<=B)) },
-        { ((A<=B)|(A==C)),                                                 __iff((B==C), (A<=B)) },
-        { ((A<=B)&(A!=C)),                                                 __iff((B==C), (A<B)) },
-        { ((A<=B)&(A!=C)),                                                 __iff((B<C), (A<=B)) },
-        { ((A<=B)|(A!=C)),                                                 __iff((B>C), 0x1) },
-        { ((A<=B)|(A!=C)),                                                 __iff((B>=C), 0x1) },
-        { ((A<=B)|(A!=C)),                                                 __iff((B==C), 0x1) },
-        { ((A<=B)&(A<=C)),                                                 __iff((B==C), (A<=B)) },
-        { ((A<=B)&(A<=C)),                                                 __iff((B<=C), (A<=B)) },
-        { ((A<=B)&(A<=C)),                                                 __iff((B<C), (A<=B)) },
-        { ((A<=B)|(A<=C)),                                                 __iff((B>C), (A<=B)) },
-        { ((A<=B)|(A<=C)),                                                 __iff((B>=C), (A<=B)) },
-        { ((A<=B)|(A<=C)),                                                 __iff((B==C), (A<=B)) },
-        { ((A<=B)&(A<C)),                                                  __iff((B==C), (A<B)) },
-        { ((A<=B)&(A<C)),                                                  __iff((B<C), (A<=B)) },
-        { ((A<=B)|(A<C)),                                                  __iff((B>C), (A<=B)) },
-        { ((A<=B)|(A<C)),                                                  __iff((B>=C), (A<=B)) },
-        { ((A<=B)|(A<C)),                                                  __iff((B==C), (A<=B)) },
-        { ((A<B)&(A>C)),                                                   __iff((B==C), 0x0) },
-        { ((A<B)&(A>C)),                                                   __iff((B<=C), 0x0) },
-        { ((A<B)&(A>C)),                                                   __iff((B<C), 0x0) },
-        { ((A<B)|(A>C)),                                                   __iff((B>C), 0x1) },
-        { ((A<B)|(A>C)),                                                   __iff((B==C), (A!=B)) },
-        { ((A<B)&(A>=C)),                                                  __iff((B==C), 0x0) },
-        { ((A<B)&(A>=C)),                                                  __iff((B<=C), 0x0) },
-        { ((A<B)&(A>=C)),                                                  __iff((B<C), 0x0) },
-        { ((A<B)|(A>=C)),                                                  __iff((B>C), 0x1) },
-        { ((A<B)|(A>=C)),                                                  __iff((B>=C), 0x1) },
-        { ((A<B)|(A>=C)),                                                  __iff((B==C), 0x1) },
-        { ((A<B)&(A==C)),                                                  __iff((B==C), 0x0) },
-        { ((A<B)&(A==C)),                                                  __iff((B<=C), 0x0) },
-        { ((A<B)&(A==C)),                                                  __iff((B<C), 0x0) },
-        { ((A<B)|(A==C)),                                                  __iff((B>C), (A<B)) },
-        { ((A<B)|(A==C)),                                                  __iff((B==C), (A<=B)) },
-        { ((A<B)&(A!=C)),                                                  __iff((B==C), (A<B)) },
-        { ((A<B)&(A!=C)),                                                  __iff((B<=C), (A<B)) },
-        { ((A<B)&(A!=C)),                                                  __iff((B<C), (A<B)) },
-        { ((A<B)|(A!=C)),                                                  __iff((B>C), 0x1) },
-        { ((A<B)|(A!=C)),                                                  __iff((B==C), (A!=B)) },
-        { ((A<B)&(A<=C)),                                                  __iff((B==C), (A<B)) },
-        { ((A<B)&(A<=C)),                                                  __iff((B<=C), (A<B)) },
-        { ((A<B)&(A<=C)),                                                  __iff((B<C), (A<B)) },
-        { ((A<B)|(A<=C)),                                                  __iff((B>C), (A<B)) },
-        { ((A<B)|(A<=C)),                                                  __iff((B==C), (A<=B)) },
-        { ((A<B)&(A<C)),                                                   __iff((B==C), (A<B)) },
-        { ((A<B)&(A<C)),                                                   __iff((B<=C), (A<B)) },
-        { ((A<B)&(A<C)),                                                   __iff((B<C), (A<B)) },
-        { ((A<B)|(A<C)),                                                   __iff((B>C), (A<B)) },
-        { ((A<B)|(A<C)),                                                   __iff((B>=C), (A<B)) },
-        { ((A<B)|(A<C)),                                                   __iff((B==C), (A<B)) },
-        { (__ugreat(A, B)&(A==C)),                                         __iff((B==C), 0x0) },
-        { (__ugreat(A, B)&(A==C)),                                         __iff(__ugreat(B, C), 0x0) },
-        { (__ugreat(A, B)&(A==C)),                                         __iff(__ugreat_eq(B, C), 0x0) },
-        { (__ugreat(A, B)|(A==C)),                                         __iff((B==C), __ugreat_eq(A, B)) },
-        { (__ugreat(A, B)|(A==C)),                                         __iff(__uless(B, C), __ugreat(A, B)) },
-        { (__ugreat(A, B)&(A!=C)),                                         __iff((B==C), __ugreat(A, B)) },
-        { (__ugreat(A, B)&(A!=C)),                                         __iff(__ugreat(B, C), __ugreat(A, B)) },
-        { (__ugreat(A, B)&(A!=C)),                                         __iff(__ugreat_eq(B, C), __ugreat(A, B)) },
-        { (__ugreat(A, B)|(A!=C)),                                         __iff((B==C), (A!=B)) },
-        { (__ugreat(A, B)|(A!=C)),                                         __iff(__uless(B, C), 0x1) },
-        { (__ugreat(A, B)&__ugreat(A, C)),                                 __iff((B==C), __ugreat(A, B)) },
-        { (__ugreat(A, B)&__ugreat(A, C)),                                 __iff(__ugreat(B, C), __ugreat(A, B)) },
-        { (__ugreat(A, B)&__ugreat(A, C)),                                 __iff(__ugreat_eq(B, C), __ugreat(A, B)) },
-        { (__ugreat(A, B)|__ugreat(A, C)),                                 __iff((B==C), __ugreat(A, B)) },
-        { (__ugreat(A, B)|__ugreat(A, C)),                                 __iff(__uless_eq(B, C), __ugreat(A, B)) },
-        { (__ugreat(A, B)|__ugreat(A, C)),                                 __iff(__uless(B, C), __ugreat(A, B)) },
-        { (__ugreat(A, B)&__ugreat_eq(A, C)),                              __iff((B==C), __ugreat(A, B)) },
-        { (__ugreat(A, B)&__ugreat_eq(A, C)),                              __iff(__ugreat(B, C), __ugreat(A, B)) },
-        { (__ugreat(A, B)&__ugreat_eq(A, C)),                              __iff(__ugreat_eq(B, C), __ugreat(A, B)) },
-        { (__ugreat(A, B)|__ugreat_eq(A, C)),                              __iff((B==C), __ugreat_eq(A, B)) },
-        { (__ugreat(A, B)|__ugreat_eq(A, C)),                              __iff(__uless(B, C), __ugreat(A, B)) },
-        { (__ugreat(A, B)&__uless_eq(A, C)),                               __iff((B==C), 0x0) },
-        { (__ugreat(A, B)&__uless_eq(A, C)),                               __iff(__ugreat(B, C), 0x0) },
-        { (__ugreat(A, B)&__uless_eq(A, C)),                               __iff(__ugreat_eq(B, C), 0x0) },
-        { (__ugreat(A, B)|__uless_eq(A, C)),                               __iff((B==C), 0x1) },
-        { (__ugreat(A, B)|__uless_eq(A, C)),                               __iff(__uless_eq(B, C), 0x1) },
-        { (__ugreat(A, B)|__uless_eq(A, C)),                               __iff(__uless(B, C), 0x1) },
-        { (__ugreat(A, B)&__uless(A, C)),                                  __iff((B==C), 0x0) },
-        { (__ugreat(A, B)&__uless(A, C)),                                  __iff(__ugreat(B, C), 0x0) },
-        { (__ugreat(A, B)&__uless(A, C)),                                  __iff(__ugreat_eq(B, C), 0x0) },
-        { (__ugreat(A, B)|__uless(A, C)),                                  __iff((B==C), (A!=B)) },
-        { (__ugreat(A, B)|__uless(A, C)),                                  __iff(__uless(B, C), 0x1) },
-        { (__ugreat_eq(A, B)&(A==C)),                                      __iff((B==C), (A==B)) },
-        { (__ugreat_eq(A, B)&(A==C)),                                      __iff(__ugreat(B, C), 0x0) },
-        { (__ugreat_eq(A, B)|(A==C)),                                      __iff((B==C), __ugreat_eq(A, B)) },
-        { (__ugreat_eq(A, B)|(A==C)),                                      __iff(__uless_eq(B, C), __ugreat_eq(A, B)) },
-        { (__ugreat_eq(A, B)|(A==C)),                                      __iff(__uless(B, C), __ugreat_eq(A, B)) },
-        { (__ugreat_eq(A, B)&(A!=C)),                                      __iff((B==C), __ugreat(A, B)) },
-        { (__ugreat_eq(A, B)&(A!=C)),                                      __iff(__ugreat(B, C), __ugreat_eq(A, B)) },
-        { (__ugreat_eq(A, B)|(A!=C)),                                      __iff((B==C), 0x1) },
-        { (__ugreat_eq(A, B)|(A!=C)),                                      __iff(__uless_eq(B, C), 0x1) },
-        { (__ugreat_eq(A, B)|(A!=C)),                                      __iff(__uless(B, C), 0x1) },
-        { (__ugreat_eq(A, B)&__ugreat(A, C)),                              __iff((B==C), __ugreat(A, B)) },
-        { (__ugreat_eq(A, B)&__ugreat(A, C)),                              __iff(__ugreat(B, C), __ugreat_eq(A, B)) },
-        { (__ugreat_eq(A, B)|__ugreat(A, C)),                              __iff((B==C), __ugreat_eq(A, B)) },
-        { (__ugreat_eq(A, B)|__ugreat(A, C)),                              __iff(__uless_eq(B, C), __ugreat_eq(A, B)) },
-        { (__ugreat_eq(A, B)|__ugreat(A, C)),                              __iff(__uless(B, C), __ugreat_eq(A, B)) },
-        { (__ugreat_eq(A, B)&__ugreat_eq(A, C)),                           __iff((B==C), __ugreat_eq(A, B)) },
-        { (__ugreat_eq(A, B)&__ugreat_eq(A, C)),                           __iff(__ugreat(B, C), __ugreat_eq(A, B)) },
-        { (__ugreat_eq(A, B)&__ugreat_eq(A, C)),                           __iff(__ugreat_eq(B, C), __ugreat_eq(A, B)) },
-        { (__ugreat_eq(A, B)|__ugreat_eq(A, C)),                           __iff((B==C), __ugreat_eq(A, B)) },
-        { (__ugreat_eq(A, B)|__ugreat_eq(A, C)),                           __iff(__uless_eq(B, C), __ugreat_eq(A, B)) },
-        { (__ugreat_eq(A, B)|__ugreat_eq(A, C)),                           __iff(__uless(B, C), __ugreat_eq(A, B)) },
-        { (__ugreat_eq(A, B)&__uless_eq(A, C)),                            __iff((B==C), (A==B)) },
-        { (__ugreat_eq(A, B)&__uless_eq(A, C)),                            __iff(__ugreat(B, C), 0x0) },
-        { (__ugreat_eq(A, B)|__uless_eq(A, C)),                            __iff((B==C), 0x1) },
-        { (__ugreat_eq(A, B)|__uless_eq(A, C)),                            __iff(__uless_eq(B, C), 0x1) },
-        { (__ugreat_eq(A, B)|__uless_eq(A, C)),                            __iff(__uless(B, C), 0x1) },
-        { (__ugreat_eq(A, B)&__uless(A, C)),                               __iff((B==C), 0x0) },
-        { (__ugreat_eq(A, B)&__uless(A, C)),                               __iff(__ugreat(B, C), 0x0) },
-        { (__ugreat_eq(A, B)&__uless(A, C)),                               __iff(__ugreat_eq(B, C), 0x0) },
-        { (__ugreat_eq(A, B)|__uless(A, C)),                               __iff((B==C), 0x1) },
-        { (__ugreat_eq(A, B)|__uless(A, C)),                               __iff(__uless_eq(B, C), 0x1) },
-        { (__ugreat_eq(A, B)|__uless(A, C)),                               __iff(__uless(B, C), 0x1) },
-        { (__uless_eq(A, B)&(A==C)),                                       __iff((B==C), (A==B)) },
-        { (__uless_eq(A, B)&(A==C)),                                       __iff(__uless(B, C), 0x0) },
-        { (__uless_eq(A, B)|(A==C)),                                       __iff((B==C), __uless_eq(A, B)) },
-        { (__uless_eq(A, B)|(A==C)),                                       __iff(__ugreat(B, C), __uless_eq(A, B)) },
-        { (__uless_eq(A, B)|(A==C)),                                       __iff(__ugreat_eq(B, C), __uless_eq(A, B)) },
-        { (__uless_eq(A, B)&(A!=C)),                                       __iff((B==C), __uless(A, B)) },
-        { (__uless_eq(A, B)&(A!=C)),                                       __iff(__uless(B, C), __uless_eq(A, B)) },
-        { (__uless_eq(A, B)|(A!=C)),                                       __iff((B==C), 0x1) },
-        { (__uless_eq(A, B)|(A!=C)),                                       __iff(__ugreat(B, C), 0x1) },
-        { (__uless_eq(A, B)|(A!=C)),                                       __iff(__ugreat_eq(B, C), 0x1) },
-        { (__uless_eq(A, B)&__ugreat(A, C)),                               __iff((B==C), 0x0) },
-        { (__uless_eq(A, B)&__ugreat(A, C)),                               __iff(__uless_eq(B, C), 0x0) },
-        { (__uless_eq(A, B)&__ugreat(A, C)),                               __iff(__uless(B, C), 0x0) },
-        { (__uless_eq(A, B)|__ugreat(A, C)),                               __iff((B==C), 0x1) },
-        { (__uless_eq(A, B)|__ugreat(A, C)),                               __iff(__ugreat(B, C), 0x1) },
-        { (__uless_eq(A, B)|__ugreat(A, C)),                               __iff(__ugreat_eq(B, C), 0x1) },
-        { (__uless_eq(A, B)&__ugreat_eq(A, C)),                            __iff((B==C), (A==B)) },
-        { (__uless_eq(A, B)&__ugreat_eq(A, C)),                            __iff(__uless(B, C), 0x0) },
-        { (__uless_eq(A, B)|__ugreat_eq(A, C)),                            __iff((B==C), 0x1) },
-        { (__uless_eq(A, B)|__ugreat_eq(A, C)),                            __iff(__ugreat(B, C), 0x1) },
-        { (__uless_eq(A, B)|__ugreat_eq(A, C)),                            __iff(__ugreat_eq(B, C), 0x1) },
-        { (__uless_eq(A, B)&__uless_eq(A, C)),                             __iff((B==C), __uless_eq(A, B)) },
-        { (__uless_eq(A, B)&__uless_eq(A, C)),                             __iff(__uless_eq(B, C), __uless_eq(A, B)) },
-        { (__uless_eq(A, B)&__uless_eq(A, C)),                             __iff(__uless(B, C), __uless_eq(A, B)) },
-        { (__uless_eq(A, B)|__uless_eq(A, C)),                             __iff((B==C), __uless_eq(A, B)) },
-        { (__uless_eq(A, B)|__uless_eq(A, C)),                             __iff(__ugreat(B, C), __uless_eq(A, B)) },
-        { (__uless_eq(A, B)|__uless_eq(A, C)),                             __iff(__ugreat_eq(B, C), __uless_eq(A, B)) },
-        { (__uless_eq(A, B)&__uless(A, C)),                                __iff((B==C), __uless(A, B)) },
-        { (__uless_eq(A, B)&__uless(A, C)),                                __iff(__uless(B, C), __uless_eq(A, B)) },
-        { (__uless_eq(A, B)|__uless(A, C)),                                __iff((B==C), __uless_eq(A, B)) },
-        { (__uless_eq(A, B)|__uless(A, C)),                                __iff(__ugreat(B, C), __uless_eq(A, B)) },
-        { (__uless_eq(A, B)|__uless(A, C)),                                __iff(__ugreat_eq(B, C), __uless_eq(A, B)) },
-        { (__uless(A, B)&(A==C)),                                          __iff((B==C), 0x0) },
-        { (__uless(A, B)&(A==C)),                                          __iff(__uless_eq(B, C), 0x0) },
-        { (__uless(A, B)&(A==C)),                                          __iff(__uless(B, C), 0x0) },
-        { (__uless(A, B)|(A==C)),                                          __iff((B==C), __uless_eq(A, B)) },
-        { (__uless(A, B)|(A==C)),                                          __iff(__ugreat(B, C), __uless(A, B)) },
-        { (__uless(A, B)&(A!=C)),                                          __iff((B==C), __uless(A, B)) },
-        { (__uless(A, B)&(A!=C)),                                          __iff(__uless_eq(B, C), __uless(A, B)) },
-        { (__uless(A, B)&(A!=C)),                                          __iff(__uless(B, C), __uless(A, B)) },
-        { (__uless(A, B)|(A!=C)),                                          __iff((B==C), (A!=B)) },
-        { (__uless(A, B)|(A!=C)),                                          __iff(__ugreat(B, C), 0x1) },
-        { (__uless(A, B)&__ugreat(A, C)),                                  __iff((B==C), 0x0) },
-        { (__uless(A, B)&__ugreat(A, C)),                                  __iff(__uless_eq(B, C), 0x0) },
-        { (__uless(A, B)&__ugreat(A, C)),                                  __iff(__uless(B, C), 0x0) },
-        { (__uless(A, B)|__ugreat(A, C)),                                  __iff((B==C), (A!=B)) },
-        { (__uless(A, B)|__ugreat(A, C)),                                  __iff(__ugreat(B, C), 0x1) },
-        { (__uless(A, B)&__ugreat_eq(A, C)),                               __iff((B==C), 0x0) },
-        { (__uless(A, B)&__ugreat_eq(A, C)),                               __iff(__uless_eq(B, C), 0x0) },
-        { (__uless(A, B)&__ugreat_eq(A, C)),                               __iff(__uless(B, C), 0x0) },
-        { (__uless(A, B)|__ugreat_eq(A, C)),                               __iff((B==C), 0x1) },
-        { (__uless(A, B)|__ugreat_eq(A, C)),                               __iff(__ugreat(B, C), 0x1) },
-        { (__uless(A, B)|__ugreat_eq(A, C)),                               __iff(__ugreat_eq(B, C), 0x1) },
-        { (__uless(A, B)&__uless_eq(A, C)),                                __iff((B==C), __uless(A, B)) },
-        { (__uless(A, B)&__uless_eq(A, C)),                                __iff(__uless_eq(B, C), __uless(A, B)) },
-        { (__uless(A, B)&__uless_eq(A, C)),                                __iff(__uless(B, C), __uless(A, B)) },
-        { (__uless(A, B)|__uless_eq(A, C)),                                __iff((B==C), __uless_eq(A, B)) },
-        { (__uless(A, B)|__uless_eq(A, C)),                                __iff(__ugreat(B, C), __uless(A, B)) },
-        { (__uless(A, B)&__uless(A, C)),                                   __iff((B==C), __uless(A, B)) },
-        { (__uless(A, B)&__uless(A, C)),                                   __iff(__uless_eq(B, C), __uless(A, B)) },
-        { (__uless(A, B)&__uless(A, C)),                                   __iff(__uless(B, C), __uless(A, B)) },
-        { (__uless(A, B)|__uless(A, C)),                                   __iff((B==C), __uless(A, B)) },
-        { (__uless(A, B)|__uless(A, C)),                                   __iff(__ugreat(B, C), __uless(A, B)) },
-        { (__uless(A, B)|__uless(A, C)),                                   __iff(__ugreat_eq(B, C), __uless(A, B)) },
-        { ((A>B)&(C>A)),                                                   __iff((B>C), 0x0) },
-        { ((A>B)&(C>A)),                                                   __iff((B>=C), 0x0) },
-        { ((A>B)&(C>A)),                                                   __iff((B==C), 0x0) },
-        { ((A>B)|(C>A)),                                                   __iff((B==C), (A!=B)) },
-        { ((A>B)|(C>A)),                                                   __iff((B<C), 0x1) },
-        { ((A>B)&(C>=A)),                                                  __iff((B>C), 0x0) },
-        { ((A>B)&(C>=A)),                                                  __iff((B>=C), 0x0) },
-        { ((A>B)&(C>=A)),                                                  __iff((B==C), 0x0) },
-        { ((A>B)|(C>=A)),                                                  __iff((B==C), 0x1) },
-        { ((A>B)|(C>=A)),                                                  __iff((B<=C), 0x1) },
-        { ((A>B)|(C>=A)),                                                  __iff((B<C), 0x1) },
-        { ((A>B)&(C==A)),                                                  __iff((B>C), 0x0) },
-        { ((A>B)&(C==A)),                                                  __iff((B>=C), 0x0) },
-        { ((A>B)&(C==A)),                                                  __iff((B==C), 0x0) },
-        { ((A>B)|(C==A)),                                                  __iff((B==C), (A>=B)) },
-        { ((A>B)|(C==A)),                                                  __iff((B<C), (A>B)) },
-        { ((A>B)&(C!=A)),                                                  __iff((B>C), (A>B)) },
-        { ((A>B)&(C!=A)),                                                  __iff((B>=C), (A>B)) },
-        { ((A>B)&(C!=A)),                                                  __iff((B==C), (A>B)) },
-        { ((A>B)|(C!=A)),                                                  __iff((B==C), (A!=B)) },
-        { ((A>B)|(C!=A)),                                                  __iff((B<C), 0x1) },
-        { ((A>B)&(C<=A)),                                                  __iff((B>C), (A>B)) },
-        { ((A>B)&(C<=A)),                                                  __iff((B>=C), (A>B)) },
-        { ((A>B)&(C<=A)),                                                  __iff((B==C), (A>B)) },
-        { ((A>B)|(C<=A)),                                                  __iff((B==C), (A>=B)) },
-        { ((A>B)|(C<=A)),                                                  __iff((B<C), (A>B)) },
-        { ((A>B)&(C<A)),                                                   __iff((B>C), (A>B)) },
-        { ((A>B)&(C<A)),                                                   __iff((B>=C), (A>B)) },
-        { ((A>B)&(C<A)),                                                   __iff((B==C), (A>B)) },
-        { ((A>B)|(C<A)),                                                   __iff((B==C), (A>B)) },
-        { ((A>B)|(C<A)),                                                   __iff((B<=C), (A>B)) },
-        { ((A>B)|(C<A)),                                                   __iff((B<C), (A>B)) },
-        { ((A>=B)&(C>A)),                                                  __iff((B>C), 0x0) },
-        { ((A>=B)&(C>A)),                                                  __iff((B>=C), 0x0) },
-        { ((A>=B)&(C>A)),                                                  __iff((B==C), 0x0) },
-        { ((A>=B)|(C>A)),                                                  __iff((B==C), 0x1) },
-        { ((A>=B)|(C>A)),                                                  __iff((B<=C), 0x1) },
-        { ((A>=B)|(C>A)),                                                  __iff((B<C), 0x1) },
-        { ((A>=B)&(C>=A)),                                                 __iff((B>C), 0x0) },
-        { ((A>=B)&(C>=A)),                                                 __iff((B==C), (A==B)) },
-        { ((A>=B)|(C>=A)),                                                 __iff((B==C), 0x1) },
-        { ((A>=B)|(C>=A)),                                                 __iff((B<=C), 0x1) },
-        { ((A>=B)|(C>=A)),                                                 __iff((B<C), 0x1) },
-        { ((A>=B)&(C==A)),                                                 __iff((B>C), 0x0) },
-        { ((A>=B)&(C==A)),                                                 __iff((B==C), (A==B)) },
-        { ((A>=B)|(C==A)),                                                 __iff((B==C), (A>=B)) },
-        { ((A>=B)|(C==A)),                                                 __iff((B<=C), (A>=B)) },
-        { ((A>=B)|(C==A)),                                                 __iff((B<C), (A>=B)) },
-        { ((A>=B)&(C!=A)),                                                 __iff((B>C), (A>=B)) },
-        { ((A>=B)&(C!=A)),                                                 __iff((B==C), (A>B)) },
-        { ((A>=B)|(C!=A)),                                                 __iff((B==C), 0x1) },
-        { ((A>=B)|(C!=A)),                                                 __iff((B<=C), 0x1) },
-        { ((A>=B)|(C!=A)),                                                 __iff((B<C), 0x1) },
-        { ((A>=B)&(C<=A)),                                                 __iff((B>C), (A>=B)) },
-        { ((A>=B)&(C<=A)),                                                 __iff((B>=C), (A>=B)) },
-        { ((A>=B)&(C<=A)),                                                 __iff((B==C), (A>=B)) },
-        { ((A>=B)|(C<=A)),                                                 __iff((B==C), (A>=B)) },
-        { ((A>=B)|(C<=A)),                                                 __iff((B<=C), (A>=B)) },
-        { ((A>=B)|(C<=A)),                                                 __iff((B<C), (A>=B)) },
-        { ((A>=B)&(C<A)),                                                  __iff((B>C), (A>=B)) },
-        { ((A>=B)&(C<A)),                                                  __iff((B==C), (A>B)) },
-        { ((A>=B)|(C<A)),                                                  __iff((B==C), (A>=B)) },
-        { ((A>=B)|(C<A)),                                                  __iff((B<=C), (A>=B)) },
-        { ((A>=B)|(C<A)),                                                  __iff((B<C), (A>=B)) },
-        { ((A==B)&(C>A)),                                                  __iff((B>C), 0x0) },
-        { ((A==B)&(C>A)),                                                  __iff((B>=C), 0x0) },
-        { ((A==B)&(C>A)),                                                  __iff((B==C), 0x0) },
-        { ((A==B)&(C>A)),                                                  __iff((B<C), (A==B)) },
-        { ((A==B)|(C>A)),                                                  __iff((B==C), (A<=B)) },
-        { ((A==B)&(C>=A)),                                                 __iff((B>C), 0x0) },
-        { ((A==B)&(C>=A)),                                                 __iff((B==C), (A==B)) },
-        { ((A==B)&(C>=A)),                                                 __iff((B<=C), (A==B)) },
-        { ((A==B)&(C>=A)),                                                 __iff((B<C), (A==B)) },
-        { ((A==B)|(C>=A)),                                                 __iff((B==C), (A<=B)) },
-        { ((A==B)&(C==A)),                                                 __iff((B>C), 0x0) },
-        { ((A==B)&(C==A)),                                                 __iff((B==C), (A==B)) },
-        { ((A==B)&(C==A)),                                                 __iff((B!=C), 0x0) },
-        { ((A==B)&(C==A)),                                                 __iff((B<C), 0x0) },
-        { ((A==B)&(C==A)),                                                 __iff(__ugreat(B, C), 0x0) },
-        { ((A==B)&(C==A)),                                                 __iff(__uless(B, C), 0x0) },
-        { ((A==B)|(C==A)),                                                 __iff((B==C), (A==B)) },
-        { ((A==B)&(C!=A)),                                                 __iff((B>C), (A==B)) },
-        { ((A==B)&(C!=A)),                                                 __iff((B==C), 0x0) },
-        { ((A==B)&(C!=A)),                                                 __iff((B!=C), (A==B)) },
-        { ((A==B)&(C!=A)),                                                 __iff((B<C), (A==B)) },
-        { ((A==B)&(C!=A)),                                                 __iff(__ugreat(B, C), (A==B)) },
-        { ((A==B)&(C!=A)),                                                 __iff(__uless(B, C), (A==B)) },
-        { ((A==B)|(C!=A)),                                                 __iff((B==C), 0x1) },
-        { ((A==B)&(C<=A)),                                                 __iff((B>C), (A==B)) },
-        { ((A==B)&(C<=A)),                                                 __iff((B>=C), (A==B)) },
-        { ((A==B)&(C<=A)),                                                 __iff((B==C), (A==B)) },
-        { ((A==B)&(C<=A)),                                                 __iff((B<C), 0x0) },
-        { ((A==B)|(C<=A)),                                                 __iff((B==C), (A>=B)) },
-        { ((A==B)&(C<A)),                                                  __iff((B>C), (A==B)) },
-        { ((A==B)&(C<A)),                                                  __iff((B==C), 0x0) },
-        { ((A==B)&(C<A)),                                                  __iff((B<=C), 0x0) },
-        { ((A==B)&(C<A)),                                                  __iff((B<C), 0x0) },
-        { ((A==B)|(C<A)),                                                  __iff((B==C), (A>=B)) },
-        { ((A==B)&__ugreat(C, A)),                                         __iff((B==C), 0x0) },
-        { ((A==B)&__ugreat(C, A)),                                         __iff(__ugreat(B, C), 0x0) },
-        { ((A==B)&__ugreat(C, A)),                                         __iff(__ugreat_eq(B, C), 0x0) },
-        { ((A==B)&__ugreat(C, A)),                                         __iff(__uless(B, C), (A==B)) },
-        { ((A==B)|__ugreat(C, A)),                                         __iff((B==C), __uless_eq(A, B)) },
-        { ((A==B)&__ugreat_eq(C, A)),                                      __iff((B==C), (A==B)) },
-        { ((A==B)&__ugreat_eq(C, A)),                                      __iff(__ugreat(B, C), 0x0) },
-        { ((A==B)&__ugreat_eq(C, A)),                                      __iff(__uless_eq(B, C), (A==B)) },
-        { ((A==B)&__ugreat_eq(C, A)),                                      __iff(__uless(B, C), (A==B)) },
-        { ((A==B)|__ugreat_eq(C, A)),                                      __iff((B==C), __uless_eq(A, B)) },
-        { ((A==B)&__uless_eq(C, A)),                                       __iff((B==C), (A==B)) },
-        { ((A==B)&__uless_eq(C, A)),                                       __iff(__ugreat(B, C), (A==B)) },
-        { ((A==B)&__uless_eq(C, A)),                                       __iff(__ugreat_eq(B, C), (A==B)) },
-        { ((A==B)&__uless_eq(C, A)),                                       __iff(__uless(B, C), 0x0) },
-        { ((A==B)|__uless_eq(C, A)),                                       __iff((B==C), __ugreat_eq(A, B)) },
-        { ((A==B)&__uless(C, A)),                                          __iff((B==C), 0x0) },
-        { ((A==B)&__uless(C, A)),                                          __iff(__ugreat(B, C), (A==B)) },
-        { ((A==B)&__uless(C, A)),                                          __iff(__uless_eq(B, C), 0x0) },
-        { ((A==B)&__uless(C, A)),                                          __iff(__uless(B, C), 0x0) },
-        { ((A==B)|__uless(C, A)),                                          __iff((B==C), __ugreat_eq(A, B)) },
-        { ((A!=B)&(C>A)),                                                  __iff((B==C), (A<B)) },
-        { ((A!=B)|(C>A)),                                                  __iff((B>C), (A!=B)) },
-        { ((A!=B)|(C>A)),                                                  __iff((B>=C), (A!=B)) },
-        { ((A!=B)|(C>A)),                                                  __iff((B==C), (A!=B)) },
-        { ((A!=B)|(C>A)),                                                  __iff((B<C), 0x1) },
-        { ((A!=B)&(C>=A)),                                                 __iff((B==C), (A<B)) },
-        { ((A!=B)|(C>=A)),                                                 __iff((B>C), (A!=B)) },
-        { ((A!=B)|(C>=A)),                                                 __iff((B==C), 0x1) },
-        { ((A!=B)|(C>=A)),                                                 __iff((B<=C), 0x1) },
-        { ((A!=B)|(C>=A)),                                                 __iff((B<C), 0x1) },
-        { ((A!=B)&(C==A)),                                                 __iff((B==C), 0x0) },
-        { ((A!=B)|(C==A)),                                                 __iff((B>C), (A!=B)) },
-        { ((A!=B)|(C==A)),                                                 __iff((B==C), 0x1) },
-        { ((A!=B)|(C==A)),                                                 __iff((B!=C), (A!=B)) },
-        { ((A!=B)|(C==A)),                                                 __iff((B<C), (A!=B)) },
-        { ((A!=B)|(C==A)),                                                 __iff(__ugreat(B, C), (A!=B)) },
-        { ((A!=B)|(C==A)),                                                 __iff(__uless(B, C), (A!=B)) },
-        { ((A!=B)&(C!=A)),                                                 __iff((B==C), (A!=B)) },
-        { ((A!=B)|(C!=A)),                                                 __iff((B>C), 0x1) },
-        { ((A!=B)|(C!=A)),                                                 __iff((B==C), (A!=B)) },
-        { ((A!=B)|(C!=A)),                                                 __iff((B!=C), 0x1) },
-        { ((A!=B)|(C!=A)),                                                 __iff((B<C), 0x1) },
-        { ((A!=B)|(C!=A)),                                                 __iff(__ugreat(B, C), 0x1) },
-        { ((A!=B)|(C!=A)),                                                 __iff(__uless(B, C), 0x1) },
-        { ((A!=B)&(C<=A)),                                                 __iff((B==C), (A>B)) },
-        { ((A!=B)|(C<=A)),                                                 __iff((B>C), 0x1) },
-        { ((A!=B)|(C<=A)),                                                 __iff((B>=C), 0x1) },
-        { ((A!=B)|(C<=A)),                                                 __iff((B==C), 0x1) },
-        { ((A!=B)|(C<=A)),                                                 __iff((B<C), (A!=B)) },
-        { ((A!=B)&(C<A)),                                                  __iff((B==C), (A>B)) },
-        { ((A!=B)|(C<A)),                                                  __iff((B>C), 0x1) },
-        { ((A!=B)|(C<A)),                                                  __iff((B==C), (A!=B)) },
-        { ((A!=B)|(C<A)),                                                  __iff((B<=C), (A!=B)) },
-        { ((A!=B)|(C<A)),                                                  __iff((B<C), (A!=B)) },
-        { ((A!=B)&__ugreat(C, A)),                                         __iff((B==C), __uless(A, B)) },
-        { ((A!=B)|__ugreat(C, A)),                                         __iff((B==C), (A!=B)) },
-        { ((A!=B)|__ugreat(C, A)),                                         __iff(__ugreat(B, C), (A!=B)) },
-        { ((A!=B)|__ugreat(C, A)),                                         __iff(__ugreat_eq(B, C), (A!=B)) },
-        { ((A!=B)|__ugreat(C, A)),                                         __iff(__uless(B, C), 0x1) },
-        { ((A!=B)&__ugreat_eq(C, A)),                                      __iff((B==C), __uless(A, B)) },
-        { ((A!=B)|__ugreat_eq(C, A)),                                      __iff((B==C), 0x1) },
-        { ((A!=B)|__ugreat_eq(C, A)),                                      __iff(__ugreat(B, C), (A!=B)) },
-        { ((A!=B)|__ugreat_eq(C, A)),                                      __iff(__uless_eq(B, C), 0x1) },
-        { ((A!=B)|__ugreat_eq(C, A)),                                      __iff(__uless(B, C), 0x1) },
-        { ((A!=B)&__uless_eq(C, A)),                                       __iff((B==C), __ugreat(A, B)) },
-        { ((A!=B)|__uless_eq(C, A)),                                       __iff((B==C), 0x1) },
-        { ((A!=B)|__uless_eq(C, A)),                                       __iff(__ugreat(B, C), 0x1) },
-        { ((A!=B)|__uless_eq(C, A)),                                       __iff(__ugreat_eq(B, C), 0x1) },
-        { ((A!=B)|__uless_eq(C, A)),                                       __iff(__uless(B, C), (A!=B)) },
-        { ((A!=B)&__uless(C, A)),                                          __iff((B==C), __ugreat(A, B)) },
-        { ((A!=B)|__uless(C, A)),                                          __iff((B==C), (A!=B)) },
-        { ((A!=B)|__uless(C, A)),                                          __iff(__ugreat(B, C), 0x1) },
-        { ((A!=B)|__uless(C, A)),                                          __iff(__uless_eq(B, C), (A!=B)) },
-        { ((A!=B)|__uless(C, A)),                                          __iff(__uless(B, C), (A!=B)) },
-        { ((A<=B)&(C>A)),                                                  __iff((B==C), (A<B)) },
-        { ((A<=B)&(C>A)),                                                  __iff((B<C), (A<=B)) },
-        { ((A<=B)|(C>A)),                                                  __iff((B>C), (A<=B)) },
-        { ((A<=B)|(C>A)),                                                  __iff((B>=C), (A<=B)) },
-        { ((A<=B)|(C>A)),                                                  __iff((B==C), (A<=B)) },
-        { ((A<=B)&(C>=A)),                                                 __iff((B==C), (A<=B)) },
-        { ((A<=B)&(C>=A)),                                                 __iff((B<=C), (A<=B)) },
-        { ((A<=B)&(C>=A)),                                                 __iff((B<C), (A<=B)) },
-        { ((A<=B)|(C>=A)),                                                 __iff((B>C), (A<=B)) },
-        { ((A<=B)|(C>=A)),                                                 __iff((B>=C), (A<=B)) },
-        { ((A<=B)|(C>=A)),                                                 __iff((B==C), (A<=B)) },
-        { ((A<=B)&(C==A)),                                                 __iff((B==C), (A==B)) },
-        { ((A<=B)&(C==A)),                                                 __iff((B<C), 0x0) },
-        { ((A<=B)|(C==A)),                                                 __iff((B>C), (A<=B)) },
-        { ((A<=B)|(C==A)),                                                 __iff((B>=C), (A<=B)) },
-        { ((A<=B)|(C==A)),                                                 __iff((B==C), (A<=B)) },
-        { ((A<=B)&(C!=A)),                                                 __iff((B==C), (A<B)) },
-        { ((A<=B)&(C!=A)),                                                 __iff((B<C), (A<=B)) },
-        { ((A<=B)|(C!=A)),                                                 __iff((B>C), 0x1) },
-        { ((A<=B)|(C!=A)),                                                 __iff((B>=C), 0x1) },
-        { ((A<=B)|(C!=A)),                                                 __iff((B==C), 0x1) },
-        { ((A<=B)&(C<=A)),                                                 __iff((B==C), (A==B)) },
-        { ((A<=B)&(C<=A)),                                                 __iff((B<C), 0x0) },
-        { ((A<=B)|(C<=A)),                                                 __iff((B>C), 0x1) },
-        { ((A<=B)|(C<=A)),                                                 __iff((B>=C), 0x1) },
-        { ((A<=B)|(C<=A)),                                                 __iff((B==C), 0x1) },
-        { ((A<=B)&(C<A)),                                                  __iff((B==C), 0x0) },
-        { ((A<=B)&(C<A)),                                                  __iff((B<=C), 0x0) },
-        { ((A<=B)&(C<A)),                                                  __iff((B<C), 0x0) },
-        { ((A<=B)|(C<A)),                                                  __iff((B>C), 0x1) },
-        { ((A<=B)|(C<A)),                                                  __iff((B>=C), 0x1) },
-        { ((A<=B)|(C<A)),                                                  __iff((B==C), 0x1) },
-        { ((A<B)&(C>A)),                                                   __iff((B==C), (A<B)) },
-        { ((A<B)&(C>A)),                                                   __iff((B<=C), (A<B)) },
-        { ((A<B)&(C>A)),                                                   __iff((B<C), (A<B)) },
-        { ((A<B)|(C>A)),                                                   __iff((B>C), (A<B)) },
-        { ((A<B)|(C>A)),                                                   __iff((B>=C), (A<B)) },
-        { ((A<B)|(C>A)),                                                   __iff((B==C), (A<B)) },
-        { ((A<B)&(C>=A)),                                                  __iff((B==C), (A<B)) },
-        { ((A<B)&(C>=A)),                                                  __iff((B<=C), (A<B)) },
-        { ((A<B)&(C>=A)),                                                  __iff((B<C), (A<B)) },
-        { ((A<B)|(C>=A)),                                                  __iff((B>C), (A<B)) },
-        { ((A<B)|(C>=A)),                                                  __iff((B==C), (A<=B)) },
-        { ((A<B)&(C==A)),                                                  __iff((B==C), 0x0) },
-        { ((A<B)&(C==A)),                                                  __iff((B<=C), 0x0) },
-        { ((A<B)&(C==A)),                                                  __iff((B<C), 0x0) },
-        { ((A<B)|(C==A)),                                                  __iff((B>C), (A<B)) },
-        { ((A<B)|(C==A)),                                                  __iff((B==C), (A<=B)) },
-        { ((A<B)&(C!=A)),                                                  __iff((B==C), (A<B)) },
-        { ((A<B)&(C!=A)),                                                  __iff((B<=C), (A<B)) },
-        { ((A<B)&(C!=A)),                                                  __iff((B<C), (A<B)) },
-        { ((A<B)|(C!=A)),                                                  __iff((B>C), 0x1) },
-        { ((A<B)|(C!=A)),                                                  __iff((B==C), (A!=B)) },
-        { ((A<B)&(C<=A)),                                                  __iff((B==C), 0x0) },
-        { ((A<B)&(C<=A)),                                                  __iff((B<=C), 0x0) },
-        { ((A<B)&(C<=A)),                                                  __iff((B<C), 0x0) },
-        { ((A<B)|(C<=A)),                                                  __iff((B>C), 0x1) },
-        { ((A<B)|(C<=A)),                                                  __iff((B>=C), 0x1) },
-        { ((A<B)|(C<=A)),                                                  __iff((B==C), 0x1) },
-        { ((A<B)&(C<A)),                                                   __iff((B==C), 0x0) },
-        { ((A<B)&(C<A)),                                                   __iff((B<=C), 0x0) },
-        { ((A<B)&(C<A)),                                                   __iff((B<C), 0x0) },
-        { ((A<B)|(C<A)),                                                   __iff((B>C), 0x1) },
-        { ((A<B)|(C<A)),                                                   __iff((B==C), (A!=B)) },
-        { (__ugreat(A, B)&(C==A)),                                         __iff((B==C), 0x0) },
-        { (__ugreat(A, B)&(C==A)),                                         __iff(__ugreat(B, C), 0x0) },
-        { (__ugreat(A, B)&(C==A)),                                         __iff(__ugreat_eq(B, C), 0x0) },
-        { (__ugreat(A, B)|(C==A)),                                         __iff((B==C), __ugreat_eq(A, B)) },
-        { (__ugreat(A, B)|(C==A)),                                         __iff(__uless(B, C), __ugreat(A, B)) },
-        { (__ugreat(A, B)&(C!=A)),                                         __iff((B==C), __ugreat(A, B)) },
-        { (__ugreat(A, B)&(C!=A)),                                         __iff(__ugreat(B, C), __ugreat(A, B)) },
-        { (__ugreat(A, B)&(C!=A)),                                         __iff(__ugreat_eq(B, C), __ugreat(A, B)) },
-        { (__ugreat(A, B)|(C!=A)),                                         __iff((B==C), (A!=B)) },
-        { (__ugreat(A, B)|(C!=A)),                                         __iff(__uless(B, C), 0x1) },
-        { (__ugreat(A, B)&__ugreat(C, A)),                                 __iff((B==C), 0x0) },
-        { (__ugreat(A, B)&__ugreat(C, A)),                                 __iff(__ugreat(B, C), 0x0) },
-        { (__ugreat(A, B)&__ugreat(C, A)),                                 __iff(__ugreat_eq(B, C), 0x0) },
-        { (__ugreat(A, B)|__ugreat(C, A)),                                 __iff((B==C), (A!=B)) },
-        { (__ugreat(A, B)|__ugreat(C, A)),                                 __iff(__uless(B, C), 0x1) },
-        { (__ugreat(A, B)&__ugreat_eq(C, A)),                              __iff((B==C), 0x0) },
-        { (__ugreat(A, B)&__ugreat_eq(C, A)),                              __iff(__ugreat(B, C), 0x0) },
-        { (__ugreat(A, B)&__ugreat_eq(C, A)),                              __iff(__ugreat_eq(B, C), 0x0) },
-        { (__ugreat(A, B)|__ugreat_eq(C, A)),                              __iff((B==C), 0x1) },
-        { (__ugreat(A, B)|__ugreat_eq(C, A)),                              __iff(__uless_eq(B, C), 0x1) },
-        { (__ugreat(A, B)|__ugreat_eq(C, A)),                              __iff(__uless(B, C), 0x1) },
-        { (__ugreat(A, B)&__uless_eq(C, A)),                               __iff((B==C), __ugreat(A, B)) },
-        { (__ugreat(A, B)&__uless_eq(C, A)),                               __iff(__ugreat(B, C), __ugreat(A, B)) },
-        { (__ugreat(A, B)&__uless_eq(C, A)),                               __iff(__ugreat_eq(B, C), __ugreat(A, B)) },
-        { (__ugreat(A, B)|__uless_eq(C, A)),                               __iff((B==C), __ugreat_eq(A, B)) },
-        { (__ugreat(A, B)|__uless_eq(C, A)),                               __iff(__uless(B, C), __ugreat(A, B)) },
-        { (__ugreat(A, B)&__uless(C, A)),                                  __iff((B==C), __ugreat(A, B)) },
-        { (__ugreat(A, B)&__uless(C, A)),                                  __iff(__ugreat(B, C), __ugreat(A, B)) },
-        { (__ugreat(A, B)&__uless(C, A)),                                  __iff(__ugreat_eq(B, C), __ugreat(A, B)) },
-        { (__ugreat(A, B)|__uless(C, A)),                                  __iff((B==C), __ugreat(A, B)) },
-        { (__ugreat(A, B)|__uless(C, A)),                                  __iff(__uless_eq(B, C), __ugreat(A, B)) },
-        { (__ugreat(A, B)|__uless(C, A)),                                  __iff(__uless(B, C), __ugreat(A, B)) },
-        { (__ugreat_eq(A, B)&(C==A)),                                      __iff((B==C), (A==B)) },
-        { (__ugreat_eq(A, B)&(C==A)),                                      __iff(__ugreat(B, C), 0x0) },
-        { (__ugreat_eq(A, B)|(C==A)),                                      __iff((B==C), __ugreat_eq(A, B)) },
-        { (__ugreat_eq(A, B)|(C==A)),                                      __iff(__uless_eq(B, C), __ugreat_eq(A, B)) },
-        { (__ugreat_eq(A, B)|(C==A)),                                      __iff(__uless(B, C), __ugreat_eq(A, B)) },
-        { (__ugreat_eq(A, B)&(C!=A)),                                      __iff((B==C), __ugreat(A, B)) },
-        { (__ugreat_eq(A, B)&(C!=A)),                                      __iff(__ugreat(B, C), __ugreat_eq(A, B)) },
-        { (__ugreat_eq(A, B)|(C!=A)),                                      __iff((B==C), 0x1) },
-        { (__ugreat_eq(A, B)|(C!=A)),                                      __iff(__uless_eq(B, C), 0x1) },
-        { (__ugreat_eq(A, B)|(C!=A)),                                      __iff(__uless(B, C), 0x1) },
-        { (__ugreat_eq(A, B)&__ugreat(C, A)),                              __iff((B==C), 0x0) },
-        { (__ugreat_eq(A, B)&__ugreat(C, A)),                              __iff(__ugreat(B, C), 0x0) },
-        { (__ugreat_eq(A, B)&__ugreat(C, A)),                              __iff(__ugreat_eq(B, C), 0x0) },
-        { (__ugreat_eq(A, B)|__ugreat(C, A)),                              __iff((B==C), 0x1) },
-        { (__ugreat_eq(A, B)|__ugreat(C, A)),                              __iff(__uless_eq(B, C), 0x1) },
-        { (__ugreat_eq(A, B)|__ugreat(C, A)),                              __iff(__uless(B, C), 0x1) },
-        { (__ugreat_eq(A, B)&__ugreat_eq(C, A)),                           __iff((B==C), (A==B)) },
-        { (__ugreat_eq(A, B)&__ugreat_eq(C, A)),                           __iff(__ugreat(B, C), 0x0) },
-        { (__ugreat_eq(A, B)|__ugreat_eq(C, A)),                           __iff((B==C), 0x1) },
-        { (__ugreat_eq(A, B)|__ugreat_eq(C, A)),                           __iff(__uless_eq(B, C), 0x1) },
-        { (__ugreat_eq(A, B)|__ugreat_eq(C, A)),                           __iff(__uless(B, C), 0x1) },
-        { (__ugreat_eq(A, B)&__uless_eq(C, A)),                            __iff((B==C), __ugreat_eq(A, B)) },
-        { (__ugreat_eq(A, B)&__uless_eq(C, A)),                            __iff(__ugreat(B, C), __ugreat_eq(A, B)) },
-        { (__ugreat_eq(A, B)&__uless_eq(C, A)),                            __iff(__ugreat_eq(B, C), __ugreat_eq(A, B)) },
-        { (__ugreat_eq(A, B)|__uless_eq(C, A)),                            __iff((B==C), __ugreat_eq(A, B)) },
-        { (__ugreat_eq(A, B)|__uless_eq(C, A)),                            __iff(__uless_eq(B, C), __ugreat_eq(A, B)) },
-        { (__ugreat_eq(A, B)|__uless_eq(C, A)),                            __iff(__uless(B, C), __ugreat_eq(A, B)) },
-        { (__ugreat_eq(A, B)&__uless(C, A)),                               __iff((B==C), __ugreat(A, B)) },
-        { (__ugreat_eq(A, B)&__uless(C, A)),                               __iff(__ugreat(B, C), __ugreat_eq(A, B)) },
-        { (__ugreat_eq(A, B)|__uless(C, A)),                               __iff((B==C), __ugreat_eq(A, B)) },
-        { (__ugreat_eq(A, B)|__uless(C, A)),                               __iff(__uless_eq(B, C), __ugreat_eq(A, B)) },
-        { (__ugreat_eq(A, B)|__uless(C, A)),                               __iff(__uless(B, C), __ugreat_eq(A, B)) },
-        { (__uless_eq(A, B)&(C==A)),                                       __iff((B==C), (A==B)) },
-        { (__uless_eq(A, B)&(C==A)),                                       __iff(__uless(B, C), 0x0) },
-        { (__uless_eq(A, B)|(C==A)),                                       __iff((B==C), __uless_eq(A, B)) },
-        { (__uless_eq(A, B)|(C==A)),                                       __iff(__ugreat(B, C), __uless_eq(A, B)) },
-        { (__uless_eq(A, B)|(C==A)),                                       __iff(__ugreat_eq(B, C), __uless_eq(A, B)) },
-        { (__uless_eq(A, B)&(C!=A)),                                       __iff((B==C), __uless(A, B)) },
-        { (__uless_eq(A, B)&(C!=A)),                                       __iff(__uless(B, C), __uless_eq(A, B)) },
-        { (__uless_eq(A, B)|(C!=A)),                                       __iff((B==C), 0x1) },
-        { (__uless_eq(A, B)|(C!=A)),                                       __iff(__ugreat(B, C), 0x1) },
-        { (__uless_eq(A, B)|(C!=A)),                                       __iff(__ugreat_eq(B, C), 0x1) },
-        { (__uless_eq(A, B)&__ugreat(C, A)),                               __iff((B==C), __uless(A, B)) },
-        { (__uless_eq(A, B)&__ugreat(C, A)),                               __iff(__uless(B, C), __uless_eq(A, B)) },
-        { (__uless_eq(A, B)|__ugreat(C, A)),                               __iff((B==C), __uless_eq(A, B)) },
-        { (__uless_eq(A, B)|__ugreat(C, A)),                               __iff(__ugreat(B, C), __uless_eq(A, B)) },
-        { (__uless_eq(A, B)|__ugreat(C, A)),                               __iff(__ugreat_eq(B, C), __uless_eq(A, B)) },
-        { (__uless_eq(A, B)&__ugreat_eq(C, A)),                            __iff((B==C), __uless_eq(A, B)) },
-        { (__uless_eq(A, B)&__ugreat_eq(C, A)),                            __iff(__uless_eq(B, C), __uless_eq(A, B)) },
-        { (__uless_eq(A, B)&__ugreat_eq(C, A)),                            __iff(__uless(B, C), __uless_eq(A, B)) },
-        { (__uless_eq(A, B)|__ugreat_eq(C, A)),                            __iff((B==C), __uless_eq(A, B)) },
-        { (__uless_eq(A, B)|__ugreat_eq(C, A)),                            __iff(__ugreat(B, C), __uless_eq(A, B)) },
-        { (__uless_eq(A, B)|__ugreat_eq(C, A)),                            __iff(__ugreat_eq(B, C), __uless_eq(A, B)) },
-        { (__uless_eq(A, B)&__uless_eq(C, A)),                             __iff((B==C), (A==B)) },
-        { (__uless_eq(A, B)&__uless_eq(C, A)),                             __iff(__uless(B, C), 0x0) },
-        { (__uless_eq(A, B)|__uless_eq(C, A)),                             __iff((B==C), 0x1) },
-        { (__uless_eq(A, B)|__uless_eq(C, A)),                             __iff(__ugreat(B, C), 0x1) },
-        { (__uless_eq(A, B)|__uless_eq(C, A)),                             __iff(__ugreat_eq(B, C), 0x1) },
-        { (__uless_eq(A, B)&__uless(C, A)),                                __iff((B==C), 0x0) },
-        { (__uless_eq(A, B)&__uless(C, A)),                                __iff(__uless_eq(B, C), 0x0) },
-        { (__uless_eq(A, B)&__uless(C, A)),                                __iff(__uless(B, C), 0x0) },
-        { (__uless_eq(A, B)|__uless(C, A)),                                __iff((B==C), 0x1) },
-        { (__uless_eq(A, B)|__uless(C, A)),                                __iff(__ugreat(B, C), 0x1) },
-        { (__uless_eq(A, B)|__uless(C, A)),                                __iff(__ugreat_eq(B, C), 0x1) },
-        { (__uless(A, B)&(C==A)),                                          __iff((B==C), 0x0) },
-        { (__uless(A, B)&(C==A)),                                          __iff(__uless_eq(B, C), 0x0) },
-        { (__uless(A, B)&(C==A)),                                          __iff(__uless(B, C), 0x0) },
-        { (__uless(A, B)|(C==A)),                                          __iff((B==C), __uless_eq(A, B)) },
-        { (__uless(A, B)|(C==A)),                                          __iff(__ugreat(B, C), __uless(A, B)) },
-        { (__uless(A, B)&(C!=A)),                                          __iff((B==C), __uless(A, B)) },
-        { (__uless(A, B)&(C!=A)),                                          __iff(__uless_eq(B, C), __uless(A, B)) },
-        { (__uless(A, B)&(C!=A)),                                          __iff(__uless(B, C), __uless(A, B)) },
-        { (__uless(A, B)|(C!=A)),                                          __iff((B==C), (A!=B)) },
-        { (__uless(A, B)|(C!=A)),                                          __iff(__ugreat(B, C), 0x1) },
-        { (__uless(A, B)&__ugreat(C, A)),                                  __iff((B==C), __uless(A, B)) },
-        { (__uless(A, B)&__ugreat(C, A)),                                  __iff(__uless_eq(B, C), __uless(A, B)) },
-        { (__uless(A, B)&__ugreat(C, A)),                                  __iff(__uless(B, C), __uless(A, B)) },
-        { (__uless(A, B)|__ugreat(C, A)),                                  __iff((B==C), __uless(A, B)) },
-        { (__uless(A, B)|__ugreat(C, A)),                                  __iff(__ugreat(B, C), __uless(A, B)) },
-        { (__uless(A, B)|__ugreat(C, A)),                                  __iff(__ugreat_eq(B, C), __uless(A, B)) },
-        { (__uless(A, B)&__ugreat_eq(C, A)),                               __iff((B==C), __uless(A, B)) },
-        { (__uless(A, B)&__ugreat_eq(C, A)),                               __iff(__uless_eq(B, C), __uless(A, B)) },
-        { (__uless(A, B)&__ugreat_eq(C, A)),                               __iff(__uless(B, C), __uless(A, B)) },
-        { (__uless(A, B)|__ugreat_eq(C, A)),                               __iff((B==C), __uless_eq(A, B)) },
-        { (__uless(A, B)|__ugreat_eq(C, A)),                               __iff(__ugreat(B, C), __uless(A, B)) },
-        { (__uless(A, B)&__uless_eq(C, A)),                                __iff((B==C), 0x0) },
-        { (__uless(A, B)&__uless_eq(C, A)),                                __iff(__uless_eq(B, C), 0x0) },
-        { (__uless(A, B)&__uless_eq(C, A)),                                __iff(__uless(B, C), 0x0) },
-        { (__uless(A, B)|__uless_eq(C, A)),                                __iff((B==C), 0x1) },
-        { (__uless(A, B)|__uless_eq(C, A)),                                __iff(__ugreat(B, C), 0x1) },
-        { (__uless(A, B)|__uless_eq(C, A)),                                __iff(__ugreat_eq(B, C), 0x1) },
-        { (__uless(A, B)&__uless(C, A)),                                   __iff((B==C), 0x0) },
-        { (__uless(A, B)&__uless(C, A)),                                   __iff(__uless_eq(B, C), 0x0) },
-        { (__uless(A, B)&__uless(C, A)),                                   __iff(__uless(B, C), 0x0) },
-        { (__uless(A, B)|__uless(C, A)),                                   __iff((B==C), (A!=B)) },
-        { (__uless(A, B)|__uless(C, A)),                                   __iff(__ugreat(B, C), 0x1) },
-        { ((B>A)&(A>C)),                                                   __iff((B==C), 0x0) },
-        { ((B>A)&(A>C)),                                                   __iff((B<=C), 0x0) },
-        { ((B>A)&(A>C)),                                                   __iff((B<C), 0x0) },
-        { ((B>A)|(A>C)),                                                   __iff((B>C), 0x1) },
-        { ((B>A)|(A>C)),                                                   __iff((B==C), (A!=B)) },
-        { ((B>A)&(A>=C)),                                                  __iff((B==C), 0x0) },
-        { ((B>A)&(A>=C)),                                                  __iff((B<=C), 0x0) },
-        { ((B>A)&(A>=C)),                                                  __iff((B<C), 0x0) },
-        { ((B>A)|(A>=C)),                                                  __iff((B>C), 0x1) },
-        { ((B>A)|(A>=C)),                                                  __iff((B>=C), 0x1) },
-        { ((B>A)|(A>=C)),                                                  __iff((B==C), 0x1) },
-        { ((B>A)&(A==C)),                                                  __iff((B==C), 0x0) },
-        { ((B>A)&(A==C)),                                                  __iff((B<=C), 0x0) },
-        { ((B>A)&(A==C)),                                                  __iff((B<C), 0x0) },
-        { ((B>A)|(A==C)),                                                  __iff((B>C), (A<B)) },
-        { ((B>A)|(A==C)),                                                  __iff((B==C), (A<=B)) },
-        { ((B>A)&(A!=C)),                                                  __iff((B==C), (A<B)) },
-        { ((B>A)&(A!=C)),                                                  __iff((B<=C), (A<B)) },
-        { ((B>A)&(A!=C)),                                                  __iff((B<C), (A<B)) },
-        { ((B>A)|(A!=C)),                                                  __iff((B>C), 0x1) },
-        { ((B>A)|(A!=C)),                                                  __iff((B==C), (A!=B)) },
-        { ((B>A)&(A<=C)),                                                  __iff((B==C), (A<B)) },
-        { ((B>A)&(A<=C)),                                                  __iff((B<=C), (A<B)) },
-        { ((B>A)&(A<=C)),                                                  __iff((B<C), (A<B)) },
-        { ((B>A)|(A<=C)),                                                  __iff((B>C), (A<B)) },
-        { ((B>A)|(A<=C)),                                                  __iff((B==C), (A<=B)) },
-        { ((B>A)&(A<C)),                                                   __iff((B==C), (A<B)) },
-        { ((B>A)&(A<C)),                                                   __iff((B<=C), (A<B)) },
-        { ((B>A)&(A<C)),                                                   __iff((B<C), (A<B)) },
-        { ((B>A)|(A<C)),                                                   __iff((B>C), (A<B)) },
-        { ((B>A)|(A<C)),                                                   __iff((B>=C), (A<B)) },
-        { ((B>A)|(A<C)),                                                   __iff((B==C), (A<B)) },
-        { ((B>=A)&(A>C)),                                                  __iff((B==C), 0x0) },
-        { ((B>=A)&(A>C)),                                                  __iff((B<=C), 0x0) },
-        { ((B>=A)&(A>C)),                                                  __iff((B<C), 0x0) },
-        { ((B>=A)|(A>C)),                                                  __iff((B>C), 0x1) },
-        { ((B>=A)|(A>C)),                                                  __iff((B>=C), 0x1) },
-        { ((B>=A)|(A>C)),                                                  __iff((B==C), 0x1) },
-        { ((B>=A)&(A>=C)),                                                 __iff((B==C), (A==B)) },
-        { ((B>=A)&(A>=C)),                                                 __iff((B<C), 0x0) },
-        { ((B>=A)|(A>=C)),                                                 __iff((B>C), 0x1) },
-        { ((B>=A)|(A>=C)),                                                 __iff((B>=C), 0x1) },
-        { ((B>=A)|(A>=C)),                                                 __iff((B==C), 0x1) },
-        { ((B>=A)&(A==C)),                                                 __iff((B==C), (A==B)) },
-        { ((B>=A)&(A==C)),                                                 __iff((B<C), 0x0) },
-        { ((B>=A)|(A==C)),                                                 __iff((B>C), (A<=B)) },
-        { ((B>=A)|(A==C)),                                                 __iff((B>=C), (A<=B)) },
-        { ((B>=A)|(A==C)),                                                 __iff((B==C), (A<=B)) },
-        { ((B>=A)&(A!=C)),                                                 __iff((B==C), (A<B)) },
-        { ((B>=A)&(A!=C)),                                                 __iff((B<C), (A<=B)) },
-        { ((B>=A)|(A!=C)),                                                 __iff((B>C), 0x1) },
-        { ((B>=A)|(A!=C)),                                                 __iff((B>=C), 0x1) },
-        { ((B>=A)|(A!=C)),                                                 __iff((B==C), 0x1) },
-        { ((B>=A)&(A<=C)),                                                 __iff((B==C), (A<=B)) },
-        { ((B>=A)&(A<=C)),                                                 __iff((B<=C), (A<=B)) },
-        { ((B>=A)&(A<=C)),                                                 __iff((B<C), (A<=B)) },
-        { ((B>=A)|(A<=C)),                                                 __iff((B>C), (A<=B)) },
-        { ((B>=A)|(A<=C)),                                                 __iff((B>=C), (A<=B)) },
-        { ((B>=A)|(A<=C)),                                                 __iff((B==C), (A<=B)) },
-        { ((B>=A)&(A<C)),                                                  __iff((B==C), (A<B)) },
-        { ((B>=A)&(A<C)),                                                  __iff((B<C), (A<=B)) },
-        { ((B>=A)|(A<C)),                                                  __iff((B>C), (A<=B)) },
-        { ((B>=A)|(A<C)),                                                  __iff((B>=C), (A<=B)) },
-        { ((B>=A)|(A<C)),                                                  __iff((B==C), (A<=B)) },
-        { ((B==A)&(A>C)),                                                  __iff((B>C), (A==B)) },
-        { ((B==A)&(A>C)),                                                  __iff((B==C), 0x0) },
-        { ((B==A)&(A>C)),                                                  __iff((B<=C), 0x0) },
-        { ((B==A)&(A>C)),                                                  __iff((B<C), 0x0) },
-        { ((B==A)|(A>C)),                                                  __iff((B==C), (A>=B)) },
-        { ((B==A)&(A>=C)),                                                 __iff((B>C), (A==B)) },
-        { ((B==A)&(A>=C)),                                                 __iff((B>=C), (A==B)) },
-        { ((B==A)&(A>=C)),                                                 __iff((B==C), (A==B)) },
-        { ((B==A)&(A>=C)),                                                 __iff((B<C), 0x0) },
-        { ((B==A)|(A>=C)),                                                 __iff((B==C), (A>=B)) },
-        { ((B==A)&(A==C)),                                                 __iff((B>C), 0x0) },
-        { ((B==A)&(A==C)),                                                 __iff((B==C), (A==B)) },
-        { ((B==A)&(A==C)),                                                 __iff((B!=C), 0x0) },
-        { ((B==A)&(A==C)),                                                 __iff((B<C), 0x0) },
-        { ((B==A)&(A==C)),                                                 __iff(__ugreat(B, C), 0x0) },
-        { ((B==A)&(A==C)),                                                 __iff(__uless(B, C), 0x0) },
-        { ((B==A)|(A==C)),                                                 __iff((B==C), (A==B)) },
-        { ((B==A)&(A!=C)),                                                 __iff((B>C), (A==B)) },
-        { ((B==A)&(A!=C)),                                                 __iff((B==C), 0x0) },
-        { ((B==A)&(A!=C)),                                                 __iff((B!=C), (A==B)) },
-        { ((B==A)&(A!=C)),                                                 __iff((B<C), (A==B)) },
-        { ((B==A)&(A!=C)),                                                 __iff(__ugreat(B, C), (A==B)) },
-        { ((B==A)&(A!=C)),                                                 __iff(__uless(B, C), (A==B)) },
-        { ((B==A)|(A!=C)),                                                 __iff((B==C), 0x1) },
-        { ((B==A)&(A<=C)),                                                 __iff((B>C), 0x0) },
-        { ((B==A)&(A<=C)),                                                 __iff((B==C), (A==B)) },
-        { ((B==A)&(A<=C)),                                                 __iff((B<=C), (A==B)) },
-        { ((B==A)&(A<=C)),                                                 __iff((B<C), (A==B)) },
-        { ((B==A)|(A<=C)),                                                 __iff((B==C), (A<=B)) },
-        { ((B==A)&(A<C)),                                                  __iff((B>C), 0x0) },
-        { ((B==A)&(A<C)),                                                  __iff((B>=C), 0x0) },
-        { ((B==A)&(A<C)),                                                  __iff((B==C), 0x0) },
-        { ((B==A)&(A<C)),                                                  __iff((B<C), (A==B)) },
-        { ((B==A)|(A<C)),                                                  __iff((B==C), (A<=B)) },
-        { ((B==A)&__ugreat(A, C)),                                         __iff((B==C), 0x0) },
-        { ((B==A)&__ugreat(A, C)),                                         __iff(__ugreat(B, C), (A==B)) },
-        { ((B==A)&__ugreat(A, C)),                                         __iff(__uless_eq(B, C), 0x0) },
-        { ((B==A)&__ugreat(A, C)),                                         __iff(__uless(B, C), 0x0) },
-        { ((B==A)|__ugreat(A, C)),                                         __iff((B==C), __ugreat_eq(A, B)) },
-        { ((B==A)&__ugreat_eq(A, C)),                                      __iff((B==C), (A==B)) },
-        { ((B==A)&__ugreat_eq(A, C)),                                      __iff(__ugreat(B, C), (A==B)) },
-        { ((B==A)&__ugreat_eq(A, C)),                                      __iff(__ugreat_eq(B, C), (A==B)) },
-        { ((B==A)&__ugreat_eq(A, C)),                                      __iff(__uless(B, C), 0x0) },
-        { ((B==A)|__ugreat_eq(A, C)),                                      __iff((B==C), __ugreat_eq(A, B)) },
-        { ((B==A)&__uless_eq(A, C)),                                       __iff((B==C), (A==B)) },
-        { ((B==A)&__uless_eq(A, C)),                                       __iff(__ugreat(B, C), 0x0) },
-        { ((B==A)&__uless_eq(A, C)),                                       __iff(__uless_eq(B, C), (A==B)) },
-        { ((B==A)&__uless_eq(A, C)),                                       __iff(__uless(B, C), (A==B)) },
-        { ((B==A)|__uless_eq(A, C)),                                       __iff((B==C), __uless_eq(A, B)) },
-        { ((B==A)&__uless(A, C)),                                          __iff((B==C), 0x0) },
-        { ((B==A)&__uless(A, C)),                                          __iff(__ugreat(B, C), 0x0) },
-        { ((B==A)&__uless(A, C)),                                          __iff(__ugreat_eq(B, C), 0x0) },
-        { ((B==A)&__uless(A, C)),                                          __iff(__uless(B, C), (A==B)) },
-        { ((B==A)|__uless(A, C)),                                          __iff((B==C), __uless_eq(A, B)) },
-        { ((B!=A)&(A>C)),                                                  __iff((B==C), (A>B)) },
-        { ((B!=A)|(A>C)),                                                  __iff((B>C), 0x1) },
-        { ((B!=A)|(A>C)),                                                  __iff((B==C), (A!=B)) },
-        { ((B!=A)|(A>C)),                                                  __iff((B<=C), (A!=B)) },
-        { ((B!=A)|(A>C)),                                                  __iff((B<C), (A!=B)) },
-        { ((B!=A)&(A>=C)),                                                 __iff((B==C), (A>B)) },
-        { ((B!=A)|(A>=C)),                                                 __iff((B>C), 0x1) },
-        { ((B!=A)|(A>=C)),                                                 __iff((B>=C), 0x1) },
-        { ((B!=A)|(A>=C)),                                                 __iff((B==C), 0x1) },
-        { ((B!=A)|(A>=C)),                                                 __iff((B<C), (A!=B)) },
-        { ((B!=A)&(A==C)),                                                 __iff((B==C), 0x0) },
-        { ((B!=A)|(A==C)),                                                 __iff((B>C), (A!=B)) },
-        { ((B!=A)|(A==C)),                                                 __iff((B==C), 0x1) },
-        { ((B!=A)|(A==C)),                                                 __iff((B!=C), (A!=B)) },
-        { ((B!=A)|(A==C)),                                                 __iff((B<C), (A!=B)) },
-        { ((B!=A)|(A==C)),                                                 __iff(__ugreat(B, C), (A!=B)) },
-        { ((B!=A)|(A==C)),                                                 __iff(__uless(B, C), (A!=B)) },
-        { ((B!=A)&(A!=C)),                                                 __iff((B==C), (A!=B)) },
-        { ((B!=A)|(A!=C)),                                                 __iff((B>C), 0x1) },
-        { ((B!=A)|(A!=C)),                                                 __iff((B==C), (A!=B)) },
-        { ((B!=A)|(A!=C)),                                                 __iff((B!=C), 0x1) },
-        { ((B!=A)|(A!=C)),                                                 __iff((B<C), 0x1) },
-        { ((B!=A)|(A!=C)),                                                 __iff(__ugreat(B, C), 0x1) },
-        { ((B!=A)|(A!=C)),                                                 __iff(__uless(B, C), 0x1) },
-        { ((B!=A)&(A<=C)),                                                 __iff((B==C), (A<B)) },
-        { ((B!=A)|(A<=C)),                                                 __iff((B>C), (A!=B)) },
-        { ((B!=A)|(A<=C)),                                                 __iff((B==C), 0x1) },
-        { ((B!=A)|(A<=C)),                                                 __iff((B<=C), 0x1) },
-        { ((B!=A)|(A<=C)),                                                 __iff((B<C), 0x1) },
-        { ((B!=A)&(A<C)),                                                  __iff((B==C), (A<B)) },
-        { ((B!=A)|(A<C)),                                                  __iff((B>C), (A!=B)) },
-        { ((B!=A)|(A<C)),                                                  __iff((B>=C), (A!=B)) },
-        { ((B!=A)|(A<C)),                                                  __iff((B==C), (A!=B)) },
-        { ((B!=A)|(A<C)),                                                  __iff((B<C), 0x1) },
-        { ((B!=A)&__ugreat(A, C)),                                         __iff((B==C), __ugreat(A, B)) },
-        { ((B!=A)|__ugreat(A, C)),                                         __iff((B==C), (A!=B)) },
-        { ((B!=A)|__ugreat(A, C)),                                         __iff(__ugreat(B, C), 0x1) },
-        { ((B!=A)|__ugreat(A, C)),                                         __iff(__uless_eq(B, C), (A!=B)) },
-        { ((B!=A)|__ugreat(A, C)),                                         __iff(__uless(B, C), (A!=B)) },
-        { ((B!=A)&__ugreat_eq(A, C)),                                      __iff((B==C), __ugreat(A, B)) },
-        { ((B!=A)|__ugreat_eq(A, C)),                                      __iff((B==C), 0x1) },
-        { ((B!=A)|__ugreat_eq(A, C)),                                      __iff(__ugreat(B, C), 0x1) },
-        { ((B!=A)|__ugreat_eq(A, C)),                                      __iff(__ugreat_eq(B, C), 0x1) },
-        { ((B!=A)|__ugreat_eq(A, C)),                                      __iff(__uless(B, C), (A!=B)) },
-        { ((B!=A)&__uless_eq(A, C)),                                       __iff((B==C), __uless(A, B)) },
-        { ((B!=A)|__uless_eq(A, C)),                                       __iff((B==C), 0x1) },
-        { ((B!=A)|__uless_eq(A, C)),                                       __iff(__ugreat(B, C), (A!=B)) },
-        { ((B!=A)|__uless_eq(A, C)),                                       __iff(__uless_eq(B, C), 0x1) },
-        { ((B!=A)|__uless_eq(A, C)),                                       __iff(__uless(B, C), 0x1) },
-        { ((B!=A)&__uless(A, C)),                                          __iff((B==C), __uless(A, B)) },
-        { ((B!=A)|__uless(A, C)),                                          __iff((B==C), (A!=B)) },
-        { ((B!=A)|__uless(A, C)),                                          __iff(__ugreat(B, C), (A!=B)) },
-        { ((B!=A)|__uless(A, C)),                                          __iff(__ugreat_eq(B, C), (A!=B)) },
-        { ((B!=A)|__uless(A, C)),                                          __iff(__uless(B, C), 0x1) },
-        { ((B<=A)&(A>C)),                                                  __iff((B>C), (A>=B)) },
-        { ((B<=A)&(A>C)),                                                  __iff((B==C), (A>B)) },
-        { ((B<=A)|(A>C)),                                                  __iff((B==C), (A>=B)) },
-        { ((B<=A)|(A>C)),                                                  __iff((B<=C), (A>=B)) },
-        { ((B<=A)|(A>C)),                                                  __iff((B<C), (A>=B)) },
-        { ((B<=A)&(A>=C)),                                                 __iff((B>C), (A>=B)) },
-        { ((B<=A)&(A>=C)),                                                 __iff((B>=C), (A>=B)) },
-        { ((B<=A)&(A>=C)),                                                 __iff((B==C), (A>=B)) },
-        { ((B<=A)|(A>=C)),                                                 __iff((B==C), (A>=B)) },
-        { ((B<=A)|(A>=C)),                                                 __iff((B<=C), (A>=B)) },
-        { ((B<=A)|(A>=C)),                                                 __iff((B<C), (A>=B)) },
-        { ((B<=A)&(A==C)),                                                 __iff((B>C), 0x0) },
-        { ((B<=A)&(A==C)),                                                 __iff((B==C), (A==B)) },
-        { ((B<=A)|(A==C)),                                                 __iff((B==C), (A>=B)) },
-        { ((B<=A)|(A==C)),                                                 __iff((B<=C), (A>=B)) },
-        { ((B<=A)|(A==C)),                                                 __iff((B<C), (A>=B)) },
-        { ((B<=A)&(A!=C)),                                                 __iff((B>C), (A>=B)) },
-        { ((B<=A)&(A!=C)),                                                 __iff((B==C), (A>B)) },
-        { ((B<=A)|(A!=C)),                                                 __iff((B==C), 0x1) },
-        { ((B<=A)|(A!=C)),                                                 __iff((B<=C), 0x1) },
-        { ((B<=A)|(A!=C)),                                                 __iff((B<C), 0x1) },
-        { ((B<=A)&(A<=C)),                                                 __iff((B>C), 0x0) },
-        { ((B<=A)&(A<=C)),                                                 __iff((B==C), (A==B)) },
-        { ((B<=A)|(A<=C)),                                                 __iff((B==C), 0x1) },
-        { ((B<=A)|(A<=C)),                                                 __iff((B<=C), 0x1) },
-        { ((B<=A)|(A<=C)),                                                 __iff((B<C), 0x1) },
-        { ((B<=A)&(A<C)),                                                  __iff((B>C), 0x0) },
-        { ((B<=A)&(A<C)),                                                  __iff((B>=C), 0x0) },
-        { ((B<=A)&(A<C)),                                                  __iff((B==C), 0x0) },
-        { ((B<=A)|(A<C)),                                                  __iff((B==C), 0x1) },
-        { ((B<=A)|(A<C)),                                                  __iff((B<=C), 0x1) },
-        { ((B<=A)|(A<C)),                                                  __iff((B<C), 0x1) },
-        { ((B<A)&(A>C)),                                                   __iff((B>C), (A>B)) },
-        { ((B<A)&(A>C)),                                                   __iff((B>=C), (A>B)) },
-        { ((B<A)&(A>C)),                                                   __iff((B==C), (A>B)) },
-        { ((B<A)|(A>C)),                                                   __iff((B==C), (A>B)) },
-        { ((B<A)|(A>C)),                                                   __iff((B<=C), (A>B)) },
-        { ((B<A)|(A>C)),                                                   __iff((B<C), (A>B)) },
-        { ((B<A)&(A>=C)),                                                  __iff((B>C), (A>B)) },
-        { ((B<A)&(A>=C)),                                                  __iff((B>=C), (A>B)) },
-        { ((B<A)&(A>=C)),                                                  __iff((B==C), (A>B)) },
-        { ((B<A)|(A>=C)),                                                  __iff((B==C), (A>=B)) },
-        { ((B<A)|(A>=C)),                                                  __iff((B<C), (A>B)) },
-        { ((B<A)&(A==C)),                                                  __iff((B>C), 0x0) },
-        { ((B<A)&(A==C)),                                                  __iff((B>=C), 0x0) },
-        { ((B<A)&(A==C)),                                                  __iff((B==C), 0x0) },
-        { ((B<A)|(A==C)),                                                  __iff((B==C), (A>=B)) },
-        { ((B<A)|(A==C)),                                                  __iff((B<C), (A>B)) },
-        { ((B<A)&(A!=C)),                                                  __iff((B>C), (A>B)) },
-        { ((B<A)&(A!=C)),                                                  __iff((B>=C), (A>B)) },
-        { ((B<A)&(A!=C)),                                                  __iff((B==C), (A>B)) },
-        { ((B<A)|(A!=C)),                                                  __iff((B==C), (A!=B)) },
-        { ((B<A)|(A!=C)),                                                  __iff((B<C), 0x1) },
-        { ((B<A)&(A<=C)),                                                  __iff((B>C), 0x0) },
-        { ((B<A)&(A<=C)),                                                  __iff((B>=C), 0x0) },
-        { ((B<A)&(A<=C)),                                                  __iff((B==C), 0x0) },
-        { ((B<A)|(A<=C)),                                                  __iff((B==C), 0x1) },
-        { ((B<A)|(A<=C)),                                                  __iff((B<=C), 0x1) },
-        { ((B<A)|(A<=C)),                                                  __iff((B<C), 0x1) },
-        { ((B<A)&(A<C)),                                                   __iff((B>C), 0x0) },
-        { ((B<A)&(A<C)),                                                   __iff((B>=C), 0x0) },
-        { ((B<A)&(A<C)),                                                   __iff((B==C), 0x0) },
-        { ((B<A)|(A<C)),                                                   __iff((B==C), (A!=B)) },
-        { ((B<A)|(A<C)),                                                   __iff((B<C), 0x1) },
-        { (__ugreat(B, A)&(A==C)),                                         __iff((B==C), 0x0) },
-        { (__ugreat(B, A)&(A==C)),                                         __iff(__uless_eq(B, C), 0x0) },
-        { (__ugreat(B, A)&(A==C)),                                         __iff(__uless(B, C), 0x0) },
-        { (__ugreat(B, A)|(A==C)),                                         __iff((B==C), __uless_eq(A, B)) },
-        { (__ugreat(B, A)|(A==C)),                                         __iff(__ugreat(B, C), __uless(A, B)) },
-        { (__ugreat(B, A)&(A!=C)),                                         __iff((B==C), __uless(A, B)) },
-        { (__ugreat(B, A)&(A!=C)),                                         __iff(__uless_eq(B, C), __uless(A, B)) },
-        { (__ugreat(B, A)&(A!=C)),                                         __iff(__uless(B, C), __uless(A, B)) },
-        { (__ugreat(B, A)|(A!=C)),                                         __iff((B==C), (A!=B)) },
-        { (__ugreat(B, A)|(A!=C)),                                         __iff(__ugreat(B, C), 0x1) },
-        { (__ugreat(B, A)&__ugreat(A, C)),                                 __iff((B==C), 0x0) },
-        { (__ugreat(B, A)&__ugreat(A, C)),                                 __iff(__uless_eq(B, C), 0x0) },
-        { (__ugreat(B, A)&__ugreat(A, C)),                                 __iff(__uless(B, C), 0x0) },
-        { (__ugreat(B, A)|__ugreat(A, C)),                                 __iff((B==C), (A!=B)) },
-        { (__ugreat(B, A)|__ugreat(A, C)),                                 __iff(__ugreat(B, C), 0x1) },
-        { (__ugreat(B, A)&__ugreat_eq(A, C)),                              __iff((B==C), 0x0) },
-        { (__ugreat(B, A)&__ugreat_eq(A, C)),                              __iff(__uless_eq(B, C), 0x0) },
-        { (__ugreat(B, A)&__ugreat_eq(A, C)),                              __iff(__uless(B, C), 0x0) },
-        { (__ugreat(B, A)|__ugreat_eq(A, C)),                              __iff((B==C), 0x1) },
-        { (__ugreat(B, A)|__ugreat_eq(A, C)),                              __iff(__ugreat(B, C), 0x1) },
-        { (__ugreat(B, A)|__ugreat_eq(A, C)),                              __iff(__ugreat_eq(B, C), 0x1) },
-        { (__ugreat(B, A)&__uless_eq(A, C)),                               __iff((B==C), __uless(A, B)) },
-        { (__ugreat(B, A)&__uless_eq(A, C)),                               __iff(__uless_eq(B, C), __uless(A, B)) },
-        { (__ugreat(B, A)&__uless_eq(A, C)),                               __iff(__uless(B, C), __uless(A, B)) },
-        { (__ugreat(B, A)|__uless_eq(A, C)),                               __iff((B==C), __uless_eq(A, B)) },
-        { (__ugreat(B, A)|__uless_eq(A, C)),                               __iff(__ugreat(B, C), __uless(A, B)) },
-        { (__ugreat(B, A)&__uless(A, C)),                                  __iff((B==C), __uless(A, B)) },
-        { (__ugreat(B, A)&__uless(A, C)),                                  __iff(__uless_eq(B, C), __uless(A, B)) },
-        { (__ugreat(B, A)&__uless(A, C)),                                  __iff(__uless(B, C), __uless(A, B)) },
-        { (__ugreat(B, A)|__uless(A, C)),                                  __iff((B==C), __uless(A, B)) },
-        { (__ugreat(B, A)|__uless(A, C)),                                  __iff(__ugreat(B, C), __uless(A, B)) },
-        { (__ugreat(B, A)|__uless(A, C)),                                  __iff(__ugreat_eq(B, C), __uless(A, B)) },
-        { (__ugreat_eq(B, A)&(A==C)),                                      __iff((B==C), (A==B)) },
-        { (__ugreat_eq(B, A)&(A==C)),                                      __iff(__uless(B, C), 0x0) },
-        { (__ugreat_eq(B, A)|(A==C)),                                      __iff((B==C), __uless_eq(A, B)) },
-        { (__ugreat_eq(B, A)|(A==C)),                                      __iff(__ugreat(B, C), __uless_eq(A, B)) },
-        { (__ugreat_eq(B, A)|(A==C)),                                      __iff(__ugreat_eq(B, C), __uless_eq(A, B)) },
-        { (__ugreat_eq(B, A)&(A!=C)),                                      __iff((B==C), __uless(A, B)) },
-        { (__ugreat_eq(B, A)&(A!=C)),                                      __iff(__uless(B, C), __uless_eq(A, B)) },
-        { (__ugreat_eq(B, A)|(A!=C)),                                      __iff((B==C), 0x1) },
-        { (__ugreat_eq(B, A)|(A!=C)),                                      __iff(__ugreat(B, C), 0x1) },
-        { (__ugreat_eq(B, A)|(A!=C)),                                      __iff(__ugreat_eq(B, C), 0x1) },
-        { (__ugreat_eq(B, A)&__ugreat(A, C)),                              __iff((B==C), 0x0) },
-        { (__ugreat_eq(B, A)&__ugreat(A, C)),                              __iff(__uless_eq(B, C), 0x0) },
-        { (__ugreat_eq(B, A)&__ugreat(A, C)),                              __iff(__uless(B, C), 0x0) },
-        { (__ugreat_eq(B, A)|__ugreat(A, C)),                              __iff((B==C), 0x1) },
-        { (__ugreat_eq(B, A)|__ugreat(A, C)),                              __iff(__ugreat(B, C), 0x1) },
-        { (__ugreat_eq(B, A)|__ugreat(A, C)),                              __iff(__ugreat_eq(B, C), 0x1) },
-        { (__ugreat_eq(B, A)&__ugreat_eq(A, C)),                           __iff((B==C), (A==B)) },
-        { (__ugreat_eq(B, A)&__ugreat_eq(A, C)),                           __iff(__uless(B, C), 0x0) },
-        { (__ugreat_eq(B, A)|__ugreat_eq(A, C)),                           __iff((B==C), 0x1) },
-        { (__ugreat_eq(B, A)|__ugreat_eq(A, C)),                           __iff(__ugreat(B, C), 0x1) },
-        { (__ugreat_eq(B, A)|__ugreat_eq(A, C)),                           __iff(__ugreat_eq(B, C), 0x1) },
-        { (__ugreat_eq(B, A)&__uless_eq(A, C)),                            __iff((B==C), __uless_eq(A, B)) },
-        { (__ugreat_eq(B, A)&__uless_eq(A, C)),                            __iff(__uless_eq(B, C), __uless_eq(A, B)) },
-        { (__ugreat_eq(B, A)&__uless_eq(A, C)),                            __iff(__uless(B, C), __uless_eq(A, B)) },
-        { (__ugreat_eq(B, A)|__uless_eq(A, C)),                            __iff((B==C), __uless_eq(A, B)) },
-        { (__ugreat_eq(B, A)|__uless_eq(A, C)),                            __iff(__ugreat(B, C), __uless_eq(A, B)) },
-        { (__ugreat_eq(B, A)|__uless_eq(A, C)),                            __iff(__ugreat_eq(B, C), __uless_eq(A, B)) },
-        { (__ugreat_eq(B, A)&__uless(A, C)),                               __iff((B==C), __uless(A, B)) },
-        { (__ugreat_eq(B, A)&__uless(A, C)),                               __iff(__uless(B, C), __uless_eq(A, B)) },
-        { (__ugreat_eq(B, A)|__uless(A, C)),                               __iff((B==C), __uless_eq(A, B)) },
-        { (__ugreat_eq(B, A)|__uless(A, C)),                               __iff(__ugreat(B, C), __uless_eq(A, B)) },
-        { (__ugreat_eq(B, A)|__uless(A, C)),                               __iff(__ugreat_eq(B, C), __uless_eq(A, B)) },
-        { (__uless_eq(B, A)&(A==C)),                                       __iff((B==C), (A==B)) },
-        { (__uless_eq(B, A)&(A==C)),                                       __iff(__ugreat(B, C), 0x0) },
-        { (__uless_eq(B, A)|(A==C)),                                       __iff((B==C), __ugreat_eq(A, B)) },
-        { (__uless_eq(B, A)|(A==C)),                                       __iff(__uless_eq(B, C), __ugreat_eq(A, B)) },
-        { (__uless_eq(B, A)|(A==C)),                                       __iff(__uless(B, C), __ugreat_eq(A, B)) },
-        { (__uless_eq(B, A)&(A!=C)),                                       __iff((B==C), __ugreat(A, B)) },
-        { (__uless_eq(B, A)&(A!=C)),                                       __iff(__ugreat(B, C), __ugreat_eq(A, B)) },
-        { (__uless_eq(B, A)|(A!=C)),                                       __iff((B==C), 0x1) },
-        { (__uless_eq(B, A)|(A!=C)),                                       __iff(__uless_eq(B, C), 0x1) },
-        { (__uless_eq(B, A)|(A!=C)),                                       __iff(__uless(B, C), 0x1) },
-        { (__uless_eq(B, A)&__ugreat(A, C)),                               __iff((B==C), __ugreat(A, B)) },
-        { (__uless_eq(B, A)&__ugreat(A, C)),                               __iff(__ugreat(B, C), __ugreat_eq(A, B)) },
-        { (__uless_eq(B, A)|__ugreat(A, C)),                               __iff((B==C), __ugreat_eq(A, B)) },
-        { (__uless_eq(B, A)|__ugreat(A, C)),                               __iff(__uless_eq(B, C), __ugreat_eq(A, B)) },
-        { (__uless_eq(B, A)|__ugreat(A, C)),                               __iff(__uless(B, C), __ugreat_eq(A, B)) },
-        { (__uless_eq(B, A)&__ugreat_eq(A, C)),                            __iff((B==C), __ugreat_eq(A, B)) },
-        { (__uless_eq(B, A)&__ugreat_eq(A, C)),                            __iff(__ugreat(B, C), __ugreat_eq(A, B)) },
-        { (__uless_eq(B, A)&__ugreat_eq(A, C)),                            __iff(__ugreat_eq(B, C), __ugreat_eq(A, B)) },
-        { (__uless_eq(B, A)|__ugreat_eq(A, C)),                            __iff((B==C), __ugreat_eq(A, B)) },
-        { (__uless_eq(B, A)|__ugreat_eq(A, C)),                            __iff(__uless_eq(B, C), __ugreat_eq(A, B)) },
-        { (__uless_eq(B, A)|__ugreat_eq(A, C)),                            __iff(__uless(B, C), __ugreat_eq(A, B)) },
-        { (__uless_eq(B, A)&__uless_eq(A, C)),                             __iff((B==C), (A==B)) },
-        { (__uless_eq(B, A)&__uless_eq(A, C)),                             __iff(__ugreat(B, C), 0x0) },
-        { (__uless_eq(B, A)|__uless_eq(A, C)),                             __iff((B==C), 0x1) },
-        { (__uless_eq(B, A)|__uless_eq(A, C)),                             __iff(__uless_eq(B, C), 0x1) },
-        { (__uless_eq(B, A)|__uless_eq(A, C)),                             __iff(__uless(B, C), 0x1) },
-        { (__uless_eq(B, A)&__uless(A, C)),                                __iff((B==C), 0x0) },
-        { (__uless_eq(B, A)&__uless(A, C)),                                __iff(__ugreat(B, C), 0x0) },
-        { (__uless_eq(B, A)&__uless(A, C)),                                __iff(__ugreat_eq(B, C), 0x0) },
-        { (__uless_eq(B, A)|__uless(A, C)),                                __iff((B==C), 0x1) },
-        { (__uless_eq(B, A)|__uless(A, C)),                                __iff(__uless_eq(B, C), 0x1) },
-        { (__uless_eq(B, A)|__uless(A, C)),                                __iff(__uless(B, C), 0x1) },
-        { (__uless(B, A)&(A==C)),                                          __iff((B==C), 0x0) },
-        { (__uless(B, A)&(A==C)),                                          __iff(__ugreat(B, C), 0x0) },
-        { (__uless(B, A)&(A==C)),                                          __iff(__ugreat_eq(B, C), 0x0) },
-        { (__uless(B, A)|(A==C)),                                          __iff((B==C), __ugreat_eq(A, B)) },
-        { (__uless(B, A)|(A==C)),                                          __iff(__uless(B, C), __ugreat(A, B)) },
-        { (__uless(B, A)&(A!=C)),                                          __iff((B==C), __ugreat(A, B)) },
-        { (__uless(B, A)&(A!=C)),                                          __iff(__ugreat(B, C), __ugreat(A, B)) },
-        { (__uless(B, A)&(A!=C)),                                          __iff(__ugreat_eq(B, C), __ugreat(A, B)) },
-        { (__uless(B, A)|(A!=C)),                                          __iff((B==C), (A!=B)) },
-        { (__uless(B, A)|(A!=C)),                                          __iff(__uless(B, C), 0x1) },
-        { (__uless(B, A)&__ugreat(A, C)),                                  __iff((B==C), __ugreat(A, B)) },
-        { (__uless(B, A)&__ugreat(A, C)),                                  __iff(__ugreat(B, C), __ugreat(A, B)) },
-        { (__uless(B, A)&__ugreat(A, C)),                                  __iff(__ugreat_eq(B, C), __ugreat(A, B)) },
-        { (__uless(B, A)|__ugreat(A, C)),                                  __iff((B==C), __ugreat(A, B)) },
-        { (__uless(B, A)|__ugreat(A, C)),                                  __iff(__uless_eq(B, C), __ugreat(A, B)) },
-        { (__uless(B, A)|__ugreat(A, C)),                                  __iff(__uless(B, C), __ugreat(A, B)) },
-        { (__uless(B, A)&__ugreat_eq(A, C)),                               __iff((B==C), __ugreat(A, B)) },
-        { (__uless(B, A)&__ugreat_eq(A, C)),                               __iff(__ugreat(B, C), __ugreat(A, B)) },
-        { (__uless(B, A)&__ugreat_eq(A, C)),                               __iff(__ugreat_eq(B, C), __ugreat(A, B)) },
-        { (__uless(B, A)|__ugreat_eq(A, C)),                               __iff((B==C), __ugreat_eq(A, B)) },
-        { (__uless(B, A)|__ugreat_eq(A, C)),                               __iff(__uless(B, C), __ugreat(A, B)) },
-        { (__uless(B, A)&__uless_eq(A, C)),                                __iff((B==C), 0x0) },
-        { (__uless(B, A)&__uless_eq(A, C)),                                __iff(__ugreat(B, C), 0x0) },
-        { (__uless(B, A)&__uless_eq(A, C)),                                __iff(__ugreat_eq(B, C), 0x0) },
-        { (__uless(B, A)|__uless_eq(A, C)),                                __iff((B==C), 0x1) },
-        { (__uless(B, A)|__uless_eq(A, C)),                                __iff(__uless_eq(B, C), 0x1) },
-        { (__uless(B, A)|__uless_eq(A, C)),                                __iff(__uless(B, C), 0x1) },
-        { (__uless(B, A)&__uless(A, C)),                                   __iff((B==C), 0x0) },
-        { (__uless(B, A)&__uless(A, C)),                                   __iff(__ugreat(B, C), 0x0) },
-        { (__uless(B, A)&__uless(A, C)),                                   __iff(__ugreat_eq(B, C), 0x0) },
-        { (__uless(B, A)|__uless(A, C)),                                   __iff((B==C), (A!=B)) },
-        { (__uless(B, A)|__uless(A, C)),                                   __iff(__uless(B, C), 0x1) },
-        { ((B>A)&(C>A)),                                                   __iff((B==C), (A<B)) },
-        { ((B>A)&(C>A)),                                                   __iff((B<=C), (A<B)) },
-        { ((B>A)&(C>A)),                                                   __iff((B<C), (A<B)) },
-        { ((B>A)|(C>A)),                                                   __iff((B>C), (A<B)) },
-        { ((B>A)|(C>A)),                                                   __iff((B>=C), (A<B)) },
-        { ((B>A)|(C>A)),                                                   __iff((B==C), (A<B)) },
-        { ((B>A)&(C>=A)),                                                  __iff((B==C), (A<B)) },
-        { ((B>A)&(C>=A)),                                                  __iff((B<=C), (A<B)) },
-        { ((B>A)&(C>=A)),                                                  __iff((B<C), (A<B)) },
-        { ((B>A)|(C>=A)),                                                  __iff((B>C), (A<B)) },
-        { ((B>A)|(C>=A)),                                                  __iff((B==C), (A<=B)) },
-        { ((B>A)&(C==A)),                                                  __iff((B==C), 0x0) },
-        { ((B>A)&(C==A)),                                                  __iff((B<=C), 0x0) },
-        { ((B>A)&(C==A)),                                                  __iff((B<C), 0x0) },
-        { ((B>A)|(C==A)),                                                  __iff((B>C), (A<B)) },
-        { ((B>A)|(C==A)),                                                  __iff((B==C), (A<=B)) },
-        { ((B>A)&(C!=A)),                                                  __iff((B==C), (A<B)) },
-        { ((B>A)&(C!=A)),                                                  __iff((B<=C), (A<B)) },
-        { ((B>A)&(C!=A)),                                                  __iff((B<C), (A<B)) },
-        { ((B>A)|(C!=A)),                                                  __iff((B>C), 0x1) },
-        { ((B>A)|(C!=A)),                                                  __iff((B==C), (A!=B)) },
-        { ((B>A)&(C<=A)),                                                  __iff((B==C), 0x0) },
-        { ((B>A)&(C<=A)),                                                  __iff((B<=C), 0x0) },
-        { ((B>A)&(C<=A)),                                                  __iff((B<C), 0x0) },
-        { ((B>A)|(C<=A)),                                                  __iff((B>C), 0x1) },
-        { ((B>A)|(C<=A)),                                                  __iff((B>=C), 0x1) },
-        { ((B>A)|(C<=A)),                                                  __iff((B==C), 0x1) },
-        { ((B>A)&(C<A)),                                                   __iff((B==C), 0x0) },
-        { ((B>A)&(C<A)),                                                   __iff((B<=C), 0x0) },
-        { ((B>A)&(C<A)),                                                   __iff((B<C), 0x0) },
-        { ((B>A)|(C<A)),                                                   __iff((B>C), 0x1) },
-        { ((B>A)|(C<A)),                                                   __iff((B==C), (A!=B)) },
-        { ((B>=A)&(C>A)),                                                  __iff((B==C), (A<B)) },
-        { ((B>=A)&(C>A)),                                                  __iff((B<C), (A<=B)) },
-        { ((B>=A)|(C>A)),                                                  __iff((B>C), (A<=B)) },
-        { ((B>=A)|(C>A)),                                                  __iff((B>=C), (A<=B)) },
-        { ((B>=A)|(C>A)),                                                  __iff((B==C), (A<=B)) },
-        { ((B>=A)&(C>=A)),                                                 __iff((B==C), (A<=B)) },
-        { ((B>=A)&(C>=A)),                                                 __iff((B<=C), (A<=B)) },
-        { ((B>=A)&(C>=A)),                                                 __iff((B<C), (A<=B)) },
-        { ((B>=A)|(C>=A)),                                                 __iff((B>C), (A<=B)) },
-        { ((B>=A)|(C>=A)),                                                 __iff((B>=C), (A<=B)) },
-        { ((B>=A)|(C>=A)),                                                 __iff((B==C), (A<=B)) },
-        { ((B>=A)&(C==A)),                                                 __iff((B==C), (A==B)) },
-        { ((B>=A)&(C==A)),                                                 __iff((B<C), 0x0) },
-        { ((B>=A)|(C==A)),                                                 __iff((B>C), (A<=B)) },
-        { ((B>=A)|(C==A)),                                                 __iff((B>=C), (A<=B)) },
-        { ((B>=A)|(C==A)),                                                 __iff((B==C), (A<=B)) },
-        { ((B>=A)&(C!=A)),                                                 __iff((B==C), (A<B)) },
-        { ((B>=A)&(C!=A)),                                                 __iff((B<C), (A<=B)) },
-        { ((B>=A)|(C!=A)),                                                 __iff((B>C), 0x1) },
-        { ((B>=A)|(C!=A)),                                                 __iff((B>=C), 0x1) },
-        { ((B>=A)|(C!=A)),                                                 __iff((B==C), 0x1) },
-        { ((B>=A)&(C<=A)),                                                 __iff((B==C), (A==B)) },
-        { ((B>=A)&(C<=A)),                                                 __iff((B<C), 0x0) },
-        { ((B>=A)|(C<=A)),                                                 __iff((B>C), 0x1) },
-        { ((B>=A)|(C<=A)),                                                 __iff((B>=C), 0x1) },
-        { ((B>=A)|(C<=A)),                                                 __iff((B==C), 0x1) },
-        { ((B>=A)&(C<A)),                                                  __iff((B==C), 0x0) },
-        { ((B>=A)&(C<A)),                                                  __iff((B<=C), 0x0) },
-        { ((B>=A)&(C<A)),                                                  __iff((B<C), 0x0) },
-        { ((B>=A)|(C<A)),                                                  __iff((B>C), 0x1) },
-        { ((B>=A)|(C<A)),                                                  __iff((B>=C), 0x1) },
-        { ((B>=A)|(C<A)),                                                  __iff((B==C), 0x1) },
-        { ((B==A)&(C>A)),                                                  __iff((B>C), 0x0) },
-        { ((B==A)&(C>A)),                                                  __iff((B>=C), 0x0) },
-        { ((B==A)&(C>A)),                                                  __iff((B==C), 0x0) },
-        { ((B==A)&(C>A)),                                                  __iff((B<C), (A==B)) },
-        { ((B==A)|(C>A)),                                                  __iff((B==C), (A<=B)) },
-        { ((B==A)&(C>=A)),                                                 __iff((B>C), 0x0) },
-        { ((B==A)&(C>=A)),                                                 __iff((B==C), (A==B)) },
-        { ((B==A)&(C>=A)),                                                 __iff((B<=C), (A==B)) },
-        { ((B==A)&(C>=A)),                                                 __iff((B<C), (A==B)) },
-        { ((B==A)|(C>=A)),                                                 __iff((B==C), (A<=B)) },
-        { ((B==A)&(C==A)),                                                 __iff((B>C), 0x0) },
-        { ((B==A)&(C==A)),                                                 __iff((B==C), (A==B)) },
-        { ((B==A)&(C==A)),                                                 __iff((B!=C), 0x0) },
-        { ((B==A)&(C==A)),                                                 __iff((B<C), 0x0) },
-        { ((B==A)&(C==A)),                                                 __iff(__ugreat(B, C), 0x0) },
-        { ((B==A)&(C==A)),                                                 __iff(__uless(B, C), 0x0) },
-        { ((B==A)|(C==A)),                                                 __iff((B==C), (A==B)) },
-        { ((B==A)&(C!=A)),                                                 __iff((B>C), (A==B)) },
-        { ((B==A)&(C!=A)),                                                 __iff((B==C), 0x0) },
-        { ((B==A)&(C!=A)),                                                 __iff((B!=C), (A==B)) },
-        { ((B==A)&(C!=A)),                                                 __iff((B<C), (A==B)) },
-        { ((B==A)&(C!=A)),                                                 __iff(__ugreat(B, C), (A==B)) },
-        { ((B==A)&(C!=A)),                                                 __iff(__uless(B, C), (A==B)) },
-        { ((B==A)|(C!=A)),                                                 __iff((B==C), 0x1) },
-        { ((B==A)&(C<=A)),                                                 __iff((B>C), (A==B)) },
-        { ((B==A)&(C<=A)),                                                 __iff((B>=C), (A==B)) },
-        { ((B==A)&(C<=A)),                                                 __iff((B==C), (A==B)) },
-        { ((B==A)&(C<=A)),                                                 __iff((B<C), 0x0) },
-        { ((B==A)|(C<=A)),                                                 __iff((B==C), (A>=B)) },
-        { ((B==A)&(C<A)),                                                  __iff((B>C), (A==B)) },
-        { ((B==A)&(C<A)),                                                  __iff((B==C), 0x0) },
-        { ((B==A)&(C<A)),                                                  __iff((B<=C), 0x0) },
-        { ((B==A)&(C<A)),                                                  __iff((B<C), 0x0) },
-        { ((B==A)|(C<A)),                                                  __iff((B==C), (A>=B)) },
-        { ((B==A)&__ugreat(C, A)),                                         __iff((B==C), 0x0) },
-        { ((B==A)&__ugreat(C, A)),                                         __iff(__ugreat(B, C), 0x0) },
-        { ((B==A)&__ugreat(C, A)),                                         __iff(__ugreat_eq(B, C), 0x0) },
-        { ((B==A)&__ugreat(C, A)),                                         __iff(__uless(B, C), (A==B)) },
-        { ((B==A)|__ugreat(C, A)),                                         __iff((B==C), __uless_eq(A, B)) },
-        { ((B==A)&__ugreat_eq(C, A)),                                      __iff((B==C), (A==B)) },
-        { ((B==A)&__ugreat_eq(C, A)),                                      __iff(__ugreat(B, C), 0x0) },
-        { ((B==A)&__ugreat_eq(C, A)),                                      __iff(__uless_eq(B, C), (A==B)) },
-        { ((B==A)&__ugreat_eq(C, A)),                                      __iff(__uless(B, C), (A==B)) },
-        { ((B==A)|__ugreat_eq(C, A)),                                      __iff((B==C), __uless_eq(A, B)) },
-        { ((B==A)&__uless_eq(C, A)),                                       __iff((B==C), (A==B)) },
-        { ((B==A)&__uless_eq(C, A)),                                       __iff(__ugreat(B, C), (A==B)) },
-        { ((B==A)&__uless_eq(C, A)),                                       __iff(__ugreat_eq(B, C), (A==B)) },
-        { ((B==A)&__uless_eq(C, A)),                                       __iff(__uless(B, C), 0x0) },
-        { ((B==A)|__uless_eq(C, A)),                                       __iff((B==C), __ugreat_eq(A, B)) },
-        { ((B==A)&__uless(C, A)),                                          __iff((B==C), 0x0) },
-        { ((B==A)&__uless(C, A)),                                          __iff(__ugreat(B, C), (A==B)) },
-        { ((B==A)&__uless(C, A)),                                          __iff(__uless_eq(B, C), 0x0) },
-        { ((B==A)&__uless(C, A)),                                          __iff(__uless(B, C), 0x0) },
-        { ((B==A)|__uless(C, A)),                                          __iff((B==C), __ugreat_eq(A, B)) },
-        { ((B!=A)&(C>A)),                                                  __iff((B==C), (A<B)) },
-        { ((B!=A)|(C>A)),                                                  __iff((B>C), (A!=B)) },
-        { ((B!=A)|(C>A)),                                                  __iff((B>=C), (A!=B)) },
-        { ((B!=A)|(C>A)),                                                  __iff((B==C), (A!=B)) },
-        { ((B!=A)|(C>A)),                                                  __iff((B<C), 0x1) },
-        { ((B!=A)&(C>=A)),                                                 __iff((B==C), (A<B)) },
-        { ((B!=A)|(C>=A)),                                                 __iff((B>C), (A!=B)) },
-        { ((B!=A)|(C>=A)),                                                 __iff((B==C), 0x1) },
-        { ((B!=A)|(C>=A)),                                                 __iff((B<=C), 0x1) },
-        { ((B!=A)|(C>=A)),                                                 __iff((B<C), 0x1) },
-        { ((B!=A)&(C==A)),                                                 __iff((B==C), 0x0) },
-        { ((B!=A)|(C==A)),                                                 __iff((B>C), (A!=B)) },
-        { ((B!=A)|(C==A)),                                                 __iff((B==C), 0x1) },
-        { ((B!=A)|(C==A)),                                                 __iff((B!=C), (A!=B)) },
-        { ((B!=A)|(C==A)),                                                 __iff((B<C), (A!=B)) },
-        { ((B!=A)|(C==A)),                                                 __iff(__ugreat(B, C), (A!=B)) },
-        { ((B!=A)|(C==A)),                                                 __iff(__uless(B, C), (A!=B)) },
-        { ((B!=A)&(C!=A)),                                                 __iff((B==C), (A!=B)) },
-        { ((B!=A)|(C!=A)),                                                 __iff((B>C), 0x1) },
-        { ((B!=A)|(C!=A)),                                                 __iff((B==C), (A!=B)) },
-        { ((B!=A)|(C!=A)),                                                 __iff((B!=C), 0x1) },
-        { ((B!=A)|(C!=A)),                                                 __iff((B<C), 0x1) },
-        { ((B!=A)|(C!=A)),                                                 __iff(__ugreat(B, C), 0x1) },
-        { ((B!=A)|(C!=A)),                                                 __iff(__uless(B, C), 0x1) },
-        { ((B!=A)&(C<=A)),                                                 __iff((B==C), (A>B)) },
-        { ((B!=A)|(C<=A)),                                                 __iff((B>C), 0x1) },
-        { ((B!=A)|(C<=A)),                                                 __iff((B>=C), 0x1) },
-        { ((B!=A)|(C<=A)),                                                 __iff((B==C), 0x1) },
-        { ((B!=A)|(C<=A)),                                                 __iff((B<C), (A!=B)) },
-        { ((B!=A)&(C<A)),                                                  __iff((B==C), (A>B)) },
-        { ((B!=A)|(C<A)),                                                  __iff((B>C), 0x1) },
-        { ((B!=A)|(C<A)),                                                  __iff((B==C), (A!=B)) },
-        { ((B!=A)|(C<A)),                                                  __iff((B<=C), (A!=B)) },
-        { ((B!=A)|(C<A)),                                                  __iff((B<C), (A!=B)) },
-        { ((B!=A)&__ugreat(C, A)),                                         __iff((B==C), __uless(A, B)) },
-        { ((B!=A)|__ugreat(C, A)),                                         __iff((B==C), (A!=B)) },
-        { ((B!=A)|__ugreat(C, A)),                                         __iff(__ugreat(B, C), (A!=B)) },
-        { ((B!=A)|__ugreat(C, A)),                                         __iff(__ugreat_eq(B, C), (A!=B)) },
-        { ((B!=A)|__ugreat(C, A)),                                         __iff(__uless(B, C), 0x1) },
-        { ((B!=A)&__ugreat_eq(C, A)),                                      __iff((B==C), __uless(A, B)) },
-        { ((B!=A)|__ugreat_eq(C, A)),                                      __iff((B==C), 0x1) },
-        { ((B!=A)|__ugreat_eq(C, A)),                                      __iff(__ugreat(B, C), (A!=B)) },
-        { ((B!=A)|__ugreat_eq(C, A)),                                      __iff(__uless_eq(B, C), 0x1) },
-        { ((B!=A)|__ugreat_eq(C, A)),                                      __iff(__uless(B, C), 0x1) },
-        { ((B!=A)&__uless_eq(C, A)),                                       __iff((B==C), __ugreat(A, B)) },
-        { ((B!=A)|__uless_eq(C, A)),                                       __iff((B==C), 0x1) },
-        { ((B!=A)|__uless_eq(C, A)),                                       __iff(__ugreat(B, C), 0x1) },
-        { ((B!=A)|__uless_eq(C, A)),                                       __iff(__ugreat_eq(B, C), 0x1) },
-        { ((B!=A)|__uless_eq(C, A)),                                       __iff(__uless(B, C), (A!=B)) },
-        { ((B!=A)&__uless(C, A)),                                          __iff((B==C), __ugreat(A, B)) },
-        { ((B!=A)|__uless(C, A)),                                          __iff((B==C), (A!=B)) },
-        { ((B!=A)|__uless(C, A)),                                          __iff(__ugreat(B, C), 0x1) },
-        { ((B!=A)|__uless(C, A)),                                          __iff(__uless_eq(B, C), (A!=B)) },
-        { ((B!=A)|__uless(C, A)),                                          __iff(__uless(B, C), (A!=B)) },
-        { ((B<=A)&(C>A)),                                                  __iff((B>C), 0x0) },
-        { ((B<=A)&(C>A)),                                                  __iff((B>=C), 0x0) },
-        { ((B<=A)&(C>A)),                                                  __iff((B==C), 0x0) },
-        { ((B<=A)|(C>A)),                                                  __iff((B==C), 0x1) },
-        { ((B<=A)|(C>A)),                                                  __iff((B<=C), 0x1) },
-        { ((B<=A)|(C>A)),                                                  __iff((B<C), 0x1) },
-        { ((B<=A)&(C>=A)),                                                 __iff((B>C), 0x0) },
-        { ((B<=A)&(C>=A)),                                                 __iff((B==C), (A==B)) },
-        { ((B<=A)|(C>=A)),                                                 __iff((B==C), 0x1) },
-        { ((B<=A)|(C>=A)),                                                 __iff((B<=C), 0x1) },
-        { ((B<=A)|(C>=A)),                                                 __iff((B<C), 0x1) },
-        { ((B<=A)&(C==A)),                                                 __iff((B>C), 0x0) },
-        { ((B<=A)&(C==A)),                                                 __iff((B==C), (A==B)) },
-        { ((B<=A)|(C==A)),                                                 __iff((B==C), (A>=B)) },
-        { ((B<=A)|(C==A)),                                                 __iff((B<=C), (A>=B)) },
-        { ((B<=A)|(C==A)),                                                 __iff((B<C), (A>=B)) },
-        { ((B<=A)&(C!=A)),                                                 __iff((B>C), (A>=B)) },
-        { ((B<=A)&(C!=A)),                                                 __iff((B==C), (A>B)) },
-        { ((B<=A)|(C!=A)),                                                 __iff((B==C), 0x1) },
-        { ((B<=A)|(C!=A)),                                                 __iff((B<=C), 0x1) },
-        { ((B<=A)|(C!=A)),                                                 __iff((B<C), 0x1) },
-        { ((B<=A)&(C<=A)),                                                 __iff((B>C), (A>=B)) },
-        { ((B<=A)&(C<=A)),                                                 __iff((B>=C), (A>=B)) },
-        { ((B<=A)&(C<=A)),                                                 __iff((B==C), (A>=B)) },
-        { ((B<=A)|(C<=A)),                                                 __iff((B==C), (A>=B)) },
-        { ((B<=A)|(C<=A)),                                                 __iff((B<=C), (A>=B)) },
-        { ((B<=A)|(C<=A)),                                                 __iff((B<C), (A>=B)) },
-        { ((B<=A)&(C<A)),                                                  __iff((B>C), (A>=B)) },
-        { ((B<=A)&(C<A)),                                                  __iff((B==C), (A>B)) },
-        { ((B<=A)|(C<A)),                                                  __iff((B==C), (A>=B)) },
-        { ((B<=A)|(C<A)),                                                  __iff((B<=C), (A>=B)) },
-        { ((B<=A)|(C<A)),                                                  __iff((B<C), (A>=B)) },
-        { ((B<A)&(C>A)),                                                   __iff((B>C), 0x0) },
-        { ((B<A)&(C>A)),                                                   __iff((B>=C), 0x0) },
-        { ((B<A)&(C>A)),                                                   __iff((B==C), 0x0) },
-        { ((B<A)|(C>A)),                                                   __iff((B==C), (A!=B)) },
-        { ((B<A)|(C>A)),                                                   __iff((B<C), 0x1) },
-        { ((B<A)&(C>=A)),                                                  __iff((B>C), 0x0) },
-        { ((B<A)&(C>=A)),                                                  __iff((B>=C), 0x0) },
-        { ((B<A)&(C>=A)),                                                  __iff((B==C), 0x0) },
-        { ((B<A)|(C>=A)),                                                  __iff((B==C), 0x1) },
-        { ((B<A)|(C>=A)),                                                  __iff((B<=C), 0x1) },
-        { ((B<A)|(C>=A)),                                                  __iff((B<C), 0x1) },
-        { ((B<A)&(C==A)),                                                  __iff((B>C), 0x0) },
-        { ((B<A)&(C==A)),                                                  __iff((B>=C), 0x0) },
-        { ((B<A)&(C==A)),                                                  __iff((B==C), 0x0) },
-        { ((B<A)|(C==A)),                                                  __iff((B==C), (A>=B)) },
-        { ((B<A)|(C==A)),                                                  __iff((B<C), (A>B)) },
-        { ((B<A)&(C!=A)),                                                  __iff((B>C), (A>B)) },
-        { ((B<A)&(C!=A)),                                                  __iff((B>=C), (A>B)) },
-        { ((B<A)&(C!=A)),                                                  __iff((B==C), (A>B)) },
-        { ((B<A)|(C!=A)),                                                  __iff((B==C), (A!=B)) },
-        { ((B<A)|(C!=A)),                                                  __iff((B<C), 0x1) },
-        { ((B<A)&(C<=A)),                                                  __iff((B>C), (A>B)) },
-        { ((B<A)&(C<=A)),                                                  __iff((B>=C), (A>B)) },
-        { ((B<A)&(C<=A)),                                                  __iff((B==C), (A>B)) },
-        { ((B<A)|(C<=A)),                                                  __iff((B==C), (A>=B)) },
-        { ((B<A)|(C<=A)),                                                  __iff((B<C), (A>B)) },
-        { ((B<A)&(C<A)),                                                   __iff((B>C), (A>B)) },
-        { ((B<A)&(C<A)),                                                   __iff((B>=C), (A>B)) },
-        { ((B<A)&(C<A)),                                                   __iff((B==C), (A>B)) },
-        { ((B<A)|(C<A)),                                                   __iff((B==C), (A>B)) },
-        { ((B<A)|(C<A)),                                                   __iff((B<=C), (A>B)) },
-        { ((B<A)|(C<A)),                                                   __iff((B<C), (A>B)) },
-        { (__ugreat(B, A)&(C==A)),                                         __iff((B==C), 0x0) },
-        { (__ugreat(B, A)&(C==A)),                                         __iff(__uless_eq(B, C), 0x0) },
-        { (__ugreat(B, A)&(C==A)),                                         __iff(__uless(B, C), 0x0) },
-        { (__ugreat(B, A)|(C==A)),                                         __iff((B==C), __uless_eq(A, B)) },
-        { (__ugreat(B, A)|(C==A)),                                         __iff(__ugreat(B, C), __uless(A, B)) },
-        { (__ugreat(B, A)&(C!=A)),                                         __iff((B==C), __uless(A, B)) },
-        { (__ugreat(B, A)&(C!=A)),                                         __iff(__uless_eq(B, C), __uless(A, B)) },
-        { (__ugreat(B, A)&(C!=A)),                                         __iff(__uless(B, C), __uless(A, B)) },
-        { (__ugreat(B, A)|(C!=A)),                                         __iff((B==C), (A!=B)) },
-        { (__ugreat(B, A)|(C!=A)),                                         __iff(__ugreat(B, C), 0x1) },
-        { (__ugreat(B, A)&__ugreat(C, A)),                                 __iff((B==C), __uless(A, B)) },
-        { (__ugreat(B, A)&__ugreat(C, A)),                                 __iff(__uless_eq(B, C), __uless(A, B)) },
-        { (__ugreat(B, A)&__ugreat(C, A)),                                 __iff(__uless(B, C), __uless(A, B)) },
-        { (__ugreat(B, A)|__ugreat(C, A)),                                 __iff((B==C), __uless(A, B)) },
-        { (__ugreat(B, A)|__ugreat(C, A)),                                 __iff(__ugreat(B, C), __uless(A, B)) },
-        { (__ugreat(B, A)|__ugreat(C, A)),                                 __iff(__ugreat_eq(B, C), __uless(A, B)) },
-        { (__ugreat(B, A)&__ugreat_eq(C, A)),                              __iff((B==C), __uless(A, B)) },
-        { (__ugreat(B, A)&__ugreat_eq(C, A)),                              __iff(__uless_eq(B, C), __uless(A, B)) },
-        { (__ugreat(B, A)&__ugreat_eq(C, A)),                              __iff(__uless(B, C), __uless(A, B)) },
-        { (__ugreat(B, A)|__ugreat_eq(C, A)),                              __iff((B==C), __uless_eq(A, B)) },
-        { (__ugreat(B, A)|__ugreat_eq(C, A)),                              __iff(__ugreat(B, C), __uless(A, B)) },
-        { (__ugreat(B, A)&__uless_eq(C, A)),                               __iff((B==C), 0x0) },
-        { (__ugreat(B, A)&__uless_eq(C, A)),                               __iff(__uless_eq(B, C), 0x0) },
-        { (__ugreat(B, A)&__uless_eq(C, A)),                               __iff(__uless(B, C), 0x0) },
-        { (__ugreat(B, A)|__uless_eq(C, A)),                               __iff((B==C), 0x1) },
-        { (__ugreat(B, A)|__uless_eq(C, A)),                               __iff(__ugreat(B, C), 0x1) },
-        { (__ugreat(B, A)|__uless_eq(C, A)),                               __iff(__ugreat_eq(B, C), 0x1) },
-        { (__ugreat(B, A)&__uless(C, A)),                                  __iff((B==C), 0x0) },
-        { (__ugreat(B, A)&__uless(C, A)),                                  __iff(__uless_eq(B, C), 0x0) },
-        { (__ugreat(B, A)&__uless(C, A)),                                  __iff(__uless(B, C), 0x0) },
-        { (__ugreat(B, A)|__uless(C, A)),                                  __iff((B==C), (A!=B)) },
-        { (__ugreat(B, A)|__uless(C, A)),                                  __iff(__ugreat(B, C), 0x1) },
-        { (__ugreat_eq(B, A)&(C==A)),                                      __iff((B==C), (A==B)) },
-        { (__ugreat_eq(B, A)&(C==A)),                                      __iff(__uless(B, C), 0x0) },
-        { (__ugreat_eq(B, A)|(C==A)),                                      __iff((B==C), __uless_eq(A, B)) },
-        { (__ugreat_eq(B, A)|(C==A)),                                      __iff(__ugreat(B, C), __uless_eq(A, B)) },
-        { (__ugreat_eq(B, A)|(C==A)),                                      __iff(__ugreat_eq(B, C), __uless_eq(A, B)) },
-        { (__ugreat_eq(B, A)&(C!=A)),                                      __iff((B==C), __uless(A, B)) },
-        { (__ugreat_eq(B, A)&(C!=A)),                                      __iff(__uless(B, C), __uless_eq(A, B)) },
-        { (__ugreat_eq(B, A)|(C!=A)),                                      __iff((B==C), 0x1) },
-        { (__ugreat_eq(B, A)|(C!=A)),                                      __iff(__ugreat(B, C), 0x1) },
-        { (__ugreat_eq(B, A)|(C!=A)),                                      __iff(__ugreat_eq(B, C), 0x1) },
-        { (__ugreat_eq(B, A)&__ugreat(C, A)),                              __iff((B==C), __uless(A, B)) },
-        { (__ugreat_eq(B, A)&__ugreat(C, A)),                              __iff(__uless(B, C), __uless_eq(A, B)) },
-        { (__ugreat_eq(B, A)|__ugreat(C, A)),                              __iff((B==C), __uless_eq(A, B)) },
-        { (__ugreat_eq(B, A)|__ugreat(C, A)),                              __iff(__ugreat(B, C), __uless_eq(A, B)) },
-        { (__ugreat_eq(B, A)|__ugreat(C, A)),                              __iff(__ugreat_eq(B, C), __uless_eq(A, B)) },
-        { (__ugreat_eq(B, A)&__ugreat_eq(C, A)),                           __iff((B==C), __uless_eq(A, B)) },
-        { (__ugreat_eq(B, A)&__ugreat_eq(C, A)),                           __iff(__uless_eq(B, C), __uless_eq(A, B)) },
-        { (__ugreat_eq(B, A)&__ugreat_eq(C, A)),                           __iff(__uless(B, C), __uless_eq(A, B)) },
-        { (__ugreat_eq(B, A)|__ugreat_eq(C, A)),                           __iff((B==C), __uless_eq(A, B)) },
-        { (__ugreat_eq(B, A)|__ugreat_eq(C, A)),                           __iff(__ugreat(B, C), __uless_eq(A, B)) },
-        { (__ugreat_eq(B, A)|__ugreat_eq(C, A)),                           __iff(__ugreat_eq(B, C), __uless_eq(A, B)) },
-        { (__ugreat_eq(B, A)&__uless_eq(C, A)),                            __iff((B==C), (A==B)) },
-        { (__ugreat_eq(B, A)&__uless_eq(C, A)),                            __iff(__uless(B, C), 0x0) },
-        { (__ugreat_eq(B, A)|__uless_eq(C, A)),                            __iff((B==C), 0x1) },
-        { (__ugreat_eq(B, A)|__uless_eq(C, A)),                            __iff(__ugreat(B, C), 0x1) },
-        { (__ugreat_eq(B, A)|__uless_eq(C, A)),                            __iff(__ugreat_eq(B, C), 0x1) },
-        { (__ugreat_eq(B, A)&__uless(C, A)),                               __iff((B==C), 0x0) },
-        { (__ugreat_eq(B, A)&__uless(C, A)),                               __iff(__uless_eq(B, C), 0x0) },
-        { (__ugreat_eq(B, A)&__uless(C, A)),                               __iff(__uless(B, C), 0x0) },
-        { (__ugreat_eq(B, A)|__uless(C, A)),                               __iff((B==C), 0x1) },
-        { (__ugreat_eq(B, A)|__uless(C, A)),                               __iff(__ugreat(B, C), 0x1) },
-        { (__ugreat_eq(B, A)|__uless(C, A)),                               __iff(__ugreat_eq(B, C), 0x1) },
-        { (__uless_eq(B, A)&(C==A)),                                       __iff((B==C), (A==B)) },
-        { (__uless_eq(B, A)&(C==A)),                                       __iff(__ugreat(B, C), 0x0) },
-        { (__uless_eq(B, A)|(C==A)),                                       __iff((B==C), __ugreat_eq(A, B)) },
-        { (__uless_eq(B, A)|(C==A)),                                       __iff(__uless_eq(B, C), __ugreat_eq(A, B)) },
-        { (__uless_eq(B, A)|(C==A)),                                       __iff(__uless(B, C), __ugreat_eq(A, B)) },
-        { (__uless_eq(B, A)&(C!=A)),                                       __iff((B==C), __ugreat(A, B)) },
-        { (__uless_eq(B, A)&(C!=A)),                                       __iff(__ugreat(B, C), __ugreat_eq(A, B)) },
-        { (__uless_eq(B, A)|(C!=A)),                                       __iff((B==C), 0x1) },
-        { (__uless_eq(B, A)|(C!=A)),                                       __iff(__uless_eq(B, C), 0x1) },
-        { (__uless_eq(B, A)|(C!=A)),                                       __iff(__uless(B, C), 0x1) },
-        { (__uless_eq(B, A)&__ugreat(C, A)),                               __iff((B==C), 0x0) },
-        { (__uless_eq(B, A)&__ugreat(C, A)),                               __iff(__ugreat(B, C), 0x0) },
-        { (__uless_eq(B, A)&__ugreat(C, A)),                               __iff(__ugreat_eq(B, C), 0x0) },
-        { (__uless_eq(B, A)|__ugreat(C, A)),                               __iff((B==C), 0x1) },
-        { (__uless_eq(B, A)|__ugreat(C, A)),                               __iff(__uless_eq(B, C), 0x1) },
-        { (__uless_eq(B, A)|__ugreat(C, A)),                               __iff(__uless(B, C), 0x1) },
-        { (__uless_eq(B, A)&__ugreat_eq(C, A)),                            __iff((B==C), (A==B)) },
-        { (__uless_eq(B, A)&__ugreat_eq(C, A)),                            __iff(__ugreat(B, C), 0x0) },
-        { (__uless_eq(B, A)|__ugreat_eq(C, A)),                            __iff((B==C), 0x1) },
-        { (__uless_eq(B, A)|__ugreat_eq(C, A)),                            __iff(__uless_eq(B, C), 0x1) },
-        { (__uless_eq(B, A)|__ugreat_eq(C, A)),                            __iff(__uless(B, C), 0x1) },
-        { (__uless_eq(B, A)&__uless_eq(C, A)),                             __iff((B==C), __ugreat_eq(A, B)) },
-        { (__uless_eq(B, A)&__uless_eq(C, A)),                             __iff(__ugreat(B, C), __ugreat_eq(A, B)) },
-        { (__uless_eq(B, A)&__uless_eq(C, A)),                             __iff(__ugreat_eq(B, C), __ugreat_eq(A, B)) },
-        { (__uless_eq(B, A)|__uless_eq(C, A)),                             __iff((B==C), __ugreat_eq(A, B)) },
-        { (__uless_eq(B, A)|__uless_eq(C, A)),                             __iff(__uless_eq(B, C), __ugreat_eq(A, B)) },
-        { (__uless_eq(B, A)|__uless_eq(C, A)),                             __iff(__uless(B, C), __ugreat_eq(A, B)) },
-        { (__uless_eq(B, A)&__uless(C, A)),                                __iff((B==C), __ugreat(A, B)) },
-        { (__uless_eq(B, A)&__uless(C, A)),                                __iff(__ugreat(B, C), __ugreat_eq(A, B)) },
-        { (__uless_eq(B, A)|__uless(C, A)),                                __iff((B==C), __ugreat_eq(A, B)) },
-        { (__uless_eq(B, A)|__uless(C, A)),                                __iff(__uless_eq(B, C), __ugreat_eq(A, B)) },
-        { (__uless_eq(B, A)|__uless(C, A)),                                __iff(__uless(B, C), __ugreat_eq(A, B)) },
-        { (__uless(B, A)&(C==A)),                                          __iff((B==C), 0x0) },
-        { (__uless(B, A)&(C==A)),                                          __iff(__ugreat(B, C), 0x0) },
-        { (__uless(B, A)&(C==A)),                                          __iff(__ugreat_eq(B, C), 0x0) },
-        { (__uless(B, A)|(C==A)),                                          __iff((B==C), __ugreat_eq(A, B)) },
-        { (__uless(B, A)|(C==A)),                                          __iff(__uless(B, C), __ugreat(A, B)) },
-        { (__uless(B, A)&(C!=A)),                                          __iff((B==C), __ugreat(A, B)) },
-        { (__uless(B, A)&(C!=A)),                                          __iff(__ugreat(B, C), __ugreat(A, B)) },
-        { (__uless(B, A)&(C!=A)),                                          __iff(__ugreat_eq(B, C), __ugreat(A, B)) },
-        { (__uless(B, A)|(C!=A)),                                          __iff((B==C), (A!=B)) },
-        { (__uless(B, A)|(C!=A)),                                          __iff(__uless(B, C), 0x1) },
-        { (__uless(B, A)&__ugreat(C, A)),                                  __iff((B==C), 0x0) },
-        { (__uless(B, A)&__ugreat(C, A)),                                  __iff(__ugreat(B, C), 0x0) },
-        { (__uless(B, A)&__ugreat(C, A)),                                  __iff(__ugreat_eq(B, C), 0x0) },
-        { (__uless(B, A)|__ugreat(C, A)),                                  __iff((B==C), (A!=B)) },
-        { (__uless(B, A)|__ugreat(C, A)),                                  __iff(__uless(B, C), 0x1) },
-        { (__uless(B, A)&__ugreat_eq(C, A)),                               __iff((B==C), 0x0) },
-        { (__uless(B, A)&__ugreat_eq(C, A)),                               __iff(__ugreat(B, C), 0x0) },
-        { (__uless(B, A)&__ugreat_eq(C, A)),                               __iff(__ugreat_eq(B, C), 0x0) },
-        { (__uless(B, A)|__ugreat_eq(C, A)),                               __iff((B==C), 0x1) },
-        { (__uless(B, A)|__ugreat_eq(C, A)),                               __iff(__uless_eq(B, C), 0x1) },
-        { (__uless(B, A)|__ugreat_eq(C, A)),                               __iff(__uless(B, C), 0x1) },
-        { (__uless(B, A)&__uless_eq(C, A)),                                __iff((B==C), __ugreat(A, B)) },
-        { (__uless(B, A)&__uless_eq(C, A)),                                __iff(__ugreat(B, C), __ugreat(A, B)) },
-        { (__uless(B, A)&__uless_eq(C, A)),                                __iff(__ugreat_eq(B, C), __ugreat(A, B)) },
-        { (__uless(B, A)|__uless_eq(C, A)),                                __iff((B==C), __ugreat_eq(A, B)) },
-        { (__uless(B, A)|__uless_eq(C, A)),                                __iff(__uless(B, C), __ugreat(A, B)) },
-        { (__uless(B, A)&__uless(C, A)),                                   __iff((B==C), __ugreat(A, B)) },
-        { (__uless(B, A)&__uless(C, A)),                                   __iff(__ugreat(B, C), __ugreat(A, B)) },
-        { (__uless(B, A)&__uless(C, A)),                                   __iff(__ugreat_eq(B, C), __ugreat(A, B)) },
-        { (__uless(B, A)|__uless(C, A)),                                   __iff((B==C), __ugreat(A, B)) },
-        { (__uless(B, A)|__uless(C, A)),                                   __iff(__uless_eq(B, C), __ugreat(A, B)) },
-        { (__uless(B, A)|__uless(C, A)),                                   __iff(__uless(B, C), __ugreat(A, B)) },
-        { ((A>B)&(A>C)),                                                   __iff((B==(C+0x1)), (A>B)) },
-        { ((A>B)|(A>C)),                                                   __iff((B==(C+0x1)), (A>=B)) },
-        { ((A>B)|(A>C)),                                                   __iff((B<(C+0x1)), (A>B)) },
-        { ((A>B)&(A>=C)),                                                  __iff((B==(C+0x1)), (A>B)) },
-        { ((A>B)&(A==C)),                                                  __iff((B==(C+0x1)), 0x0) },
-        { ((A>B)&(A!=C)),                                                  __iff((B==(C+0x1)), (A>B)) },
-        { ((A>B)&(A<=C)),                                                  __iff((B==(C+0x1)), 0x0) },
-        { ((A>B)|(A<=C)),                                                  __iff((B==(C+0x1)), (A!=B)) },
-        { ((A>B)|(A<=C)),                                                  __iff((B<(C+0x1)), 0x1) },
-        { ((A>B)&(A<C)),                                                   __iff((B==(C+0x1)), 0x0) },
-        { ((A>=B)&(A>C)),                                                  __iff((B==(C+0x1)), (A>=B)) },
-        { ((A>=B)|(A>C)),                                                  __iff((B==(C+0x1)), (A>=B)) },
-        { ((A>=B)|(A>C)),                                                  __iff((B<=(C+0x1)), (A>=B)) },
-        { ((A>=B)|(A>C)),                                                  __iff((B<(C+0x1)), (A>=B)) },
-        { ((A>=B)&(A>=C)),                                                 __iff((B==(C+0x1)), (A>=B)) },
-        { ((A>=B)|(A>=C)),                                                 __iff((B<(C+0x1)), (A>=B)) },
-        { ((A>=B)&(A==C)),                                                 __iff((B==(C+0x1)), 0x0) },
-        { ((A>=B)|(A==C)),                                                 __iff((B<(C+0x1)), (A>=B)) },
-        { ((A>=B)&(A!=C)),                                                 __iff((B==(C+0x1)), (A>=B)) },
-        { ((A>=B)|(A!=C)),                                                 __iff((B<(C+0x1)), 0x1) },
-        { ((A>=B)&(A<=C)),                                                 __iff((B==(C+0x1)), 0x0) },
-        { ((A>=B)|(A<=C)),                                                 __iff((B==(C+0x1)), 0x1) },
-        { ((A>=B)|(A<=C)),                                                 __iff((B<=(C+0x1)), 0x1) },
-        { ((A>=B)|(A<=C)),                                                 __iff((B<(C+0x1)), 0x1) },
-        { ((A>=B)&(A<C)),                                                  __iff((B==(C+0x1)), 0x0) },
-        { ((A>=B)|(A<C)),                                                  __iff((B<(C+0x1)), 0x1) },
-        { ((A==B)&(A>C)),                                                  __iff((B==(C+0x1)), (A==B)) },
-        { ((A==B)&(A>C)),                                                  __iff((B<(C+0x1)), 0x0) },
-        { ((A==B)|(A>C)),                                                  __iff((B==(C+0x1)), (A>=B)) },
-        { ((A==B)&(A>=C)),                                                 __iff((B==(C+0x1)), (A==B)) },
-        { ((A==B)&(A==C)),                                                 __iff((B==(C+0x1)), 0x0) },
-        { ((A==B)&(A!=C)),                                                 __iff((B==(C+0x1)), (A==B)) },
-        { ((A==B)&(A<=C)),                                                 __iff((B==(C+0x1)), 0x0) },
-        { ((A==B)&(A<=C)),                                                 __iff((B<(C+0x1)), (A==B)) },
-        { ((A==B)|(A<=C)),                                                 __iff((B==(C+0x1)), (A<=B)) },
-        { ((A==B)&(A<C)),                                                  __iff((B==(C+0x1)), 0x0) },
-        { ((A==B)&__ugreat(A, C)),                                         __iff(__uless(B, (C+0x1)), 0x0) },
-        { ((A==B)&__uless_eq(A, C)),                                       __iff(__uless(B, (C+0x1)), (A==B)) },
-        { ((A!=B)&(A>C)),                                                  __iff((B==(C+0x1)), (A>B)) },
-        { ((A!=B)|(A>C)),                                                  __iff((B==(C+0x1)), 0x1) },
-        { ((A!=B)|(A>C)),                                                  __iff((B<(C+0x1)), (A!=B)) },
-        { ((A!=B)|(A>=C)),                                                 __iff((B==(C+0x1)), 0x1) },
-        { ((A!=B)|(A==C)),                                                 __iff((B==(C+0x1)), (A!=B)) },
-        { ((A!=B)|(A!=C)),                                                 __iff((B==(C+0x1)), 0x1) },
-        { ((A!=B)&(A<=C)),                                                 __iff((B==(C+0x1)), (A<B)) },
-        { ((A!=B)|(A<=C)),                                                 __iff((B==(C+0x1)), (A!=B)) },
-        { ((A!=B)|(A<=C)),                                                 __iff((B<(C+0x1)), 0x1) },
-        { ((A!=B)|(A<C)),                                                  __iff((B==(C+0x1)), (A!=B)) },
-        { ((A!=B)|__ugreat(A, C)),                                         __iff(__uless(B, (C+0x1)), (A!=B)) },
-        { ((A!=B)|__uless_eq(A, C)),                                       __iff(__uless(B, (C+0x1)), 0x1) },
-        { ((A<=B)&(A>C)),                                                  __iff((B==(C+0x1)), (A==B)) },
-        { ((A<=B)&(A>C)),                                                  __iff((B<(C+0x1)), 0x0) },
-        { ((A<=B)|(A>C)),                                                  __iff((B==(C+0x1)), 0x1) },
-        { ((A<=B)|(A>=C)),                                                 __iff((B==(C+0x1)), 0x1) },
-        { ((A<=B)|(A==C)),                                                 __iff((B==(C+0x1)), (A<=B)) },
-        { ((A<=B)|(A!=C)),                                                 __iff((B==(C+0x1)), 0x1) },
-        { ((A<=B)&(A<=C)),                                                 __iff((B==(C+0x1)), (A<B)) },
-        { ((A<=B)&(A<=C)),                                                 __iff((B<(C+0x1)), (A<=B)) },
-        { ((A<=B)|(A<=C)),                                                 __iff((B==(C+0x1)), (A<=B)) },
-        { ((A<=B)|(A<C)),                                                  __iff((B==(C+0x1)), (A<=B)) },
-        { ((A<B)&(A>C)),                                                   __iff((B==(C+0x1)), 0x0) },
-        { ((A<B)&(A>C)),                                                   __iff((B<=(C+0x1)), 0x0) },
-        { ((A<B)&(A>C)),                                                   __iff((B<(C+0x1)), 0x0) },
-        { ((A<B)|(A>C)),                                                   __iff((B==(C+0x1)), 0x1) },
-        { ((A<B)&(A>=C)),                                                  __iff((B<(C+0x1)), 0x0) },
-        { ((A<B)|(A>=C)),                                                  __iff((B==(C+0x1)), 0x1) },
-        { ((A<B)&(A==C)),                                                  __iff((B<(C+0x1)), 0x0) },
-        { ((A<B)|(A==C)),                                                  __iff((B==(C+0x1)), (A<B)) },
-        { ((A<B)&(A!=C)),                                                  __iff((B<(C+0x1)), (A<B)) },
-        { ((A<B)|(A!=C)),                                                  __iff((B==(C+0x1)), 0x1) },
-        { ((A<B)&(A<=C)),                                                  __iff((B==(C+0x1)), (A<B)) },
-        { ((A<B)&(A<=C)),                                                  __iff((B<=(C+0x1)), (A<B)) },
-        { ((A<B)&(A<=C)),                                                  __iff((B<(C+0x1)), (A<B)) },
-        { ((A<B)|(A<=C)),                                                  __iff((B==(C+0x1)), (A<B)) },
-        { ((A<B)&(A<C)),                                                   __iff((B<(C+0x1)), (A<B)) },
-        { ((A<B)|(A<C)),                                                   __iff((B==(C+0x1)), (A<B)) },
-        { (__ugreat(A, B)|__ugreat(A, C)),                                 __iff(__uless(B, (C+0x1)), __ugreat(A, B)) },
-        { (__ugreat(A, B)|__uless_eq(A, C)),                               __iff(__uless(B, (C+0x1)), 0x1) },
-        { (__ugreat_eq(A, B)|(A==C)),                                      __iff(__uless(B, (C+0x1)), __ugreat_eq(A, B)) },
-        { (__ugreat_eq(A, B)|(A!=C)),                                      __iff(__uless(B, (C+0x1)), 0x1) },
-        { (__ugreat_eq(A, B)|__ugreat(A, C)),                              __iff((B==(C+0x1)), __ugreat_eq(A, B)) },
-        { (__ugreat_eq(A, B)|__ugreat(A, C)),                              __iff(__uless_eq(B, (C+0x1)), __ugreat_eq(A, B)) },
-        { (__ugreat_eq(A, B)|__ugreat(A, C)),                              __iff(__uless(B, (C+0x1)), __ugreat_eq(A, B)) },
-        { (__ugreat_eq(A, B)|__ugreat_eq(A, C)),                           __iff(__uless(B, (C+0x1)), __ugreat_eq(A, B)) },
-        { (__ugreat_eq(A, B)|__uless_eq(A, C)),                            __iff((B==(C+0x1)), 0x1) },
-        { (__ugreat_eq(A, B)|__uless_eq(A, C)),                            __iff(__uless_eq(B, (C+0x1)), 0x1) },
-        { (__ugreat_eq(A, B)|__uless_eq(A, C)),                            __iff(__uless(B, (C+0x1)), 0x1) },
-        { (__ugreat_eq(A, B)|__uless(A, C)),                               __iff(__uless(B, (C+0x1)), 0x1) },
-        { (__uless_eq(A, B)&__ugreat(A, C)),                               __iff(__uless(B, (C+0x1)), 0x0) },
-        { (__uless_eq(A, B)&__uless_eq(A, C)),                             __iff(__uless(B, (C+0x1)), __uless_eq(A, B)) },
-        { (__uless(A, B)&(A==C)),                                          __iff(__uless(B, (C+0x1)), 0x0) },
-        { (__uless(A, B)&(A!=C)),                                          __iff(__uless(B, (C+0x1)), __uless(A, B)) },
-        { (__uless(A, B)&__ugreat(A, C)),                                  __iff((B==(C+0x1)), 0x0) },
-        { (__uless(A, B)&__ugreat(A, C)),                                  __iff(__uless_eq(B, (C+0x1)), 0x0) },
-        { (__uless(A, B)&__ugreat(A, C)),                                  __iff(__uless(B, (C+0x1)), 0x0) },
-        { (__uless(A, B)&__ugreat_eq(A, C)),                               __iff(__uless(B, (C+0x1)), 0x0) },
-        { (__uless(A, B)&__uless_eq(A, C)),                                __iff((B==(C+0x1)), __uless(A, B)) },
-        { (__uless(A, B)&__uless_eq(A, C)),                                __iff(__uless_eq(B, (C+0x1)), __uless(A, B)) },
-        { (__uless(A, B)&__uless_eq(A, C)),                                __iff(__uless(B, (C+0x1)), __uless(A, B)) },
-        { (__uless(A, B)&__uless(A, C)),                                   __iff(__uless(B, (C+0x1)), __uless(A, B)) },
-        { ((A>B)&(C>A)),                                                   __iff((B==(C+0x1)), 0x0) },
-        { ((A>B)&(C>=A)),                                                  __iff((B==(C+0x1)), 0x0) },
-        { ((A>B)|(C>=A)),                                                  __iff((B==(C+0x1)), (A!=B)) },
-        { ((A>B)|(C>=A)),                                                  __iff((B<(C+0x1)), 0x1) },
-        { ((A>B)&(C==A)),                                                  __iff((B==(C+0x1)), 0x0) },
-        { ((A>B)&(C!=A)),                                                  __iff((B==(C+0x1)), (A>B)) },
-        { ((A>B)&(C<=A)),                                                  __iff((B==(C+0x1)), (A>B)) },
-        { ((A>B)&(C<A)),                                                   __iff((B==(C+0x1)), (A>B)) },
-        { ((A>B)|(C<A)),                                                   __iff((B==(C+0x1)), (A>=B)) },
-        { ((A>B)|(C<A)),                                                   __iff((B<(C+0x1)), (A>B)) },
-        { ((A>=B)&(C>A)),                                                  __iff((B==(C+0x1)), 0x0) },
-        { ((A>=B)|(C>A)),                                                  __iff((B<(C+0x1)), 0x1) },
-        { ((A>=B)&(C>=A)),                                                 __iff((B==(C+0x1)), 0x0) },
-        { ((A>=B)|(C>=A)),                                                 __iff((B==(C+0x1)), 0x1) },
-        { ((A>=B)|(C>=A)),                                                 __iff((B<=(C+0x1)), 0x1) },
-        { ((A>=B)|(C>=A)),                                                 __iff((B<(C+0x1)), 0x1) },
-        { ((A>=B)&(C==A)),                                                 __iff((B==(C+0x1)), 0x0) },
-        { ((A>=B)|(C==A)),                                                 __iff((B<(C+0x1)), (A>=B)) },
-        { ((A>=B)&(C!=A)),                                                 __iff((B==(C+0x1)), (A>=B)) },
-        { ((A>=B)|(C!=A)),                                                 __iff((B<(C+0x1)), 0x1) },
-        { ((A>=B)&(C<=A)),                                                 __iff((B==(C+0x1)), (A>=B)) },
-        { ((A>=B)|(C<=A)),                                                 __iff((B<(C+0x1)), (A>=B)) },
-        { ((A>=B)&(C<A)),                                                  __iff((B==(C+0x1)), (A>=B)) },
-        { ((A>=B)|(C<A)),                                                  __iff((B==(C+0x1)), (A>=B)) },
-        { ((A>=B)|(C<A)),                                                  __iff((B<=(C+0x1)), (A>=B)) },
-        { ((A>=B)|(C<A)),                                                  __iff((B<(C+0x1)), (A>=B)) },
-        { ((A==B)&(C>A)),                                                  __iff((B==(C+0x1)), 0x0) },
-        { ((A==B)&(C>=A)),                                                 __iff((B==(C+0x1)), 0x0) },
-        { ((A==B)&(C>=A)),                                                 __iff((B<(C+0x1)), (A==B)) },
-        { ((A==B)|(C>=A)),                                                 __iff((B==(C+0x1)), (A<=B)) },
-        { ((A==B)&(C==A)),                                                 __iff((B==(C+0x1)), 0x0) },
-        { ((A==B)&(C!=A)),                                                 __iff((B==(C+0x1)), (A==B)) },
-        { ((A==B)&(C<=A)),                                                 __iff((B==(C+0x1)), (A==B)) },
-        { ((A==B)&(C<A)),                                                  __iff((B==(C+0x1)), (A==B)) },
-        { ((A==B)&(C<A)),                                                  __iff((B<(C+0x1)), 0x0) },
-        { ((A==B)|(C<A)),                                                  __iff((B==(C+0x1)), (A>=B)) },
-        { ((A==B)&__ugreat_eq(C, A)),                                      __iff(__uless(B, (C+0x1)), (A==B)) },
-        { ((A==B)&__uless(C, A)),                                          __iff(__uless(B, (C+0x1)), 0x0) },
-        { ((A!=B)|(C>A)),                                                  __iff((B==(C+0x1)), (A!=B)) },
-        { ((A!=B)&(C>=A)),                                                 __iff((B==(C+0x1)), (A<B)) },
-        { ((A!=B)|(C>=A)),                                                 __iff((B==(C+0x1)), (A!=B)) },
-        { ((A!=B)|(C>=A)),                                                 __iff((B<(C+0x1)), 0x1) },
-        { ((A!=B)|(C==A)),                                                 __iff((B==(C+0x1)), (A!=B)) },
-        { ((A!=B)|(C!=A)),                                                 __iff((B==(C+0x1)), 0x1) },
-        { ((A!=B)|(C<=A)),                                                 __iff((B==(C+0x1)), 0x1) },
-        { ((A!=B)&(C<A)),                                                  __iff((B==(C+0x1)), (A>B)) },
-        { ((A!=B)|(C<A)),                                                  __iff((B==(C+0x1)), 0x1) },
-        { ((A!=B)|(C<A)),                                                  __iff((B<(C+0x1)), (A!=B)) },
-        { ((A!=B)|__ugreat_eq(C, A)),                                      __iff(__uless(B, (C+0x1)), 0x1) },
-        { ((A!=B)|__uless(C, A)),                                          __iff(__uless(B, (C+0x1)), (A!=B)) },
-        { ((A<=B)|(C>A)),                                                  __iff((B==(C+0x1)), (A<=B)) },
-        { ((A<=B)&(C>=A)),                                                 __iff((B==(C+0x1)), (A<B)) },
-        { ((A<=B)&(C>=A)),                                                 __iff((B<(C+0x1)), (A<=B)) },
-        { ((A<=B)|(C>=A)),                                                 __iff((B==(C+0x1)), (A<=B)) },
-        { ((A<=B)|(C==A)),                                                 __iff((B==(C+0x1)), (A<=B)) },
-        { ((A<=B)|(C!=A)),                                                 __iff((B==(C+0x1)), 0x1) },
-        { ((A<=B)|(C<=A)),                                                 __iff((B==(C+0x1)), 0x1) },
-        { ((A<=B)&(C<A)),                                                  __iff((B==(C+0x1)), (A==B)) },
-        { ((A<=B)&(C<A)),                                                  __iff((B<(C+0x1)), 0x0) },
-        { ((A<=B)|(C<A)),                                                  __iff((B==(C+0x1)), 0x1) },
-        { ((A<B)&(C>A)),                                                   __iff((B<(C+0x1)), (A<B)) },
-        { ((A<B)|(C>A)),                                                   __iff((B==(C+0x1)), (A<B)) },
-        { ((A<B)&(C>=A)),                                                  __iff((B==(C+0x1)), (A<B)) },
-        { ((A<B)&(C>=A)),                                                  __iff((B<=(C+0x1)), (A<B)) },
-        { ((A<B)&(C>=A)),                                                  __iff((B<(C+0x1)), (A<B)) },
-        { ((A<B)|(C>=A)),                                                  __iff((B==(C+0x1)), (A<B)) },
-        { ((A<B)&(C==A)),                                                  __iff((B<(C+0x1)), 0x0) },
-        { ((A<B)|(C==A)),                                                  __iff((B==(C+0x1)), (A<B)) },
-        { ((A<B)&(C!=A)),                                                  __iff((B<(C+0x1)), (A<B)) },
-        { ((A<B)|(C!=A)),                                                  __iff((B==(C+0x1)), 0x1) },
-        { ((A<B)&(C<=A)),                                                  __iff((B<(C+0x1)), 0x0) },
-        { ((A<B)|(C<=A)),                                                  __iff((B==(C+0x1)), 0x1) },
-        { ((A<B)&(C<A)),                                                   __iff((B==(C+0x1)), 0x0) },
-        { ((A<B)&(C<A)),                                                   __iff((B<=(C+0x1)), 0x0) },
-        { ((A<B)&(C<A)),                                                   __iff((B<(C+0x1)), 0x0) },
-        { ((A<B)|(C<A)),                                                   __iff((B==(C+0x1)), 0x1) },
-        { (__ugreat(A, B)|__ugreat_eq(C, A)),                              __iff(__uless(B, (C+0x1)), 0x1) },
-        { (__ugreat(A, B)|__uless(C, A)),                                  __iff(__uless(B, (C+0x1)), __ugreat(A, B)) },
-        { (__ugreat_eq(A, B)|(C==A)),                                      __iff(__uless(B, (C+0x1)), __ugreat_eq(A, B)) },
-        { (__ugreat_eq(A, B)|(C!=A)),                                      __iff(__uless(B, (C+0x1)), 0x1) },
-        { (__ugreat_eq(A, B)|__ugreat(C, A)),                              __iff(__uless(B, (C+0x1)), 0x1) },
-        { (__ugreat_eq(A, B)|__ugreat_eq(C, A)),                           __iff((B==(C+0x1)), 0x1) },
-        { (__ugreat_eq(A, B)|__ugreat_eq(C, A)),                           __iff(__uless_eq(B, (C+0x1)), 0x1) },
-        { (__ugreat_eq(A, B)|__ugreat_eq(C, A)),                           __iff(__uless(B, (C+0x1)), 0x1) },
-        { (__ugreat_eq(A, B)|__uless_eq(C, A)),                            __iff(__uless(B, (C+0x1)), __ugreat_eq(A, B)) },
-        { (__ugreat_eq(A, B)|__uless(C, A)),                               __iff((B==(C+0x1)), __ugreat_eq(A, B)) },
-        { (__ugreat_eq(A, B)|__uless(C, A)),                               __iff(__uless_eq(B, (C+0x1)), __ugreat_eq(A, B)) },
-        { (__ugreat_eq(A, B)|__uless(C, A)),                               __iff(__uless(B, (C+0x1)), __ugreat_eq(A, B)) },
-        { (__uless_eq(A, B)&__ugreat_eq(C, A)),                            __iff(__uless(B, (C+0x1)), __uless_eq(A, B)) },
-        { (__uless_eq(A, B)&__uless(C, A)),                                __iff(__uless(B, (C+0x1)), 0x0) },
-        { (__uless(A, B)&(C==A)),                                          __iff(__uless(B, (C+0x1)), 0x0) },
-        { (__uless(A, B)&(C!=A)),                                          __iff(__uless(B, (C+0x1)), __uless(A, B)) },
-        { (__uless(A, B)&__ugreat(C, A)),                                  __iff(__uless(B, (C+0x1)), __uless(A, B)) },
-        { (__uless(A, B)&__ugreat_eq(C, A)),                               __iff((B==(C+0x1)), __uless(A, B)) },
-        { (__uless(A, B)&__ugreat_eq(C, A)),                               __iff(__uless_eq(B, (C+0x1)), __uless(A, B)) },
-        { (__uless(A, B)&__ugreat_eq(C, A)),                               __iff(__uless(B, (C+0x1)), __uless(A, B)) },
-        { (__uless(A, B)&__uless_eq(C, A)),                                __iff(__uless(B, (C+0x1)), 0x0) },
-        { (__uless(A, B)&__uless(C, A)),                                   __iff((B==(C+0x1)), 0x0) },
-        { (__uless(A, B)&__uless(C, A)),                                   __iff(__uless_eq(B, (C+0x1)), 0x0) },
-        { (__uless(A, B)&__uless(C, A)),                                   __iff(__uless(B, (C+0x1)), 0x0) },
-        { ((B>A)&(A>C)),                                                   __iff((B==(C+0x1)), 0x0) },
-        { ((B>A)&(A>C)),                                                   __iff((B<=(C+0x1)), 0x0) },
-        { ((B>A)&(A>C)),                                                   __iff((B<(C+0x1)), 0x0) },
-        { ((B>A)|(A>C)),                                                   __iff((B==(C+0x1)), 0x1) },
-        { ((B>A)&(A>=C)),                                                  __iff((B<(C+0x1)), 0x0) },
-        { ((B>A)|(A>=C)),                                                  __iff((B==(C+0x1)), 0x1) },
-        { ((B>A)&(A==C)),                                                  __iff((B<(C+0x1)), 0x0) },
-        { ((B>A)|(A==C)),                                                  __iff((B==(C+0x1)), (A<B)) },
-        { ((B>A)&(A!=C)),                                                  __iff((B<(C+0x1)), (A<B)) },
-        { ((B>A)|(A!=C)),                                                  __iff((B==(C+0x1)), 0x1) },
-        { ((B>A)&(A<=C)),                                                  __iff((B==(C+0x1)), (A<B)) },
-        { ((B>A)&(A<=C)),                                                  __iff((B<=(C+0x1)), (A<B)) },
-        { ((B>A)&(A<=C)),                                                  __iff((B<(C+0x1)), (A<B)) },
-        { ((B>A)|(A<=C)),                                                  __iff((B==(C+0x1)), (A<B)) },
-        { ((B>A)&(A<C)),                                                   __iff((B<(C+0x1)), (A<B)) },
-        { ((B>A)|(A<C)),                                                   __iff((B==(C+0x1)), (A<B)) },
-        { ((B>=A)&(A>C)),                                                  __iff((B==(C+0x1)), (A==B)) },
-        { ((B>=A)&(A>C)),                                                  __iff((B<(C+0x1)), 0x0) },
-        { ((B>=A)|(A>C)),                                                  __iff((B==(C+0x1)), 0x1) },
-        { ((B>=A)|(A>=C)),                                                 __iff((B==(C+0x1)), 0x1) },
-        { ((B>=A)|(A==C)),                                                 __iff((B==(C+0x1)), (A<=B)) },
-        { ((B>=A)|(A!=C)),                                                 __iff((B==(C+0x1)), 0x1) },
-        { ((B>=A)&(A<=C)),                                                 __iff((B==(C+0x1)), (A<B)) },
-        { ((B>=A)&(A<=C)),                                                 __iff((B<(C+0x1)), (A<=B)) },
-        { ((B>=A)|(A<=C)),                                                 __iff((B==(C+0x1)), (A<=B)) },
-        { ((B>=A)|(A<C)),                                                  __iff((B==(C+0x1)), (A<=B)) },
-        { ((B==A)&(A>C)),                                                  __iff((B==(C+0x1)), (A==B)) },
-        { ((B==A)&(A>C)),                                                  __iff((B<(C+0x1)), 0x0) },
-        { ((B==A)|(A>C)),                                                  __iff((B==(C+0x1)), (A>=B)) },
-        { ((B==A)&(A>=C)),                                                 __iff((B==(C+0x1)), (A==B)) },
-        { ((B==A)&(A==C)),                                                 __iff((B==(C+0x1)), 0x0) },
-        { ((B==A)&(A!=C)),                                                 __iff((B==(C+0x1)), (A==B)) },
-        { ((B==A)&(A<=C)),                                                 __iff((B==(C+0x1)), 0x0) },
-        { ((B==A)&(A<=C)),                                                 __iff((B<(C+0x1)), (A==B)) },
-        { ((B==A)|(A<=C)),                                                 __iff((B==(C+0x1)), (A<=B)) },
-        { ((B==A)&(A<C)),                                                  __iff((B==(C+0x1)), 0x0) },
-        { ((B==A)&__ugreat(A, C)),                                         __iff(__uless(B, (C+0x1)), 0x0) },
-        { ((B==A)&__uless_eq(A, C)),                                       __iff(__uless(B, (C+0x1)), (A==B)) },
-        { ((B!=A)&(A>C)),                                                  __iff((B==(C+0x1)), (A>B)) },
-        { ((B!=A)|(A>C)),                                                  __iff((B==(C+0x1)), 0x1) },
-        { ((B!=A)|(A>C)),                                                  __iff((B<(C+0x1)), (A!=B)) },
-        { ((B!=A)|(A>=C)),                                                 __iff((B==(C+0x1)), 0x1) },
-        { ((B!=A)|(A==C)),                                                 __iff((B==(C+0x1)), (A!=B)) },
-        { ((B!=A)|(A!=C)),                                                 __iff((B==(C+0x1)), 0x1) },
-        { ((B!=A)&(A<=C)),                                                 __iff((B==(C+0x1)), (A<B)) },
-        { ((B!=A)|(A<=C)),                                                 __iff((B==(C+0x1)), (A!=B)) },
-        { ((B!=A)|(A<=C)),                                                 __iff((B<(C+0x1)), 0x1) },
-        { ((B!=A)|(A<C)),                                                  __iff((B==(C+0x1)), (A!=B)) },
-        { ((B!=A)|__ugreat(A, C)),                                         __iff(__uless(B, (C+0x1)), (A!=B)) },
-        { ((B!=A)|__uless_eq(A, C)),                                       __iff(__uless(B, (C+0x1)), 0x1) },
-        { ((B<=A)&(A>C)),                                                  __iff((B==(C+0x1)), (A>=B)) },
-        { ((B<=A)|(A>C)),                                                  __iff((B==(C+0x1)), (A>=B)) },
-        { ((B<=A)|(A>C)),                                                  __iff((B<=(C+0x1)), (A>=B)) },
-        { ((B<=A)|(A>C)),                                                  __iff((B<(C+0x1)), (A>=B)) },
-        { ((B<=A)&(A>=C)),                                                 __iff((B==(C+0x1)), (A>=B)) },
-        { ((B<=A)|(A>=C)),                                                 __iff((B<(C+0x1)), (A>=B)) },
-        { ((B<=A)&(A==C)),                                                 __iff((B==(C+0x1)), 0x0) },
-        { ((B<=A)|(A==C)),                                                 __iff((B<(C+0x1)), (A>=B)) },
-        { ((B<=A)&(A!=C)),                                                 __iff((B==(C+0x1)), (A>=B)) },
-        { ((B<=A)|(A!=C)),                                                 __iff((B<(C+0x1)), 0x1) },
-        { ((B<=A)&(A<=C)),                                                 __iff((B==(C+0x1)), 0x0) },
-        { ((B<=A)|(A<=C)),                                                 __iff((B==(C+0x1)), 0x1) },
-        { ((B<=A)|(A<=C)),                                                 __iff((B<=(C+0x1)), 0x1) },
-        { ((B<=A)|(A<=C)),                                                 __iff((B<(C+0x1)), 0x1) },
-        { ((B<=A)&(A<C)),                                                  __iff((B==(C+0x1)), 0x0) },
-        { ((B<=A)|(A<C)),                                                  __iff((B<(C+0x1)), 0x1) },
-        { ((B<A)&(A>C)),                                                   __iff((B==(C+0x1)), (A>B)) },
-        { ((B<A)|(A>C)),                                                   __iff((B==(C+0x1)), (A>=B)) },
-        { ((B<A)|(A>C)),                                                   __iff((B<(C+0x1)), (A>B)) },
-        { ((B<A)&(A>=C)),                                                  __iff((B==(C+0x1)), (A>B)) },
-        { ((B<A)&(A==C)),                                                  __iff((B==(C+0x1)), 0x0) },
-        { ((B<A)&(A!=C)),                                                  __iff((B==(C+0x1)), (A>B)) },
-        { ((B<A)&(A<=C)),                                                  __iff((B==(C+0x1)), 0x0) },
-        { ((B<A)|(A<=C)),                                                  __iff((B==(C+0x1)), (A!=B)) },
-        { ((B<A)|(A<=C)),                                                  __iff((B<(C+0x1)), 0x1) },
-        { ((B<A)&(A<C)),                                                   __iff((B==(C+0x1)), 0x0) },
-        { (__ugreat(B, A)&(A==C)),                                         __iff(__uless(B, (C+0x1)), 0x0) },
-        { (__ugreat(B, A)&(A!=C)),                                         __iff(__uless(B, (C+0x1)), __uless(A, B)) },
-        { (__ugreat(B, A)&__ugreat(A, C)),                                 __iff((B==(C+0x1)), 0x0) },
-        { (__ugreat(B, A)&__ugreat(A, C)),                                 __iff(__uless_eq(B, (C+0x1)), 0x0) },
-        { (__ugreat(B, A)&__ugreat(A, C)),                                 __iff(__uless(B, (C+0x1)), 0x0) },
-        { (__ugreat(B, A)&__ugreat_eq(A, C)),                              __iff(__uless(B, (C+0x1)), 0x0) },
-        { (__ugreat(B, A)&__uless_eq(A, C)),                               __iff((B==(C+0x1)), __uless(A, B)) },
-        { (__ugreat(B, A)&__uless_eq(A, C)),                               __iff(__uless_eq(B, (C+0x1)), __uless(A, B)) },
-        { (__ugreat(B, A)&__uless_eq(A, C)),                               __iff(__uless(B, (C+0x1)), __uless(A, B)) },
-        { (__ugreat(B, A)&__uless(A, C)),                                  __iff(__uless(B, (C+0x1)), __uless(A, B)) },
-        { (__ugreat_eq(B, A)&__ugreat(A, C)),                              __iff(__uless(B, (C+0x1)), 0x0) },
-        { (__ugreat_eq(B, A)&__uless_eq(A, C)),                            __iff(__uless(B, (C+0x1)), __uless_eq(A, B)) },
-        { (__uless_eq(B, A)|(A==C)),                                       __iff(__uless(B, (C+0x1)), __ugreat_eq(A, B)) },
-        { (__uless_eq(B, A)|(A!=C)),                                       __iff(__uless(B, (C+0x1)), 0x1) },
-        { (__uless_eq(B, A)|__ugreat(A, C)),                               __iff((B==(C+0x1)), __ugreat_eq(A, B)) },
-        { (__uless_eq(B, A)|__ugreat(A, C)),                               __iff(__uless_eq(B, (C+0x1)), __ugreat_eq(A, B)) },
-        { (__uless_eq(B, A)|__ugreat(A, C)),                               __iff(__uless(B, (C+0x1)), __ugreat_eq(A, B)) },
-        { (__uless_eq(B, A)|__ugreat_eq(A, C)),                            __iff(__uless(B, (C+0x1)), __ugreat_eq(A, B)) },
-        { (__uless_eq(B, A)|__uless_eq(A, C)),                             __iff((B==(C+0x1)), 0x1) },
-        { (__uless_eq(B, A)|__uless_eq(A, C)),                             __iff(__uless_eq(B, (C+0x1)), 0x1) },
-        { (__uless_eq(B, A)|__uless_eq(A, C)),                             __iff(__uless(B, (C+0x1)), 0x1) },
-        { (__uless_eq(B, A)|__uless(A, C)),                                __iff(__uless(B, (C+0x1)), 0x1) },
-        { (__uless(B, A)|__ugreat(A, C)),                                  __iff(__uless(B, (C+0x1)), __ugreat(A, B)) },
-        { (__uless(B, A)|__uless_eq(A, C)),                                __iff(__uless(B, (C+0x1)), 0x1) },
-        { ((B>A)&(C>A)),                                                   __iff((B<(C+0x1)), (A<B)) },
-        { ((B>A)|(C>A)),                                                   __iff((B==(C+0x1)), (A<B)) },
-        { ((B>A)&(C>=A)),                                                  __iff((B==(C+0x1)), (A<B)) },
-        { ((B>A)&(C>=A)),                                                  __iff((B<=(C+0x1)), (A<B)) },
-        { ((B>A)&(C>=A)),                                                  __iff((B<(C+0x1)), (A<B)) },
-        { ((B>A)|(C>=A)),                                                  __iff((B==(C+0x1)), (A<B)) },
-        { ((B>A)&(C==A)),                                                  __iff((B<(C+0x1)), 0x0) },
-        { ((B>A)|(C==A)),                                                  __iff((B==(C+0x1)), (A<B)) },
-        { ((B>A)&(C!=A)),                                                  __iff((B<(C+0x1)), (A<B)) },
-        { ((B>A)|(C!=A)),                                                  __iff((B==(C+0x1)), 0x1) },
-        { ((B>A)&(C<=A)),                                                  __iff((B<(C+0x1)), 0x0) },
-        { ((B>A)|(C<=A)),                                                  __iff((B==(C+0x1)), 0x1) },
-        { ((B>A)&(C<A)),                                                   __iff((B==(C+0x1)), 0x0) },
-        { ((B>A)&(C<A)),                                                   __iff((B<=(C+0x1)), 0x0) },
-        { ((B>A)&(C<A)),                                                   __iff((B<(C+0x1)), 0x0) },
-        { ((B>A)|(C<A)),                                                   __iff((B==(C+0x1)), 0x1) },
-        { ((B>=A)|(C>A)),                                                  __iff((B==(C+0x1)), (A<=B)) },
-        { ((B>=A)&(C>=A)),                                                 __iff((B==(C+0x1)), (A<B)) },
-        { ((B>=A)&(C>=A)),                                                 __iff((B<(C+0x1)), (A<=B)) },
-        { ((B>=A)|(C>=A)),                                                 __iff((B==(C+0x1)), (A<=B)) },
-        { ((B>=A)|(C==A)),                                                 __iff((B==(C+0x1)), (A<=B)) },
-        { ((B>=A)|(C!=A)),                                                 __iff((B==(C+0x1)), 0x1) },
-        { ((B>=A)|(C<=A)),                                                 __iff((B==(C+0x1)), 0x1) },
-        { ((B>=A)&(C<A)),                                                  __iff((B==(C+0x1)), (A==B)) },
-        { ((B>=A)&(C<A)),                                                  __iff((B<(C+0x1)), 0x0) },
-        { ((B>=A)|(C<A)),                                                  __iff((B==(C+0x1)), 0x1) },
-        { ((B==A)&(C>A)),                                                  __iff((B==(C+0x1)), 0x0) },
-        { ((B==A)&(C>=A)),                                                 __iff((B==(C+0x1)), 0x0) },
-        { ((B==A)&(C>=A)),                                                 __iff((B<(C+0x1)), (A==B)) },
-        { ((B==A)|(C>=A)),                                                 __iff((B==(C+0x1)), (A<=B)) },
-        { ((B==A)&(C==A)),                                                 __iff((B==(C+0x1)), 0x0) },
-        { ((B==A)&(C!=A)),                                                 __iff((B==(C+0x1)), (A==B)) },
-        { ((B==A)&(C<=A)),                                                 __iff((B==(C+0x1)), (A==B)) },
-        { ((B==A)&(C<A)),                                                  __iff((B==(C+0x1)), (A==B)) },
-        { ((B==A)&(C<A)),                                                  __iff((B<(C+0x1)), 0x0) },
-        { ((B==A)|(C<A)),                                                  __iff((B==(C+0x1)), (A>=B)) },
-        { ((B==A)&__ugreat_eq(C, A)),                                      __iff(__uless(B, (C+0x1)), (A==B)) },
-        { ((B==A)&__uless(C, A)),                                          __iff(__uless(B, (C+0x1)), 0x0) },
-        { ((B!=A)|(C>A)),                                                  __iff((B==(C+0x1)), (A!=B)) },
-        { ((B!=A)&(C>=A)),                                                 __iff((B==(C+0x1)), (A<B)) },
-        { ((B!=A)|(C>=A)),                                                 __iff((B==(C+0x1)), (A!=B)) },
-        { ((B!=A)|(C>=A)),                                                 __iff((B<(C+0x1)), 0x1) },
-        { ((B!=A)|(C==A)),                                                 __iff((B==(C+0x1)), (A!=B)) },
-        { ((B!=A)|(C!=A)),                                                 __iff((B==(C+0x1)), 0x1) },
-        { ((B!=A)|(C<=A)),                                                 __iff((B==(C+0x1)), 0x1) },
-        { ((B!=A)&(C<A)),                                                  __iff((B==(C+0x1)), (A>B)) },
-        { ((B!=A)|(C<A)),                                                  __iff((B==(C+0x1)), 0x1) },
-        { ((B!=A)|(C<A)),                                                  __iff((B<(C+0x1)), (A!=B)) },
-        { ((B!=A)|__ugreat_eq(C, A)),                                      __iff(__uless(B, (C+0x1)), 0x1) },
-        { ((B!=A)|__uless(C, A)),                                          __iff(__uless(B, (C+0x1)), (A!=B)) },
-        { ((B<=A)&(C>A)),                                                  __iff((B==(C+0x1)), 0x0) },
-        { ((B<=A)|(C>A)),                                                  __iff((B<(C+0x1)), 0x1) },
-        { ((B<=A)&(C>=A)),                                                 __iff((B==(C+0x1)), 0x0) },
-        { ((B<=A)|(C>=A)),                                                 __iff((B==(C+0x1)), 0x1) },
-        { ((B<=A)|(C>=A)),                                                 __iff((B<=(C+0x1)), 0x1) },
-        { ((B<=A)|(C>=A)),                                                 __iff((B<(C+0x1)), 0x1) },
-        { ((B<=A)&(C==A)),                                                 __iff((B==(C+0x1)), 0x0) },
-        { ((B<=A)|(C==A)),                                                 __iff((B<(C+0x1)), (A>=B)) },
-        { ((B<=A)&(C!=A)),                                                 __iff((B==(C+0x1)), (A>=B)) },
-        { ((B<=A)|(C!=A)),                                                 __iff((B<(C+0x1)), 0x1) },
-        { ((B<=A)&(C<=A)),                                                 __iff((B==(C+0x1)), (A>=B)) },
-        { ((B<=A)|(C<=A)),                                                 __iff((B<(C+0x1)), (A>=B)) },
-        { ((B<=A)&(C<A)),                                                  __iff((B==(C+0x1)), (A>=B)) },
-        { ((B<=A)|(C<A)),                                                  __iff((B==(C+0x1)), (A>=B)) },
-        { ((B<=A)|(C<A)),                                                  __iff((B<=(C+0x1)), (A>=B)) },
-        { ((B<=A)|(C<A)),                                                  __iff((B<(C+0x1)), (A>=B)) },
-        { ((B<A)&(C>A)),                                                   __iff((B==(C+0x1)), 0x0) },
-        { ((B<A)&(C>=A)),                                                  __iff((B==(C+0x1)), 0x0) },
-        { ((B<A)|(C>=A)),                                                  __iff((B==(C+0x1)), (A!=B)) },
-        { ((B<A)|(C>=A)),                                                  __iff((B<(C+0x1)), 0x1) },
-        { ((B<A)&(C==A)),                                                  __iff((B==(C+0x1)), 0x0) },
-        { ((B<A)&(C!=A)),                                                  __iff((B==(C+0x1)), (A>B)) },
-        { ((B<A)&(C<=A)),                                                  __iff((B==(C+0x1)), (A>B)) },
-        { ((B<A)&(C<A)),                                                   __iff((B==(C+0x1)), (A>B)) },
-        { ((B<A)|(C<A)),                                                   __iff((B==(C+0x1)), (A>=B)) },
-        { ((B<A)|(C<A)),                                                   __iff((B<(C+0x1)), (A>B)) },
-        { (__ugreat(B, A)&(C==A)),                                         __iff(__uless(B, (C+0x1)), 0x0) },
-        { (__ugreat(B, A)&(C!=A)),                                         __iff(__uless(B, (C+0x1)), __uless(A, B)) },
-        { (__ugreat(B, A)&__ugreat(C, A)),                                 __iff(__uless(B, (C+0x1)), __uless(A, B)) },
-        { (__ugreat(B, A)&__ugreat_eq(C, A)),                              __iff((B==(C+0x1)), __uless(A, B)) },
-        { (__ugreat(B, A)&__ugreat_eq(C, A)),                              __iff(__uless_eq(B, (C+0x1)), __uless(A, B)) },
-        { (__ugreat(B, A)&__ugreat_eq(C, A)),                              __iff(__uless(B, (C+0x1)), __uless(A, B)) },
-        { (__ugreat(B, A)&__uless_eq(C, A)),                               __iff(__uless(B, (C+0x1)), 0x0) },
-        { (__ugreat(B, A)&__uless(C, A)),                                  __iff((B==(C+0x1)), 0x0) },
-        { (__ugreat(B, A)&__uless(C, A)),                                  __iff(__uless_eq(B, (C+0x1)), 0x0) },
-        { (__ugreat(B, A)&__uless(C, A)),                                  __iff(__uless(B, (C+0x1)), 0x0) },
-        { (__ugreat_eq(B, A)&__ugreat_eq(C, A)),                           __iff(__uless(B, (C+0x1)), __uless_eq(A, B)) },
-        { (__ugreat_eq(B, A)&__uless(C, A)),                               __iff(__uless(B, (C+0x1)), 0x0) },
-        { (__uless_eq(B, A)|(C==A)),                                       __iff(__uless(B, (C+0x1)), __ugreat_eq(A, B)) },
-        { (__uless_eq(B, A)|(C!=A)),                                       __iff(__uless(B, (C+0x1)), 0x1) },
-        { (__uless_eq(B, A)|__ugreat(C, A)),                               __iff(__uless(B, (C+0x1)), 0x1) },
-        { (__uless_eq(B, A)|__ugreat_eq(C, A)),                            __iff((B==(C+0x1)), 0x1) },
-        { (__uless_eq(B, A)|__ugreat_eq(C, A)),                            __iff(__uless_eq(B, (C+0x1)), 0x1) },
-        { (__uless_eq(B, A)|__ugreat_eq(C, A)),                            __iff(__uless(B, (C+0x1)), 0x1) },
-        { (__uless_eq(B, A)|__uless_eq(C, A)),                             __iff(__uless(B, (C+0x1)), __ugreat_eq(A, B)) },
-        { (__uless_eq(B, A)|__uless(C, A)),                                __iff((B==(C+0x1)), __ugreat_eq(A, B)) },
-        { (__uless_eq(B, A)|__uless(C, A)),                                __iff(__uless_eq(B, (C+0x1)), __ugreat_eq(A, B)) },
-        { (__uless_eq(B, A)|__uless(C, A)),                                __iff(__uless(B, (C+0x1)), __ugreat_eq(A, B)) },
-        { (__uless(B, A)|__ugreat_eq(C, A)),                               __iff(__uless(B, (C+0x1)), 0x1) },
-        { (__uless(B, A)|__uless(C, A)),                                   __iff(__uless(B, (C+0x1)), __ugreat(A, B)) },
-        { ((A>B)&(A>C)),                                                   __iff((B>(C-0x1)), (A>B)) },
-        { ((A>B)|(A>C)),                                                   __iff((B==(C-0x1)), (A>B)) },
-        { ((A>B)|(A>C)),                                                   __iff((B<=(C-0x1)), (A>B)) },
-        { ((A>B)|(A>C)),                                                   __iff((B<(C-0x1)), (A>B)) },
-        { ((A>B)&(A>=C)),                                                  __iff((B>(C-0x1)), (A>B)) },
-        { ((A>B)&(A>=C)),                                                  __iff((B>=(C-0x1)), (A>B)) },
-        { ((A>B)&(A>=C)),                                                  __iff((B==(C-0x1)), (A>B)) },
-        { ((A>B)|(A>=C)),                                                  __iff((B==(C-0x1)), (A>B)) },
-        { ((A>B)|(A>=C)),                                                  __iff((B<=(C-0x1)), (A>B)) },
-        { ((A>B)|(A>=C)),                                                  __iff((B<(C-0x1)), (A>B)) },
-        { ((A>B)&(A==C)),                                                  __iff((B>(C-0x1)), 0x0) },
-        { ((A>B)|(A==C)),                                                  __iff((B==(C-0x1)), (A>B)) },
-        { ((A>B)|(A==C)),                                                  __iff((B<=(C-0x1)), (A>B)) },
-        { ((A>B)|(A==C)),                                                  __iff((B<(C-0x1)), (A>B)) },
-        { ((A>B)&(A!=C)),                                                  __iff((B>(C-0x1)), (A>B)) },
-        { ((A>B)|(A!=C)),                                                  __iff((B==(C-0x1)), 0x1) },
-        { ((A>B)|(A!=C)),                                                  __iff((B<=(C-0x1)), 0x1) },
-        { ((A>B)|(A!=C)),                                                  __iff((B<(C-0x1)), 0x1) },
-        { ((A>B)&(A<=C)),                                                  __iff((B>(C-0x1)), 0x0) },
-        { ((A>B)|(A<=C)),                                                  __iff((B==(C-0x1)), 0x1) },
-        { ((A>B)|(A<=C)),                                                  __iff((B<=(C-0x1)), 0x1) },
-        { ((A>B)|(A<=C)),                                                  __iff((B<(C-0x1)), 0x1) },
-        { ((A>B)&(A<C)),                                                   __iff((B>(C-0x1)), 0x0) },
-        { ((A>B)&(A<C)),                                                   __iff((B>=(C-0x1)), 0x0) },
-        { ((A>B)&(A<C)),                                                   __iff((B==(C-0x1)), 0x0) },
-        { ((A>B)|(A<C)),                                                   __iff((B==(C-0x1)), 0x1) },
-        { ((A>B)|(A<C)),                                                   __iff((B<=(C-0x1)), 0x1) },
-        { ((A>B)|(A<C)),                                                   __iff((B<(C-0x1)), 0x1) },
-        { ((A>=B)|(A>C)),                                                  __iff((B==(C-0x1)), (A>=B)) },
-        { ((A>=B)|(A>C)),                                                  __iff((B<=(C-0x1)), (A>=B)) },
-        { ((A>=B)|(A>C)),                                                  __iff((B<(C-0x1)), (A>=B)) },
-        { ((A>=B)&(A>=C)),                                                 __iff((B>(C-0x1)), (A>=B)) },
-        { ((A>=B)&(A>=C)),                                                 __iff((B==(C-0x1)), (A>B)) },
-        { ((A>=B)|(A>=C)),                                                 __iff((B==(C-0x1)), (A>=B)) },
-        { ((A>=B)|(A>=C)),                                                 __iff((B<=(C-0x1)), (A>=B)) },
-        { ((A>=B)|(A>=C)),                                                 __iff((B<(C-0x1)), (A>=B)) },
-        { ((A>=B)|(A==C)),                                                 __iff((B==(C-0x1)), (A>=B)) },
-        { ((A>=B)|(A==C)),                                                 __iff((B<=(C-0x1)), (A>=B)) },
-        { ((A>=B)|(A==C)),                                                 __iff((B<(C-0x1)), (A>=B)) },
-        { ((A>=B)|(A!=C)),                                                 __iff((B==(C-0x1)), 0x1) },
-        { ((A>=B)|(A!=C)),                                                 __iff((B<=(C-0x1)), 0x1) },
-        { ((A>=B)|(A!=C)),                                                 __iff((B<(C-0x1)), 0x1) },
-        { ((A>=B)|(A<=C)),                                                 __iff((B==(C-0x1)), 0x1) },
-        { ((A>=B)|(A<=C)),                                                 __iff((B<=(C-0x1)), 0x1) },
-        { ((A>=B)|(A<=C)),                                                 __iff((B<(C-0x1)), 0x1) },
-        { ((A>=B)&(A<C)),                                                  __iff((B>(C-0x1)), 0x0) },
-        { ((A>=B)&(A<C)),                                                  __iff((B==(C-0x1)), (A==B)) },
-        { ((A>=B)|(A<C)),                                                  __iff((B==(C-0x1)), 0x1) },
-        { ((A>=B)|(A<C)),                                                  __iff((B<=(C-0x1)), 0x1) },
-        { ((A>=B)|(A<C)),                                                  __iff((B<(C-0x1)), 0x1) },
-        { ((A==B)&(A>C)),                                                  __iff((B==(C-0x1)), 0x0) },
-        { ((A==B)&(A>C)),                                                  __iff((B<=(C-0x1)), 0x0) },
-        { ((A==B)&(A>C)),                                                  __iff((B<(C-0x1)), 0x0) },
-        { ((A==B)&(A>=C)),                                                 __iff((B>(C-0x1)), (A==B)) },
-        { ((A==B)&(A>=C)),                                                 __iff((B==(C-0x1)), 0x0) },
-        { ((A==B)&(A>=C)),                                                 __iff((B<=(C-0x1)), 0x0) },
-        { ((A==B)&(A>=C)),                                                 __iff((B<(C-0x1)), 0x0) },
-        { ((A==B)|(A>=C)),                                                 __iff((B==(C-0x1)), (A>=B)) },
-        { ((A==B)&(A==C)),                                                 __iff((B==(C-0x1)), 0x0) },
-        { ((A==B)&(A==C)),                                                 __iff((B<=(C-0x1)), 0x0) },
-        { ((A==B)&(A==C)),                                                 __iff((B<(C-0x1)), 0x0) },
-        { ((A==B)&(A!=C)),                                                 __iff((B==(C-0x1)), (A==B)) },
-        { ((A==B)&(A!=C)),                                                 __iff((B<=(C-0x1)), (A==B)) },
-        { ((A==B)&(A!=C)),                                                 __iff((B<(C-0x1)), (A==B)) },
-        { ((A==B)&(A<=C)),                                                 __iff((B==(C-0x1)), (A==B)) },
-        { ((A==B)&(A<=C)),                                                 __iff((B<=(C-0x1)), (A==B)) },
-        { ((A==B)&(A<=C)),                                                 __iff((B<(C-0x1)), (A==B)) },
-        { ((A==B)&(A<C)),                                                  __iff((B>(C-0x1)), 0x0) },
-        { ((A==B)&(A<C)),                                                  __iff((B==(C-0x1)), (A==B)) },
-        { ((A==B)&(A<C)),                                                  __iff((B<=(C-0x1)), (A==B)) },
-        { ((A==B)&(A<C)),                                                  __iff((B<(C-0x1)), (A==B)) },
-        { ((A==B)|(A<C)),                                                  __iff((B==(C-0x1)), (A<=B)) },
-        { ((A==B)&__ugreat_eq(A, C)),                                      __iff(__ugreat(B, (C-0x1)), (A==B)) },
-        { ((A==B)&__uless(A, C)),                                          __iff(__ugreat(B, (C-0x1)), 0x0) },
-        { ((A!=B)|(A>C)),                                                  __iff((B==(C-0x1)), (A!=B)) },
-        { ((A!=B)|(A>C)),                                                  __iff((B<=(C-0x1)), (A!=B)) },
-        { ((A!=B)|(A>C)),                                                  __iff((B<(C-0x1)), (A!=B)) },
-        { ((A!=B)&(A>=C)),                                                 __iff((B==(C-0x1)), (A>B)) },
-        { ((A!=B)|(A>=C)),                                                 __iff((B>(C-0x1)), 0x1) },
-        { ((A!=B)|(A>=C)),                                                 __iff((B==(C-0x1)), (A!=B)) },
-        { ((A!=B)|(A>=C)),                                                 __iff((B<=(C-0x1)), (A!=B)) },
-        { ((A!=B)|(A>=C)),                                                 __iff((B<(C-0x1)), (A!=B)) },
-        { ((A!=B)|(A==C)),                                                 __iff((B==(C-0x1)), (A!=B)) },
-        { ((A!=B)|(A==C)),                                                 __iff((B<=(C-0x1)), (A!=B)) },
-        { ((A!=B)|(A==C)),                                                 __iff((B<(C-0x1)), (A!=B)) },
-        { ((A!=B)|(A!=C)),                                                 __iff((B==(C-0x1)), 0x1) },
-        { ((A!=B)|(A!=C)),                                                 __iff((B<=(C-0x1)), 0x1) },
-        { ((A!=B)|(A!=C)),                                                 __iff((B<(C-0x1)), 0x1) },
-        { ((A!=B)|(A<=C)),                                                 __iff((B==(C-0x1)), 0x1) },
-        { ((A!=B)|(A<=C)),                                                 __iff((B<=(C-0x1)), 0x1) },
-        { ((A!=B)|(A<=C)),                                                 __iff((B<(C-0x1)), 0x1) },
-        { ((A!=B)&(A<C)),                                                  __iff((B==(C-0x1)), (A<B)) },
-        { ((A!=B)|(A<C)),                                                  __iff((B>(C-0x1)), (A!=B)) },
-        { ((A!=B)|(A<C)),                                                  __iff((B==(C-0x1)), 0x1) },
-        { ((A!=B)|(A<C)),                                                  __iff((B<=(C-0x1)), 0x1) },
-        { ((A!=B)|(A<C)),                                                  __iff((B<(C-0x1)), 0x1) },
-        { ((A!=B)|__ugreat_eq(A, C)),                                      __iff(__ugreat(B, (C-0x1)), 0x1) },
-        { ((A!=B)|__uless(A, C)),                                          __iff(__ugreat(B, (C-0x1)), (A!=B)) },
-        { ((A<=B)&(A>C)),                                                  __iff((B==(C-0x1)), 0x0) },
-        { ((A<=B)&(A>C)),                                                  __iff((B<=(C-0x1)), 0x0) },
-        { ((A<=B)&(A>C)),                                                  __iff((B<(C-0x1)), 0x0) },
-        { ((A<=B)|(A>C)),                                                  __iff((B>(C-0x1)), 0x1) },
-        { ((A<=B)&(A>=C)),                                                 __iff((B==(C-0x1)), 0x0) },
-        { ((A<=B)&(A>=C)),                                                 __iff((B<=(C-0x1)), 0x0) },
-        { ((A<=B)&(A>=C)),                                                 __iff((B<(C-0x1)), 0x0) },
-        { ((A<=B)|(A>=C)),                                                 __iff((B>(C-0x1)), 0x1) },
-        { ((A<=B)|(A>=C)),                                                 __iff((B>=(C-0x1)), 0x1) },
-        { ((A<=B)|(A>=C)),                                                 __iff((B==(C-0x1)), 0x1) },
-        { ((A<=B)&(A==C)),                                                 __iff((B==(C-0x1)), 0x0) },
-        { ((A<=B)&(A==C)),                                                 __iff((B<=(C-0x1)), 0x0) },
-        { ((A<=B)&(A==C)),                                                 __iff((B<(C-0x1)), 0x0) },
-        { ((A<=B)|(A==C)),                                                 __iff((B>(C-0x1)), (A<=B)) },
-        { ((A<=B)&(A!=C)),                                                 __iff((B==(C-0x1)), (A<=B)) },
-        { ((A<=B)&(A!=C)),                                                 __iff((B<=(C-0x1)), (A<=B)) },
-        { ((A<=B)&(A!=C)),                                                 __iff((B<(C-0x1)), (A<=B)) },
-        { ((A<=B)|(A!=C)),                                                 __iff((B>(C-0x1)), 0x1) },
-        { ((A<=B)&(A<=C)),                                                 __iff((B==(C-0x1)), (A<=B)) },
-        { ((A<=B)&(A<=C)),                                                 __iff((B<=(C-0x1)), (A<=B)) },
-        { ((A<=B)&(A<=C)),                                                 __iff((B<(C-0x1)), (A<=B)) },
-        { ((A<=B)|(A<=C)),                                                 __iff((B>(C-0x1)), (A<=B)) },
-        { ((A<=B)&(A<C)),                                                  __iff((B==(C-0x1)), (A<=B)) },
-        { ((A<=B)&(A<C)),                                                  __iff((B<=(C-0x1)), (A<=B)) },
-        { ((A<=B)&(A<C)),                                                  __iff((B<(C-0x1)), (A<=B)) },
-        { ((A<=B)|(A<C)),                                                  __iff((B>(C-0x1)), (A<=B)) },
-        { ((A<=B)|(A<C)),                                                  __iff((B>=(C-0x1)), (A<=B)) },
-        { ((A<=B)|(A<C)),                                                  __iff((B==(C-0x1)), (A<=B)) },
-        { ((A<B)&(A>C)),                                                   __iff((B==(C-0x1)), 0x0) },
-        { ((A<B)&(A>C)),                                                   __iff((B<=(C-0x1)), 0x0) },
-        { ((A<B)&(A>C)),                                                   __iff((B<(C-0x1)), 0x0) },
-        { ((A<B)&(A>=C)),                                                  __iff((B==(C-0x1)), 0x0) },
-        { ((A<B)&(A>=C)),                                                  __iff((B<=(C-0x1)), 0x0) },
-        { ((A<B)&(A>=C)),                                                  __iff((B<(C-0x1)), 0x0) },
-        { ((A<B)|(A>=C)),                                                  __iff((B>(C-0x1)), 0x1) },
-        { ((A<B)|(A>=C)),                                                  __iff((B==(C-0x1)), (A!=B)) },
-        { ((A<B)&(A==C)),                                                  __iff((B==(C-0x1)), 0x0) },
-        { ((A<B)&(A==C)),                                                  __iff((B<=(C-0x1)), 0x0) },
-        { ((A<B)&(A==C)),                                                  __iff((B<(C-0x1)), 0x0) },
-        { ((A<B)&(A!=C)),                                                  __iff((B==(C-0x1)), (A<B)) },
-        { ((A<B)&(A!=C)),                                                  __iff((B<=(C-0x1)), (A<B)) },
-        { ((A<B)&(A!=C)),                                                  __iff((B<(C-0x1)), (A<B)) },
-        { ((A<B)&(A<=C)),                                                  __iff((B==(C-0x1)), (A<B)) },
-        { ((A<B)&(A<=C)),                                                  __iff((B<=(C-0x1)), (A<B)) },
-        { ((A<B)&(A<=C)),                                                  __iff((B<(C-0x1)), (A<B)) },
-        { ((A<B)&(A<C)),                                                   __iff((B==(C-0x1)), (A<B)) },
-        { ((A<B)&(A<C)),                                                   __iff((B<=(C-0x1)), (A<B)) },
-        { ((A<B)&(A<C)),                                                   __iff((B<(C-0x1)), (A<B)) },
-        { ((A<B)|(A<C)),                                                   __iff((B>(C-0x1)), (A<B)) },
-        { ((A<B)|(A<C)),                                                   __iff((B==(C-0x1)), (A<=B)) },
-        { (__ugreat(A, B)&(A==C)),                                         __iff(__ugreat(B, (C-0x1)), 0x0) },
-        { (__ugreat(A, B)&(A!=C)),                                         __iff(__ugreat(B, (C-0x1)), __ugreat(A, B)) },
-        { (__ugreat(A, B)&__ugreat(A, C)),                                 __iff(__ugreat(B, (C-0x1)), __ugreat(A, B)) },
-        { (__ugreat(A, B)&__ugreat_eq(A, C)),                              __iff((B==(C-0x1)), __ugreat(A, B)) },
-        { (__ugreat(A, B)&__ugreat_eq(A, C)),                              __iff(__ugreat(B, (C-0x1)), __ugreat(A, B)) },
-        { (__ugreat(A, B)&__ugreat_eq(A, C)),                              __iff(__ugreat_eq(B, (C-0x1)), __ugreat(A, B)) },
-        { (__ugreat(A, B)&__uless_eq(A, C)),                               __iff(__ugreat(B, (C-0x1)), 0x0) },
-        { (__ugreat(A, B)&__uless(A, C)),                                  __iff((B==(C-0x1)), 0x0) },
-        { (__ugreat(A, B)&__uless(A, C)),                                  __iff(__ugreat(B, (C-0x1)), 0x0) },
-        { (__ugreat(A, B)&__uless(A, C)),                                  __iff(__ugreat_eq(B, (C-0x1)), 0x0) },
-        { (__ugreat_eq(A, B)&__ugreat_eq(A, C)),                           __iff(__ugreat(B, (C-0x1)), __ugreat_eq(A, B)) },
-        { (__ugreat_eq(A, B)&__uless(A, C)),                               __iff(__ugreat(B, (C-0x1)), 0x0) },
-        { (__uless_eq(A, B)|(A==C)),                                       __iff(__ugreat(B, (C-0x1)), __uless_eq(A, B)) },
-        { (__uless_eq(A, B)|(A!=C)),                                       __iff(__ugreat(B, (C-0x1)), 0x1) },
-        { (__uless_eq(A, B)|__ugreat(A, C)),                               __iff(__ugreat(B, (C-0x1)), 0x1) },
-        { (__uless_eq(A, B)|__ugreat_eq(A, C)),                            __iff((B==(C-0x1)), 0x1) },
-        { (__uless_eq(A, B)|__ugreat_eq(A, C)),                            __iff(__ugreat(B, (C-0x1)), 0x1) },
-        { (__uless_eq(A, B)|__ugreat_eq(A, C)),                            __iff(__ugreat_eq(B, (C-0x1)), 0x1) },
-        { (__uless_eq(A, B)|__uless_eq(A, C)),                             __iff(__ugreat(B, (C-0x1)), __uless_eq(A, B)) },
-        { (__uless_eq(A, B)|__uless(A, C)),                                __iff((B==(C-0x1)), __uless_eq(A, B)) },
-        { (__uless_eq(A, B)|__uless(A, C)),                                __iff(__ugreat(B, (C-0x1)), __uless_eq(A, B)) },
-        { (__uless_eq(A, B)|__uless(A, C)),                                __iff(__ugreat_eq(B, (C-0x1)), __uless_eq(A, B)) },
-        { (__uless(A, B)|__ugreat_eq(A, C)),                               __iff(__ugreat(B, (C-0x1)), 0x1) },
-        { (__uless(A, B)|__uless(A, C)),                                   __iff(__ugreat(B, (C-0x1)), __uless(A, B)) },
-        { ((A>B)&(C>A)),                                                   __iff((B>(C-0x1)), 0x0) },
-        { ((A>B)&(C>A)),                                                   __iff((B>=(C-0x1)), 0x0) },
-        { ((A>B)&(C>A)),                                                   __iff((B==(C-0x1)), 0x0) },
-        { ((A>B)|(C>A)),                                                   __iff((B==(C-0x1)), 0x1) },
-        { ((A>B)|(C>A)),                                                   __iff((B<=(C-0x1)), 0x1) },
-        { ((A>B)|(C>A)),                                                   __iff((B<(C-0x1)), 0x1) },
-        { ((A>B)&(C>=A)),                                                  __iff((B>(C-0x1)), 0x0) },
-        { ((A>B)|(C>=A)),                                                  __iff((B==(C-0x1)), 0x1) },
-        { ((A>B)|(C>=A)),                                                  __iff((B<=(C-0x1)), 0x1) },
-        { ((A>B)|(C>=A)),                                                  __iff((B<(C-0x1)), 0x1) },
-        { ((A>B)&(C==A)),                                                  __iff((B>(C-0x1)), 0x0) },
-        { ((A>B)|(C==A)),                                                  __iff((B==(C-0x1)), (A>B)) },
-        { ((A>B)|(C==A)),                                                  __iff((B<=(C-0x1)), (A>B)) },
-        { ((A>B)|(C==A)),                                                  __iff((B<(C-0x1)), (A>B)) },
-        { ((A>B)&(C!=A)),                                                  __iff((B>(C-0x1)), (A>B)) },
-        { ((A>B)|(C!=A)),                                                  __iff((B==(C-0x1)), 0x1) },
-        { ((A>B)|(C!=A)),                                                  __iff((B<=(C-0x1)), 0x1) },
-        { ((A>B)|(C!=A)),                                                  __iff((B<(C-0x1)), 0x1) },
-        { ((A>B)&(C<=A)),                                                  __iff((B>(C-0x1)), (A>B)) },
-        { ((A>B)&(C<=A)),                                                  __iff((B>=(C-0x1)), (A>B)) },
-        { ((A>B)&(C<=A)),                                                  __iff((B==(C-0x1)), (A>B)) },
-        { ((A>B)|(C<=A)),                                                  __iff((B==(C-0x1)), (A>B)) },
-        { ((A>B)|(C<=A)),                                                  __iff((B<=(C-0x1)), (A>B)) },
-        { ((A>B)|(C<=A)),                                                  __iff((B<(C-0x1)), (A>B)) },
-        { ((A>B)&(C<A)),                                                   __iff((B>(C-0x1)), (A>B)) },
-        { ((A>B)|(C<A)),                                                   __iff((B==(C-0x1)), (A>B)) },
-        { ((A>B)|(C<A)),                                                   __iff((B<=(C-0x1)), (A>B)) },
-        { ((A>B)|(C<A)),                                                   __iff((B<(C-0x1)), (A>B)) },
-        { ((A>=B)&(C>A)),                                                  __iff((B>(C-0x1)), 0x0) },
-        { ((A>=B)&(C>A)),                                                  __iff((B==(C-0x1)), (A==B)) },
-        { ((A>=B)|(C>A)),                                                  __iff((B==(C-0x1)), 0x1) },
-        { ((A>=B)|(C>A)),                                                  __iff((B<=(C-0x1)), 0x1) },
-        { ((A>=B)|(C>A)),                                                  __iff((B<(C-0x1)), 0x1) },
-        { ((A>=B)|(C>=A)),                                                 __iff((B==(C-0x1)), 0x1) },
-        { ((A>=B)|(C>=A)),                                                 __iff((B<=(C-0x1)), 0x1) },
-        { ((A>=B)|(C>=A)),                                                 __iff((B<(C-0x1)), 0x1) },
-        { ((A>=B)|(C==A)),                                                 __iff((B==(C-0x1)), (A>=B)) },
-        { ((A>=B)|(C==A)),                                                 __iff((B<=(C-0x1)), (A>=B)) },
-        { ((A>=B)|(C==A)),                                                 __iff((B<(C-0x1)), (A>=B)) },
-        { ((A>=B)|(C!=A)),                                                 __iff((B==(C-0x1)), 0x1) },
-        { ((A>=B)|(C!=A)),                                                 __iff((B<=(C-0x1)), 0x1) },
-        { ((A>=B)|(C!=A)),                                                 __iff((B<(C-0x1)), 0x1) },
-        { ((A>=B)&(C<=A)),                                                 __iff((B>(C-0x1)), (A>=B)) },
-        { ((A>=B)&(C<=A)),                                                 __iff((B==(C-0x1)), (A>B)) },
-        { ((A>=B)|(C<=A)),                                                 __iff((B==(C-0x1)), (A>=B)) },
-        { ((A>=B)|(C<=A)),                                                 __iff((B<=(C-0x1)), (A>=B)) },
-        { ((A>=B)|(C<=A)),                                                 __iff((B<(C-0x1)), (A>=B)) },
-        { ((A>=B)|(C<A)),                                                  __iff((B==(C-0x1)), (A>=B)) },
-        { ((A>=B)|(C<A)),                                                  __iff((B<=(C-0x1)), (A>=B)) },
-        { ((A>=B)|(C<A)),                                                  __iff((B<(C-0x1)), (A>=B)) },
-        { ((A==B)&(C>A)),                                                  __iff((B>(C-0x1)), 0x0) },
-        { ((A==B)&(C>A)),                                                  __iff((B==(C-0x1)), (A==B)) },
-        { ((A==B)&(C>A)),                                                  __iff((B<=(C-0x1)), (A==B)) },
-        { ((A==B)&(C>A)),                                                  __iff((B<(C-0x1)), (A==B)) },
-        { ((A==B)|(C>A)),                                                  __iff((B==(C-0x1)), (A<=B)) },
-        { ((A==B)&(C>=A)),                                                 __iff((B==(C-0x1)), (A==B)) },
-        { ((A==B)&(C>=A)),                                                 __iff((B<=(C-0x1)), (A==B)) },
-        { ((A==B)&(C>=A)),                                                 __iff((B<(C-0x1)), (A==B)) },
-        { ((A==B)&(C==A)),                                                 __iff((B==(C-0x1)), 0x0) },
-        { ((A==B)&(C==A)),                                                 __iff((B<=(C-0x1)), 0x0) },
-        { ((A==B)&(C==A)),                                                 __iff((B<(C-0x1)), 0x0) },
-        { ((A==B)&(C!=A)),                                                 __iff((B==(C-0x1)), (A==B)) },
-        { ((A==B)&(C!=A)),                                                 __iff((B<=(C-0x1)), (A==B)) },
-        { ((A==B)&(C!=A)),                                                 __iff((B<(C-0x1)), (A==B)) },
-        { ((A==B)&(C<=A)),                                                 __iff((B>(C-0x1)), (A==B)) },
-        { ((A==B)&(C<=A)),                                                 __iff((B==(C-0x1)), 0x0) },
-        { ((A==B)&(C<=A)),                                                 __iff((B<=(C-0x1)), 0x0) },
-        { ((A==B)&(C<=A)),                                                 __iff((B<(C-0x1)), 0x0) },
-        { ((A==B)|(C<=A)),                                                 __iff((B==(C-0x1)), (A>=B)) },
-        { ((A==B)&(C<A)),                                                  __iff((B==(C-0x1)), 0x0) },
-        { ((A==B)&(C<A)),                                                  __iff((B<=(C-0x1)), 0x0) },
-        { ((A==B)&(C<A)),                                                  __iff((B<(C-0x1)), 0x0) },
-        { ((A==B)&__ugreat(C, A)),                                         __iff(__ugreat(B, (C-0x1)), 0x0) },
-        { ((A==B)&__uless_eq(C, A)),                                       __iff(__ugreat(B, (C-0x1)), (A==B)) },
-        { ((A!=B)&(C>A)),                                                  __iff((B==(C-0x1)), (A<B)) },
-        { ((A!=B)|(C>A)),                                                  __iff((B>(C-0x1)), (A!=B)) },
-        { ((A!=B)|(C>A)),                                                  __iff((B==(C-0x1)), 0x1) },
-        { ((A!=B)|(C>A)),                                                  __iff((B<=(C-0x1)), 0x1) },
-        { ((A!=B)|(C>A)),                                                  __iff((B<(C-0x1)), 0x1) },
-        { ((A!=B)|(C>=A)),                                                 __iff((B==(C-0x1)), 0x1) },
-        { ((A!=B)|(C>=A)),                                                 __iff((B<=(C-0x1)), 0x1) },
-        { ((A!=B)|(C>=A)),                                                 __iff((B<(C-0x1)), 0x1) },
-        { ((A!=B)|(C==A)),                                                 __iff((B==(C-0x1)), (A!=B)) },
-        { ((A!=B)|(C==A)),                                                 __iff((B<=(C-0x1)), (A!=B)) },
-        { ((A!=B)|(C==A)),                                                 __iff((B<(C-0x1)), (A!=B)) },
-        { ((A!=B)|(C!=A)),                                                 __iff((B==(C-0x1)), 0x1) },
-        { ((A!=B)|(C!=A)),                                                 __iff((B<=(C-0x1)), 0x1) },
-        { ((A!=B)|(C!=A)),                                                 __iff((B<(C-0x1)), 0x1) },
-        { ((A!=B)&(C<=A)),                                                 __iff((B==(C-0x1)), (A>B)) },
-        { ((A!=B)|(C<=A)),                                                 __iff((B>(C-0x1)), 0x1) },
-        { ((A!=B)|(C<=A)),                                                 __iff((B==(C-0x1)), (A!=B)) },
-        { ((A!=B)|(C<=A)),                                                 __iff((B<=(C-0x1)), (A!=B)) },
-        { ((A!=B)|(C<=A)),                                                 __iff((B<(C-0x1)), (A!=B)) },
-        { ((A!=B)|(C<A)),                                                  __iff((B==(C-0x1)), (A!=B)) },
-        { ((A!=B)|(C<A)),                                                  __iff((B<=(C-0x1)), (A!=B)) },
-        { ((A!=B)|(C<A)),                                                  __iff((B<(C-0x1)), (A!=B)) },
-        { ((A!=B)|__ugreat(C, A)),                                         __iff(__ugreat(B, (C-0x1)), (A!=B)) },
-        { ((A!=B)|__uless_eq(C, A)),                                       __iff(__ugreat(B, (C-0x1)), 0x1) },
-        { ((A<=B)&(C>A)),                                                  __iff((B==(C-0x1)), (A<=B)) },
-        { ((A<=B)&(C>A)),                                                  __iff((B<=(C-0x1)), (A<=B)) },
-        { ((A<=B)&(C>A)),                                                  __iff((B<(C-0x1)), (A<=B)) },
-        { ((A<=B)|(C>A)),                                                  __iff((B>(C-0x1)), (A<=B)) },
-        { ((A<=B)|(C>A)),                                                  __iff((B>=(C-0x1)), (A<=B)) },
-        { ((A<=B)|(C>A)),                                                  __iff((B==(C-0x1)), (A<=B)) },
-        { ((A<=B)&(C>=A)),                                                 __iff((B==(C-0x1)), (A<=B)) },
-        { ((A<=B)&(C>=A)),                                                 __iff((B<=(C-0x1)), (A<=B)) },
-        { ((A<=B)&(C>=A)),                                                 __iff((B<(C-0x1)), (A<=B)) },
-        { ((A<=B)|(C>=A)),                                                 __iff((B>(C-0x1)), (A<=B)) },
-        { ((A<=B)&(C==A)),                                                 __iff((B==(C-0x1)), 0x0) },
-        { ((A<=B)&(C==A)),                                                 __iff((B<=(C-0x1)), 0x0) },
-        { ((A<=B)&(C==A)),                                                 __iff((B<(C-0x1)), 0x0) },
-        { ((A<=B)|(C==A)),                                                 __iff((B>(C-0x1)), (A<=B)) },
-        { ((A<=B)&(C!=A)),                                                 __iff((B==(C-0x1)), (A<=B)) },
-        { ((A<=B)&(C!=A)),                                                 __iff((B<=(C-0x1)), (A<=B)) },
-        { ((A<=B)&(C!=A)),                                                 __iff((B<(C-0x1)), (A<=B)) },
-        { ((A<=B)|(C!=A)),                                                 __iff((B>(C-0x1)), 0x1) },
-        { ((A<=B)&(C<=A)),                                                 __iff((B==(C-0x1)), 0x0) },
-        { ((A<=B)&(C<=A)),                                                 __iff((B<=(C-0x1)), 0x0) },
-        { ((A<=B)&(C<=A)),                                                 __iff((B<(C-0x1)), 0x0) },
-        { ((A<=B)|(C<=A)),                                                 __iff((B>(C-0x1)), 0x1) },
-        { ((A<=B)|(C<=A)),                                                 __iff((B>=(C-0x1)), 0x1) },
-        { ((A<=B)|(C<=A)),                                                 __iff((B==(C-0x1)), 0x1) },
-        { ((A<=B)&(C<A)),                                                  __iff((B==(C-0x1)), 0x0) },
-        { ((A<=B)&(C<A)),                                                  __iff((B<=(C-0x1)), 0x0) },
-        { ((A<=B)&(C<A)),                                                  __iff((B<(C-0x1)), 0x0) },
-        { ((A<=B)|(C<A)),                                                  __iff((B>(C-0x1)), 0x1) },
-        { ((A<B)&(C>A)),                                                   __iff((B==(C-0x1)), (A<B)) },
-        { ((A<B)&(C>A)),                                                   __iff((B<=(C-0x1)), (A<B)) },
-        { ((A<B)&(C>A)),                                                   __iff((B<(C-0x1)), (A<B)) },
-        { ((A<B)|(C>A)),                                                   __iff((B>(C-0x1)), (A<B)) },
-        { ((A<B)|(C>A)),                                                   __iff((B==(C-0x1)), (A<=B)) },
-        { ((A<B)&(C>=A)),                                                  __iff((B==(C-0x1)), (A<B)) },
-        { ((A<B)&(C>=A)),                                                  __iff((B<=(C-0x1)), (A<B)) },
-        { ((A<B)&(C>=A)),                                                  __iff((B<(C-0x1)), (A<B)) },
-        { ((A<B)&(C==A)),                                                  __iff((B==(C-0x1)), 0x0) },
-        { ((A<B)&(C==A)),                                                  __iff((B<=(C-0x1)), 0x0) },
-        { ((A<B)&(C==A)),                                                  __iff((B<(C-0x1)), 0x0) },
-        { ((A<B)&(C!=A)),                                                  __iff((B==(C-0x1)), (A<B)) },
-        { ((A<B)&(C!=A)),                                                  __iff((B<=(C-0x1)), (A<B)) },
-        { ((A<B)&(C!=A)),                                                  __iff((B<(C-0x1)), (A<B)) },
-        { ((A<B)&(C<=A)),                                                  __iff((B==(C-0x1)), 0x0) },
-        { ((A<B)&(C<=A)),                                                  __iff((B<=(C-0x1)), 0x0) },
-        { ((A<B)&(C<=A)),                                                  __iff((B<(C-0x1)), 0x0) },
-        { ((A<B)|(C<=A)),                                                  __iff((B>(C-0x1)), 0x1) },
-        { ((A<B)|(C<=A)),                                                  __iff((B==(C-0x1)), (A!=B)) },
-        { ((A<B)&(C<A)),                                                   __iff((B==(C-0x1)), 0x0) },
-        { ((A<B)&(C<A)),                                                   __iff((B<=(C-0x1)), 0x0) },
-        { ((A<B)&(C<A)),                                                   __iff((B<(C-0x1)), 0x0) },
-        { (__ugreat(A, B)&(C==A)),                                         __iff(__ugreat(B, (C-0x1)), 0x0) },
-        { (__ugreat(A, B)&(C!=A)),                                         __iff(__ugreat(B, (C-0x1)), __ugreat(A, B)) },
-        { (__ugreat(A, B)&__ugreat(C, A)),                                 __iff((B==(C-0x1)), 0x0) },
-        { (__ugreat(A, B)&__ugreat(C, A)),                                 __iff(__ugreat(B, (C-0x1)), 0x0) },
-        { (__ugreat(A, B)&__ugreat(C, A)),                                 __iff(__ugreat_eq(B, (C-0x1)), 0x0) },
-        { (__ugreat(A, B)&__ugreat_eq(C, A)),                              __iff(__ugreat(B, (C-0x1)), 0x0) },
-        { (__ugreat(A, B)&__uless_eq(C, A)),                               __iff((B==(C-0x1)), __ugreat(A, B)) },
-        { (__ugreat(A, B)&__uless_eq(C, A)),                               __iff(__ugreat(B, (C-0x1)), __ugreat(A, B)) },
-        { (__ugreat(A, B)&__uless_eq(C, A)),                               __iff(__ugreat_eq(B, (C-0x1)), __ugreat(A, B)) },
-        { (__ugreat(A, B)&__uless(C, A)),                                  __iff(__ugreat(B, (C-0x1)), __ugreat(A, B)) },
-        { (__ugreat_eq(A, B)&__ugreat(C, A)),                              __iff(__ugreat(B, (C-0x1)), 0x0) },
-        { (__ugreat_eq(A, B)&__uless_eq(C, A)),                            __iff(__ugreat(B, (C-0x1)), __ugreat_eq(A, B)) },
-        { (__uless_eq(A, B)|(C==A)),                                       __iff(__ugreat(B, (C-0x1)), __uless_eq(A, B)) },
-        { (__uless_eq(A, B)|(C!=A)),                                       __iff(__ugreat(B, (C-0x1)), 0x1) },
-        { (__uless_eq(A, B)|__ugreat(C, A)),                               __iff((B==(C-0x1)), __uless_eq(A, B)) },
-        { (__uless_eq(A, B)|__ugreat(C, A)),                               __iff(__ugreat(B, (C-0x1)), __uless_eq(A, B)) },
-        { (__uless_eq(A, B)|__ugreat(C, A)),                               __iff(__ugreat_eq(B, (C-0x1)), __uless_eq(A, B)) },
-        { (__uless_eq(A, B)|__ugreat_eq(C, A)),                            __iff(__ugreat(B, (C-0x1)), __uless_eq(A, B)) },
-        { (__uless_eq(A, B)|__uless_eq(C, A)),                             __iff((B==(C-0x1)), 0x1) },
-        { (__uless_eq(A, B)|__uless_eq(C, A)),                             __iff(__ugreat(B, (C-0x1)), 0x1) },
-        { (__uless_eq(A, B)|__uless_eq(C, A)),                             __iff(__ugreat_eq(B, (C-0x1)), 0x1) },
-        { (__uless_eq(A, B)|__uless(C, A)),                                __iff(__ugreat(B, (C-0x1)), 0x1) },
-        { (__uless(A, B)|__ugreat(C, A)),                                  __iff(__ugreat(B, (C-0x1)), __uless(A, B)) },
-        { (__uless(A, B)|__uless_eq(C, A)),                                __iff(__ugreat(B, (C-0x1)), 0x1) },
-        { ((B>A)&(A>C)),                                                   __iff((B==(C-0x1)), 0x0) },
-        { ((B>A)&(A>C)),                                                   __iff((B<=(C-0x1)), 0x0) },
-        { ((B>A)&(A>C)),                                                   __iff((B<(C-0x1)), 0x0) },
-        { ((B>A)&(A>=C)),                                                  __iff((B==(C-0x1)), 0x0) },
-        { ((B>A)&(A>=C)),                                                  __iff((B<=(C-0x1)), 0x0) },
-        { ((B>A)&(A>=C)),                                                  __iff((B<(C-0x1)), 0x0) },
-        { ((B>A)|(A>=C)),                                                  __iff((B>(C-0x1)), 0x1) },
-        { ((B>A)|(A>=C)),                                                  __iff((B==(C-0x1)), (A!=B)) },
-        { ((B>A)&(A==C)),                                                  __iff((B==(C-0x1)), 0x0) },
-        { ((B>A)&(A==C)),                                                  __iff((B<=(C-0x1)), 0x0) },
-        { ((B>A)&(A==C)),                                                  __iff((B<(C-0x1)), 0x0) },
-        { ((B>A)&(A!=C)),                                                  __iff((B==(C-0x1)), (A<B)) },
-        { ((B>A)&(A!=C)),                                                  __iff((B<=(C-0x1)), (A<B)) },
-        { ((B>A)&(A!=C)),                                                  __iff((B<(C-0x1)), (A<B)) },
-        { ((B>A)&(A<=C)),                                                  __iff((B==(C-0x1)), (A<B)) },
-        { ((B>A)&(A<=C)),                                                  __iff((B<=(C-0x1)), (A<B)) },
-        { ((B>A)&(A<=C)),                                                  __iff((B<(C-0x1)), (A<B)) },
-        { ((B>A)&(A<C)),                                                   __iff((B==(C-0x1)), (A<B)) },
-        { ((B>A)&(A<C)),                                                   __iff((B<=(C-0x1)), (A<B)) },
-        { ((B>A)&(A<C)),                                                   __iff((B<(C-0x1)), (A<B)) },
-        { ((B>A)|(A<C)),                                                   __iff((B>(C-0x1)), (A<B)) },
-        { ((B>A)|(A<C)),                                                   __iff((B==(C-0x1)), (A<=B)) },
-        { ((B>=A)&(A>C)),                                                  __iff((B==(C-0x1)), 0x0) },
-        { ((B>=A)&(A>C)),                                                  __iff((B<=(C-0x1)), 0x0) },
-        { ((B>=A)&(A>C)),                                                  __iff((B<(C-0x1)), 0x0) },
-        { ((B>=A)|(A>C)),                                                  __iff((B>(C-0x1)), 0x1) },
-        { ((B>=A)&(A>=C)),                                                 __iff((B==(C-0x1)), 0x0) },
-        { ((B>=A)&(A>=C)),                                                 __iff((B<=(C-0x1)), 0x0) },
-        { ((B>=A)&(A>=C)),                                                 __iff((B<(C-0x1)), 0x0) },
-        { ((B>=A)|(A>=C)),                                                 __iff((B>(C-0x1)), 0x1) },
-        { ((B>=A)|(A>=C)),                                                 __iff((B>=(C-0x1)), 0x1) },
-        { ((B>=A)|(A>=C)),                                                 __iff((B==(C-0x1)), 0x1) },
-        { ((B>=A)&(A==C)),                                                 __iff((B==(C-0x1)), 0x0) },
-        { ((B>=A)&(A==C)),                                                 __iff((B<=(C-0x1)), 0x0) },
-        { ((B>=A)&(A==C)),                                                 __iff((B<(C-0x1)), 0x0) },
-        { ((B>=A)|(A==C)),                                                 __iff((B>(C-0x1)), (A<=B)) },
-        { ((B>=A)&(A!=C)),                                                 __iff((B==(C-0x1)), (A<=B)) },
-        { ((B>=A)&(A!=C)),                                                 __iff((B<=(C-0x1)), (A<=B)) },
-        { ((B>=A)&(A!=C)),                                                 __iff((B<(C-0x1)), (A<=B)) },
-        { ((B>=A)|(A!=C)),                                                 __iff((B>(C-0x1)), 0x1) },
-        { ((B>=A)&(A<=C)),                                                 __iff((B==(C-0x1)), (A<=B)) },
-        { ((B>=A)&(A<=C)),                                                 __iff((B<=(C-0x1)), (A<=B)) },
-        { ((B>=A)&(A<=C)),                                                 __iff((B<(C-0x1)), (A<=B)) },
-        { ((B>=A)|(A<=C)),                                                 __iff((B>(C-0x1)), (A<=B)) },
-        { ((B>=A)&(A<C)),                                                  __iff((B==(C-0x1)), (A<=B)) },
-        { ((B>=A)&(A<C)),                                                  __iff((B<=(C-0x1)), (A<=B)) },
-        { ((B>=A)&(A<C)),                                                  __iff((B<(C-0x1)), (A<=B)) },
-        { ((B>=A)|(A<C)),                                                  __iff((B>(C-0x1)), (A<=B)) },
-        { ((B>=A)|(A<C)),                                                  __iff((B>=(C-0x1)), (A<=B)) },
-        { ((B>=A)|(A<C)),                                                  __iff((B==(C-0x1)), (A<=B)) },
-        { ((B==A)&(A>C)),                                                  __iff((B==(C-0x1)), 0x0) },
-        { ((B==A)&(A>C)),                                                  __iff((B<=(C-0x1)), 0x0) },
-        { ((B==A)&(A>C)),                                                  __iff((B<(C-0x1)), 0x0) },
-        { ((B==A)&(A>=C)),                                                 __iff((B>(C-0x1)), (A==B)) },
-        { ((B==A)&(A>=C)),                                                 __iff((B==(C-0x1)), 0x0) },
-        { ((B==A)&(A>=C)),                                                 __iff((B<=(C-0x1)), 0x0) },
-        { ((B==A)&(A>=C)),                                                 __iff((B<(C-0x1)), 0x0) },
-        { ((B==A)|(A>=C)),                                                 __iff((B==(C-0x1)), (A>=B)) },
-        { ((B==A)&(A==C)),                                                 __iff((B==(C-0x1)), 0x0) },
-        { ((B==A)&(A==C)),                                                 __iff((B<=(C-0x1)), 0x0) },
-        { ((B==A)&(A==C)),                                                 __iff((B<(C-0x1)), 0x0) },
-        { ((B==A)&(A!=C)),                                                 __iff((B==(C-0x1)), (A==B)) },
-        { ((B==A)&(A!=C)),                                                 __iff((B<=(C-0x1)), (A==B)) },
-        { ((B==A)&(A!=C)),                                                 __iff((B<(C-0x1)), (A==B)) },
-        { ((B==A)&(A<=C)),                                                 __iff((B==(C-0x1)), (A==B)) },
-        { ((B==A)&(A<=C)),                                                 __iff((B<=(C-0x1)), (A==B)) },
-        { ((B==A)&(A<=C)),                                                 __iff((B<(C-0x1)), (A==B)) },
-        { ((B==A)&(A<C)),                                                  __iff((B>(C-0x1)), 0x0) },
-        { ((B==A)&(A<C)),                                                  __iff((B==(C-0x1)), (A==B)) },
-        { ((B==A)&(A<C)),                                                  __iff((B<=(C-0x1)), (A==B)) },
-        { ((B==A)&(A<C)),                                                  __iff((B<(C-0x1)), (A==B)) },
-        { ((B==A)|(A<C)),                                                  __iff((B==(C-0x1)), (A<=B)) },
-        { ((B==A)&__ugreat_eq(A, C)),                                      __iff(__ugreat(B, (C-0x1)), (A==B)) },
-        { ((B==A)&__uless(A, C)),                                          __iff(__ugreat(B, (C-0x1)), 0x0) },
-        { ((B!=A)|(A>C)),                                                  __iff((B==(C-0x1)), (A!=B)) },
-        { ((B!=A)|(A>C)),                                                  __iff((B<=(C-0x1)), (A!=B)) },
-        { ((B!=A)|(A>C)),                                                  __iff((B<(C-0x1)), (A!=B)) },
-        { ((B!=A)&(A>=C)),                                                 __iff((B==(C-0x1)), (A>B)) },
-        { ((B!=A)|(A>=C)),                                                 __iff((B>(C-0x1)), 0x1) },
-        { ((B!=A)|(A>=C)),                                                 __iff((B==(C-0x1)), (A!=B)) },
-        { ((B!=A)|(A>=C)),                                                 __iff((B<=(C-0x1)), (A!=B)) },
-        { ((B!=A)|(A>=C)),                                                 __iff((B<(C-0x1)), (A!=B)) },
-        { ((B!=A)|(A==C)),                                                 __iff((B==(C-0x1)), (A!=B)) },
-        { ((B!=A)|(A==C)),                                                 __iff((B<=(C-0x1)), (A!=B)) },
-        { ((B!=A)|(A==C)),                                                 __iff((B<(C-0x1)), (A!=B)) },
-        { ((B!=A)|(A!=C)),                                                 __iff((B==(C-0x1)), 0x1) },
-        { ((B!=A)|(A!=C)),                                                 __iff((B<=(C-0x1)), 0x1) },
-        { ((B!=A)|(A!=C)),                                                 __iff((B<(C-0x1)), 0x1) },
-        { ((B!=A)|(A<=C)),                                                 __iff((B==(C-0x1)), 0x1) },
-        { ((B!=A)|(A<=C)),                                                 __iff((B<=(C-0x1)), 0x1) },
-        { ((B!=A)|(A<=C)),                                                 __iff((B<(C-0x1)), 0x1) },
-        { ((B!=A)&(A<C)),                                                  __iff((B==(C-0x1)), (A<B)) },
-        { ((B!=A)|(A<C)),                                                  __iff((B>(C-0x1)), (A!=B)) },
-        { ((B!=A)|(A<C)),                                                  __iff((B==(C-0x1)), 0x1) },
-        { ((B!=A)|(A<C)),                                                  __iff((B<=(C-0x1)), 0x1) },
-        { ((B!=A)|(A<C)),                                                  __iff((B<(C-0x1)), 0x1) },
-        { ((B!=A)|__ugreat_eq(A, C)),                                      __iff(__ugreat(B, (C-0x1)), 0x1) },
-        { ((B!=A)|__uless(A, C)),                                          __iff(__ugreat(B, (C-0x1)), (A!=B)) },
-        { ((B<=A)|(A>C)),                                                  __iff((B==(C-0x1)), (A>=B)) },
-        { ((B<=A)|(A>C)),                                                  __iff((B<=(C-0x1)), (A>=B)) },
-        { ((B<=A)|(A>C)),                                                  __iff((B<(C-0x1)), (A>=B)) },
-        { ((B<=A)&(A>=C)),                                                 __iff((B>(C-0x1)), (A>=B)) },
-        { ((B<=A)&(A>=C)),                                                 __iff((B==(C-0x1)), (A>B)) },
-        { ((B<=A)|(A>=C)),                                                 __iff((B==(C-0x1)), (A>=B)) },
-        { ((B<=A)|(A>=C)),                                                 __iff((B<=(C-0x1)), (A>=B)) },
-        { ((B<=A)|(A>=C)),                                                 __iff((B<(C-0x1)), (A>=B)) },
-        { ((B<=A)|(A==C)),                                                 __iff((B==(C-0x1)), (A>=B)) },
-        { ((B<=A)|(A==C)),                                                 __iff((B<=(C-0x1)), (A>=B)) },
-        { ((B<=A)|(A==C)),                                                 __iff((B<(C-0x1)), (A>=B)) },
-        { ((B<=A)|(A!=C)),                                                 __iff((B==(C-0x1)), 0x1) },
-        { ((B<=A)|(A!=C)),                                                 __iff((B<=(C-0x1)), 0x1) },
-        { ((B<=A)|(A!=C)),                                                 __iff((B<(C-0x1)), 0x1) },
-        { ((B<=A)|(A<=C)),                                                 __iff((B==(C-0x1)), 0x1) },
-        { ((B<=A)|(A<=C)),                                                 __iff((B<=(C-0x1)), 0x1) },
-        { ((B<=A)|(A<=C)),                                                 __iff((B<(C-0x1)), 0x1) },
-        { ((B<=A)&(A<C)),                                                  __iff((B>(C-0x1)), 0x0) },
-        { ((B<=A)&(A<C)),                                                  __iff((B==(C-0x1)), (A==B)) },
-        { ((B<=A)|(A<C)),                                                  __iff((B==(C-0x1)), 0x1) },
-        { ((B<=A)|(A<C)),                                                  __iff((B<=(C-0x1)), 0x1) },
-        { ((B<=A)|(A<C)),                                                  __iff((B<(C-0x1)), 0x1) },
-        { ((B<A)&(A>C)),                                                   __iff((B>(C-0x1)), (A>B)) },
-        { ((B<A)|(A>C)),                                                   __iff((B==(C-0x1)), (A>B)) },
-        { ((B<A)|(A>C)),                                                   __iff((B<=(C-0x1)), (A>B)) },
-        { ((B<A)|(A>C)),                                                   __iff((B<(C-0x1)), (A>B)) },
-        { ((B<A)&(A>=C)),                                                  __iff((B>(C-0x1)), (A>B)) },
-        { ((B<A)&(A>=C)),                                                  __iff((B>=(C-0x1)), (A>B)) },
-        { ((B<A)&(A>=C)),                                                  __iff((B==(C-0x1)), (A>B)) },
-        { ((B<A)|(A>=C)),                                                  __iff((B==(C-0x1)), (A>B)) },
-        { ((B<A)|(A>=C)),                                                  __iff((B<=(C-0x1)), (A>B)) },
-        { ((B<A)|(A>=C)),                                                  __iff((B<(C-0x1)), (A>B)) },
-        { ((B<A)&(A==C)),                                                  __iff((B>(C-0x1)), 0x0) },
-        { ((B<A)|(A==C)),                                                  __iff((B==(C-0x1)), (A>B)) },
-        { ((B<A)|(A==C)),                                                  __iff((B<=(C-0x1)), (A>B)) },
-        { ((B<A)|(A==C)),                                                  __iff((B<(C-0x1)), (A>B)) },
-        { ((B<A)&(A!=C)),                                                  __iff((B>(C-0x1)), (A>B)) },
-        { ((B<A)|(A!=C)),                                                  __iff((B==(C-0x1)), 0x1) },
-        { ((B<A)|(A!=C)),                                                  __iff((B<=(C-0x1)), 0x1) },
-        { ((B<A)|(A!=C)),                                                  __iff((B<(C-0x1)), 0x1) },
-        { ((B<A)&(A<=C)),                                                  __iff((B>(C-0x1)), 0x0) },
-        { ((B<A)|(A<=C)),                                                  __iff((B==(C-0x1)), 0x1) },
-        { ((B<A)|(A<=C)),                                                  __iff((B<=(C-0x1)), 0x1) },
-        { ((B<A)|(A<=C)),                                                  __iff((B<(C-0x1)), 0x1) },
-        { ((B<A)&(A<C)),                                                   __iff((B>(C-0x1)), 0x0) },
-        { ((B<A)&(A<C)),                                                   __iff((B>=(C-0x1)), 0x0) },
-        { ((B<A)&(A<C)),                                                   __iff((B==(C-0x1)), 0x0) },
-        { ((B<A)|(A<C)),                                                   __iff((B==(C-0x1)), 0x1) },
-        { ((B<A)|(A<C)),                                                   __iff((B<=(C-0x1)), 0x1) },
-        { ((B<A)|(A<C)),                                                   __iff((B<(C-0x1)), 0x1) },
-        { (__ugreat(B, A)|__ugreat_eq(A, C)),                              __iff(__ugreat(B, (C-0x1)), 0x1) },
-        { (__ugreat(B, A)|__uless(A, C)),                                  __iff(__ugreat(B, (C-0x1)), __uless(A, B)) },
-        { (__ugreat_eq(B, A)|(A==C)),                                      __iff(__ugreat(B, (C-0x1)), __uless_eq(A, B)) },
-        { (__ugreat_eq(B, A)|(A!=C)),                                      __iff(__ugreat(B, (C-0x1)), 0x1) },
-        { (__ugreat_eq(B, A)|__ugreat(A, C)),                              __iff(__ugreat(B, (C-0x1)), 0x1) },
-        { (__ugreat_eq(B, A)|__ugreat_eq(A, C)),                           __iff((B==(C-0x1)), 0x1) },
-        { (__ugreat_eq(B, A)|__ugreat_eq(A, C)),                           __iff(__ugreat(B, (C-0x1)), 0x1) },
-        { (__ugreat_eq(B, A)|__ugreat_eq(A, C)),                           __iff(__ugreat_eq(B, (C-0x1)), 0x1) },
-        { (__ugreat_eq(B, A)|__uless_eq(A, C)),                            __iff(__ugreat(B, (C-0x1)), __uless_eq(A, B)) },
-        { (__ugreat_eq(B, A)|__uless(A, C)),                               __iff((B==(C-0x1)), __uless_eq(A, B)) },
-        { (__ugreat_eq(B, A)|__uless(A, C)),                               __iff(__ugreat(B, (C-0x1)), __uless_eq(A, B)) },
-        { (__ugreat_eq(B, A)|__uless(A, C)),                               __iff(__ugreat_eq(B, (C-0x1)), __uless_eq(A, B)) },
-        { (__uless_eq(B, A)&__ugreat_eq(A, C)),                            __iff(__ugreat(B, (C-0x1)), __ugreat_eq(A, B)) },
-        { (__uless_eq(B, A)&__uless(A, C)),                                __iff(__ugreat(B, (C-0x1)), 0x0) },
-        { (__uless(B, A)&(A==C)),                                          __iff(__ugreat(B, (C-0x1)), 0x0) },
-        { (__uless(B, A)&(A!=C)),                                          __iff(__ugreat(B, (C-0x1)), __ugreat(A, B)) },
-        { (__uless(B, A)&__ugreat(A, C)),                                  __iff(__ugreat(B, (C-0x1)), __ugreat(A, B)) },
-        { (__uless(B, A)&__ugreat_eq(A, C)),                               __iff((B==(C-0x1)), __ugreat(A, B)) },
-        { (__uless(B, A)&__ugreat_eq(A, C)),                               __iff(__ugreat(B, (C-0x1)), __ugreat(A, B)) },
-        { (__uless(B, A)&__ugreat_eq(A, C)),                               __iff(__ugreat_eq(B, (C-0x1)), __ugreat(A, B)) },
-        { (__uless(B, A)&__uless_eq(A, C)),                                __iff(__ugreat(B, (C-0x1)), 0x0) },
-        { (__uless(B, A)&__uless(A, C)),                                   __iff((B==(C-0x1)), 0x0) },
-        { (__uless(B, A)&__uless(A, C)),                                   __iff(__ugreat(B, (C-0x1)), 0x0) },
-        { (__uless(B, A)&__uless(A, C)),                                   __iff(__ugreat_eq(B, (C-0x1)), 0x0) },
-        { ((B>A)&(C>A)),                                                   __iff((B==(C-0x1)), (A<B)) },
-        { ((B>A)&(C>A)),                                                   __iff((B<=(C-0x1)), (A<B)) },
-        { ((B>A)&(C>A)),                                                   __iff((B<(C-0x1)), (A<B)) },
-        { ((B>A)|(C>A)),                                                   __iff((B>(C-0x1)), (A<B)) },
-        { ((B>A)|(C>A)),                                                   __iff((B==(C-0x1)), (A<=B)) },
-        { ((B>A)&(C>=A)),                                                  __iff((B==(C-0x1)), (A<B)) },
-        { ((B>A)&(C>=A)),                                                  __iff((B<=(C-0x1)), (A<B)) },
-        { ((B>A)&(C>=A)),                                                  __iff((B<(C-0x1)), (A<B)) },
-        { ((B>A)&(C==A)),                                                  __iff((B==(C-0x1)), 0x0) },
-        { ((B>A)&(C==A)),                                                  __iff((B<=(C-0x1)), 0x0) },
-        { ((B>A)&(C==A)),                                                  __iff((B<(C-0x1)), 0x0) },
-        { ((B>A)&(C!=A)),                                                  __iff((B==(C-0x1)), (A<B)) },
-        { ((B>A)&(C!=A)),                                                  __iff((B<=(C-0x1)), (A<B)) },
-        { ((B>A)&(C!=A)),                                                  __iff((B<(C-0x1)), (A<B)) },
-        { ((B>A)&(C<=A)),                                                  __iff((B==(C-0x1)), 0x0) },
-        { ((B>A)&(C<=A)),                                                  __iff((B<=(C-0x1)), 0x0) },
-        { ((B>A)&(C<=A)),                                                  __iff((B<(C-0x1)), 0x0) },
-        { ((B>A)|(C<=A)),                                                  __iff((B>(C-0x1)), 0x1) },
-        { ((B>A)|(C<=A)),                                                  __iff((B==(C-0x1)), (A!=B)) },
-        { ((B>A)&(C<A)),                                                   __iff((B==(C-0x1)), 0x0) },
-        { ((B>A)&(C<A)),                                                   __iff((B<=(C-0x1)), 0x0) },
-        { ((B>A)&(C<A)),                                                   __iff((B<(C-0x1)), 0x0) },
-        { ((B>=A)&(C>A)),                                                  __iff((B==(C-0x1)), (A<=B)) },
-        { ((B>=A)&(C>A)),                                                  __iff((B<=(C-0x1)), (A<=B)) },
-        { ((B>=A)&(C>A)),                                                  __iff((B<(C-0x1)), (A<=B)) },
-        { ((B>=A)|(C>A)),                                                  __iff((B>(C-0x1)), (A<=B)) },
-        { ((B>=A)|(C>A)),                                                  __iff((B>=(C-0x1)), (A<=B)) },
-        { ((B>=A)|(C>A)),                                                  __iff((B==(C-0x1)), (A<=B)) },
-        { ((B>=A)&(C>=A)),                                                 __iff((B==(C-0x1)), (A<=B)) },
-        { ((B>=A)&(C>=A)),                                                 __iff((B<=(C-0x1)), (A<=B)) },
-        { ((B>=A)&(C>=A)),                                                 __iff((B<(C-0x1)), (A<=B)) },
-        { ((B>=A)|(C>=A)),                                                 __iff((B>(C-0x1)), (A<=B)) },
-        { ((B>=A)&(C==A)),                                                 __iff((B==(C-0x1)), 0x0) },
-        { ((B>=A)&(C==A)),                                                 __iff((B<=(C-0x1)), 0x0) },
-        { ((B>=A)&(C==A)),                                                 __iff((B<(C-0x1)), 0x0) },
-        { ((B>=A)|(C==A)),                                                 __iff((B>(C-0x1)), (A<=B)) },
-        { ((B>=A)&(C!=A)),                                                 __iff((B==(C-0x1)), (A<=B)) },
-        { ((B>=A)&(C!=A)),                                                 __iff((B<=(C-0x1)), (A<=B)) },
-        { ((B>=A)&(C!=A)),                                                 __iff((B<(C-0x1)), (A<=B)) },
-        { ((B>=A)|(C!=A)),                                                 __iff((B>(C-0x1)), 0x1) },
-        { ((B>=A)&(C<=A)),                                                 __iff((B==(C-0x1)), 0x0) },
-        { ((B>=A)&(C<=A)),                                                 __iff((B<=(C-0x1)), 0x0) },
-        { ((B>=A)&(C<=A)),                                                 __iff((B<(C-0x1)), 0x0) },
-        { ((B>=A)|(C<=A)),                                                 __iff((B>(C-0x1)), 0x1) },
-        { ((B>=A)|(C<=A)),                                                 __iff((B>=(C-0x1)), 0x1) },
-        { ((B>=A)|(C<=A)),                                                 __iff((B==(C-0x1)), 0x1) },
-        { ((B>=A)&(C<A)),                                                  __iff((B==(C-0x1)), 0x0) },
-        { ((B>=A)&(C<A)),                                                  __iff((B<=(C-0x1)), 0x0) },
-        { ((B>=A)&(C<A)),                                                  __iff((B<(C-0x1)), 0x0) },
-        { ((B>=A)|(C<A)),                                                  __iff((B>(C-0x1)), 0x1) },
-        { ((B==A)&(C>A)),                                                  __iff((B>(C-0x1)), 0x0) },
-        { ((B==A)&(C>A)),                                                  __iff((B==(C-0x1)), (A==B)) },
-        { ((B==A)&(C>A)),                                                  __iff((B<=(C-0x1)), (A==B)) },
-        { ((B==A)&(C>A)),                                                  __iff((B<(C-0x1)), (A==B)) },
-        { ((B==A)|(C>A)),                                                  __iff((B==(C-0x1)), (A<=B)) },
-        { ((B==A)&(C>=A)),                                                 __iff((B==(C-0x1)), (A==B)) },
-        { ((B==A)&(C>=A)),                                                 __iff((B<=(C-0x1)), (A==B)) },
-        { ((B==A)&(C>=A)),                                                 __iff((B<(C-0x1)), (A==B)) },
-        { ((B==A)&(C==A)),                                                 __iff((B==(C-0x1)), 0x0) },
-        { ((B==A)&(C==A)),                                                 __iff((B<=(C-0x1)), 0x0) },
-        { ((B==A)&(C==A)),                                                 __iff((B<(C-0x1)), 0x0) },
-        { ((B==A)&(C!=A)),                                                 __iff((B==(C-0x1)), (A==B)) },
-        { ((B==A)&(C!=A)),                                                 __iff((B<=(C-0x1)), (A==B)) },
-        { ((B==A)&(C!=A)),                                                 __iff((B<(C-0x1)), (A==B)) },
-        { ((B==A)&(C<=A)),                                                 __iff((B>(C-0x1)), (A==B)) },
-        { ((B==A)&(C<=A)),                                                 __iff((B==(C-0x1)), 0x0) },
-        { ((B==A)&(C<=A)),                                                 __iff((B<=(C-0x1)), 0x0) },
-        { ((B==A)&(C<=A)),                                                 __iff((B<(C-0x1)), 0x0) },
-        { ((B==A)|(C<=A)),                                                 __iff((B==(C-0x1)), (A>=B)) },
-        { ((B==A)&(C<A)),                                                  __iff((B==(C-0x1)), 0x0) },
-        { ((B==A)&(C<A)),                                                  __iff((B<=(C-0x1)), 0x0) },
-        { ((B==A)&(C<A)),                                                  __iff((B<(C-0x1)), 0x0) },
-        { ((B==A)&__ugreat(C, A)),                                         __iff(__ugreat(B, (C-0x1)), 0x0) },
-        { ((B==A)&__uless_eq(C, A)),                                       __iff(__ugreat(B, (C-0x1)), (A==B)) },
-        { ((B!=A)&(C>A)),                                                  __iff((B==(C-0x1)), (A<B)) },
-        { ((B!=A)|(C>A)),                                                  __iff((B>(C-0x1)), (A!=B)) },
-        { ((B!=A)|(C>A)),                                                  __iff((B==(C-0x1)), 0x1) },
-        { ((B!=A)|(C>A)),                                                  __iff((B<=(C-0x1)), 0x1) },
-        { ((B!=A)|(C>A)),                                                  __iff((B<(C-0x1)), 0x1) },
-        { ((B!=A)|(C>=A)),                                                 __iff((B==(C-0x1)), 0x1) },
-        { ((B!=A)|(C>=A)),                                                 __iff((B<=(C-0x1)), 0x1) },
-        { ((B!=A)|(C>=A)),                                                 __iff((B<(C-0x1)), 0x1) },
-        { ((B!=A)|(C==A)),                                                 __iff((B==(C-0x1)), (A!=B)) },
-        { ((B!=A)|(C==A)),                                                 __iff((B<=(C-0x1)), (A!=B)) },
-        { ((B!=A)|(C==A)),                                                 __iff((B<(C-0x1)), (A!=B)) },
-        { ((B!=A)|(C!=A)),                                                 __iff((B==(C-0x1)), 0x1) },
-        { ((B!=A)|(C!=A)),                                                 __iff((B<=(C-0x1)), 0x1) },
-        { ((B!=A)|(C!=A)),                                                 __iff((B<(C-0x1)), 0x1) },
-        { ((B!=A)&(C<=A)),                                                 __iff((B==(C-0x1)), (A>B)) },
-        { ((B!=A)|(C<=A)),                                                 __iff((B>(C-0x1)), 0x1) },
-        { ((B!=A)|(C<=A)),                                                 __iff((B==(C-0x1)), (A!=B)) },
-        { ((B!=A)|(C<=A)),                                                 __iff((B<=(C-0x1)), (A!=B)) },
-        { ((B!=A)|(C<=A)),                                                 __iff((B<(C-0x1)), (A!=B)) },
-        { ((B!=A)|(C<A)),                                                  __iff((B==(C-0x1)), (A!=B)) },
-        { ((B!=A)|(C<A)),                                                  __iff((B<=(C-0x1)), (A!=B)) },
-        { ((B!=A)|(C<A)),                                                  __iff((B<(C-0x1)), (A!=B)) },
-        { ((B!=A)|__ugreat(C, A)),                                         __iff(__ugreat(B, (C-0x1)), (A!=B)) },
-        { ((B!=A)|__uless_eq(C, A)),                                       __iff(__ugreat(B, (C-0x1)), 0x1) },
-        { ((B<=A)&(C>A)),                                                  __iff((B>(C-0x1)), 0x0) },
-        { ((B<=A)&(C>A)),                                                  __iff((B==(C-0x1)), (A==B)) },
-        { ((B<=A)|(C>A)),                                                  __iff((B==(C-0x1)), 0x1) },
-        { ((B<=A)|(C>A)),                                                  __iff((B<=(C-0x1)), 0x1) },
-        { ((B<=A)|(C>A)),                                                  __iff((B<(C-0x1)), 0x1) },
-        { ((B<=A)|(C>=A)),                                                 __iff((B==(C-0x1)), 0x1) },
-        { ((B<=A)|(C>=A)),                                                 __iff((B<=(C-0x1)), 0x1) },
-        { ((B<=A)|(C>=A)),                                                 __iff((B<(C-0x1)), 0x1) },
-        { ((B<=A)|(C==A)),                                                 __iff((B==(C-0x1)), (A>=B)) },
-        { ((B<=A)|(C==A)),                                                 __iff((B<=(C-0x1)), (A>=B)) },
-        { ((B<=A)|(C==A)),                                                 __iff((B<(C-0x1)), (A>=B)) },
-        { ((B<=A)|(C!=A)),                                                 __iff((B==(C-0x1)), 0x1) },
-        { ((B<=A)|(C!=A)),                                                 __iff((B<=(C-0x1)), 0x1) },
-        { ((B<=A)|(C!=A)),                                                 __iff((B<(C-0x1)), 0x1) },
-        { ((B<=A)&(C<=A)),                                                 __iff((B>(C-0x1)), (A>=B)) },
-        { ((B<=A)&(C<=A)),                                                 __iff((B==(C-0x1)), (A>B)) },
-        { ((B<=A)|(C<=A)),                                                 __iff((B==(C-0x1)), (A>=B)) },
-        { ((B<=A)|(C<=A)),                                                 __iff((B<=(C-0x1)), (A>=B)) },
-        { ((B<=A)|(C<=A)),                                                 __iff((B<(C-0x1)), (A>=B)) },
-        { ((B<=A)|(C<A)),                                                  __iff((B==(C-0x1)), (A>=B)) },
-        { ((B<=A)|(C<A)),                                                  __iff((B<=(C-0x1)), (A>=B)) },
-        { ((B<=A)|(C<A)),                                                  __iff((B<(C-0x1)), (A>=B)) },
-        { ((B<A)&(C>A)),                                                   __iff((B>(C-0x1)), 0x0) },
-        { ((B<A)&(C>A)),                                                   __iff((B>=(C-0x1)), 0x0) },
-        { ((B<A)&(C>A)),                                                   __iff((B==(C-0x1)), 0x0) },
-        { ((B<A)|(C>A)),                                                   __iff((B==(C-0x1)), 0x1) },
-        { ((B<A)|(C>A)),                                                   __iff((B<=(C-0x1)), 0x1) },
-        { ((B<A)|(C>A)),                                                   __iff((B<(C-0x1)), 0x1) },
-        { ((B<A)&(C>=A)),                                                  __iff((B>(C-0x1)), 0x0) },
-        { ((B<A)|(C>=A)),                                                  __iff((B==(C-0x1)), 0x1) },
-        { ((B<A)|(C>=A)),                                                  __iff((B<=(C-0x1)), 0x1) },
-        { ((B<A)|(C>=A)),                                                  __iff((B<(C-0x1)), 0x1) },
-        { ((B<A)&(C==A)),                                                  __iff((B>(C-0x1)), 0x0) },
-        { ((B<A)|(C==A)),                                                  __iff((B==(C-0x1)), (A>B)) },
-        { ((B<A)|(C==A)),                                                  __iff((B<=(C-0x1)), (A>B)) },
-        { ((B<A)|(C==A)),                                                  __iff((B<(C-0x1)), (A>B)) },
-        { ((B<A)&(C!=A)),                                                  __iff((B>(C-0x1)), (A>B)) },
-        { ((B<A)|(C!=A)),                                                  __iff((B==(C-0x1)), 0x1) },
-        { ((B<A)|(C!=A)),                                                  __iff((B<=(C-0x1)), 0x1) },
-        { ((B<A)|(C!=A)),                                                  __iff((B<(C-0x1)), 0x1) },
-        { ((B<A)&(C<=A)),                                                  __iff((B>(C-0x1)), (A>B)) },
-        { ((B<A)&(C<=A)),                                                  __iff((B>=(C-0x1)), (A>B)) },
-        { ((B<A)&(C<=A)),                                                  __iff((B==(C-0x1)), (A>B)) },
-        { ((B<A)|(C<=A)),                                                  __iff((B==(C-0x1)), (A>B)) },
-        { ((B<A)|(C<=A)),                                                  __iff((B<=(C-0x1)), (A>B)) },
-        { ((B<A)|(C<=A)),                                                  __iff((B<(C-0x1)), (A>B)) },
-        { ((B<A)&(C<A)),                                                   __iff((B>(C-0x1)), (A>B)) },
-        { ((B<A)|(C<A)),                                                   __iff((B==(C-0x1)), (A>B)) },
-        { ((B<A)|(C<A)),                                                   __iff((B<=(C-0x1)), (A>B)) },
-        { ((B<A)|(C<A)),                                                   __iff((B<(C-0x1)), (A>B)) },
-        { (__ugreat(B, A)|__ugreat(C, A)),                                 __iff(__ugreat(B, (C-0x1)), __uless(A, B)) },
-        { (__ugreat(B, A)|__uless_eq(C, A)),                               __iff(__ugreat(B, (C-0x1)), 0x1) },
-        { (__ugreat_eq(B, A)|(C==A)),                                      __iff(__ugreat(B, (C-0x1)), __uless_eq(A, B)) },
-        { (__ugreat_eq(B, A)|(C!=A)),                                      __iff(__ugreat(B, (C-0x1)), 0x1) },
-        { (__ugreat_eq(B, A)|__ugreat(C, A)),                              __iff((B==(C-0x1)), __uless_eq(A, B)) },
-        { (__ugreat_eq(B, A)|__ugreat(C, A)),                              __iff(__ugreat(B, (C-0x1)), __uless_eq(A, B)) },
-        { (__ugreat_eq(B, A)|__ugreat(C, A)),                              __iff(__ugreat_eq(B, (C-0x1)), __uless_eq(A, B)) },
-        { (__ugreat_eq(B, A)|__ugreat_eq(C, A)),                           __iff(__ugreat(B, (C-0x1)), __uless_eq(A, B)) },
-        { (__ugreat_eq(B, A)|__uless_eq(C, A)),                            __iff((B==(C-0x1)), 0x1) },
-        { (__ugreat_eq(B, A)|__uless_eq(C, A)),                            __iff(__ugreat(B, (C-0x1)), 0x1) },
-        { (__ugreat_eq(B, A)|__uless_eq(C, A)),                            __iff(__ugreat_eq(B, (C-0x1)), 0x1) },
-        { (__ugreat_eq(B, A)|__uless(C, A)),                               __iff(__ugreat(B, (C-0x1)), 0x1) },
-        { (__uless_eq(B, A)&__ugreat(C, A)),                               __iff(__ugreat(B, (C-0x1)), 0x0) },
-        { (__uless_eq(B, A)&__uless_eq(C, A)),                             __iff(__ugreat(B, (C-0x1)), __ugreat_eq(A, B)) },
-        { (__uless(B, A)&(C==A)),                                          __iff(__ugreat(B, (C-0x1)), 0x0) },
-        { (__uless(B, A)&(C!=A)),                                          __iff(__ugreat(B, (C-0x1)), __ugreat(A, B)) },
-        { (__uless(B, A)&__ugreat(C, A)),                                  __iff((B==(C-0x1)), 0x0) },
-        { (__uless(B, A)&__ugreat(C, A)),                                  __iff(__ugreat(B, (C-0x1)), 0x0) },
-        { (__uless(B, A)&__ugreat(C, A)),                                  __iff(__ugreat_eq(B, (C-0x1)), 0x0) },
-        { (__uless(B, A)&__ugreat_eq(C, A)),                               __iff(__ugreat(B, (C-0x1)), 0x0) },
-        { (__uless(B, A)&__uless_eq(C, A)),                                __iff((B==(C-0x1)), __ugreat(A, B)) },
-        { (__uless(B, A)&__uless_eq(C, A)),                                __iff(__ugreat(B, (C-0x1)), __ugreat(A, B)) },
-        { (__uless(B, A)&__uless_eq(C, A)),                                __iff(__ugreat_eq(B, (C-0x1)), __ugreat(A, B)) },
-#endif
-        { (__uless(B, A)&__uless(C, A)),                                   __iff(__ugreat(B, (C-0x1)), __ugreat(A, B)) },
-
         // Manually added:
         //
-		{ __uless( A + B, B ),                                             __uless( ~A, B ) },
-		{ __uless_eq( A + B, B ),                                          __uless_eq( -A, B ) },
-		{ __ugreat( A + B, B ),                                            __ugreat( -A, B ) },
-		{ __ugreat_eq( A + B, B ),                                         __ugreat_eq( ~A, B ) },
-		{ __uless( A + B, B ),                                             __ugreat( A, ~B ) },
-		{ __uless_eq( A - B, ~B ),                                         __ugreat_eq( A, B ) },
-		{ __ugreat( A - B, ~B ),                                           __uless( A, B ) },
-		{ __ugreat_eq( A + B, B ),                                         __uless_eq( A, ~B ) },
+        { __uless( A + B, B ),                                             __uless( ~A, B ) },
+        { __uless_eq( A + B, B ),                                          __uless_eq( -A, B ) },
+        { __ugreat( A + B, B ),                                            __ugreat( -A, B ) },
+        { __ugreat_eq( A + B, B ),                                         __ugreat_eq( ~A, B ) },
+        { __uless( A + B, B ),                                             __ugreat( A, ~B ) },
+        { __uless_eq( A - B, ~B ),                                         __ugreat_eq( A, B ) },
+        { __ugreat( A - B, ~B ),                                           __uless( A, B ) },
+        { __ugreat_eq( A + B, B ),                                         __uless_eq( A, ~B ) },
         { A<=A,                                                            1 },
         { A<A,                                                             0 },
         { A==A,                                                            1 },
         { A!=A,                                                            0 },
         { A>A,                                                             0 },
         { A>=A,                                                            1 },
-		{ __uless( A, A ),                                                 0 },
-		{ __uless_eq( A, A ),                                              1 },
-		{ __ugreat( A, A ),                                                0 },
-		{ __ugreat_eq( A, A ),                                             1 },
+        { __uless( A, A ),                                                 0 },
+        { __uless_eq( A, A ),                                              1 },
+        { __ugreat( A, A ),                                                0 },
+        { __ugreat_eq( A, A ),                                             1 },
         { A==~A,                                                           0 },
         { A!=~A,                                                           1 },
         { A==-A,                                                           0 },
         { A!=-A,                                                           1 },
     };
+    
+    const std::vector<std::pair<instance::reference, instance::reference>>& build_boolean_simplifiers()
+    {
+        if ( boolean_simplifiers.size() )
+        {
+            return boolean_simplifiers;
+        }
+
+#ifndef __INTELLISENSE__
+#define SIMPLIFIER( ... ) ([ ] () { boolean_simplifiers.push_back( { __VA_ARGS__ } ); })()
+
+        // Boolean Simplifiers
+        //
+        SIMPLIFIER( ((A>B)&(A>C)),                                                   __iff((B>C), (A>B)) );
+        SIMPLIFIER( ((A>B)&(A>C)),                                                   __iff((B>=C), (A>B)) );
+        SIMPLIFIER( ((A>B)&(A>C)),                                                   __iff((B==C), (A>B)) );
+        SIMPLIFIER( ((A>B)|(A>C)),                                                   __iff((B==C), (A>B)) );
+        SIMPLIFIER( ((A>B)|(A>C)),                                                   __iff((B<=C), (A>B)) );
+        SIMPLIFIER( ((A>B)|(A>C)),                                                   __iff((B<C), (A>B)) );
+        SIMPLIFIER( ((A>B)&(A>=C)),                                                  __iff((B>C), (A>B)) );
+        SIMPLIFIER( ((A>B)&(A>=C)),                                                  __iff((B>=C), (A>B)) );
+        SIMPLIFIER( ((A>B)&(A>=C)),                                                  __iff((B==C), (A>B)) );
+        SIMPLIFIER( ((A>B)|(A>=C)),                                                  __iff((B==C), (A>=B)) );
+        SIMPLIFIER( ((A>B)|(A>=C)),                                                  __iff((B<C), (A>B)) );
+        SIMPLIFIER( ((A>B)&(A==C)),                                                  __iff((B>C), 0x0) );
+        SIMPLIFIER( ((A>B)&(A==C)),                                                  __iff((B>=C), 0x0) );
+        SIMPLIFIER( ((A>B)&(A==C)),                                                  __iff((B==C), 0x0) );
+        SIMPLIFIER( ((A>B)|(A==C)),                                                  __iff((B==C), (A>=B)) );
+        SIMPLIFIER( ((A>B)|(A==C)),                                                  __iff((B<C), (A>B)) );
+        SIMPLIFIER( ((A>B)&(A!=C)),                                                  __iff((B>C), (A>B)) );
+        SIMPLIFIER( ((A>B)&(A!=C)),                                                  __iff((B>=C), (A>B)) );
+        SIMPLIFIER( ((A>B)&(A!=C)),                                                  __iff((B==C), (A>B)) );
+        SIMPLIFIER( ((A>B)|(A!=C)),                                                  __iff((B==C), (A!=B)) );
+        SIMPLIFIER( ((A>B)|(A!=C)),                                                  __iff((B<C), 0x1) );
+        SIMPLIFIER( ((A>B)&(A<=C)),                                                  __iff((B>C), 0x0) );
+        SIMPLIFIER( ((A>B)&(A<=C)),                                                  __iff((B>=C), 0x0) );
+        SIMPLIFIER( ((A>B)&(A<=C)),                                                  __iff((B==C), 0x0) );
+        SIMPLIFIER( ((A>B)|(A<=C)),                                                  __iff((B==C), 0x1) );
+        SIMPLIFIER( ((A>B)|(A<=C)),                                                  __iff((B<=C), 0x1) );
+        SIMPLIFIER( ((A>B)|(A<=C)),                                                  __iff((B<C), 0x1) );
+        SIMPLIFIER( ((A>B)&(A<C)),                                                   __iff((B>C), 0x0) );
+        SIMPLIFIER( ((A>B)&(A<C)),                                                   __iff((B>=C), 0x0) );
+        SIMPLIFIER( ((A>B)&(A<C)),                                                   __iff((B==C), 0x0) );
+        SIMPLIFIER( ((A>B)|(A<C)),                                                   __iff((B==C), (A!=B)) );
+        SIMPLIFIER( ((A>B)|(A<C)),                                                   __iff((B<C), 0x1) );
+        SIMPLIFIER( ((A>=B)&(A>C)),                                                  __iff((B>C), (A>=B)) );
+        SIMPLIFIER( ((A>=B)&(A>C)),                                                  __iff((B==C), (A>B)) );
+        SIMPLIFIER( ((A>=B)|(A>C)),                                                  __iff((B==C), (A>=B)) );
+        SIMPLIFIER( ((A>=B)|(A>C)),                                                  __iff((B<=C), (A>=B)) );
+        SIMPLIFIER( ((A>=B)|(A>C)),                                                  __iff((B<C), (A>=B)) );
+        SIMPLIFIER( ((A>=B)&(A>=C)),                                                 __iff((B>C), (A>=B)) );
+        SIMPLIFIER( ((A>=B)&(A>=C)),                                                 __iff((B>=C), (A>=B)) );
+        SIMPLIFIER( ((A>=B)&(A>=C)),                                                 __iff((B==C), (A>=B)) );
+        SIMPLIFIER( ((A>=B)|(A>=C)),                                                 __iff((B==C), (A>=B)) );
+        SIMPLIFIER( ((A>=B)|(A>=C)),                                                 __iff((B<=C), (A>=B)) );
+        SIMPLIFIER( ((A>=B)|(A>=C)),                                                 __iff((B<C), (A>=B)) );
+        SIMPLIFIER( ((A>=B)&(A==C)),                                                 __iff((B>C), 0x0) );
+        SIMPLIFIER( ((A>=B)&(A==C)),                                                 __iff((B==C), (A==B)) );
+        SIMPLIFIER( ((A>=B)|(A==C)),                                                 __iff((B==C), (A>=B)) );
+        SIMPLIFIER( ((A>=B)|(A==C)),                                                 __iff((B<=C), (A>=B)) );
+        SIMPLIFIER( ((A>=B)|(A==C)),                                                 __iff((B<C), (A>=B)) );
+        SIMPLIFIER( ((A>=B)&(A!=C)),                                                 __iff((B>C), (A>=B)) );
+        SIMPLIFIER( ((A>=B)&(A!=C)),                                                 __iff((B==C), (A>B)) );
+        SIMPLIFIER( ((A>=B)|(A!=C)),                                                 __iff((B==C), 0x1) );
+        SIMPLIFIER( ((A>=B)|(A!=C)),                                                 __iff((B<=C), 0x1) );
+        SIMPLIFIER( ((A>=B)|(A!=C)),                                                 __iff((B<C), 0x1) );
+        SIMPLIFIER( ((A>=B)&(A<=C)),                                                 __iff((B>C), 0x0) );
+        SIMPLIFIER( ((A>=B)&(A<=C)),                                                 __iff((B==C), (A==B)) );
+        SIMPLIFIER( ((A>=B)|(A<=C)),                                                 __iff((B==C), 0x1) );
+        SIMPLIFIER( ((A>=B)|(A<=C)),                                                 __iff((B<=C), 0x1) );
+        SIMPLIFIER( ((A>=B)|(A<=C)),                                                 __iff((B<C), 0x1) );
+        SIMPLIFIER( ((A>=B)&(A<C)),                                                  __iff((B>C), 0x0) );
+        SIMPLIFIER( ((A>=B)&(A<C)),                                                  __iff((B>=C), 0x0) );
+        SIMPLIFIER( ((A>=B)&(A<C)),                                                  __iff((B==C), 0x0) );
+        SIMPLIFIER( ((A>=B)|(A<C)),                                                  __iff((B==C), 0x1) );
+        SIMPLIFIER( ((A>=B)|(A<C)),                                                  __iff((B<=C), 0x1) );
+        SIMPLIFIER( ((A>=B)|(A<C)),                                                  __iff((B<C), 0x1) );
+        SIMPLIFIER( ((A==B)&(A>C)),                                                  __iff((B>C), (A==B)) );
+        SIMPLIFIER( ((A==B)&(A>C)),                                                  __iff((B==C), 0x0) );
+        SIMPLIFIER( ((A==B)&(A>C)),                                                  __iff((B<=C), 0x0) );
+        SIMPLIFIER( ((A==B)&(A>C)),                                                  __iff((B<C), 0x0) );
+        SIMPLIFIER( ((A==B)|(A>C)),                                                  __iff((B==C), (A>=B)) );
+        SIMPLIFIER( ((A==B)&(A>=C)),                                                 __iff((B>C), (A==B)) );
+        SIMPLIFIER( ((A==B)&(A>=C)),                                                 __iff((B>=C), (A==B)) );
+        SIMPLIFIER( ((A==B)&(A>=C)),                                                 __iff((B==C), (A==B)) );
+        SIMPLIFIER( ((A==B)&(A>=C)),                                                 __iff((B<C), 0x0) );
+        SIMPLIFIER( ((A==B)|(A>=C)),                                                 __iff((B==C), (A>=B)) );
+        SIMPLIFIER( ((A==B)&(A==C)),                                                 __iff((B>C), 0x0) );
+        SIMPLIFIER( ((A==B)&(A==C)),                                                 __iff((B==C), (A==B)) );
+        SIMPLIFIER( ((A==B)&(A==C)),                                                 __iff((B!=C), 0x0) );
+        SIMPLIFIER( ((A==B)&(A==C)),                                                 __iff((B<C), 0x0) );
+        SIMPLIFIER( ((A==B)&(A==C)),                                                 __iff(__ugreat(B, C), 0x0) );
+        SIMPLIFIER( ((A==B)&(A==C)),                                                 __iff(__uless(B, C), 0x0) );
+        SIMPLIFIER( ((A==B)|(A==C)),                                                 __iff((B==C), (A==B)) );
+        SIMPLIFIER( ((A==B)&(A!=C)),                                                 __iff((B>C), (A==B)) );
+        SIMPLIFIER( ((A==B)&(A!=C)),                                                 __iff((B==C), 0x0) );
+        SIMPLIFIER( ((A==B)&(A!=C)),                                                 __iff((B!=C), (A==B)) );
+        SIMPLIFIER( ((A==B)&(A!=C)),                                                 __iff((B<C), (A==B)) );
+        SIMPLIFIER( ((A==B)&(A!=C)),                                                 __iff(__ugreat(B, C), (A==B)) );
+        SIMPLIFIER( ((A==B)&(A!=C)),                                                 __iff(__uless(B, C), (A==B)) );
+        SIMPLIFIER( ((A==B)|(A!=C)),                                                 __iff((B==C), 0x1) );
+        SIMPLIFIER( ((A==B)&(A<=C)),                                                 __iff((B>C), 0x0) );
+        SIMPLIFIER( ((A==B)&(A<=C)),                                                 __iff((B==C), (A==B)) );
+        SIMPLIFIER( ((A==B)&(A<=C)),                                                 __iff((B<=C), (A==B)) );
+        SIMPLIFIER( ((A==B)&(A<=C)),                                                 __iff((B<C), (A==B)) );
+        SIMPLIFIER( ((A==B)|(A<=C)),                                                 __iff((B==C), (A<=B)) );
+        SIMPLIFIER( ((A==B)&(A<C)),                                                  __iff((B>C), 0x0) );
+        SIMPLIFIER( ((A==B)&(A<C)),                                                  __iff((B>=C), 0x0) );
+        SIMPLIFIER( ((A==B)&(A<C)),                                                  __iff((B==C), 0x0) );
+        SIMPLIFIER( ((A==B)&(A<C)),                                                  __iff((B<C), (A==B)) );
+        SIMPLIFIER( ((A==B)|(A<C)),                                                  __iff((B==C), (A<=B)) );
+        SIMPLIFIER( ((A==B)&__ugreat(A, C)),                                         __iff((B==C), 0x0) );
+        SIMPLIFIER( ((A==B)&__ugreat(A, C)),                                         __iff(__ugreat(B, C), (A==B)) );
+        SIMPLIFIER( ((A==B)&__ugreat(A, C)),                                         __iff(__uless_eq(B, C), 0x0) );
+        SIMPLIFIER( ((A==B)&__ugreat(A, C)),                                         __iff(__uless(B, C), 0x0) );
+        SIMPLIFIER( ((A==B)|__ugreat(A, C)),                                         __iff((B==C), __ugreat_eq(A, B)) );
+        SIMPLIFIER( ((A==B)&__ugreat_eq(A, C)),                                      __iff((B==C), (A==B)) );
+        SIMPLIFIER( ((A==B)&__ugreat_eq(A, C)),                                      __iff(__ugreat(B, C), (A==B)) );
+        SIMPLIFIER( ((A==B)&__ugreat_eq(A, C)),                                      __iff(__ugreat_eq(B, C), (A==B)) );
+        SIMPLIFIER( ((A==B)&__ugreat_eq(A, C)),                                      __iff(__uless(B, C), 0x0) );
+        SIMPLIFIER( ((A==B)|__ugreat_eq(A, C)),                                      __iff((B==C), __ugreat_eq(A, B)) );
+        SIMPLIFIER( ((A==B)&__uless_eq(A, C)),                                       __iff((B==C), (A==B)) );
+        SIMPLIFIER( ((A==B)&__uless_eq(A, C)),                                       __iff(__ugreat(B, C), 0x0) );
+        SIMPLIFIER( ((A==B)&__uless_eq(A, C)),                                       __iff(__uless_eq(B, C), (A==B)) );
+        SIMPLIFIER( ((A==B)&__uless_eq(A, C)),                                       __iff(__uless(B, C), (A==B)) );
+        SIMPLIFIER( ((A==B)|__uless_eq(A, C)),                                       __iff((B==C), __uless_eq(A, B)) );
+        SIMPLIFIER( ((A==B)&__uless(A, C)),                                          __iff((B==C), 0x0) );
+        SIMPLIFIER( ((A==B)&__uless(A, C)),                                          __iff(__ugreat(B, C), 0x0) );
+        SIMPLIFIER( ((A==B)&__uless(A, C)),                                          __iff(__ugreat_eq(B, C), 0x0) );
+        SIMPLIFIER( ((A==B)&__uless(A, C)),                                          __iff(__uless(B, C), (A==B)) );
+        SIMPLIFIER( ((A==B)|__uless(A, C)),                                          __iff((B==C), __uless_eq(A, B)) );
+        SIMPLIFIER( ((A!=B)&(A>C)),                                                  __iff((B==C), (A>B)) );
+        SIMPLIFIER( ((A!=B)|(A>C)),                                                  __iff((B>C), 0x1) );
+        SIMPLIFIER( ((A!=B)|(A>C)),                                                  __iff((B==C), (A!=B)) );
+        SIMPLIFIER( ((A!=B)|(A>C)),                                                  __iff((B<=C), (A!=B)) );
+        SIMPLIFIER( ((A!=B)|(A>C)),                                                  __iff((B<C), (A!=B)) );
+        SIMPLIFIER( ((A!=B)&(A>=C)),                                                 __iff((B==C), (A>B)) );
+        SIMPLIFIER( ((A!=B)|(A>=C)),                                                 __iff((B>C), 0x1) );
+        SIMPLIFIER( ((A!=B)|(A>=C)),                                                 __iff((B>=C), 0x1) );
+        SIMPLIFIER( ((A!=B)|(A>=C)),                                                 __iff((B==C), 0x1) );
+        SIMPLIFIER( ((A!=B)|(A>=C)),                                                 __iff((B<C), (A!=B)) );
+        SIMPLIFIER( ((A!=B)&(A==C)),                                                 __iff((B==C), 0x0) );
+        SIMPLIFIER( ((A!=B)|(A==C)),                                                 __iff((B>C), (A!=B)) );
+        SIMPLIFIER( ((A!=B)|(A==C)),                                                 __iff((B==C), 0x1) );
+        SIMPLIFIER( ((A!=B)|(A==C)),                                                 __iff((B!=C), (A!=B)) );
+        SIMPLIFIER( ((A!=B)|(A==C)),                                                 __iff((B<C), (A!=B)) );
+        SIMPLIFIER( ((A!=B)|(A==C)),                                                 __iff(__ugreat(B, C), (A!=B)) );
+        SIMPLIFIER( ((A!=B)|(A==C)),                                                 __iff(__uless(B, C), (A!=B)) );
+        SIMPLIFIER( ((A!=B)&(A!=C)),                                                 __iff((B==C), (A!=B)) );
+        SIMPLIFIER( ((A!=B)|(A!=C)),                                                 __iff((B>C), 0x1) );
+        SIMPLIFIER( ((A!=B)|(A!=C)),                                                 __iff((B==C), (A!=B)) );
+        SIMPLIFIER( ((A!=B)|(A!=C)),                                                 __iff((B!=C), 0x1) );
+        SIMPLIFIER( ((A!=B)|(A!=C)),                                                 __iff((B<C), 0x1) );
+        SIMPLIFIER( ((A!=B)|(A!=C)),                                                 __iff(__ugreat(B, C), 0x1) );
+        SIMPLIFIER( ((A!=B)|(A!=C)),                                                 __iff(__uless(B, C), 0x1) );
+        SIMPLIFIER( ((A!=B)&(A<=C)),                                                 __iff((B==C), (A<B)) );
+        SIMPLIFIER( ((A!=B)|(A<=C)),                                                 __iff((B>C), (A!=B)) );
+        SIMPLIFIER( ((A!=B)|(A<=C)),                                                 __iff((B==C), 0x1) );
+        SIMPLIFIER( ((A!=B)|(A<=C)),                                                 __iff((B<=C), 0x1) );
+        SIMPLIFIER( ((A!=B)|(A<=C)),                                                 __iff((B<C), 0x1) );
+        SIMPLIFIER( ((A!=B)&(A<C)),                                                  __iff((B==C), (A<B)) );
+        SIMPLIFIER( ((A!=B)|(A<C)),                                                  __iff((B>C), (A!=B)) );
+        SIMPLIFIER( ((A!=B)|(A<C)),                                                  __iff((B>=C), (A!=B)) );
+        SIMPLIFIER( ((A!=B)|(A<C)),                                                  __iff((B==C), (A!=B)) );
+        SIMPLIFIER( ((A!=B)|(A<C)),                                                  __iff((B<C), 0x1) );
+        SIMPLIFIER( ((A!=B)&__ugreat(A, C)),                                         __iff((B==C), __ugreat(A, B)) );
+        SIMPLIFIER( ((A!=B)|__ugreat(A, C)),                                         __iff((B==C), (A!=B)) );
+        SIMPLIFIER( ((A!=B)|__ugreat(A, C)),                                         __iff(__ugreat(B, C), 0x1) );
+        SIMPLIFIER( ((A!=B)|__ugreat(A, C)),                                         __iff(__uless_eq(B, C), (A!=B)) );
+        SIMPLIFIER( ((A!=B)|__ugreat(A, C)),                                         __iff(__uless(B, C), (A!=B)) );
+        SIMPLIFIER( ((A!=B)&__ugreat_eq(A, C)),                                      __iff((B==C), __ugreat(A, B)) );
+        SIMPLIFIER( ((A!=B)|__ugreat_eq(A, C)),                                      __iff((B==C), 0x1) );
+        SIMPLIFIER( ((A!=B)|__ugreat_eq(A, C)),                                      __iff(__ugreat(B, C), 0x1) );
+        SIMPLIFIER( ((A!=B)|__ugreat_eq(A, C)),                                      __iff(__ugreat_eq(B, C), 0x1) );
+        SIMPLIFIER( ((A!=B)|__ugreat_eq(A, C)),                                      __iff(__uless(B, C), (A!=B)) );
+        SIMPLIFIER( ((A!=B)&__uless_eq(A, C)),                                       __iff((B==C), __uless(A, B)) );
+        SIMPLIFIER( ((A!=B)|__uless_eq(A, C)),                                       __iff((B==C), 0x1) );
+        SIMPLIFIER( ((A!=B)|__uless_eq(A, C)),                                       __iff(__ugreat(B, C), (A!=B)) );
+        SIMPLIFIER( ((A!=B)|__uless_eq(A, C)),                                       __iff(__uless_eq(B, C), 0x1) );
+        SIMPLIFIER( ((A!=B)|__uless_eq(A, C)),                                       __iff(__uless(B, C), 0x1) );
+        SIMPLIFIER( ((A!=B)&__uless(A, C)),                                          __iff((B==C), __uless(A, B)) );
+        SIMPLIFIER( ((A!=B)|__uless(A, C)),                                          __iff((B==C), (A!=B)) );
+        SIMPLIFIER( ((A!=B)|__uless(A, C)),                                          __iff(__ugreat(B, C), (A!=B)) );
+        SIMPLIFIER( ((A!=B)|__uless(A, C)),                                          __iff(__ugreat_eq(B, C), (A!=B)) );
+        SIMPLIFIER( ((A!=B)|__uless(A, C)),                                          __iff(__uless(B, C), 0x1) );
+        SIMPLIFIER( ((A<=B)&(A>C)),                                                  __iff((B==C), 0x0) );
+        SIMPLIFIER( ((A<=B)&(A>C)),                                                  __iff((B<=C), 0x0) );
+        SIMPLIFIER( ((A<=B)&(A>C)),                                                  __iff((B<C), 0x0) );
+        SIMPLIFIER( ((A<=B)|(A>C)),                                                  __iff((B>C), 0x1) );
+        SIMPLIFIER( ((A<=B)|(A>C)),                                                  __iff((B>=C), 0x1) );
+        SIMPLIFIER( ((A<=B)|(A>C)),                                                  __iff((B==C), 0x1) );
+        SIMPLIFIER( ((A<=B)&(A>=C)),                                                 __iff((B==C), (A==B)) );
+        SIMPLIFIER( ((A<=B)&(A>=C)),                                                 __iff((B<C), 0x0) );
+        SIMPLIFIER( ((A<=B)|(A>=C)),                                                 __iff((B>C), 0x1) );
+        SIMPLIFIER( ((A<=B)|(A>=C)),                                                 __iff((B>=C), 0x1) );
+        SIMPLIFIER( ((A<=B)|(A>=C)),                                                 __iff((B==C), 0x1) );
+        SIMPLIFIER( ((A<=B)&(A==C)),                                                 __iff((B==C), (A==B)) );
+        SIMPLIFIER( ((A<=B)&(A==C)),                                                 __iff((B<C), 0x0) );
+        SIMPLIFIER( ((A<=B)|(A==C)),                                                 __iff((B>C), (A<=B)) );
+        SIMPLIFIER( ((A<=B)|(A==C)),                                                 __iff((B>=C), (A<=B)) );
+        SIMPLIFIER( ((A<=B)|(A==C)),                                                 __iff((B==C), (A<=B)) );
+        SIMPLIFIER( ((A<=B)&(A!=C)),                                                 __iff((B==C), (A<B)) );
+        SIMPLIFIER( ((A<=B)&(A!=C)),                                                 __iff((B<C), (A<=B)) );
+        SIMPLIFIER( ((A<=B)|(A!=C)),                                                 __iff((B>C), 0x1) );
+        SIMPLIFIER( ((A<=B)|(A!=C)),                                                 __iff((B>=C), 0x1) );
+        SIMPLIFIER( ((A<=B)|(A!=C)),                                                 __iff((B==C), 0x1) );
+        SIMPLIFIER( ((A<=B)&(A<=C)),                                                 __iff((B==C), (A<=B)) );
+        SIMPLIFIER( ((A<=B)&(A<=C)),                                                 __iff((B<=C), (A<=B)) );
+        SIMPLIFIER( ((A<=B)&(A<=C)),                                                 __iff((B<C), (A<=B)) );
+        SIMPLIFIER( ((A<=B)|(A<=C)),                                                 __iff((B>C), (A<=B)) );
+        SIMPLIFIER( ((A<=B)|(A<=C)),                                                 __iff((B>=C), (A<=B)) );
+        SIMPLIFIER( ((A<=B)|(A<=C)),                                                 __iff((B==C), (A<=B)) );
+        SIMPLIFIER( ((A<=B)&(A<C)),                                                  __iff((B==C), (A<B)) );
+        SIMPLIFIER( ((A<=B)&(A<C)),                                                  __iff((B<C), (A<=B)) );
+        SIMPLIFIER( ((A<=B)|(A<C)),                                                  __iff((B>C), (A<=B)) );
+        SIMPLIFIER( ((A<=B)|(A<C)),                                                  __iff((B>=C), (A<=B)) );
+        SIMPLIFIER( ((A<=B)|(A<C)),                                                  __iff((B==C), (A<=B)) );
+        SIMPLIFIER( ((A<B)&(A>C)),                                                   __iff((B==C), 0x0) );
+        SIMPLIFIER( ((A<B)&(A>C)),                                                   __iff((B<=C), 0x0) );
+        SIMPLIFIER( ((A<B)&(A>C)),                                                   __iff((B<C), 0x0) );
+        SIMPLIFIER( ((A<B)|(A>C)),                                                   __iff((B>C), 0x1) );
+        SIMPLIFIER( ((A<B)|(A>C)),                                                   __iff((B==C), (A!=B)) );
+        SIMPLIFIER( ((A<B)&(A>=C)),                                                  __iff((B==C), 0x0) );
+        SIMPLIFIER( ((A<B)&(A>=C)),                                                  __iff((B<=C), 0x0) );
+        SIMPLIFIER( ((A<B)&(A>=C)),                                                  __iff((B<C), 0x0) );
+        SIMPLIFIER( ((A<B)|(A>=C)),                                                  __iff((B>C), 0x1) );
+        SIMPLIFIER( ((A<B)|(A>=C)),                                                  __iff((B>=C), 0x1) );
+        SIMPLIFIER( ((A<B)|(A>=C)),                                                  __iff((B==C), 0x1) );
+        SIMPLIFIER( ((A<B)&(A==C)),                                                  __iff((B==C), 0x0) );
+        SIMPLIFIER( ((A<B)&(A==C)),                                                  __iff((B<=C), 0x0) );
+        SIMPLIFIER( ((A<B)&(A==C)),                                                  __iff((B<C), 0x0) );
+        SIMPLIFIER( ((A<B)|(A==C)),                                                  __iff((B>C), (A<B)) );
+        SIMPLIFIER( ((A<B)|(A==C)),                                                  __iff((B==C), (A<=B)) );
+        SIMPLIFIER( ((A<B)&(A!=C)),                                                  __iff((B==C), (A<B)) );
+        SIMPLIFIER( ((A<B)&(A!=C)),                                                  __iff((B<=C), (A<B)) );
+        SIMPLIFIER( ((A<B)&(A!=C)),                                                  __iff((B<C), (A<B)) );
+        SIMPLIFIER( ((A<B)|(A!=C)),                                                  __iff((B>C), 0x1) );
+        SIMPLIFIER( ((A<B)|(A!=C)),                                                  __iff((B==C), (A!=B)) );
+        SIMPLIFIER( ((A<B)&(A<=C)),                                                  __iff((B==C), (A<B)) );
+        SIMPLIFIER( ((A<B)&(A<=C)),                                                  __iff((B<=C), (A<B)) );
+        SIMPLIFIER( ((A<B)&(A<=C)),                                                  __iff((B<C), (A<B)) );
+        SIMPLIFIER( ((A<B)|(A<=C)),                                                  __iff((B>C), (A<B)) );
+        SIMPLIFIER( ((A<B)|(A<=C)),                                                  __iff((B==C), (A<=B)) );
+        SIMPLIFIER( ((A<B)&(A<C)),                                                   __iff((B==C), (A<B)) );
+        SIMPLIFIER( ((A<B)&(A<C)),                                                   __iff((B<=C), (A<B)) );
+        SIMPLIFIER( ((A<B)&(A<C)),                                                   __iff((B<C), (A<B)) );
+        SIMPLIFIER( ((A<B)|(A<C)),                                                   __iff((B>C), (A<B)) );
+        SIMPLIFIER( ((A<B)|(A<C)),                                                   __iff((B>=C), (A<B)) );
+        SIMPLIFIER( ((A<B)|(A<C)),                                                   __iff((B==C), (A<B)) );
+        SIMPLIFIER( (__ugreat(A, B)&(A==C)),                                         __iff((B==C), 0x0) );
+        SIMPLIFIER( (__ugreat(A, B)&(A==C)),                                         __iff(__ugreat(B, C), 0x0) );
+        SIMPLIFIER( (__ugreat(A, B)&(A==C)),                                         __iff(__ugreat_eq(B, C), 0x0) );
+        SIMPLIFIER( (__ugreat(A, B)|(A==C)),                                         __iff((B==C), __ugreat_eq(A, B)) );
+        SIMPLIFIER( (__ugreat(A, B)|(A==C)),                                         __iff(__uless(B, C), __ugreat(A, B)) );
+        SIMPLIFIER( (__ugreat(A, B)&(A!=C)),                                         __iff((B==C), __ugreat(A, B)) );
+        SIMPLIFIER( (__ugreat(A, B)&(A!=C)),                                         __iff(__ugreat(B, C), __ugreat(A, B)) );
+        SIMPLIFIER( (__ugreat(A, B)&(A!=C)),                                         __iff(__ugreat_eq(B, C), __ugreat(A, B)) );
+        SIMPLIFIER( (__ugreat(A, B)|(A!=C)),                                         __iff((B==C), (A!=B)) );
+        SIMPLIFIER( (__ugreat(A, B)|(A!=C)),                                         __iff(__uless(B, C), 0x1) );
+        SIMPLIFIER( (__ugreat(A, B)&__ugreat(A, C)),                                 __iff((B==C), __ugreat(A, B)) );
+        SIMPLIFIER( (__ugreat(A, B)&__ugreat(A, C)),                                 __iff(__ugreat(B, C), __ugreat(A, B)) );
+        SIMPLIFIER( (__ugreat(A, B)&__ugreat(A, C)),                                 __iff(__ugreat_eq(B, C), __ugreat(A, B)) );
+        SIMPLIFIER( (__ugreat(A, B)|__ugreat(A, C)),                                 __iff((B==C), __ugreat(A, B)) );
+        SIMPLIFIER( (__ugreat(A, B)|__ugreat(A, C)),                                 __iff(__uless_eq(B, C), __ugreat(A, B)) );
+        SIMPLIFIER( (__ugreat(A, B)|__ugreat(A, C)),                                 __iff(__uless(B, C), __ugreat(A, B)) );
+        SIMPLIFIER( (__ugreat(A, B)&__ugreat_eq(A, C)),                              __iff((B==C), __ugreat(A, B)) );
+        SIMPLIFIER( (__ugreat(A, B)&__ugreat_eq(A, C)),                              __iff(__ugreat(B, C), __ugreat(A, B)) );
+        SIMPLIFIER( (__ugreat(A, B)&__ugreat_eq(A, C)),                              __iff(__ugreat_eq(B, C), __ugreat(A, B)) );
+        SIMPLIFIER( (__ugreat(A, B)|__ugreat_eq(A, C)),                              __iff((B==C), __ugreat_eq(A, B)) );
+        SIMPLIFIER( (__ugreat(A, B)|__ugreat_eq(A, C)),                              __iff(__uless(B, C), __ugreat(A, B)) );
+        SIMPLIFIER( (__ugreat(A, B)&__uless_eq(A, C)),                               __iff((B==C), 0x0) );
+        SIMPLIFIER( (__ugreat(A, B)&__uless_eq(A, C)),                               __iff(__ugreat(B, C), 0x0) );
+        SIMPLIFIER( (__ugreat(A, B)&__uless_eq(A, C)),                               __iff(__ugreat_eq(B, C), 0x0) );
+        SIMPLIFIER( (__ugreat(A, B)|__uless_eq(A, C)),                               __iff((B==C), 0x1) );
+        SIMPLIFIER( (__ugreat(A, B)|__uless_eq(A, C)),                               __iff(__uless_eq(B, C), 0x1) );
+        SIMPLIFIER( (__ugreat(A, B)|__uless_eq(A, C)),                               __iff(__uless(B, C), 0x1) );
+        SIMPLIFIER( (__ugreat(A, B)&__uless(A, C)),                                  __iff((B==C), 0x0) );
+        SIMPLIFIER( (__ugreat(A, B)&__uless(A, C)),                                  __iff(__ugreat(B, C), 0x0) );
+        SIMPLIFIER( (__ugreat(A, B)&__uless(A, C)),                                  __iff(__ugreat_eq(B, C), 0x0) );
+        SIMPLIFIER( (__ugreat(A, B)|__uless(A, C)),                                  __iff((B==C), (A!=B)) );
+        SIMPLIFIER( (__ugreat(A, B)|__uless(A, C)),                                  __iff(__uless(B, C), 0x1) );
+        SIMPLIFIER( (__ugreat_eq(A, B)&(A==C)),                                      __iff((B==C), (A==B)) );
+        SIMPLIFIER( (__ugreat_eq(A, B)&(A==C)),                                      __iff(__ugreat(B, C), 0x0) );
+        SIMPLIFIER( (__ugreat_eq(A, B)|(A==C)),                                      __iff((B==C), __ugreat_eq(A, B)) );
+        SIMPLIFIER( (__ugreat_eq(A, B)|(A==C)),                                      __iff(__uless_eq(B, C), __ugreat_eq(A, B)) );
+        SIMPLIFIER( (__ugreat_eq(A, B)|(A==C)),                                      __iff(__uless(B, C), __ugreat_eq(A, B)) );
+        SIMPLIFIER( (__ugreat_eq(A, B)&(A!=C)),                                      __iff((B==C), __ugreat(A, B)) );
+        SIMPLIFIER( (__ugreat_eq(A, B)&(A!=C)),                                      __iff(__ugreat(B, C), __ugreat_eq(A, B)) );
+        SIMPLIFIER( (__ugreat_eq(A, B)|(A!=C)),                                      __iff((B==C), 0x1) );
+        SIMPLIFIER( (__ugreat_eq(A, B)|(A!=C)),                                      __iff(__uless_eq(B, C), 0x1) );
+        SIMPLIFIER( (__ugreat_eq(A, B)|(A!=C)),                                      __iff(__uless(B, C), 0x1) );
+        SIMPLIFIER( (__ugreat_eq(A, B)&__ugreat(A, C)),                              __iff((B==C), __ugreat(A, B)) );
+        SIMPLIFIER( (__ugreat_eq(A, B)&__ugreat(A, C)),                              __iff(__ugreat(B, C), __ugreat_eq(A, B)) );
+        SIMPLIFIER( (__ugreat_eq(A, B)|__ugreat(A, C)),                              __iff((B==C), __ugreat_eq(A, B)) );
+        SIMPLIFIER( (__ugreat_eq(A, B)|__ugreat(A, C)),                              __iff(__uless_eq(B, C), __ugreat_eq(A, B)) );
+        SIMPLIFIER( (__ugreat_eq(A, B)|__ugreat(A, C)),                              __iff(__uless(B, C), __ugreat_eq(A, B)) );
+        SIMPLIFIER( (__ugreat_eq(A, B)&__ugreat_eq(A, C)),                           __iff((B==C), __ugreat_eq(A, B)) );
+        SIMPLIFIER( (__ugreat_eq(A, B)&__ugreat_eq(A, C)),                           __iff(__ugreat(B, C), __ugreat_eq(A, B)) );
+        SIMPLIFIER( (__ugreat_eq(A, B)&__ugreat_eq(A, C)),                           __iff(__ugreat_eq(B, C), __ugreat_eq(A, B)) );
+        SIMPLIFIER( (__ugreat_eq(A, B)|__ugreat_eq(A, C)),                           __iff((B==C), __ugreat_eq(A, B)) );
+        SIMPLIFIER( (__ugreat_eq(A, B)|__ugreat_eq(A, C)),                           __iff(__uless_eq(B, C), __ugreat_eq(A, B)) );
+        SIMPLIFIER( (__ugreat_eq(A, B)|__ugreat_eq(A, C)),                           __iff(__uless(B, C), __ugreat_eq(A, B)) );
+        SIMPLIFIER( (__ugreat_eq(A, B)&__uless_eq(A, C)),                            __iff((B==C), (A==B)) );
+        SIMPLIFIER( (__ugreat_eq(A, B)&__uless_eq(A, C)),                            __iff(__ugreat(B, C), 0x0) );
+        SIMPLIFIER( (__ugreat_eq(A, B)|__uless_eq(A, C)),                            __iff((B==C), 0x1) );
+        SIMPLIFIER( (__ugreat_eq(A, B)|__uless_eq(A, C)),                            __iff(__uless_eq(B, C), 0x1) );
+        SIMPLIFIER( (__ugreat_eq(A, B)|__uless_eq(A, C)),                            __iff(__uless(B, C), 0x1) );
+        SIMPLIFIER( (__ugreat_eq(A, B)&__uless(A, C)),                               __iff((B==C), 0x0) );
+        SIMPLIFIER( (__ugreat_eq(A, B)&__uless(A, C)),                               __iff(__ugreat(B, C), 0x0) );
+        SIMPLIFIER( (__ugreat_eq(A, B)&__uless(A, C)),                               __iff(__ugreat_eq(B, C), 0x0) );
+        SIMPLIFIER( (__ugreat_eq(A, B)|__uless(A, C)),                               __iff((B==C), 0x1) );
+        SIMPLIFIER( (__ugreat_eq(A, B)|__uless(A, C)),                               __iff(__uless_eq(B, C), 0x1) );
+        SIMPLIFIER( (__ugreat_eq(A, B)|__uless(A, C)),                               __iff(__uless(B, C), 0x1) );
+        SIMPLIFIER( (__uless_eq(A, B)&(A==C)),                                       __iff((B==C), (A==B)) );
+        SIMPLIFIER( (__uless_eq(A, B)&(A==C)),                                       __iff(__uless(B, C), 0x0) );
+        SIMPLIFIER( (__uless_eq(A, B)|(A==C)),                                       __iff((B==C), __uless_eq(A, B)) );
+        SIMPLIFIER( (__uless_eq(A, B)|(A==C)),                                       __iff(__ugreat(B, C), __uless_eq(A, B)) );
+        SIMPLIFIER( (__uless_eq(A, B)|(A==C)),                                       __iff(__ugreat_eq(B, C), __uless_eq(A, B)) );
+        SIMPLIFIER( (__uless_eq(A, B)&(A!=C)),                                       __iff((B==C), __uless(A, B)) );
+        SIMPLIFIER( (__uless_eq(A, B)&(A!=C)),                                       __iff(__uless(B, C), __uless_eq(A, B)) );
+        SIMPLIFIER( (__uless_eq(A, B)|(A!=C)),                                       __iff((B==C), 0x1) );
+        SIMPLIFIER( (__uless_eq(A, B)|(A!=C)),                                       __iff(__ugreat(B, C), 0x1) );
+        SIMPLIFIER( (__uless_eq(A, B)|(A!=C)),                                       __iff(__ugreat_eq(B, C), 0x1) );
+        SIMPLIFIER( (__uless_eq(A, B)&__ugreat(A, C)),                               __iff((B==C), 0x0) );
+        SIMPLIFIER( (__uless_eq(A, B)&__ugreat(A, C)),                               __iff(__uless_eq(B, C), 0x0) );
+        SIMPLIFIER( (__uless_eq(A, B)&__ugreat(A, C)),                               __iff(__uless(B, C), 0x0) );
+        SIMPLIFIER( (__uless_eq(A, B)|__ugreat(A, C)),                               __iff((B==C), 0x1) );
+        SIMPLIFIER( (__uless_eq(A, B)|__ugreat(A, C)),                               __iff(__ugreat(B, C), 0x1) );
+        SIMPLIFIER( (__uless_eq(A, B)|__ugreat(A, C)),                               __iff(__ugreat_eq(B, C), 0x1) );
+        SIMPLIFIER( (__uless_eq(A, B)&__ugreat_eq(A, C)),                            __iff((B==C), (A==B)) );
+        SIMPLIFIER( (__uless_eq(A, B)&__ugreat_eq(A, C)),                            __iff(__uless(B, C), 0x0) );
+        SIMPLIFIER( (__uless_eq(A, B)|__ugreat_eq(A, C)),                            __iff((B==C), 0x1) );
+        SIMPLIFIER( (__uless_eq(A, B)|__ugreat_eq(A, C)),                            __iff(__ugreat(B, C), 0x1) );
+        SIMPLIFIER( (__uless_eq(A, B)|__ugreat_eq(A, C)),                            __iff(__ugreat_eq(B, C), 0x1) );
+        SIMPLIFIER( (__uless_eq(A, B)&__uless_eq(A, C)),                             __iff((B==C), __uless_eq(A, B)) );
+        SIMPLIFIER( (__uless_eq(A, B)&__uless_eq(A, C)),                             __iff(__uless_eq(B, C), __uless_eq(A, B)) );
+        SIMPLIFIER( (__uless_eq(A, B)&__uless_eq(A, C)),                             __iff(__uless(B, C), __uless_eq(A, B)) );
+        SIMPLIFIER( (__uless_eq(A, B)|__uless_eq(A, C)),                             __iff((B==C), __uless_eq(A, B)) );
+        SIMPLIFIER( (__uless_eq(A, B)|__uless_eq(A, C)),                             __iff(__ugreat(B, C), __uless_eq(A, B)) );
+        SIMPLIFIER( (__uless_eq(A, B)|__uless_eq(A, C)),                             __iff(__ugreat_eq(B, C), __uless_eq(A, B)) );
+        SIMPLIFIER( (__uless_eq(A, B)&__uless(A, C)),                                __iff((B==C), __uless(A, B)) );
+        SIMPLIFIER( (__uless_eq(A, B)&__uless(A, C)),                                __iff(__uless(B, C), __uless_eq(A, B)) );
+        SIMPLIFIER( (__uless_eq(A, B)|__uless(A, C)),                                __iff((B==C), __uless_eq(A, B)) );
+        SIMPLIFIER( (__uless_eq(A, B)|__uless(A, C)),                                __iff(__ugreat(B, C), __uless_eq(A, B)) );
+        SIMPLIFIER( (__uless_eq(A, B)|__uless(A, C)),                                __iff(__ugreat_eq(B, C), __uless_eq(A, B)) );
+        SIMPLIFIER( (__uless(A, B)&(A==C)),                                          __iff((B==C), 0x0) );
+        SIMPLIFIER( (__uless(A, B)&(A==C)),                                          __iff(__uless_eq(B, C), 0x0) );
+        SIMPLIFIER( (__uless(A, B)&(A==C)),                                          __iff(__uless(B, C), 0x0) );
+        SIMPLIFIER( (__uless(A, B)|(A==C)),                                          __iff((B==C), __uless_eq(A, B)) );
+        SIMPLIFIER( (__uless(A, B)|(A==C)),                                          __iff(__ugreat(B, C), __uless(A, B)) );
+        SIMPLIFIER( (__uless(A, B)&(A!=C)),                                          __iff((B==C), __uless(A, B)) );
+        SIMPLIFIER( (__uless(A, B)&(A!=C)),                                          __iff(__uless_eq(B, C), __uless(A, B)) );
+        SIMPLIFIER( (__uless(A, B)&(A!=C)),                                          __iff(__uless(B, C), __uless(A, B)) );
+        SIMPLIFIER( (__uless(A, B)|(A!=C)),                                          __iff((B==C), (A!=B)) );
+        SIMPLIFIER( (__uless(A, B)|(A!=C)),                                          __iff(__ugreat(B, C), 0x1) );
+        SIMPLIFIER( (__uless(A, B)&__ugreat(A, C)),                                  __iff((B==C), 0x0) );
+        SIMPLIFIER( (__uless(A, B)&__ugreat(A, C)),                                  __iff(__uless_eq(B, C), 0x0) );
+        SIMPLIFIER( (__uless(A, B)&__ugreat(A, C)),                                  __iff(__uless(B, C), 0x0) );
+        SIMPLIFIER( (__uless(A, B)|__ugreat(A, C)),                                  __iff((B==C), (A!=B)) );
+        SIMPLIFIER( (__uless(A, B)|__ugreat(A, C)),                                  __iff(__ugreat(B, C), 0x1) );
+        SIMPLIFIER( (__uless(A, B)&__ugreat_eq(A, C)),                               __iff((B==C), 0x0) );
+        SIMPLIFIER( (__uless(A, B)&__ugreat_eq(A, C)),                               __iff(__uless_eq(B, C), 0x0) );
+        SIMPLIFIER( (__uless(A, B)&__ugreat_eq(A, C)),                               __iff(__uless(B, C), 0x0) );
+        SIMPLIFIER( (__uless(A, B)|__ugreat_eq(A, C)),                               __iff((B==C), 0x1) );
+        SIMPLIFIER( (__uless(A, B)|__ugreat_eq(A, C)),                               __iff(__ugreat(B, C), 0x1) );
+        SIMPLIFIER( (__uless(A, B)|__ugreat_eq(A, C)),                               __iff(__ugreat_eq(B, C), 0x1) );
+        SIMPLIFIER( (__uless(A, B)&__uless_eq(A, C)),                                __iff((B==C), __uless(A, B)) );
+        SIMPLIFIER( (__uless(A, B)&__uless_eq(A, C)),                                __iff(__uless_eq(B, C), __uless(A, B)) );
+        SIMPLIFIER( (__uless(A, B)&__uless_eq(A, C)),                                __iff(__uless(B, C), __uless(A, B)) );
+        SIMPLIFIER( (__uless(A, B)|__uless_eq(A, C)),                                __iff((B==C), __uless_eq(A, B)) );
+        SIMPLIFIER( (__uless(A, B)|__uless_eq(A, C)),                                __iff(__ugreat(B, C), __uless(A, B)) );
+        SIMPLIFIER( (__uless(A, B)&__uless(A, C)),                                   __iff((B==C), __uless(A, B)) );
+        SIMPLIFIER( (__uless(A, B)&__uless(A, C)),                                   __iff(__uless_eq(B, C), __uless(A, B)) );
+        SIMPLIFIER( (__uless(A, B)&__uless(A, C)),                                   __iff(__uless(B, C), __uless(A, B)) );
+        SIMPLIFIER( (__uless(A, B)|__uless(A, C)),                                   __iff((B==C), __uless(A, B)) );
+        SIMPLIFIER( (__uless(A, B)|__uless(A, C)),                                   __iff(__ugreat(B, C), __uless(A, B)) );
+        SIMPLIFIER( (__uless(A, B)|__uless(A, C)),                                   __iff(__ugreat_eq(B, C), __uless(A, B)) );
+        SIMPLIFIER( ((A>B)&(C>A)),                                                   __iff((B>C), 0x0) );
+        SIMPLIFIER( ((A>B)&(C>A)),                                                   __iff((B>=C), 0x0) );
+        SIMPLIFIER( ((A>B)&(C>A)),                                                   __iff((B==C), 0x0) );
+        SIMPLIFIER( ((A>B)|(C>A)),                                                   __iff((B==C), (A!=B)) );
+        SIMPLIFIER( ((A>B)|(C>A)),                                                   __iff((B<C), 0x1) );
+        SIMPLIFIER( ((A>B)&(C>=A)),                                                  __iff((B>C), 0x0) );
+        SIMPLIFIER( ((A>B)&(C>=A)),                                                  __iff((B>=C), 0x0) );
+        SIMPLIFIER( ((A>B)&(C>=A)),                                                  __iff((B==C), 0x0) );
+        SIMPLIFIER( ((A>B)|(C>=A)),                                                  __iff((B==C), 0x1) );
+        SIMPLIFIER( ((A>B)|(C>=A)),                                                  __iff((B<=C), 0x1) );
+        SIMPLIFIER( ((A>B)|(C>=A)),                                                  __iff((B<C), 0x1) );
+        SIMPLIFIER( ((A>B)&(C==A)),                                                  __iff((B>C), 0x0) );
+        SIMPLIFIER( ((A>B)&(C==A)),                                                  __iff((B>=C), 0x0) );
+        SIMPLIFIER( ((A>B)&(C==A)),                                                  __iff((B==C), 0x0) );
+        SIMPLIFIER( ((A>B)|(C==A)),                                                  __iff((B==C), (A>=B)) );
+        SIMPLIFIER( ((A>B)|(C==A)),                                                  __iff((B<C), (A>B)) );
+        SIMPLIFIER( ((A>B)&(C!=A)),                                                  __iff((B>C), (A>B)) );
+        SIMPLIFIER( ((A>B)&(C!=A)),                                                  __iff((B>=C), (A>B)) );
+        SIMPLIFIER( ((A>B)&(C!=A)),                                                  __iff((B==C), (A>B)) );
+        SIMPLIFIER( ((A>B)|(C!=A)),                                                  __iff((B==C), (A!=B)) );
+        SIMPLIFIER( ((A>B)|(C!=A)),                                                  __iff((B<C), 0x1) );
+        SIMPLIFIER( ((A>B)&(C<=A)),                                                  __iff((B>C), (A>B)) );
+        SIMPLIFIER( ((A>B)&(C<=A)),                                                  __iff((B>=C), (A>B)) );
+        SIMPLIFIER( ((A>B)&(C<=A)),                                                  __iff((B==C), (A>B)) );
+        SIMPLIFIER( ((A>B)|(C<=A)),                                                  __iff((B==C), (A>=B)) );
+        SIMPLIFIER( ((A>B)|(C<=A)),                                                  __iff((B<C), (A>B)) );
+        SIMPLIFIER( ((A>B)&(C<A)),                                                   __iff((B>C), (A>B)) );
+        SIMPLIFIER( ((A>B)&(C<A)),                                                   __iff((B>=C), (A>B)) );
+        SIMPLIFIER( ((A>B)&(C<A)),                                                   __iff((B==C), (A>B)) );
+        SIMPLIFIER( ((A>B)|(C<A)),                                                   __iff((B==C), (A>B)) );
+        SIMPLIFIER( ((A>B)|(C<A)),                                                   __iff((B<=C), (A>B)) );
+        SIMPLIFIER( ((A>B)|(C<A)),                                                   __iff((B<C), (A>B)) );
+        SIMPLIFIER( ((A>=B)&(C>A)),                                                  __iff((B>C), 0x0) );
+        SIMPLIFIER( ((A>=B)&(C>A)),                                                  __iff((B>=C), 0x0) );
+        SIMPLIFIER( ((A>=B)&(C>A)),                                                  __iff((B==C), 0x0) );
+        SIMPLIFIER( ((A>=B)|(C>A)),                                                  __iff((B==C), 0x1) );
+        SIMPLIFIER( ((A>=B)|(C>A)),                                                  __iff((B<=C), 0x1) );
+        SIMPLIFIER( ((A>=B)|(C>A)),                                                  __iff((B<C), 0x1) );
+        SIMPLIFIER( ((A>=B)&(C>=A)),                                                 __iff((B>C), 0x0) );
+        SIMPLIFIER( ((A>=B)&(C>=A)),                                                 __iff((B==C), (A==B)) );
+        SIMPLIFIER( ((A>=B)|(C>=A)),                                                 __iff((B==C), 0x1) );
+        SIMPLIFIER( ((A>=B)|(C>=A)),                                                 __iff((B<=C), 0x1) );
+        SIMPLIFIER( ((A>=B)|(C>=A)),                                                 __iff((B<C), 0x1) );
+        SIMPLIFIER( ((A>=B)&(C==A)),                                                 __iff((B>C), 0x0) );
+        SIMPLIFIER( ((A>=B)&(C==A)),                                                 __iff((B==C), (A==B)) );
+        SIMPLIFIER( ((A>=B)|(C==A)),                                                 __iff((B==C), (A>=B)) );
+        SIMPLIFIER( ((A>=B)|(C==A)),                                                 __iff((B<=C), (A>=B)) );
+        SIMPLIFIER( ((A>=B)|(C==A)),                                                 __iff((B<C), (A>=B)) );
+        SIMPLIFIER( ((A>=B)&(C!=A)),                                                 __iff((B>C), (A>=B)) );
+        SIMPLIFIER( ((A>=B)&(C!=A)),                                                 __iff((B==C), (A>B)) );
+        SIMPLIFIER( ((A>=B)|(C!=A)),                                                 __iff((B==C), 0x1) );
+        SIMPLIFIER( ((A>=B)|(C!=A)),                                                 __iff((B<=C), 0x1) );
+        SIMPLIFIER( ((A>=B)|(C!=A)),                                                 __iff((B<C), 0x1) );
+        SIMPLIFIER( ((A>=B)&(C<=A)),                                                 __iff((B>C), (A>=B)) );
+        SIMPLIFIER( ((A>=B)&(C<=A)),                                                 __iff((B>=C), (A>=B)) );
+        SIMPLIFIER( ((A>=B)&(C<=A)),                                                 __iff((B==C), (A>=B)) );
+        SIMPLIFIER( ((A>=B)|(C<=A)),                                                 __iff((B==C), (A>=B)) );
+        SIMPLIFIER( ((A>=B)|(C<=A)),                                                 __iff((B<=C), (A>=B)) );
+        SIMPLIFIER( ((A>=B)|(C<=A)),                                                 __iff((B<C), (A>=B)) );
+        SIMPLIFIER( ((A>=B)&(C<A)),                                                  __iff((B>C), (A>=B)) );
+        SIMPLIFIER( ((A>=B)&(C<A)),                                                  __iff((B==C), (A>B)) );
+        SIMPLIFIER( ((A>=B)|(C<A)),                                                  __iff((B==C), (A>=B)) );
+        SIMPLIFIER( ((A>=B)|(C<A)),                                                  __iff((B<=C), (A>=B)) );
+        SIMPLIFIER( ((A>=B)|(C<A)),                                                  __iff((B<C), (A>=B)) );
+        SIMPLIFIER( ((A==B)&(C>A)),                                                  __iff((B>C), 0x0) );
+        SIMPLIFIER( ((A==B)&(C>A)),                                                  __iff((B>=C), 0x0) );
+        SIMPLIFIER( ((A==B)&(C>A)),                                                  __iff((B==C), 0x0) );
+        SIMPLIFIER( ((A==B)&(C>A)),                                                  __iff((B<C), (A==B)) );
+        SIMPLIFIER( ((A==B)|(C>A)),                                                  __iff((B==C), (A<=B)) );
+        SIMPLIFIER( ((A==B)&(C>=A)),                                                 __iff((B>C), 0x0) );
+        SIMPLIFIER( ((A==B)&(C>=A)),                                                 __iff((B==C), (A==B)) );
+        SIMPLIFIER( ((A==B)&(C>=A)),                                                 __iff((B<=C), (A==B)) );
+        SIMPLIFIER( ((A==B)&(C>=A)),                                                 __iff((B<C), (A==B)) );
+        SIMPLIFIER( ((A==B)|(C>=A)),                                                 __iff((B==C), (A<=B)) );
+        SIMPLIFIER( ((A==B)&(C==A)),                                                 __iff((B>C), 0x0) );
+        SIMPLIFIER( ((A==B)&(C==A)),                                                 __iff((B==C), (A==B)) );
+        SIMPLIFIER( ((A==B)&(C==A)),                                                 __iff((B!=C), 0x0) );
+        SIMPLIFIER( ((A==B)&(C==A)),                                                 __iff((B<C), 0x0) );
+        SIMPLIFIER( ((A==B)&(C==A)),                                                 __iff(__ugreat(B, C), 0x0) );
+        SIMPLIFIER( ((A==B)&(C==A)),                                                 __iff(__uless(B, C), 0x0) );
+        SIMPLIFIER( ((A==B)|(C==A)),                                                 __iff((B==C), (A==B)) );
+        SIMPLIFIER( ((A==B)&(C!=A)),                                                 __iff((B>C), (A==B)) );
+        SIMPLIFIER( ((A==B)&(C!=A)),                                                 __iff((B==C), 0x0) );
+        SIMPLIFIER( ((A==B)&(C!=A)),                                                 __iff((B!=C), (A==B)) );
+        SIMPLIFIER( ((A==B)&(C!=A)),                                                 __iff((B<C), (A==B)) );
+        SIMPLIFIER( ((A==B)&(C!=A)),                                                 __iff(__ugreat(B, C), (A==B)) );
+        SIMPLIFIER( ((A==B)&(C!=A)),                                                 __iff(__uless(B, C), (A==B)) );
+        SIMPLIFIER( ((A==B)|(C!=A)),                                                 __iff((B==C), 0x1) );
+        SIMPLIFIER( ((A==B)&(C<=A)),                                                 __iff((B>C), (A==B)) );
+        SIMPLIFIER( ((A==B)&(C<=A)),                                                 __iff((B>=C), (A==B)) );
+        SIMPLIFIER( ((A==B)&(C<=A)),                                                 __iff((B==C), (A==B)) );
+        SIMPLIFIER( ((A==B)&(C<=A)),                                                 __iff((B<C), 0x0) );
+        SIMPLIFIER( ((A==B)|(C<=A)),                                                 __iff((B==C), (A>=B)) );
+        SIMPLIFIER( ((A==B)&(C<A)),                                                  __iff((B>C), (A==B)) );
+        SIMPLIFIER( ((A==B)&(C<A)),                                                  __iff((B==C), 0x0) );
+        SIMPLIFIER( ((A==B)&(C<A)),                                                  __iff((B<=C), 0x0) );
+        SIMPLIFIER( ((A==B)&(C<A)),                                                  __iff((B<C), 0x0) );
+        SIMPLIFIER( ((A==B)|(C<A)),                                                  __iff((B==C), (A>=B)) );
+        SIMPLIFIER( ((A==B)&__ugreat(C, A)),                                         __iff((B==C), 0x0) );
+        SIMPLIFIER( ((A==B)&__ugreat(C, A)),                                         __iff(__ugreat(B, C), 0x0) );
+        SIMPLIFIER( ((A==B)&__ugreat(C, A)),                                         __iff(__ugreat_eq(B, C), 0x0) );
+        SIMPLIFIER( ((A==B)&__ugreat(C, A)),                                         __iff(__uless(B, C), (A==B)) );
+        SIMPLIFIER( ((A==B)|__ugreat(C, A)),                                         __iff((B==C), __uless_eq(A, B)) );
+        SIMPLIFIER( ((A==B)&__ugreat_eq(C, A)),                                      __iff((B==C), (A==B)) );
+        SIMPLIFIER( ((A==B)&__ugreat_eq(C, A)),                                      __iff(__ugreat(B, C), 0x0) );
+        SIMPLIFIER( ((A==B)&__ugreat_eq(C, A)),                                      __iff(__uless_eq(B, C), (A==B)) );
+        SIMPLIFIER( ((A==B)&__ugreat_eq(C, A)),                                      __iff(__uless(B, C), (A==B)) );
+        SIMPLIFIER( ((A==B)|__ugreat_eq(C, A)),                                      __iff((B==C), __uless_eq(A, B)) );
+        SIMPLIFIER( ((A==B)&__uless_eq(C, A)),                                       __iff((B==C), (A==B)) );
+        SIMPLIFIER( ((A==B)&__uless_eq(C, A)),                                       __iff(__ugreat(B, C), (A==B)) );
+        SIMPLIFIER( ((A==B)&__uless_eq(C, A)),                                       __iff(__ugreat_eq(B, C), (A==B)) );
+        SIMPLIFIER( ((A==B)&__uless_eq(C, A)),                                       __iff(__uless(B, C), 0x0) );
+        SIMPLIFIER( ((A==B)|__uless_eq(C, A)),                                       __iff((B==C), __ugreat_eq(A, B)) );
+        SIMPLIFIER( ((A==B)&__uless(C, A)),                                          __iff((B==C), 0x0) );
+        SIMPLIFIER( ((A==B)&__uless(C, A)),                                          __iff(__ugreat(B, C), (A==B)) );
+        SIMPLIFIER( ((A==B)&__uless(C, A)),                                          __iff(__uless_eq(B, C), 0x0) );
+        SIMPLIFIER( ((A==B)&__uless(C, A)),                                          __iff(__uless(B, C), 0x0) );
+        SIMPLIFIER( ((A==B)|__uless(C, A)),                                          __iff((B==C), __ugreat_eq(A, B)) );
+        SIMPLIFIER( ((A!=B)&(C>A)),                                                  __iff((B==C), (A<B)) );
+        SIMPLIFIER( ((A!=B)|(C>A)),                                                  __iff((B>C), (A!=B)) );
+        SIMPLIFIER( ((A!=B)|(C>A)),                                                  __iff((B>=C), (A!=B)) );
+        SIMPLIFIER( ((A!=B)|(C>A)),                                                  __iff((B==C), (A!=B)) );
+        SIMPLIFIER( ((A!=B)|(C>A)),                                                  __iff((B<C), 0x1) );
+        SIMPLIFIER( ((A!=B)&(C>=A)),                                                 __iff((B==C), (A<B)) );
+        SIMPLIFIER( ((A!=B)|(C>=A)),                                                 __iff((B>C), (A!=B)) );
+        SIMPLIFIER( ((A!=B)|(C>=A)),                                                 __iff((B==C), 0x1) );
+        SIMPLIFIER( ((A!=B)|(C>=A)),                                                 __iff((B<=C), 0x1) );
+        SIMPLIFIER( ((A!=B)|(C>=A)),                                                 __iff((B<C), 0x1) );
+        SIMPLIFIER( ((A!=B)&(C==A)),                                                 __iff((B==C), 0x0) );
+        SIMPLIFIER( ((A!=B)|(C==A)),                                                 __iff((B>C), (A!=B)) );
+        SIMPLIFIER( ((A!=B)|(C==A)),                                                 __iff((B==C), 0x1) );
+        SIMPLIFIER( ((A!=B)|(C==A)),                                                 __iff((B!=C), (A!=B)) );
+        SIMPLIFIER( ((A!=B)|(C==A)),                                                 __iff((B<C), (A!=B)) );
+        SIMPLIFIER( ((A!=B)|(C==A)),                                                 __iff(__ugreat(B, C), (A!=B)) );
+        SIMPLIFIER( ((A!=B)|(C==A)),                                                 __iff(__uless(B, C), (A!=B)) );
+        SIMPLIFIER( ((A!=B)&(C!=A)),                                                 __iff((B==C), (A!=B)) );
+        SIMPLIFIER( ((A!=B)|(C!=A)),                                                 __iff((B>C), 0x1) );
+        SIMPLIFIER( ((A!=B)|(C!=A)),                                                 __iff((B==C), (A!=B)) );
+        SIMPLIFIER( ((A!=B)|(C!=A)),                                                 __iff((B!=C), 0x1) );
+        SIMPLIFIER( ((A!=B)|(C!=A)),                                                 __iff((B<C), 0x1) );
+        SIMPLIFIER( ((A!=B)|(C!=A)),                                                 __iff(__ugreat(B, C), 0x1) );
+        SIMPLIFIER( ((A!=B)|(C!=A)),                                                 __iff(__uless(B, C), 0x1) );
+        SIMPLIFIER( ((A!=B)&(C<=A)),                                                 __iff((B==C), (A>B)) );
+        SIMPLIFIER( ((A!=B)|(C<=A)),                                                 __iff((B>C), 0x1) );
+        SIMPLIFIER( ((A!=B)|(C<=A)),                                                 __iff((B>=C), 0x1) );
+        SIMPLIFIER( ((A!=B)|(C<=A)),                                                 __iff((B==C), 0x1) );
+        SIMPLIFIER( ((A!=B)|(C<=A)),                                                 __iff((B<C), (A!=B)) );
+        SIMPLIFIER( ((A!=B)&(C<A)),                                                  __iff((B==C), (A>B)) );
+        SIMPLIFIER( ((A!=B)|(C<A)),                                                  __iff((B>C), 0x1) );
+        SIMPLIFIER( ((A!=B)|(C<A)),                                                  __iff((B==C), (A!=B)) );
+        SIMPLIFIER( ((A!=B)|(C<A)),                                                  __iff((B<=C), (A!=B)) );
+        SIMPLIFIER( ((A!=B)|(C<A)),                                                  __iff((B<C), (A!=B)) );
+        SIMPLIFIER( ((A!=B)&__ugreat(C, A)),                                         __iff((B==C), __uless(A, B)) );
+        SIMPLIFIER( ((A!=B)|__ugreat(C, A)),                                         __iff((B==C), (A!=B)) );
+        SIMPLIFIER( ((A!=B)|__ugreat(C, A)),                                         __iff(__ugreat(B, C), (A!=B)) );
+        SIMPLIFIER( ((A!=B)|__ugreat(C, A)),                                         __iff(__ugreat_eq(B, C), (A!=B)) );
+        SIMPLIFIER( ((A!=B)|__ugreat(C, A)),                                         __iff(__uless(B, C), 0x1) );
+        SIMPLIFIER( ((A!=B)&__ugreat_eq(C, A)),                                      __iff((B==C), __uless(A, B)) );
+        SIMPLIFIER( ((A!=B)|__ugreat_eq(C, A)),                                      __iff((B==C), 0x1) );
+        SIMPLIFIER( ((A!=B)|__ugreat_eq(C, A)),                                      __iff(__ugreat(B, C), (A!=B)) );
+        SIMPLIFIER( ((A!=B)|__ugreat_eq(C, A)),                                      __iff(__uless_eq(B, C), 0x1) );
+        SIMPLIFIER( ((A!=B)|__ugreat_eq(C, A)),                                      __iff(__uless(B, C), 0x1) );
+        SIMPLIFIER( ((A!=B)&__uless_eq(C, A)),                                       __iff((B==C), __ugreat(A, B)) );
+        SIMPLIFIER( ((A!=B)|__uless_eq(C, A)),                                       __iff((B==C), 0x1) );
+        SIMPLIFIER( ((A!=B)|__uless_eq(C, A)),                                       __iff(__ugreat(B, C), 0x1) );
+        SIMPLIFIER( ((A!=B)|__uless_eq(C, A)),                                       __iff(__ugreat_eq(B, C), 0x1) );
+        SIMPLIFIER( ((A!=B)|__uless_eq(C, A)),                                       __iff(__uless(B, C), (A!=B)) );
+        SIMPLIFIER( ((A!=B)&__uless(C, A)),                                          __iff((B==C), __ugreat(A, B)) );
+        SIMPLIFIER( ((A!=B)|__uless(C, A)),                                          __iff((B==C), (A!=B)) );
+        SIMPLIFIER( ((A!=B)|__uless(C, A)),                                          __iff(__ugreat(B, C), 0x1) );
+        SIMPLIFIER( ((A!=B)|__uless(C, A)),                                          __iff(__uless_eq(B, C), (A!=B)) );
+        SIMPLIFIER( ((A!=B)|__uless(C, A)),                                          __iff(__uless(B, C), (A!=B)) );
+        SIMPLIFIER( ((A<=B)&(C>A)),                                                  __iff((B==C), (A<B)) );
+        SIMPLIFIER( ((A<=B)&(C>A)),                                                  __iff((B<C), (A<=B)) );
+        SIMPLIFIER( ((A<=B)|(C>A)),                                                  __iff((B>C), (A<=B)) );
+        SIMPLIFIER( ((A<=B)|(C>A)),                                                  __iff((B>=C), (A<=B)) );
+        SIMPLIFIER( ((A<=B)|(C>A)),                                                  __iff((B==C), (A<=B)) );
+        SIMPLIFIER( ((A<=B)&(C>=A)),                                                 __iff((B==C), (A<=B)) );
+        SIMPLIFIER( ((A<=B)&(C>=A)),                                                 __iff((B<=C), (A<=B)) );
+        SIMPLIFIER( ((A<=B)&(C>=A)),                                                 __iff((B<C), (A<=B)) );
+        SIMPLIFIER( ((A<=B)|(C>=A)),                                                 __iff((B>C), (A<=B)) );
+        SIMPLIFIER( ((A<=B)|(C>=A)),                                                 __iff((B>=C), (A<=B)) );
+        SIMPLIFIER( ((A<=B)|(C>=A)),                                                 __iff((B==C), (A<=B)) );
+        SIMPLIFIER( ((A<=B)&(C==A)),                                                 __iff((B==C), (A==B)) );
+        SIMPLIFIER( ((A<=B)&(C==A)),                                                 __iff((B<C), 0x0) );
+        SIMPLIFIER( ((A<=B)|(C==A)),                                                 __iff((B>C), (A<=B)) );
+        SIMPLIFIER( ((A<=B)|(C==A)),                                                 __iff((B>=C), (A<=B)) );
+        SIMPLIFIER( ((A<=B)|(C==A)),                                                 __iff((B==C), (A<=B)) );
+        SIMPLIFIER( ((A<=B)&(C!=A)),                                                 __iff((B==C), (A<B)) );
+        SIMPLIFIER( ((A<=B)&(C!=A)),                                                 __iff((B<C), (A<=B)) );
+        SIMPLIFIER( ((A<=B)|(C!=A)),                                                 __iff((B>C), 0x1) );
+        SIMPLIFIER( ((A<=B)|(C!=A)),                                                 __iff((B>=C), 0x1) );
+        SIMPLIFIER( ((A<=B)|(C!=A)),                                                 __iff((B==C), 0x1) );
+        SIMPLIFIER( ((A<=B)&(C<=A)),                                                 __iff((B==C), (A==B)) );
+        SIMPLIFIER( ((A<=B)&(C<=A)),                                                 __iff((B<C), 0x0) );
+        SIMPLIFIER( ((A<=B)|(C<=A)),                                                 __iff((B>C), 0x1) );
+        SIMPLIFIER( ((A<=B)|(C<=A)),                                                 __iff((B>=C), 0x1) );
+        SIMPLIFIER( ((A<=B)|(C<=A)),                                                 __iff((B==C), 0x1) );
+        SIMPLIFIER( ((A<=B)&(C<A)),                                                  __iff((B==C), 0x0) );
+        SIMPLIFIER( ((A<=B)&(C<A)),                                                  __iff((B<=C), 0x0) );
+        SIMPLIFIER( ((A<=B)&(C<A)),                                                  __iff((B<C), 0x0) );
+        SIMPLIFIER( ((A<=B)|(C<A)),                                                  __iff((B>C), 0x1) );
+        SIMPLIFIER( ((A<=B)|(C<A)),                                                  __iff((B>=C), 0x1) );
+        SIMPLIFIER( ((A<=B)|(C<A)),                                                  __iff((B==C), 0x1) );
+        SIMPLIFIER( ((A<B)&(C>A)),                                                   __iff((B==C), (A<B)) );
+        SIMPLIFIER( ((A<B)&(C>A)),                                                   __iff((B<=C), (A<B)) );
+        SIMPLIFIER( ((A<B)&(C>A)),                                                   __iff((B<C), (A<B)) );
+        SIMPLIFIER( ((A<B)|(C>A)),                                                   __iff((B>C), (A<B)) );
+        SIMPLIFIER( ((A<B)|(C>A)),                                                   __iff((B>=C), (A<B)) );
+        SIMPLIFIER( ((A<B)|(C>A)),                                                   __iff((B==C), (A<B)) );
+        SIMPLIFIER( ((A<B)&(C>=A)),                                                  __iff((B==C), (A<B)) );
+        SIMPLIFIER( ((A<B)&(C>=A)),                                                  __iff((B<=C), (A<B)) );
+        SIMPLIFIER( ((A<B)&(C>=A)),                                                  __iff((B<C), (A<B)) );
+        SIMPLIFIER( ((A<B)|(C>=A)),                                                  __iff((B>C), (A<B)) );
+        SIMPLIFIER( ((A<B)|(C>=A)),                                                  __iff((B==C), (A<=B)) );
+        SIMPLIFIER( ((A<B)&(C==A)),                                                  __iff((B==C), 0x0) );
+        SIMPLIFIER( ((A<B)&(C==A)),                                                  __iff((B<=C), 0x0) );
+        SIMPLIFIER( ((A<B)&(C==A)),                                                  __iff((B<C), 0x0) );
+        SIMPLIFIER( ((A<B)|(C==A)),                                                  __iff((B>C), (A<B)) );
+        SIMPLIFIER( ((A<B)|(C==A)),                                                  __iff((B==C), (A<=B)) );
+        SIMPLIFIER( ((A<B)&(C!=A)),                                                  __iff((B==C), (A<B)) );
+        SIMPLIFIER( ((A<B)&(C!=A)),                                                  __iff((B<=C), (A<B)) );
+        SIMPLIFIER( ((A<B)&(C!=A)),                                                  __iff((B<C), (A<B)) );
+        SIMPLIFIER( ((A<B)|(C!=A)),                                                  __iff((B>C), 0x1) );
+        SIMPLIFIER( ((A<B)|(C!=A)),                                                  __iff((B==C), (A!=B)) );
+        SIMPLIFIER( ((A<B)&(C<=A)),                                                  __iff((B==C), 0x0) );
+        SIMPLIFIER( ((A<B)&(C<=A)),                                                  __iff((B<=C), 0x0) );
+        SIMPLIFIER( ((A<B)&(C<=A)),                                                  __iff((B<C), 0x0) );
+        SIMPLIFIER( ((A<B)|(C<=A)),                                                  __iff((B>C), 0x1) );
+        SIMPLIFIER( ((A<B)|(C<=A)),                                                  __iff((B>=C), 0x1) );
+        SIMPLIFIER( ((A<B)|(C<=A)),                                                  __iff((B==C), 0x1) );
+        SIMPLIFIER( ((A<B)&(C<A)),                                                   __iff((B==C), 0x0) );
+        SIMPLIFIER( ((A<B)&(C<A)),                                                   __iff((B<=C), 0x0) );
+        SIMPLIFIER( ((A<B)&(C<A)),                                                   __iff((B<C), 0x0) );
+        SIMPLIFIER( ((A<B)|(C<A)),                                                   __iff((B>C), 0x1) );
+        SIMPLIFIER( ((A<B)|(C<A)),                                                   __iff((B==C), (A!=B)) );
+        SIMPLIFIER( (__ugreat(A, B)&(C==A)),                                         __iff((B==C), 0x0) );
+        SIMPLIFIER( (__ugreat(A, B)&(C==A)),                                         __iff(__ugreat(B, C), 0x0) );
+        SIMPLIFIER( (__ugreat(A, B)&(C==A)),                                         __iff(__ugreat_eq(B, C), 0x0) );
+        SIMPLIFIER( (__ugreat(A, B)|(C==A)),                                         __iff((B==C), __ugreat_eq(A, B)) );
+        SIMPLIFIER( (__ugreat(A, B)|(C==A)),                                         __iff(__uless(B, C), __ugreat(A, B)) );
+        SIMPLIFIER( (__ugreat(A, B)&(C!=A)),                                         __iff((B==C), __ugreat(A, B)) );
+        SIMPLIFIER( (__ugreat(A, B)&(C!=A)),                                         __iff(__ugreat(B, C), __ugreat(A, B)) );
+        SIMPLIFIER( (__ugreat(A, B)&(C!=A)),                                         __iff(__ugreat_eq(B, C), __ugreat(A, B)) );
+        SIMPLIFIER( (__ugreat(A, B)|(C!=A)),                                         __iff((B==C), (A!=B)) );
+        SIMPLIFIER( (__ugreat(A, B)|(C!=A)),                                         __iff(__uless(B, C), 0x1) );
+        SIMPLIFIER( (__ugreat(A, B)&__ugreat(C, A)),                                 __iff((B==C), 0x0) );
+        SIMPLIFIER( (__ugreat(A, B)&__ugreat(C, A)),                                 __iff(__ugreat(B, C), 0x0) );
+        SIMPLIFIER( (__ugreat(A, B)&__ugreat(C, A)),                                 __iff(__ugreat_eq(B, C), 0x0) );
+        SIMPLIFIER( (__ugreat(A, B)|__ugreat(C, A)),                                 __iff((B==C), (A!=B)) );
+        SIMPLIFIER( (__ugreat(A, B)|__ugreat(C, A)),                                 __iff(__uless(B, C), 0x1) );
+        SIMPLIFIER( (__ugreat(A, B)&__ugreat_eq(C, A)),                              __iff((B==C), 0x0) );
+        SIMPLIFIER( (__ugreat(A, B)&__ugreat_eq(C, A)),                              __iff(__ugreat(B, C), 0x0) );
+        SIMPLIFIER( (__ugreat(A, B)&__ugreat_eq(C, A)),                              __iff(__ugreat_eq(B, C), 0x0) );
+        SIMPLIFIER( (__ugreat(A, B)|__ugreat_eq(C, A)),                              __iff((B==C), 0x1) );
+        SIMPLIFIER( (__ugreat(A, B)|__ugreat_eq(C, A)),                              __iff(__uless_eq(B, C), 0x1) );
+        SIMPLIFIER( (__ugreat(A, B)|__ugreat_eq(C, A)),                              __iff(__uless(B, C), 0x1) );
+        SIMPLIFIER( (__ugreat(A, B)&__uless_eq(C, A)),                               __iff((B==C), __ugreat(A, B)) );
+        SIMPLIFIER( (__ugreat(A, B)&__uless_eq(C, A)),                               __iff(__ugreat(B, C), __ugreat(A, B)) );
+        SIMPLIFIER( (__ugreat(A, B)&__uless_eq(C, A)),                               __iff(__ugreat_eq(B, C), __ugreat(A, B)) );
+        SIMPLIFIER( (__ugreat(A, B)|__uless_eq(C, A)),                               __iff((B==C), __ugreat_eq(A, B)) );
+        SIMPLIFIER( (__ugreat(A, B)|__uless_eq(C, A)),                               __iff(__uless(B, C), __ugreat(A, B)) );
+        SIMPLIFIER( (__ugreat(A, B)&__uless(C, A)),                                  __iff((B==C), __ugreat(A, B)) );
+        SIMPLIFIER( (__ugreat(A, B)&__uless(C, A)),                                  __iff(__ugreat(B, C), __ugreat(A, B)) );
+        SIMPLIFIER( (__ugreat(A, B)&__uless(C, A)),                                  __iff(__ugreat_eq(B, C), __ugreat(A, B)) );
+        SIMPLIFIER( (__ugreat(A, B)|__uless(C, A)),                                  __iff((B==C), __ugreat(A, B)) );
+        SIMPLIFIER( (__ugreat(A, B)|__uless(C, A)),                                  __iff(__uless_eq(B, C), __ugreat(A, B)) );
+        SIMPLIFIER( (__ugreat(A, B)|__uless(C, A)),                                  __iff(__uless(B, C), __ugreat(A, B)) );
+        SIMPLIFIER( (__ugreat_eq(A, B)&(C==A)),                                      __iff((B==C), (A==B)) );
+        SIMPLIFIER( (__ugreat_eq(A, B)&(C==A)),                                      __iff(__ugreat(B, C), 0x0) );
+        SIMPLIFIER( (__ugreat_eq(A, B)|(C==A)),                                      __iff((B==C), __ugreat_eq(A, B)) );
+        SIMPLIFIER( (__ugreat_eq(A, B)|(C==A)),                                      __iff(__uless_eq(B, C), __ugreat_eq(A, B)) );
+        SIMPLIFIER( (__ugreat_eq(A, B)|(C==A)),                                      __iff(__uless(B, C), __ugreat_eq(A, B)) );
+        SIMPLIFIER( (__ugreat_eq(A, B)&(C!=A)),                                      __iff((B==C), __ugreat(A, B)) );
+        SIMPLIFIER( (__ugreat_eq(A, B)&(C!=A)),                                      __iff(__ugreat(B, C), __ugreat_eq(A, B)) );
+        SIMPLIFIER( (__ugreat_eq(A, B)|(C!=A)),                                      __iff((B==C), 0x1) );
+        SIMPLIFIER( (__ugreat_eq(A, B)|(C!=A)),                                      __iff(__uless_eq(B, C), 0x1) );
+        SIMPLIFIER( (__ugreat_eq(A, B)|(C!=A)),                                      __iff(__uless(B, C), 0x1) );
+        SIMPLIFIER( (__ugreat_eq(A, B)&__ugreat(C, A)),                              __iff((B==C), 0x0) );
+        SIMPLIFIER( (__ugreat_eq(A, B)&__ugreat(C, A)),                              __iff(__ugreat(B, C), 0x0) );
+        SIMPLIFIER( (__ugreat_eq(A, B)&__ugreat(C, A)),                              __iff(__ugreat_eq(B, C), 0x0) );
+        SIMPLIFIER( (__ugreat_eq(A, B)|__ugreat(C, A)),                              __iff((B==C), 0x1) );
+        SIMPLIFIER( (__ugreat_eq(A, B)|__ugreat(C, A)),                              __iff(__uless_eq(B, C), 0x1) );
+        SIMPLIFIER( (__ugreat_eq(A, B)|__ugreat(C, A)),                              __iff(__uless(B, C), 0x1) );
+        SIMPLIFIER( (__ugreat_eq(A, B)&__ugreat_eq(C, A)),                           __iff((B==C), (A==B)) );
+        SIMPLIFIER( (__ugreat_eq(A, B)&__ugreat_eq(C, A)),                           __iff(__ugreat(B, C), 0x0) );
+        SIMPLIFIER( (__ugreat_eq(A, B)|__ugreat_eq(C, A)),                           __iff((B==C), 0x1) );
+        SIMPLIFIER( (__ugreat_eq(A, B)|__ugreat_eq(C, A)),                           __iff(__uless_eq(B, C), 0x1) );
+        SIMPLIFIER( (__ugreat_eq(A, B)|__ugreat_eq(C, A)),                           __iff(__uless(B, C), 0x1) );
+        SIMPLIFIER( (__ugreat_eq(A, B)&__uless_eq(C, A)),                            __iff((B==C), __ugreat_eq(A, B)) );
+        SIMPLIFIER( (__ugreat_eq(A, B)&__uless_eq(C, A)),                            __iff(__ugreat(B, C), __ugreat_eq(A, B)) );
+        SIMPLIFIER( (__ugreat_eq(A, B)&__uless_eq(C, A)),                            __iff(__ugreat_eq(B, C), __ugreat_eq(A, B)) );
+        SIMPLIFIER( (__ugreat_eq(A, B)|__uless_eq(C, A)),                            __iff((B==C), __ugreat_eq(A, B)) );
+        SIMPLIFIER( (__ugreat_eq(A, B)|__uless_eq(C, A)),                            __iff(__uless_eq(B, C), __ugreat_eq(A, B)) );
+        SIMPLIFIER( (__ugreat_eq(A, B)|__uless_eq(C, A)),                            __iff(__uless(B, C), __ugreat_eq(A, B)) );
+        SIMPLIFIER( (__ugreat_eq(A, B)&__uless(C, A)),                               __iff((B==C), __ugreat(A, B)) );
+        SIMPLIFIER( (__ugreat_eq(A, B)&__uless(C, A)),                               __iff(__ugreat(B, C), __ugreat_eq(A, B)) );
+        SIMPLIFIER( (__ugreat_eq(A, B)|__uless(C, A)),                               __iff((B==C), __ugreat_eq(A, B)) );
+        SIMPLIFIER( (__ugreat_eq(A, B)|__uless(C, A)),                               __iff(__uless_eq(B, C), __ugreat_eq(A, B)) );
+        SIMPLIFIER( (__ugreat_eq(A, B)|__uless(C, A)),                               __iff(__uless(B, C), __ugreat_eq(A, B)) );
+        SIMPLIFIER( (__uless_eq(A, B)&(C==A)),                                       __iff((B==C), (A==B)) );
+        SIMPLIFIER( (__uless_eq(A, B)&(C==A)),                                       __iff(__uless(B, C), 0x0) );
+        SIMPLIFIER( (__uless_eq(A, B)|(C==A)),                                       __iff((B==C), __uless_eq(A, B)) );
+        SIMPLIFIER( (__uless_eq(A, B)|(C==A)),                                       __iff(__ugreat(B, C), __uless_eq(A, B)) );
+        SIMPLIFIER( (__uless_eq(A, B)|(C==A)),                                       __iff(__ugreat_eq(B, C), __uless_eq(A, B)) );
+        SIMPLIFIER( (__uless_eq(A, B)&(C!=A)),                                       __iff((B==C), __uless(A, B)) );
+        SIMPLIFIER( (__uless_eq(A, B)&(C!=A)),                                       __iff(__uless(B, C), __uless_eq(A, B)) );
+        SIMPLIFIER( (__uless_eq(A, B)|(C!=A)),                                       __iff((B==C), 0x1) );
+        SIMPLIFIER( (__uless_eq(A, B)|(C!=A)),                                       __iff(__ugreat(B, C), 0x1) );
+        SIMPLIFIER( (__uless_eq(A, B)|(C!=A)),                                       __iff(__ugreat_eq(B, C), 0x1) );
+        SIMPLIFIER( (__uless_eq(A, B)&__ugreat(C, A)),                               __iff((B==C), __uless(A, B)) );
+        SIMPLIFIER( (__uless_eq(A, B)&__ugreat(C, A)),                               __iff(__uless(B, C), __uless_eq(A, B)) );
+        SIMPLIFIER( (__uless_eq(A, B)|__ugreat(C, A)),                               __iff((B==C), __uless_eq(A, B)) );
+        SIMPLIFIER( (__uless_eq(A, B)|__ugreat(C, A)),                               __iff(__ugreat(B, C), __uless_eq(A, B)) );
+        SIMPLIFIER( (__uless_eq(A, B)|__ugreat(C, A)),                               __iff(__ugreat_eq(B, C), __uless_eq(A, B)) );
+        SIMPLIFIER( (__uless_eq(A, B)&__ugreat_eq(C, A)),                            __iff((B==C), __uless_eq(A, B)) );
+        SIMPLIFIER( (__uless_eq(A, B)&__ugreat_eq(C, A)),                            __iff(__uless_eq(B, C), __uless_eq(A, B)) );
+        SIMPLIFIER( (__uless_eq(A, B)&__ugreat_eq(C, A)),                            __iff(__uless(B, C), __uless_eq(A, B)) );
+        SIMPLIFIER( (__uless_eq(A, B)|__ugreat_eq(C, A)),                            __iff((B==C), __uless_eq(A, B)) );
+        SIMPLIFIER( (__uless_eq(A, B)|__ugreat_eq(C, A)),                            __iff(__ugreat(B, C), __uless_eq(A, B)) );
+        SIMPLIFIER( (__uless_eq(A, B)|__ugreat_eq(C, A)),                            __iff(__ugreat_eq(B, C), __uless_eq(A, B)) );
+        SIMPLIFIER( (__uless_eq(A, B)&__uless_eq(C, A)),                             __iff((B==C), (A==B)) );
+        SIMPLIFIER( (__uless_eq(A, B)&__uless_eq(C, A)),                             __iff(__uless(B, C), 0x0) );
+        SIMPLIFIER( (__uless_eq(A, B)|__uless_eq(C, A)),                             __iff((B==C), 0x1) );
+        SIMPLIFIER( (__uless_eq(A, B)|__uless_eq(C, A)),                             __iff(__ugreat(B, C), 0x1) );
+        SIMPLIFIER( (__uless_eq(A, B)|__uless_eq(C, A)),                             __iff(__ugreat_eq(B, C), 0x1) );
+        SIMPLIFIER( (__uless_eq(A, B)&__uless(C, A)),                                __iff((B==C), 0x0) );
+        SIMPLIFIER( (__uless_eq(A, B)&__uless(C, A)),                                __iff(__uless_eq(B, C), 0x0) );
+        SIMPLIFIER( (__uless_eq(A, B)&__uless(C, A)),                                __iff(__uless(B, C), 0x0) );
+        SIMPLIFIER( (__uless_eq(A, B)|__uless(C, A)),                                __iff((B==C), 0x1) );
+        SIMPLIFIER( (__uless_eq(A, B)|__uless(C, A)),                                __iff(__ugreat(B, C), 0x1) );
+        SIMPLIFIER( (__uless_eq(A, B)|__uless(C, A)),                                __iff(__ugreat_eq(B, C), 0x1) );
+        SIMPLIFIER( (__uless(A, B)&(C==A)),                                          __iff((B==C), 0x0) );
+        SIMPLIFIER( (__uless(A, B)&(C==A)),                                          __iff(__uless_eq(B, C), 0x0) );
+        SIMPLIFIER( (__uless(A, B)&(C==A)),                                          __iff(__uless(B, C), 0x0) );
+        SIMPLIFIER( (__uless(A, B)|(C==A)),                                          __iff((B==C), __uless_eq(A, B)) );
+        SIMPLIFIER( (__uless(A, B)|(C==A)),                                          __iff(__ugreat(B, C), __uless(A, B)) );
+        SIMPLIFIER( (__uless(A, B)&(C!=A)),                                          __iff((B==C), __uless(A, B)) );
+        SIMPLIFIER( (__uless(A, B)&(C!=A)),                                          __iff(__uless_eq(B, C), __uless(A, B)) );
+        SIMPLIFIER( (__uless(A, B)&(C!=A)),                                          __iff(__uless(B, C), __uless(A, B)) );
+        SIMPLIFIER( (__uless(A, B)|(C!=A)),                                          __iff((B==C), (A!=B)) );
+        SIMPLIFIER( (__uless(A, B)|(C!=A)),                                          __iff(__ugreat(B, C), 0x1) );
+        SIMPLIFIER( (__uless(A, B)&__ugreat(C, A)),                                  __iff((B==C), __uless(A, B)) );
+        SIMPLIFIER( (__uless(A, B)&__ugreat(C, A)),                                  __iff(__uless_eq(B, C), __uless(A, B)) );
+        SIMPLIFIER( (__uless(A, B)&__ugreat(C, A)),                                  __iff(__uless(B, C), __uless(A, B)) );
+        SIMPLIFIER( (__uless(A, B)|__ugreat(C, A)),                                  __iff((B==C), __uless(A, B)) );
+        SIMPLIFIER( (__uless(A, B)|__ugreat(C, A)),                                  __iff(__ugreat(B, C), __uless(A, B)) );
+        SIMPLIFIER( (__uless(A, B)|__ugreat(C, A)),                                  __iff(__ugreat_eq(B, C), __uless(A, B)) );
+        SIMPLIFIER( (__uless(A, B)&__ugreat_eq(C, A)),                               __iff((B==C), __uless(A, B)) );
+        SIMPLIFIER( (__uless(A, B)&__ugreat_eq(C, A)),                               __iff(__uless_eq(B, C), __uless(A, B)) );
+        SIMPLIFIER( (__uless(A, B)&__ugreat_eq(C, A)),                               __iff(__uless(B, C), __uless(A, B)) );
+        SIMPLIFIER( (__uless(A, B)|__ugreat_eq(C, A)),                               __iff((B==C), __uless_eq(A, B)) );
+        SIMPLIFIER( (__uless(A, B)|__ugreat_eq(C, A)),                               __iff(__ugreat(B, C), __uless(A, B)) );
+        SIMPLIFIER( (__uless(A, B)&__uless_eq(C, A)),                                __iff((B==C), 0x0) );
+        SIMPLIFIER( (__uless(A, B)&__uless_eq(C, A)),                                __iff(__uless_eq(B, C), 0x0) );
+        SIMPLIFIER( (__uless(A, B)&__uless_eq(C, A)),                                __iff(__uless(B, C), 0x0) );
+        SIMPLIFIER( (__uless(A, B)|__uless_eq(C, A)),                                __iff((B==C), 0x1) );
+        SIMPLIFIER( (__uless(A, B)|__uless_eq(C, A)),                                __iff(__ugreat(B, C), 0x1) );
+        SIMPLIFIER( (__uless(A, B)|__uless_eq(C, A)),                                __iff(__ugreat_eq(B, C), 0x1) );
+        SIMPLIFIER( (__uless(A, B)&__uless(C, A)),                                   __iff((B==C), 0x0) );
+        SIMPLIFIER( (__uless(A, B)&__uless(C, A)),                                   __iff(__uless_eq(B, C), 0x0) );
+        SIMPLIFIER( (__uless(A, B)&__uless(C, A)),                                   __iff(__uless(B, C), 0x0) );
+        SIMPLIFIER( (__uless(A, B)|__uless(C, A)),                                   __iff((B==C), (A!=B)) );
+        SIMPLIFIER( (__uless(A, B)|__uless(C, A)),                                   __iff(__ugreat(B, C), 0x1) );
+        SIMPLIFIER( ((B>A)&(A>C)),                                                   __iff((B==C), 0x0) );
+        SIMPLIFIER( ((B>A)&(A>C)),                                                   __iff((B<=C), 0x0) );
+        SIMPLIFIER( ((B>A)&(A>C)),                                                   __iff((B<C), 0x0) );
+        SIMPLIFIER( ((B>A)|(A>C)),                                                   __iff((B>C), 0x1) );
+        SIMPLIFIER( ((B>A)|(A>C)),                                                   __iff((B==C), (A!=B)) );
+        SIMPLIFIER( ((B>A)&(A>=C)),                                                  __iff((B==C), 0x0) );
+        SIMPLIFIER( ((B>A)&(A>=C)),                                                  __iff((B<=C), 0x0) );
+        SIMPLIFIER( ((B>A)&(A>=C)),                                                  __iff((B<C), 0x0) );
+        SIMPLIFIER( ((B>A)|(A>=C)),                                                  __iff((B>C), 0x1) );
+        SIMPLIFIER( ((B>A)|(A>=C)),                                                  __iff((B>=C), 0x1) );
+        SIMPLIFIER( ((B>A)|(A>=C)),                                                  __iff((B==C), 0x1) );
+        SIMPLIFIER( ((B>A)&(A==C)),                                                  __iff((B==C), 0x0) );
+        SIMPLIFIER( ((B>A)&(A==C)),                                                  __iff((B<=C), 0x0) );
+        SIMPLIFIER( ((B>A)&(A==C)),                                                  __iff((B<C), 0x0) );
+        SIMPLIFIER( ((B>A)|(A==C)),                                                  __iff((B>C), (A<B)) );
+        SIMPLIFIER( ((B>A)|(A==C)),                                                  __iff((B==C), (A<=B)) );
+        SIMPLIFIER( ((B>A)&(A!=C)),                                                  __iff((B==C), (A<B)) );
+        SIMPLIFIER( ((B>A)&(A!=C)),                                                  __iff((B<=C), (A<B)) );
+        SIMPLIFIER( ((B>A)&(A!=C)),                                                  __iff((B<C), (A<B)) );
+        SIMPLIFIER( ((B>A)|(A!=C)),                                                  __iff((B>C), 0x1) );
+        SIMPLIFIER( ((B>A)|(A!=C)),                                                  __iff((B==C), (A!=B)) );
+        SIMPLIFIER( ((B>A)&(A<=C)),                                                  __iff((B==C), (A<B)) );
+        SIMPLIFIER( ((B>A)&(A<=C)),                                                  __iff((B<=C), (A<B)) );
+        SIMPLIFIER( ((B>A)&(A<=C)),                                                  __iff((B<C), (A<B)) );
+        SIMPLIFIER( ((B>A)|(A<=C)),                                                  __iff((B>C), (A<B)) );
+        SIMPLIFIER( ((B>A)|(A<=C)),                                                  __iff((B==C), (A<=B)) );
+        SIMPLIFIER( ((B>A)&(A<C)),                                                   __iff((B==C), (A<B)) );
+        SIMPLIFIER( ((B>A)&(A<C)),                                                   __iff((B<=C), (A<B)) );
+        SIMPLIFIER( ((B>A)&(A<C)),                                                   __iff((B<C), (A<B)) );
+        SIMPLIFIER( ((B>A)|(A<C)),                                                   __iff((B>C), (A<B)) );
+        SIMPLIFIER( ((B>A)|(A<C)),                                                   __iff((B>=C), (A<B)) );
+        SIMPLIFIER( ((B>A)|(A<C)),                                                   __iff((B==C), (A<B)) );
+        SIMPLIFIER( ((B>=A)&(A>C)),                                                  __iff((B==C), 0x0) );
+        SIMPLIFIER( ((B>=A)&(A>C)),                                                  __iff((B<=C), 0x0) );
+        SIMPLIFIER( ((B>=A)&(A>C)),                                                  __iff((B<C), 0x0) );
+        SIMPLIFIER( ((B>=A)|(A>C)),                                                  __iff((B>C), 0x1) );
+        SIMPLIFIER( ((B>=A)|(A>C)),                                                  __iff((B>=C), 0x1) );
+        SIMPLIFIER( ((B>=A)|(A>C)),                                                  __iff((B==C), 0x1) );
+        SIMPLIFIER( ((B>=A)&(A>=C)),                                                 __iff((B==C), (A==B)) );
+        SIMPLIFIER( ((B>=A)&(A>=C)),                                                 __iff((B<C), 0x0) );
+        SIMPLIFIER( ((B>=A)|(A>=C)),                                                 __iff((B>C), 0x1) );
+        SIMPLIFIER( ((B>=A)|(A>=C)),                                                 __iff((B>=C), 0x1) );
+        SIMPLIFIER( ((B>=A)|(A>=C)),                                                 __iff((B==C), 0x1) );
+        SIMPLIFIER( ((B>=A)&(A==C)),                                                 __iff((B==C), (A==B)) );
+        SIMPLIFIER( ((B>=A)&(A==C)),                                                 __iff((B<C), 0x0) );
+        SIMPLIFIER( ((B>=A)|(A==C)),                                                 __iff((B>C), (A<=B)) );
+        SIMPLIFIER( ((B>=A)|(A==C)),                                                 __iff((B>=C), (A<=B)) );
+        SIMPLIFIER( ((B>=A)|(A==C)),                                                 __iff((B==C), (A<=B)) );
+        SIMPLIFIER( ((B>=A)&(A!=C)),                                                 __iff((B==C), (A<B)) );
+        SIMPLIFIER( ((B>=A)&(A!=C)),                                                 __iff((B<C), (A<=B)) );
+        SIMPLIFIER( ((B>=A)|(A!=C)),                                                 __iff((B>C), 0x1) );
+        SIMPLIFIER( ((B>=A)|(A!=C)),                                                 __iff((B>=C), 0x1) );
+        SIMPLIFIER( ((B>=A)|(A!=C)),                                                 __iff((B==C), 0x1) );
+        SIMPLIFIER( ((B>=A)&(A<=C)),                                                 __iff((B==C), (A<=B)) );
+        SIMPLIFIER( ((B>=A)&(A<=C)),                                                 __iff((B<=C), (A<=B)) );
+        SIMPLIFIER( ((B>=A)&(A<=C)),                                                 __iff((B<C), (A<=B)) );
+        SIMPLIFIER( ((B>=A)|(A<=C)),                                                 __iff((B>C), (A<=B)) );
+        SIMPLIFIER( ((B>=A)|(A<=C)),                                                 __iff((B>=C), (A<=B)) );
+        SIMPLIFIER( ((B>=A)|(A<=C)),                                                 __iff((B==C), (A<=B)) );
+        SIMPLIFIER( ((B>=A)&(A<C)),                                                  __iff((B==C), (A<B)) );
+        SIMPLIFIER( ((B>=A)&(A<C)),                                                  __iff((B<C), (A<=B)) );
+        SIMPLIFIER( ((B>=A)|(A<C)),                                                  __iff((B>C), (A<=B)) );
+        SIMPLIFIER( ((B>=A)|(A<C)),                                                  __iff((B>=C), (A<=B)) );
+        SIMPLIFIER( ((B>=A)|(A<C)),                                                  __iff((B==C), (A<=B)) );
+        SIMPLIFIER( ((B==A)&(A>C)),                                                  __iff((B>C), (A==B)) );
+        SIMPLIFIER( ((B==A)&(A>C)),                                                  __iff((B==C), 0x0) );
+        SIMPLIFIER( ((B==A)&(A>C)),                                                  __iff((B<=C), 0x0) );
+        SIMPLIFIER( ((B==A)&(A>C)),                                                  __iff((B<C), 0x0) );
+        SIMPLIFIER( ((B==A)|(A>C)),                                                  __iff((B==C), (A>=B)) );
+        SIMPLIFIER( ((B==A)&(A>=C)),                                                 __iff((B>C), (A==B)) );
+        SIMPLIFIER( ((B==A)&(A>=C)),                                                 __iff((B>=C), (A==B)) );
+        SIMPLIFIER( ((B==A)&(A>=C)),                                                 __iff((B==C), (A==B)) );
+        SIMPLIFIER( ((B==A)&(A>=C)),                                                 __iff((B<C), 0x0) );
+        SIMPLIFIER( ((B==A)|(A>=C)),                                                 __iff((B==C), (A>=B)) );
+        SIMPLIFIER( ((B==A)&(A==C)),                                                 __iff((B>C), 0x0) );
+        SIMPLIFIER( ((B==A)&(A==C)),                                                 __iff((B==C), (A==B)) );
+        SIMPLIFIER( ((B==A)&(A==C)),                                                 __iff((B!=C), 0x0) );
+        SIMPLIFIER( ((B==A)&(A==C)),                                                 __iff((B<C), 0x0) );
+        SIMPLIFIER( ((B==A)&(A==C)),                                                 __iff(__ugreat(B, C), 0x0) );
+        SIMPLIFIER( ((B==A)&(A==C)),                                                 __iff(__uless(B, C), 0x0) );
+        SIMPLIFIER( ((B==A)|(A==C)),                                                 __iff((B==C), (A==B)) );
+        SIMPLIFIER( ((B==A)&(A!=C)),                                                 __iff((B>C), (A==B)) );
+        SIMPLIFIER( ((B==A)&(A!=C)),                                                 __iff((B==C), 0x0) );
+        SIMPLIFIER( ((B==A)&(A!=C)),                                                 __iff((B!=C), (A==B)) );
+        SIMPLIFIER( ((B==A)&(A!=C)),                                                 __iff((B<C), (A==B)) );
+        SIMPLIFIER( ((B==A)&(A!=C)),                                                 __iff(__ugreat(B, C), (A==B)) );
+        SIMPLIFIER( ((B==A)&(A!=C)),                                                 __iff(__uless(B, C), (A==B)) );
+        SIMPLIFIER( ((B==A)|(A!=C)),                                                 __iff((B==C), 0x1) );
+        SIMPLIFIER( ((B==A)&(A<=C)),                                                 __iff((B>C), 0x0) );
+        SIMPLIFIER( ((B==A)&(A<=C)),                                                 __iff((B==C), (A==B)) );
+        SIMPLIFIER( ((B==A)&(A<=C)),                                                 __iff((B<=C), (A==B)) );
+        SIMPLIFIER( ((B==A)&(A<=C)),                                                 __iff((B<C), (A==B)) );
+        SIMPLIFIER( ((B==A)|(A<=C)),                                                 __iff((B==C), (A<=B)) );
+        SIMPLIFIER( ((B==A)&(A<C)),                                                  __iff((B>C), 0x0) );
+        SIMPLIFIER( ((B==A)&(A<C)),                                                  __iff((B>=C), 0x0) );
+        SIMPLIFIER( ((B==A)&(A<C)),                                                  __iff((B==C), 0x0) );
+        SIMPLIFIER( ((B==A)&(A<C)),                                                  __iff((B<C), (A==B)) );
+        SIMPLIFIER( ((B==A)|(A<C)),                                                  __iff((B==C), (A<=B)) );
+        SIMPLIFIER( ((B==A)&__ugreat(A, C)),                                         __iff((B==C), 0x0) );
+        SIMPLIFIER( ((B==A)&__ugreat(A, C)),                                         __iff(__ugreat(B, C), (A==B)) );
+        SIMPLIFIER( ((B==A)&__ugreat(A, C)),                                         __iff(__uless_eq(B, C), 0x0) );
+        SIMPLIFIER( ((B==A)&__ugreat(A, C)),                                         __iff(__uless(B, C), 0x0) );
+        SIMPLIFIER( ((B==A)|__ugreat(A, C)),                                         __iff((B==C), __ugreat_eq(A, B)) );
+        SIMPLIFIER( ((B==A)&__ugreat_eq(A, C)),                                      __iff((B==C), (A==B)) );
+        SIMPLIFIER( ((B==A)&__ugreat_eq(A, C)),                                      __iff(__ugreat(B, C), (A==B)) );
+        SIMPLIFIER( ((B==A)&__ugreat_eq(A, C)),                                      __iff(__ugreat_eq(B, C), (A==B)) );
+        SIMPLIFIER( ((B==A)&__ugreat_eq(A, C)),                                      __iff(__uless(B, C), 0x0) );
+        SIMPLIFIER( ((B==A)|__ugreat_eq(A, C)),                                      __iff((B==C), __ugreat_eq(A, B)) );
+        SIMPLIFIER( ((B==A)&__uless_eq(A, C)),                                       __iff((B==C), (A==B)) );
+        SIMPLIFIER( ((B==A)&__uless_eq(A, C)),                                       __iff(__ugreat(B, C), 0x0) );
+        SIMPLIFIER( ((B==A)&__uless_eq(A, C)),                                       __iff(__uless_eq(B, C), (A==B)) );
+        SIMPLIFIER( ((B==A)&__uless_eq(A, C)),                                       __iff(__uless(B, C), (A==B)) );
+        SIMPLIFIER( ((B==A)|__uless_eq(A, C)),                                       __iff((B==C), __uless_eq(A, B)) );
+        SIMPLIFIER( ((B==A)&__uless(A, C)),                                          __iff((B==C), 0x0) );
+        SIMPLIFIER( ((B==A)&__uless(A, C)),                                          __iff(__ugreat(B, C), 0x0) );
+        SIMPLIFIER( ((B==A)&__uless(A, C)),                                          __iff(__ugreat_eq(B, C), 0x0) );
+        SIMPLIFIER( ((B==A)&__uless(A, C)),                                          __iff(__uless(B, C), (A==B)) );
+        SIMPLIFIER( ((B==A)|__uless(A, C)),                                          __iff((B==C), __uless_eq(A, B)) );
+        SIMPLIFIER( ((B!=A)&(A>C)),                                                  __iff((B==C), (A>B)) );
+        SIMPLIFIER( ((B!=A)|(A>C)),                                                  __iff((B>C), 0x1) );
+        SIMPLIFIER( ((B!=A)|(A>C)),                                                  __iff((B==C), (A!=B)) );
+        SIMPLIFIER( ((B!=A)|(A>C)),                                                  __iff((B<=C), (A!=B)) );
+        SIMPLIFIER( ((B!=A)|(A>C)),                                                  __iff((B<C), (A!=B)) );
+        SIMPLIFIER( ((B!=A)&(A>=C)),                                                 __iff((B==C), (A>B)) );
+        SIMPLIFIER( ((B!=A)|(A>=C)),                                                 __iff((B>C), 0x1) );
+        SIMPLIFIER( ((B!=A)|(A>=C)),                                                 __iff((B>=C), 0x1) );
+        SIMPLIFIER( ((B!=A)|(A>=C)),                                                 __iff((B==C), 0x1) );
+        SIMPLIFIER( ((B!=A)|(A>=C)),                                                 __iff((B<C), (A!=B)) );
+        SIMPLIFIER( ((B!=A)&(A==C)),                                                 __iff((B==C), 0x0) );
+        SIMPLIFIER( ((B!=A)|(A==C)),                                                 __iff((B>C), (A!=B)) );
+        SIMPLIFIER( ((B!=A)|(A==C)),                                                 __iff((B==C), 0x1) );
+        SIMPLIFIER( ((B!=A)|(A==C)),                                                 __iff((B!=C), (A!=B)) );
+        SIMPLIFIER( ((B!=A)|(A==C)),                                                 __iff((B<C), (A!=B)) );
+        SIMPLIFIER( ((B!=A)|(A==C)),                                                 __iff(__ugreat(B, C), (A!=B)) );
+        SIMPLIFIER( ((B!=A)|(A==C)),                                                 __iff(__uless(B, C), (A!=B)) );
+        SIMPLIFIER( ((B!=A)&(A!=C)),                                                 __iff((B==C), (A!=B)) );
+        SIMPLIFIER( ((B!=A)|(A!=C)),                                                 __iff((B>C), 0x1) );
+        SIMPLIFIER( ((B!=A)|(A!=C)),                                                 __iff((B==C), (A!=B)) );
+        SIMPLIFIER( ((B!=A)|(A!=C)),                                                 __iff((B!=C), 0x1) );
+        SIMPLIFIER( ((B!=A)|(A!=C)),                                                 __iff((B<C), 0x1) );
+        SIMPLIFIER( ((B!=A)|(A!=C)),                                                 __iff(__ugreat(B, C), 0x1) );
+        SIMPLIFIER( ((B!=A)|(A!=C)),                                                 __iff(__uless(B, C), 0x1) );
+        SIMPLIFIER( ((B!=A)&(A<=C)),                                                 __iff((B==C), (A<B)) );
+        SIMPLIFIER( ((B!=A)|(A<=C)),                                                 __iff((B>C), (A!=B)) );
+        SIMPLIFIER( ((B!=A)|(A<=C)),                                                 __iff((B==C), 0x1) );
+        SIMPLIFIER( ((B!=A)|(A<=C)),                                                 __iff((B<=C), 0x1) );
+        SIMPLIFIER( ((B!=A)|(A<=C)),                                                 __iff((B<C), 0x1) );
+        SIMPLIFIER( ((B!=A)&(A<C)),                                                  __iff((B==C), (A<B)) );
+        SIMPLIFIER( ((B!=A)|(A<C)),                                                  __iff((B>C), (A!=B)) );
+        SIMPLIFIER( ((B!=A)|(A<C)),                                                  __iff((B>=C), (A!=B)) );
+        SIMPLIFIER( ((B!=A)|(A<C)),                                                  __iff((B==C), (A!=B)) );
+        SIMPLIFIER( ((B!=A)|(A<C)),                                                  __iff((B<C), 0x1) );
+        SIMPLIFIER( ((B!=A)&__ugreat(A, C)),                                         __iff((B==C), __ugreat(A, B)) );
+        SIMPLIFIER( ((B!=A)|__ugreat(A, C)),                                         __iff((B==C), (A!=B)) );
+        SIMPLIFIER( ((B!=A)|__ugreat(A, C)),                                         __iff(__ugreat(B, C), 0x1) );
+        SIMPLIFIER( ((B!=A)|__ugreat(A, C)),                                         __iff(__uless_eq(B, C), (A!=B)) );
+        SIMPLIFIER( ((B!=A)|__ugreat(A, C)),                                         __iff(__uless(B, C), (A!=B)) );
+        SIMPLIFIER( ((B!=A)&__ugreat_eq(A, C)),                                      __iff((B==C), __ugreat(A, B)) );
+        SIMPLIFIER( ((B!=A)|__ugreat_eq(A, C)),                                      __iff((B==C), 0x1) );
+        SIMPLIFIER( ((B!=A)|__ugreat_eq(A, C)),                                      __iff(__ugreat(B, C), 0x1) );
+        SIMPLIFIER( ((B!=A)|__ugreat_eq(A, C)),                                      __iff(__ugreat_eq(B, C), 0x1) );
+        SIMPLIFIER( ((B!=A)|__ugreat_eq(A, C)),                                      __iff(__uless(B, C), (A!=B)) );
+        SIMPLIFIER( ((B!=A)&__uless_eq(A, C)),                                       __iff((B==C), __uless(A, B)) );
+        SIMPLIFIER( ((B!=A)|__uless_eq(A, C)),                                       __iff((B==C), 0x1) );
+        SIMPLIFIER( ((B!=A)|__uless_eq(A, C)),                                       __iff(__ugreat(B, C), (A!=B)) );
+        SIMPLIFIER( ((B!=A)|__uless_eq(A, C)),                                       __iff(__uless_eq(B, C), 0x1) );
+        SIMPLIFIER( ((B!=A)|__uless_eq(A, C)),                                       __iff(__uless(B, C), 0x1) );
+        SIMPLIFIER( ((B!=A)&__uless(A, C)),                                          __iff((B==C), __uless(A, B)) );
+        SIMPLIFIER( ((B!=A)|__uless(A, C)),                                          __iff((B==C), (A!=B)) );
+        SIMPLIFIER( ((B!=A)|__uless(A, C)),                                          __iff(__ugreat(B, C), (A!=B)) );
+        SIMPLIFIER( ((B!=A)|__uless(A, C)),                                          __iff(__ugreat_eq(B, C), (A!=B)) );
+        SIMPLIFIER( ((B!=A)|__uless(A, C)),                                          __iff(__uless(B, C), 0x1) );
+        SIMPLIFIER( ((B<=A)&(A>C)),                                                  __iff((B>C), (A>=B)) );
+        SIMPLIFIER( ((B<=A)&(A>C)),                                                  __iff((B==C), (A>B)) );
+        SIMPLIFIER( ((B<=A)|(A>C)),                                                  __iff((B==C), (A>=B)) );
+        SIMPLIFIER( ((B<=A)|(A>C)),                                                  __iff((B<=C), (A>=B)) );
+        SIMPLIFIER( ((B<=A)|(A>C)),                                                  __iff((B<C), (A>=B)) );
+        SIMPLIFIER( ((B<=A)&(A>=C)),                                                 __iff((B>C), (A>=B)) );
+        SIMPLIFIER( ((B<=A)&(A>=C)),                                                 __iff((B>=C), (A>=B)) );
+        SIMPLIFIER( ((B<=A)&(A>=C)),                                                 __iff((B==C), (A>=B)) );
+        SIMPLIFIER( ((B<=A)|(A>=C)),                                                 __iff((B==C), (A>=B)) );
+        SIMPLIFIER( ((B<=A)|(A>=C)),                                                 __iff((B<=C), (A>=B)) );
+        SIMPLIFIER( ((B<=A)|(A>=C)),                                                 __iff((B<C), (A>=B)) );
+        SIMPLIFIER( ((B<=A)&(A==C)),                                                 __iff((B>C), 0x0) );
+        SIMPLIFIER( ((B<=A)&(A==C)),                                                 __iff((B==C), (A==B)) );
+        SIMPLIFIER( ((B<=A)|(A==C)),                                                 __iff((B==C), (A>=B)) );
+        SIMPLIFIER( ((B<=A)|(A==C)),                                                 __iff((B<=C), (A>=B)) );
+        SIMPLIFIER( ((B<=A)|(A==C)),                                                 __iff((B<C), (A>=B)) );
+        SIMPLIFIER( ((B<=A)&(A!=C)),                                                 __iff((B>C), (A>=B)) );
+        SIMPLIFIER( ((B<=A)&(A!=C)),                                                 __iff((B==C), (A>B)) );
+        SIMPLIFIER( ((B<=A)|(A!=C)),                                                 __iff((B==C), 0x1) );
+        SIMPLIFIER( ((B<=A)|(A!=C)),                                                 __iff((B<=C), 0x1) );
+        SIMPLIFIER( ((B<=A)|(A!=C)),                                                 __iff((B<C), 0x1) );
+        SIMPLIFIER( ((B<=A)&(A<=C)),                                                 __iff((B>C), 0x0) );
+        SIMPLIFIER( ((B<=A)&(A<=C)),                                                 __iff((B==C), (A==B)) );
+        SIMPLIFIER( ((B<=A)|(A<=C)),                                                 __iff((B==C), 0x1) );
+        SIMPLIFIER( ((B<=A)|(A<=C)),                                                 __iff((B<=C), 0x1) );
+        SIMPLIFIER( ((B<=A)|(A<=C)),                                                 __iff((B<C), 0x1) );
+        SIMPLIFIER( ((B<=A)&(A<C)),                                                  __iff((B>C), 0x0) );
+        SIMPLIFIER( ((B<=A)&(A<C)),                                                  __iff((B>=C), 0x0) );
+        SIMPLIFIER( ((B<=A)&(A<C)),                                                  __iff((B==C), 0x0) );
+        SIMPLIFIER( ((B<=A)|(A<C)),                                                  __iff((B==C), 0x1) );
+        SIMPLIFIER( ((B<=A)|(A<C)),                                                  __iff((B<=C), 0x1) );
+        SIMPLIFIER( ((B<=A)|(A<C)),                                                  __iff((B<C), 0x1) );
+        SIMPLIFIER( ((B<A)&(A>C)),                                                   __iff((B>C), (A>B)) );
+        SIMPLIFIER( ((B<A)&(A>C)),                                                   __iff((B>=C), (A>B)) );
+        SIMPLIFIER( ((B<A)&(A>C)),                                                   __iff((B==C), (A>B)) );
+        SIMPLIFIER( ((B<A)|(A>C)),                                                   __iff((B==C), (A>B)) );
+        SIMPLIFIER( ((B<A)|(A>C)),                                                   __iff((B<=C), (A>B)) );
+        SIMPLIFIER( ((B<A)|(A>C)),                                                   __iff((B<C), (A>B)) );
+        SIMPLIFIER( ((B<A)&(A>=C)),                                                  __iff((B>C), (A>B)) );
+        SIMPLIFIER( ((B<A)&(A>=C)),                                                  __iff((B>=C), (A>B)) );
+        SIMPLIFIER( ((B<A)&(A>=C)),                                                  __iff((B==C), (A>B)) );
+        SIMPLIFIER( ((B<A)|(A>=C)),                                                  __iff((B==C), (A>=B)) );
+        SIMPLIFIER( ((B<A)|(A>=C)),                                                  __iff((B<C), (A>B)) );
+        SIMPLIFIER( ((B<A)&(A==C)),                                                  __iff((B>C), 0x0) );
+        SIMPLIFIER( ((B<A)&(A==C)),                                                  __iff((B>=C), 0x0) );
+        SIMPLIFIER( ((B<A)&(A==C)),                                                  __iff((B==C), 0x0) );
+        SIMPLIFIER( ((B<A)|(A==C)),                                                  __iff((B==C), (A>=B)) );
+        SIMPLIFIER( ((B<A)|(A==C)),                                                  __iff((B<C), (A>B)) );
+        SIMPLIFIER( ((B<A)&(A!=C)),                                                  __iff((B>C), (A>B)) );
+        SIMPLIFIER( ((B<A)&(A!=C)),                                                  __iff((B>=C), (A>B)) );
+        SIMPLIFIER( ((B<A)&(A!=C)),                                                  __iff((B==C), (A>B)) );
+        SIMPLIFIER( ((B<A)|(A!=C)),                                                  __iff((B==C), (A!=B)) );
+        SIMPLIFIER( ((B<A)|(A!=C)),                                                  __iff((B<C), 0x1) );
+        SIMPLIFIER( ((B<A)&(A<=C)),                                                  __iff((B>C), 0x0) );
+        SIMPLIFIER( ((B<A)&(A<=C)),                                                  __iff((B>=C), 0x0) );
+        SIMPLIFIER( ((B<A)&(A<=C)),                                                  __iff((B==C), 0x0) );
+        SIMPLIFIER( ((B<A)|(A<=C)),                                                  __iff((B==C), 0x1) );
+        SIMPLIFIER( ((B<A)|(A<=C)),                                                  __iff((B<=C), 0x1) );
+        SIMPLIFIER( ((B<A)|(A<=C)),                                                  __iff((B<C), 0x1) );
+        SIMPLIFIER( ((B<A)&(A<C)),                                                   __iff((B>C), 0x0) );
+        SIMPLIFIER( ((B<A)&(A<C)),                                                   __iff((B>=C), 0x0) );
+        SIMPLIFIER( ((B<A)&(A<C)),                                                   __iff((B==C), 0x0) );
+        SIMPLIFIER( ((B<A)|(A<C)),                                                   __iff((B==C), (A!=B)) );
+        SIMPLIFIER( ((B<A)|(A<C)),                                                   __iff((B<C), 0x1) );
+        SIMPLIFIER( (__ugreat(B, A)&(A==C)),                                         __iff((B==C), 0x0) );
+        SIMPLIFIER( (__ugreat(B, A)&(A==C)),                                         __iff(__uless_eq(B, C), 0x0) );
+        SIMPLIFIER( (__ugreat(B, A)&(A==C)),                                         __iff(__uless(B, C), 0x0) );
+        SIMPLIFIER( (__ugreat(B, A)|(A==C)),                                         __iff((B==C), __uless_eq(A, B)) );
+        SIMPLIFIER( (__ugreat(B, A)|(A==C)),                                         __iff(__ugreat(B, C), __uless(A, B)) );
+        SIMPLIFIER( (__ugreat(B, A)&(A!=C)),                                         __iff((B==C), __uless(A, B)) );
+        SIMPLIFIER( (__ugreat(B, A)&(A!=C)),                                         __iff(__uless_eq(B, C), __uless(A, B)) );
+        SIMPLIFIER( (__ugreat(B, A)&(A!=C)),                                         __iff(__uless(B, C), __uless(A, B)) );
+        SIMPLIFIER( (__ugreat(B, A)|(A!=C)),                                         __iff((B==C), (A!=B)) );
+        SIMPLIFIER( (__ugreat(B, A)|(A!=C)),                                         __iff(__ugreat(B, C), 0x1) );
+        SIMPLIFIER( (__ugreat(B, A)&__ugreat(A, C)),                                 __iff((B==C), 0x0) );
+        SIMPLIFIER( (__ugreat(B, A)&__ugreat(A, C)),                                 __iff(__uless_eq(B, C), 0x0) );
+        SIMPLIFIER( (__ugreat(B, A)&__ugreat(A, C)),                                 __iff(__uless(B, C), 0x0) );
+        SIMPLIFIER( (__ugreat(B, A)|__ugreat(A, C)),                                 __iff((B==C), (A!=B)) );
+        SIMPLIFIER( (__ugreat(B, A)|__ugreat(A, C)),                                 __iff(__ugreat(B, C), 0x1) );
+        SIMPLIFIER( (__ugreat(B, A)&__ugreat_eq(A, C)),                              __iff((B==C), 0x0) );
+        SIMPLIFIER( (__ugreat(B, A)&__ugreat_eq(A, C)),                              __iff(__uless_eq(B, C), 0x0) );
+        SIMPLIFIER( (__ugreat(B, A)&__ugreat_eq(A, C)),                              __iff(__uless(B, C), 0x0) );
+        SIMPLIFIER( (__ugreat(B, A)|__ugreat_eq(A, C)),                              __iff((B==C), 0x1) );
+        SIMPLIFIER( (__ugreat(B, A)|__ugreat_eq(A, C)),                              __iff(__ugreat(B, C), 0x1) );
+        SIMPLIFIER( (__ugreat(B, A)|__ugreat_eq(A, C)),                              __iff(__ugreat_eq(B, C), 0x1) );
+        SIMPLIFIER( (__ugreat(B, A)&__uless_eq(A, C)),                               __iff((B==C), __uless(A, B)) );
+        SIMPLIFIER( (__ugreat(B, A)&__uless_eq(A, C)),                               __iff(__uless_eq(B, C), __uless(A, B)) );
+        SIMPLIFIER( (__ugreat(B, A)&__uless_eq(A, C)),                               __iff(__uless(B, C), __uless(A, B)) );
+        SIMPLIFIER( (__ugreat(B, A)|__uless_eq(A, C)),                               __iff((B==C), __uless_eq(A, B)) );
+        SIMPLIFIER( (__ugreat(B, A)|__uless_eq(A, C)),                               __iff(__ugreat(B, C), __uless(A, B)) );
+        SIMPLIFIER( (__ugreat(B, A)&__uless(A, C)),                                  __iff((B==C), __uless(A, B)) );
+        SIMPLIFIER( (__ugreat(B, A)&__uless(A, C)),                                  __iff(__uless_eq(B, C), __uless(A, B)) );
+        SIMPLIFIER( (__ugreat(B, A)&__uless(A, C)),                                  __iff(__uless(B, C), __uless(A, B)) );
+        SIMPLIFIER( (__ugreat(B, A)|__uless(A, C)),                                  __iff((B==C), __uless(A, B)) );
+        SIMPLIFIER( (__ugreat(B, A)|__uless(A, C)),                                  __iff(__ugreat(B, C), __uless(A, B)) );
+        SIMPLIFIER( (__ugreat(B, A)|__uless(A, C)),                                  __iff(__ugreat_eq(B, C), __uless(A, B)) );
+        SIMPLIFIER( (__ugreat_eq(B, A)&(A==C)),                                      __iff((B==C), (A==B)) );
+        SIMPLIFIER( (__ugreat_eq(B, A)&(A==C)),                                      __iff(__uless(B, C), 0x0) );
+        SIMPLIFIER( (__ugreat_eq(B, A)|(A==C)),                                      __iff((B==C), __uless_eq(A, B)) );
+        SIMPLIFIER( (__ugreat_eq(B, A)|(A==C)),                                      __iff(__ugreat(B, C), __uless_eq(A, B)) );
+        SIMPLIFIER( (__ugreat_eq(B, A)|(A==C)),                                      __iff(__ugreat_eq(B, C), __uless_eq(A, B)) );
+        SIMPLIFIER( (__ugreat_eq(B, A)&(A!=C)),                                      __iff((B==C), __uless(A, B)) );
+        SIMPLIFIER( (__ugreat_eq(B, A)&(A!=C)),                                      __iff(__uless(B, C), __uless_eq(A, B)) );
+        SIMPLIFIER( (__ugreat_eq(B, A)|(A!=C)),                                      __iff((B==C), 0x1) );
+        SIMPLIFIER( (__ugreat_eq(B, A)|(A!=C)),                                      __iff(__ugreat(B, C), 0x1) );
+        SIMPLIFIER( (__ugreat_eq(B, A)|(A!=C)),                                      __iff(__ugreat_eq(B, C), 0x1) );
+        SIMPLIFIER( (__ugreat_eq(B, A)&__ugreat(A, C)),                              __iff((B==C), 0x0) );
+        SIMPLIFIER( (__ugreat_eq(B, A)&__ugreat(A, C)),                              __iff(__uless_eq(B, C), 0x0) );
+        SIMPLIFIER( (__ugreat_eq(B, A)&__ugreat(A, C)),                              __iff(__uless(B, C), 0x0) );
+        SIMPLIFIER( (__ugreat_eq(B, A)|__ugreat(A, C)),                              __iff((B==C), 0x1) );
+        SIMPLIFIER( (__ugreat_eq(B, A)|__ugreat(A, C)),                              __iff(__ugreat(B, C), 0x1) );
+        SIMPLIFIER( (__ugreat_eq(B, A)|__ugreat(A, C)),                              __iff(__ugreat_eq(B, C), 0x1) );
+        SIMPLIFIER( (__ugreat_eq(B, A)&__ugreat_eq(A, C)),                           __iff((B==C), (A==B)) );
+        SIMPLIFIER( (__ugreat_eq(B, A)&__ugreat_eq(A, C)),                           __iff(__uless(B, C), 0x0) );
+        SIMPLIFIER( (__ugreat_eq(B, A)|__ugreat_eq(A, C)),                           __iff((B==C), 0x1) );
+        SIMPLIFIER( (__ugreat_eq(B, A)|__ugreat_eq(A, C)),                           __iff(__ugreat(B, C), 0x1) );
+        SIMPLIFIER( (__ugreat_eq(B, A)|__ugreat_eq(A, C)),                           __iff(__ugreat_eq(B, C), 0x1) );
+        SIMPLIFIER( (__ugreat_eq(B, A)&__uless_eq(A, C)),                            __iff((B==C), __uless_eq(A, B)) );
+        SIMPLIFIER( (__ugreat_eq(B, A)&__uless_eq(A, C)),                            __iff(__uless_eq(B, C), __uless_eq(A, B)) );
+        SIMPLIFIER( (__ugreat_eq(B, A)&__uless_eq(A, C)),                            __iff(__uless(B, C), __uless_eq(A, B)) );
+        SIMPLIFIER( (__ugreat_eq(B, A)|__uless_eq(A, C)),                            __iff((B==C), __uless_eq(A, B)) );
+        SIMPLIFIER( (__ugreat_eq(B, A)|__uless_eq(A, C)),                            __iff(__ugreat(B, C), __uless_eq(A, B)) );
+        SIMPLIFIER( (__ugreat_eq(B, A)|__uless_eq(A, C)),                            __iff(__ugreat_eq(B, C), __uless_eq(A, B)) );
+        SIMPLIFIER( (__ugreat_eq(B, A)&__uless(A, C)),                               __iff((B==C), __uless(A, B)) );
+        SIMPLIFIER( (__ugreat_eq(B, A)&__uless(A, C)),                               __iff(__uless(B, C), __uless_eq(A, B)) );
+        SIMPLIFIER( (__ugreat_eq(B, A)|__uless(A, C)),                               __iff((B==C), __uless_eq(A, B)) );
+        SIMPLIFIER( (__ugreat_eq(B, A)|__uless(A, C)),                               __iff(__ugreat(B, C), __uless_eq(A, B)) );
+        SIMPLIFIER( (__ugreat_eq(B, A)|__uless(A, C)),                               __iff(__ugreat_eq(B, C), __uless_eq(A, B)) );
+        SIMPLIFIER( (__uless_eq(B, A)&(A==C)),                                       __iff((B==C), (A==B)) );
+        SIMPLIFIER( (__uless_eq(B, A)&(A==C)),                                       __iff(__ugreat(B, C), 0x0) );
+        SIMPLIFIER( (__uless_eq(B, A)|(A==C)),                                       __iff((B==C), __ugreat_eq(A, B)) );
+        SIMPLIFIER( (__uless_eq(B, A)|(A==C)),                                       __iff(__uless_eq(B, C), __ugreat_eq(A, B)) );
+        SIMPLIFIER( (__uless_eq(B, A)|(A==C)),                                       __iff(__uless(B, C), __ugreat_eq(A, B)) );
+        SIMPLIFIER( (__uless_eq(B, A)&(A!=C)),                                       __iff((B==C), __ugreat(A, B)) );
+        SIMPLIFIER( (__uless_eq(B, A)&(A!=C)),                                       __iff(__ugreat(B, C), __ugreat_eq(A, B)) );
+        SIMPLIFIER( (__uless_eq(B, A)|(A!=C)),                                       __iff((B==C), 0x1) );
+        SIMPLIFIER( (__uless_eq(B, A)|(A!=C)),                                       __iff(__uless_eq(B, C), 0x1) );
+        SIMPLIFIER( (__uless_eq(B, A)|(A!=C)),                                       __iff(__uless(B, C), 0x1) );
+        SIMPLIFIER( (__uless_eq(B, A)&__ugreat(A, C)),                               __iff((B==C), __ugreat(A, B)) );
+        SIMPLIFIER( (__uless_eq(B, A)&__ugreat(A, C)),                               __iff(__ugreat(B, C), __ugreat_eq(A, B)) );
+        SIMPLIFIER( (__uless_eq(B, A)|__ugreat(A, C)),                               __iff((B==C), __ugreat_eq(A, B)) );
+        SIMPLIFIER( (__uless_eq(B, A)|__ugreat(A, C)),                               __iff(__uless_eq(B, C), __ugreat_eq(A, B)) );
+        SIMPLIFIER( (__uless_eq(B, A)|__ugreat(A, C)),                               __iff(__uless(B, C), __ugreat_eq(A, B)) );
+        SIMPLIFIER( (__uless_eq(B, A)&__ugreat_eq(A, C)),                            __iff((B==C), __ugreat_eq(A, B)) );
+        SIMPLIFIER( (__uless_eq(B, A)&__ugreat_eq(A, C)),                            __iff(__ugreat(B, C), __ugreat_eq(A, B)) );
+        SIMPLIFIER( (__uless_eq(B, A)&__ugreat_eq(A, C)),                            __iff(__ugreat_eq(B, C), __ugreat_eq(A, B)) );
+        SIMPLIFIER( (__uless_eq(B, A)|__ugreat_eq(A, C)),                            __iff((B==C), __ugreat_eq(A, B)) );
+        SIMPLIFIER( (__uless_eq(B, A)|__ugreat_eq(A, C)),                            __iff(__uless_eq(B, C), __ugreat_eq(A, B)) );
+        SIMPLIFIER( (__uless_eq(B, A)|__ugreat_eq(A, C)),                            __iff(__uless(B, C), __ugreat_eq(A, B)) );
+        SIMPLIFIER( (__uless_eq(B, A)&__uless_eq(A, C)),                             __iff((B==C), (A==B)) );
+        SIMPLIFIER( (__uless_eq(B, A)&__uless_eq(A, C)),                             __iff(__ugreat(B, C), 0x0) );
+        SIMPLIFIER( (__uless_eq(B, A)|__uless_eq(A, C)),                             __iff((B==C), 0x1) );
+        SIMPLIFIER( (__uless_eq(B, A)|__uless_eq(A, C)),                             __iff(__uless_eq(B, C), 0x1) );
+        SIMPLIFIER( (__uless_eq(B, A)|__uless_eq(A, C)),                             __iff(__uless(B, C), 0x1) );
+        SIMPLIFIER( (__uless_eq(B, A)&__uless(A, C)),                                __iff((B==C), 0x0) );
+        SIMPLIFIER( (__uless_eq(B, A)&__uless(A, C)),                                __iff(__ugreat(B, C), 0x0) );
+        SIMPLIFIER( (__uless_eq(B, A)&__uless(A, C)),                                __iff(__ugreat_eq(B, C), 0x0) );
+        SIMPLIFIER( (__uless_eq(B, A)|__uless(A, C)),                                __iff((B==C), 0x1) );
+        SIMPLIFIER( (__uless_eq(B, A)|__uless(A, C)),                                __iff(__uless_eq(B, C), 0x1) );
+        SIMPLIFIER( (__uless_eq(B, A)|__uless(A, C)),                                __iff(__uless(B, C), 0x1) );
+        SIMPLIFIER( (__uless(B, A)&(A==C)),                                          __iff((B==C), 0x0) );
+        SIMPLIFIER( (__uless(B, A)&(A==C)),                                          __iff(__ugreat(B, C), 0x0) );
+        SIMPLIFIER( (__uless(B, A)&(A==C)),                                          __iff(__ugreat_eq(B, C), 0x0) );
+        SIMPLIFIER( (__uless(B, A)|(A==C)),                                          __iff((B==C), __ugreat_eq(A, B)) );
+        SIMPLIFIER( (__uless(B, A)|(A==C)),                                          __iff(__uless(B, C), __ugreat(A, B)) );
+        SIMPLIFIER( (__uless(B, A)&(A!=C)),                                          __iff((B==C), __ugreat(A, B)) );
+        SIMPLIFIER( (__uless(B, A)&(A!=C)),                                          __iff(__ugreat(B, C), __ugreat(A, B)) );
+        SIMPLIFIER( (__uless(B, A)&(A!=C)),                                          __iff(__ugreat_eq(B, C), __ugreat(A, B)) );
+        SIMPLIFIER( (__uless(B, A)|(A!=C)),                                          __iff((B==C), (A!=B)) );
+        SIMPLIFIER( (__uless(B, A)|(A!=C)),                                          __iff(__uless(B, C), 0x1) );
+        SIMPLIFIER( (__uless(B, A)&__ugreat(A, C)),                                  __iff((B==C), __ugreat(A, B)) );
+        SIMPLIFIER( (__uless(B, A)&__ugreat(A, C)),                                  __iff(__ugreat(B, C), __ugreat(A, B)) );
+        SIMPLIFIER( (__uless(B, A)&__ugreat(A, C)),                                  __iff(__ugreat_eq(B, C), __ugreat(A, B)) );
+        SIMPLIFIER( (__uless(B, A)|__ugreat(A, C)),                                  __iff((B==C), __ugreat(A, B)) );
+        SIMPLIFIER( (__uless(B, A)|__ugreat(A, C)),                                  __iff(__uless_eq(B, C), __ugreat(A, B)) );
+        SIMPLIFIER( (__uless(B, A)|__ugreat(A, C)),                                  __iff(__uless(B, C), __ugreat(A, B)) );
+        SIMPLIFIER( (__uless(B, A)&__ugreat_eq(A, C)),                               __iff((B==C), __ugreat(A, B)) );
+        SIMPLIFIER( (__uless(B, A)&__ugreat_eq(A, C)),                               __iff(__ugreat(B, C), __ugreat(A, B)) );
+        SIMPLIFIER( (__uless(B, A)&__ugreat_eq(A, C)),                               __iff(__ugreat_eq(B, C), __ugreat(A, B)) );
+        SIMPLIFIER( (__uless(B, A)|__ugreat_eq(A, C)),                               __iff((B==C), __ugreat_eq(A, B)) );
+        SIMPLIFIER( (__uless(B, A)|__ugreat_eq(A, C)),                               __iff(__uless(B, C), __ugreat(A, B)) );
+        SIMPLIFIER( (__uless(B, A)&__uless_eq(A, C)),                                __iff((B==C), 0x0) );
+        SIMPLIFIER( (__uless(B, A)&__uless_eq(A, C)),                                __iff(__ugreat(B, C), 0x0) );
+        SIMPLIFIER( (__uless(B, A)&__uless_eq(A, C)),                                __iff(__ugreat_eq(B, C), 0x0) );
+        SIMPLIFIER( (__uless(B, A)|__uless_eq(A, C)),                                __iff((B==C), 0x1) );
+        SIMPLIFIER( (__uless(B, A)|__uless_eq(A, C)),                                __iff(__uless_eq(B, C), 0x1) );
+        SIMPLIFIER( (__uless(B, A)|__uless_eq(A, C)),                                __iff(__uless(B, C), 0x1) );
+        SIMPLIFIER( (__uless(B, A)&__uless(A, C)),                                   __iff((B==C), 0x0) );
+        SIMPLIFIER( (__uless(B, A)&__uless(A, C)),                                   __iff(__ugreat(B, C), 0x0) );
+        SIMPLIFIER( (__uless(B, A)&__uless(A, C)),                                   __iff(__ugreat_eq(B, C), 0x0) );
+        SIMPLIFIER( (__uless(B, A)|__uless(A, C)),                                   __iff((B==C), (A!=B)) );
+        SIMPLIFIER( (__uless(B, A)|__uless(A, C)),                                   __iff(__uless(B, C), 0x1) );
+        SIMPLIFIER( ((B>A)&(C>A)),                                                   __iff((B==C), (A<B)) );
+        SIMPLIFIER( ((B>A)&(C>A)),                                                   __iff((B<=C), (A<B)) );
+        SIMPLIFIER( ((B>A)&(C>A)),                                                   __iff((B<C), (A<B)) );
+        SIMPLIFIER( ((B>A)|(C>A)),                                                   __iff((B>C), (A<B)) );
+        SIMPLIFIER( ((B>A)|(C>A)),                                                   __iff((B>=C), (A<B)) );
+        SIMPLIFIER( ((B>A)|(C>A)),                                                   __iff((B==C), (A<B)) );
+        SIMPLIFIER( ((B>A)&(C>=A)),                                                  __iff((B==C), (A<B)) );
+        SIMPLIFIER( ((B>A)&(C>=A)),                                                  __iff((B<=C), (A<B)) );
+        SIMPLIFIER( ((B>A)&(C>=A)),                                                  __iff((B<C), (A<B)) );
+        SIMPLIFIER( ((B>A)|(C>=A)),                                                  __iff((B>C), (A<B)) );
+        SIMPLIFIER( ((B>A)|(C>=A)),                                                  __iff((B==C), (A<=B)) );
+        SIMPLIFIER( ((B>A)&(C==A)),                                                  __iff((B==C), 0x0) );
+        SIMPLIFIER( ((B>A)&(C==A)),                                                  __iff((B<=C), 0x0) );
+        SIMPLIFIER( ((B>A)&(C==A)),                                                  __iff((B<C), 0x0) );
+        SIMPLIFIER( ((B>A)|(C==A)),                                                  __iff((B>C), (A<B)) );
+        SIMPLIFIER( ((B>A)|(C==A)),                                                  __iff((B==C), (A<=B)) );
+        SIMPLIFIER( ((B>A)&(C!=A)),                                                  __iff((B==C), (A<B)) );
+        SIMPLIFIER( ((B>A)&(C!=A)),                                                  __iff((B<=C), (A<B)) );
+        SIMPLIFIER( ((B>A)&(C!=A)),                                                  __iff((B<C), (A<B)) );
+        SIMPLIFIER( ((B>A)|(C!=A)),                                                  __iff((B>C), 0x1) );
+        SIMPLIFIER( ((B>A)|(C!=A)),                                                  __iff((B==C), (A!=B)) );
+        SIMPLIFIER( ((B>A)&(C<=A)),                                                  __iff((B==C), 0x0) );
+        SIMPLIFIER( ((B>A)&(C<=A)),                                                  __iff((B<=C), 0x0) );
+        SIMPLIFIER( ((B>A)&(C<=A)),                                                  __iff((B<C), 0x0) );
+        SIMPLIFIER( ((B>A)|(C<=A)),                                                  __iff((B>C), 0x1) );
+        SIMPLIFIER( ((B>A)|(C<=A)),                                                  __iff((B>=C), 0x1) );
+        SIMPLIFIER( ((B>A)|(C<=A)),                                                  __iff((B==C), 0x1) );
+        SIMPLIFIER( ((B>A)&(C<A)),                                                   __iff((B==C), 0x0) );
+        SIMPLIFIER( ((B>A)&(C<A)),                                                   __iff((B<=C), 0x0) );
+        SIMPLIFIER( ((B>A)&(C<A)),                                                   __iff((B<C), 0x0) );
+        SIMPLIFIER( ((B>A)|(C<A)),                                                   __iff((B>C), 0x1) );
+        SIMPLIFIER( ((B>A)|(C<A)),                                                   __iff((B==C), (A!=B)) );
+        SIMPLIFIER( ((B>=A)&(C>A)),                                                  __iff((B==C), (A<B)) );
+        SIMPLIFIER( ((B>=A)&(C>A)),                                                  __iff((B<C), (A<=B)) );
+        SIMPLIFIER( ((B>=A)|(C>A)),                                                  __iff((B>C), (A<=B)) );
+        SIMPLIFIER( ((B>=A)|(C>A)),                                                  __iff((B>=C), (A<=B)) );
+        SIMPLIFIER( ((B>=A)|(C>A)),                                                  __iff((B==C), (A<=B)) );
+        SIMPLIFIER( ((B>=A)&(C>=A)),                                                 __iff((B==C), (A<=B)) );
+        SIMPLIFIER( ((B>=A)&(C>=A)),                                                 __iff((B<=C), (A<=B)) );
+        SIMPLIFIER( ((B>=A)&(C>=A)),                                                 __iff((B<C), (A<=B)) );
+        SIMPLIFIER( ((B>=A)|(C>=A)),                                                 __iff((B>C), (A<=B)) );
+        SIMPLIFIER( ((B>=A)|(C>=A)),                                                 __iff((B>=C), (A<=B)) );
+        SIMPLIFIER( ((B>=A)|(C>=A)),                                                 __iff((B==C), (A<=B)) );
+        SIMPLIFIER( ((B>=A)&(C==A)),                                                 __iff((B==C), (A==B)) );
+        SIMPLIFIER( ((B>=A)&(C==A)),                                                 __iff((B<C), 0x0) );
+        SIMPLIFIER( ((B>=A)|(C==A)),                                                 __iff((B>C), (A<=B)) );
+        SIMPLIFIER( ((B>=A)|(C==A)),                                                 __iff((B>=C), (A<=B)) );
+        SIMPLIFIER( ((B>=A)|(C==A)),                                                 __iff((B==C), (A<=B)) );
+        SIMPLIFIER( ((B>=A)&(C!=A)),                                                 __iff((B==C), (A<B)) );
+        SIMPLIFIER( ((B>=A)&(C!=A)),                                                 __iff((B<C), (A<=B)) );
+        SIMPLIFIER( ((B>=A)|(C!=A)),                                                 __iff((B>C), 0x1) );
+        SIMPLIFIER( ((B>=A)|(C!=A)),                                                 __iff((B>=C), 0x1) );
+        SIMPLIFIER( ((B>=A)|(C!=A)),                                                 __iff((B==C), 0x1) );
+        SIMPLIFIER( ((B>=A)&(C<=A)),                                                 __iff((B==C), (A==B)) );
+        SIMPLIFIER( ((B>=A)&(C<=A)),                                                 __iff((B<C), 0x0) );
+        SIMPLIFIER( ((B>=A)|(C<=A)),                                                 __iff((B>C), 0x1) );
+        SIMPLIFIER( ((B>=A)|(C<=A)),                                                 __iff((B>=C), 0x1) );
+        SIMPLIFIER( ((B>=A)|(C<=A)),                                                 __iff((B==C), 0x1) );
+        SIMPLIFIER( ((B>=A)&(C<A)),                                                  __iff((B==C), 0x0) );
+        SIMPLIFIER( ((B>=A)&(C<A)),                                                  __iff((B<=C), 0x0) );
+        SIMPLIFIER( ((B>=A)&(C<A)),                                                  __iff((B<C), 0x0) );
+        SIMPLIFIER( ((B>=A)|(C<A)),                                                  __iff((B>C), 0x1) );
+        SIMPLIFIER( ((B>=A)|(C<A)),                                                  __iff((B>=C), 0x1) );
+        SIMPLIFIER( ((B>=A)|(C<A)),                                                  __iff((B==C), 0x1) );
+        SIMPLIFIER( ((B==A)&(C>A)),                                                  __iff((B>C), 0x0) );
+        SIMPLIFIER( ((B==A)&(C>A)),                                                  __iff((B>=C), 0x0) );
+        SIMPLIFIER( ((B==A)&(C>A)),                                                  __iff((B==C), 0x0) );
+        SIMPLIFIER( ((B==A)&(C>A)),                                                  __iff((B<C), (A==B)) );
+        SIMPLIFIER( ((B==A)|(C>A)),                                                  __iff((B==C), (A<=B)) );
+        SIMPLIFIER( ((B==A)&(C>=A)),                                                 __iff((B>C), 0x0) );
+        SIMPLIFIER( ((B==A)&(C>=A)),                                                 __iff((B==C), (A==B)) );
+        SIMPLIFIER( ((B==A)&(C>=A)),                                                 __iff((B<=C), (A==B)) );
+        SIMPLIFIER( ((B==A)&(C>=A)),                                                 __iff((B<C), (A==B)) );
+        SIMPLIFIER( ((B==A)|(C>=A)),                                                 __iff((B==C), (A<=B)) );
+        SIMPLIFIER( ((B==A)&(C==A)),                                                 __iff((B>C), 0x0) );
+        SIMPLIFIER( ((B==A)&(C==A)),                                                 __iff((B==C), (A==B)) );
+        SIMPLIFIER( ((B==A)&(C==A)),                                                 __iff((B!=C), 0x0) );
+        SIMPLIFIER( ((B==A)&(C==A)),                                                 __iff((B<C), 0x0) );
+        SIMPLIFIER( ((B==A)&(C==A)),                                                 __iff(__ugreat(B, C), 0x0) );
+        SIMPLIFIER( ((B==A)&(C==A)),                                                 __iff(__uless(B, C), 0x0) );
+        SIMPLIFIER( ((B==A)|(C==A)),                                                 __iff((B==C), (A==B)) );
+        SIMPLIFIER( ((B==A)&(C!=A)),                                                 __iff((B>C), (A==B)) );
+        SIMPLIFIER( ((B==A)&(C!=A)),                                                 __iff((B==C), 0x0) );
+        SIMPLIFIER( ((B==A)&(C!=A)),                                                 __iff((B!=C), (A==B)) );
+        SIMPLIFIER( ((B==A)&(C!=A)),                                                 __iff((B<C), (A==B)) );
+        SIMPLIFIER( ((B==A)&(C!=A)),                                                 __iff(__ugreat(B, C), (A==B)) );
+        SIMPLIFIER( ((B==A)&(C!=A)),                                                 __iff(__uless(B, C), (A==B)) );
+        SIMPLIFIER( ((B==A)|(C!=A)),                                                 __iff((B==C), 0x1) );
+        SIMPLIFIER( ((B==A)&(C<=A)),                                                 __iff((B>C), (A==B)) );
+        SIMPLIFIER( ((B==A)&(C<=A)),                                                 __iff((B>=C), (A==B)) );
+        SIMPLIFIER( ((B==A)&(C<=A)),                                                 __iff((B==C), (A==B)) );
+        SIMPLIFIER( ((B==A)&(C<=A)),                                                 __iff((B<C), 0x0) );
+        SIMPLIFIER( ((B==A)|(C<=A)),                                                 __iff((B==C), (A>=B)) );
+        SIMPLIFIER( ((B==A)&(C<A)),                                                  __iff((B>C), (A==B)) );
+        SIMPLIFIER( ((B==A)&(C<A)),                                                  __iff((B==C), 0x0) );
+        SIMPLIFIER( ((B==A)&(C<A)),                                                  __iff((B<=C), 0x0) );
+        SIMPLIFIER( ((B==A)&(C<A)),                                                  __iff((B<C), 0x0) );
+        SIMPLIFIER( ((B==A)|(C<A)),                                                  __iff((B==C), (A>=B)) );
+        SIMPLIFIER( ((B==A)&__ugreat(C, A)),                                         __iff((B==C), 0x0) );
+        SIMPLIFIER( ((B==A)&__ugreat(C, A)),                                         __iff(__ugreat(B, C), 0x0) );
+        SIMPLIFIER( ((B==A)&__ugreat(C, A)),                                         __iff(__ugreat_eq(B, C), 0x0) );
+        SIMPLIFIER( ((B==A)&__ugreat(C, A)),                                         __iff(__uless(B, C), (A==B)) );
+        SIMPLIFIER( ((B==A)|__ugreat(C, A)),                                         __iff((B==C), __uless_eq(A, B)) );
+        SIMPLIFIER( ((B==A)&__ugreat_eq(C, A)),                                      __iff((B==C), (A==B)) );
+        SIMPLIFIER( ((B==A)&__ugreat_eq(C, A)),                                      __iff(__ugreat(B, C), 0x0) );
+        SIMPLIFIER( ((B==A)&__ugreat_eq(C, A)),                                      __iff(__uless_eq(B, C), (A==B)) );
+        SIMPLIFIER( ((B==A)&__ugreat_eq(C, A)),                                      __iff(__uless(B, C), (A==B)) );
+        SIMPLIFIER( ((B==A)|__ugreat_eq(C, A)),                                      __iff((B==C), __uless_eq(A, B)) );
+        SIMPLIFIER( ((B==A)&__uless_eq(C, A)),                                       __iff((B==C), (A==B)) );
+        SIMPLIFIER( ((B==A)&__uless_eq(C, A)),                                       __iff(__ugreat(B, C), (A==B)) );
+        SIMPLIFIER( ((B==A)&__uless_eq(C, A)),                                       __iff(__ugreat_eq(B, C), (A==B)) );
+        SIMPLIFIER( ((B==A)&__uless_eq(C, A)),                                       __iff(__uless(B, C), 0x0) );
+        SIMPLIFIER( ((B==A)|__uless_eq(C, A)),                                       __iff((B==C), __ugreat_eq(A, B)) );
+        SIMPLIFIER( ((B==A)&__uless(C, A)),                                          __iff((B==C), 0x0) );
+        SIMPLIFIER( ((B==A)&__uless(C, A)),                                          __iff(__ugreat(B, C), (A==B)) );
+        SIMPLIFIER( ((B==A)&__uless(C, A)),                                          __iff(__uless_eq(B, C), 0x0) );
+        SIMPLIFIER( ((B==A)&__uless(C, A)),                                          __iff(__uless(B, C), 0x0) );
+        SIMPLIFIER( ((B==A)|__uless(C, A)),                                          __iff((B==C), __ugreat_eq(A, B)) );
+        SIMPLIFIER( ((B!=A)&(C>A)),                                                  __iff((B==C), (A<B)) );
+        SIMPLIFIER( ((B!=A)|(C>A)),                                                  __iff((B>C), (A!=B)) );
+        SIMPLIFIER( ((B!=A)|(C>A)),                                                  __iff((B>=C), (A!=B)) );
+        SIMPLIFIER( ((B!=A)|(C>A)),                                                  __iff((B==C), (A!=B)) );
+        SIMPLIFIER( ((B!=A)|(C>A)),                                                  __iff((B<C), 0x1) );
+        SIMPLIFIER( ((B!=A)&(C>=A)),                                                 __iff((B==C), (A<B)) );
+        SIMPLIFIER( ((B!=A)|(C>=A)),                                                 __iff((B>C), (A!=B)) );
+        SIMPLIFIER( ((B!=A)|(C>=A)),                                                 __iff((B==C), 0x1) );
+        SIMPLIFIER( ((B!=A)|(C>=A)),                                                 __iff((B<=C), 0x1) );
+        SIMPLIFIER( ((B!=A)|(C>=A)),                                                 __iff((B<C), 0x1) );
+        SIMPLIFIER( ((B!=A)&(C==A)),                                                 __iff((B==C), 0x0) );
+        SIMPLIFIER( ((B!=A)|(C==A)),                                                 __iff((B>C), (A!=B)) );
+        SIMPLIFIER( ((B!=A)|(C==A)),                                                 __iff((B==C), 0x1) );
+        SIMPLIFIER( ((B!=A)|(C==A)),                                                 __iff((B!=C), (A!=B)) );
+        SIMPLIFIER( ((B!=A)|(C==A)),                                                 __iff((B<C), (A!=B)) );
+        SIMPLIFIER( ((B!=A)|(C==A)),                                                 __iff(__ugreat(B, C), (A!=B)) );
+        SIMPLIFIER( ((B!=A)|(C==A)),                                                 __iff(__uless(B, C), (A!=B)) );
+        SIMPLIFIER( ((B!=A)&(C!=A)),                                                 __iff((B==C), (A!=B)) );
+        SIMPLIFIER( ((B!=A)|(C!=A)),                                                 __iff((B>C), 0x1) );
+        SIMPLIFIER( ((B!=A)|(C!=A)),                                                 __iff((B==C), (A!=B)) );
+        SIMPLIFIER( ((B!=A)|(C!=A)),                                                 __iff((B!=C), 0x1) );
+        SIMPLIFIER( ((B!=A)|(C!=A)),                                                 __iff((B<C), 0x1) );
+        SIMPLIFIER( ((B!=A)|(C!=A)),                                                 __iff(__ugreat(B, C), 0x1) );
+        SIMPLIFIER( ((B!=A)|(C!=A)),                                                 __iff(__uless(B, C), 0x1) );
+        SIMPLIFIER( ((B!=A)&(C<=A)),                                                 __iff((B==C), (A>B)) );
+        SIMPLIFIER( ((B!=A)|(C<=A)),                                                 __iff((B>C), 0x1) );
+        SIMPLIFIER( ((B!=A)|(C<=A)),                                                 __iff((B>=C), 0x1) );
+        SIMPLIFIER( ((B!=A)|(C<=A)),                                                 __iff((B==C), 0x1) );
+        SIMPLIFIER( ((B!=A)|(C<=A)),                                                 __iff((B<C), (A!=B)) );
+        SIMPLIFIER( ((B!=A)&(C<A)),                                                  __iff((B==C), (A>B)) );
+        SIMPLIFIER( ((B!=A)|(C<A)),                                                  __iff((B>C), 0x1) );
+        SIMPLIFIER( ((B!=A)|(C<A)),                                                  __iff((B==C), (A!=B)) );
+        SIMPLIFIER( ((B!=A)|(C<A)),                                                  __iff((B<=C), (A!=B)) );
+        SIMPLIFIER( ((B!=A)|(C<A)),                                                  __iff((B<C), (A!=B)) );
+        SIMPLIFIER( ((B!=A)&__ugreat(C, A)),                                         __iff((B==C), __uless(A, B)) );
+        SIMPLIFIER( ((B!=A)|__ugreat(C, A)),                                         __iff((B==C), (A!=B)) );
+        SIMPLIFIER( ((B!=A)|__ugreat(C, A)),                                         __iff(__ugreat(B, C), (A!=B)) );
+        SIMPLIFIER( ((B!=A)|__ugreat(C, A)),                                         __iff(__ugreat_eq(B, C), (A!=B)) );
+        SIMPLIFIER( ((B!=A)|__ugreat(C, A)),                                         __iff(__uless(B, C), 0x1) );
+        SIMPLIFIER( ((B!=A)&__ugreat_eq(C, A)),                                      __iff((B==C), __uless(A, B)) );
+        SIMPLIFIER( ((B!=A)|__ugreat_eq(C, A)),                                      __iff((B==C), 0x1) );
+        SIMPLIFIER( ((B!=A)|__ugreat_eq(C, A)),                                      __iff(__ugreat(B, C), (A!=B)) );
+        SIMPLIFIER( ((B!=A)|__ugreat_eq(C, A)),                                      __iff(__uless_eq(B, C), 0x1) );
+        SIMPLIFIER( ((B!=A)|__ugreat_eq(C, A)),                                      __iff(__uless(B, C), 0x1) );
+        SIMPLIFIER( ((B!=A)&__uless_eq(C, A)),                                       __iff((B==C), __ugreat(A, B)) );
+        SIMPLIFIER( ((B!=A)|__uless_eq(C, A)),                                       __iff((B==C), 0x1) );
+        SIMPLIFIER( ((B!=A)|__uless_eq(C, A)),                                       __iff(__ugreat(B, C), 0x1) );
+        SIMPLIFIER( ((B!=A)|__uless_eq(C, A)),                                       __iff(__ugreat_eq(B, C), 0x1) );
+        SIMPLIFIER( ((B!=A)|__uless_eq(C, A)),                                       __iff(__uless(B, C), (A!=B)) );
+        SIMPLIFIER( ((B!=A)&__uless(C, A)),                                          __iff((B==C), __ugreat(A, B)) );
+        SIMPLIFIER( ((B!=A)|__uless(C, A)),                                          __iff((B==C), (A!=B)) );
+        SIMPLIFIER( ((B!=A)|__uless(C, A)),                                          __iff(__ugreat(B, C), 0x1) );
+        SIMPLIFIER( ((B!=A)|__uless(C, A)),                                          __iff(__uless_eq(B, C), (A!=B)) );
+        SIMPLIFIER( ((B!=A)|__uless(C, A)),                                          __iff(__uless(B, C), (A!=B)) );
+        SIMPLIFIER( ((B<=A)&(C>A)),                                                  __iff((B>C), 0x0) );
+        SIMPLIFIER( ((B<=A)&(C>A)),                                                  __iff((B>=C), 0x0) );
+        SIMPLIFIER( ((B<=A)&(C>A)),                                                  __iff((B==C), 0x0) );
+        SIMPLIFIER( ((B<=A)|(C>A)),                                                  __iff((B==C), 0x1) );
+        SIMPLIFIER( ((B<=A)|(C>A)),                                                  __iff((B<=C), 0x1) );
+        SIMPLIFIER( ((B<=A)|(C>A)),                                                  __iff((B<C), 0x1) );
+        SIMPLIFIER( ((B<=A)&(C>=A)),                                                 __iff((B>C), 0x0) );
+        SIMPLIFIER( ((B<=A)&(C>=A)),                                                 __iff((B==C), (A==B)) );
+        SIMPLIFIER( ((B<=A)|(C>=A)),                                                 __iff((B==C), 0x1) );
+        SIMPLIFIER( ((B<=A)|(C>=A)),                                                 __iff((B<=C), 0x1) );
+        SIMPLIFIER( ((B<=A)|(C>=A)),                                                 __iff((B<C), 0x1) );
+        SIMPLIFIER( ((B<=A)&(C==A)),                                                 __iff((B>C), 0x0) );
+        SIMPLIFIER( ((B<=A)&(C==A)),                                                 __iff((B==C), (A==B)) );
+        SIMPLIFIER( ((B<=A)|(C==A)),                                                 __iff((B==C), (A>=B)) );
+        SIMPLIFIER( ((B<=A)|(C==A)),                                                 __iff((B<=C), (A>=B)) );
+        SIMPLIFIER( ((B<=A)|(C==A)),                                                 __iff((B<C), (A>=B)) );
+        SIMPLIFIER( ((B<=A)&(C!=A)),                                                 __iff((B>C), (A>=B)) );
+        SIMPLIFIER( ((B<=A)&(C!=A)),                                                 __iff((B==C), (A>B)) );
+        SIMPLIFIER( ((B<=A)|(C!=A)),                                                 __iff((B==C), 0x1) );
+        SIMPLIFIER( ((B<=A)|(C!=A)),                                                 __iff((B<=C), 0x1) );
+        SIMPLIFIER( ((B<=A)|(C!=A)),                                                 __iff((B<C), 0x1) );
+        SIMPLIFIER( ((B<=A)&(C<=A)),                                                 __iff((B>C), (A>=B)) );
+        SIMPLIFIER( ((B<=A)&(C<=A)),                                                 __iff((B>=C), (A>=B)) );
+        SIMPLIFIER( ((B<=A)&(C<=A)),                                                 __iff((B==C), (A>=B)) );
+        SIMPLIFIER( ((B<=A)|(C<=A)),                                                 __iff((B==C), (A>=B)) );
+        SIMPLIFIER( ((B<=A)|(C<=A)),                                                 __iff((B<=C), (A>=B)) );
+        SIMPLIFIER( ((B<=A)|(C<=A)),                                                 __iff((B<C), (A>=B)) );
+        SIMPLIFIER( ((B<=A)&(C<A)),                                                  __iff((B>C), (A>=B)) );
+        SIMPLIFIER( ((B<=A)&(C<A)),                                                  __iff((B==C), (A>B)) );
+        SIMPLIFIER( ((B<=A)|(C<A)),                                                  __iff((B==C), (A>=B)) );
+        SIMPLIFIER( ((B<=A)|(C<A)),                                                  __iff((B<=C), (A>=B)) );
+        SIMPLIFIER( ((B<=A)|(C<A)),                                                  __iff((B<C), (A>=B)) );
+        SIMPLIFIER( ((B<A)&(C>A)),                                                   __iff((B>C), 0x0) );
+        SIMPLIFIER( ((B<A)&(C>A)),                                                   __iff((B>=C), 0x0) );
+        SIMPLIFIER( ((B<A)&(C>A)),                                                   __iff((B==C), 0x0) );
+        SIMPLIFIER( ((B<A)|(C>A)),                                                   __iff((B==C), (A!=B)) );
+        SIMPLIFIER( ((B<A)|(C>A)),                                                   __iff((B<C), 0x1) );
+        SIMPLIFIER( ((B<A)&(C>=A)),                                                  __iff((B>C), 0x0) );
+        SIMPLIFIER( ((B<A)&(C>=A)),                                                  __iff((B>=C), 0x0) );
+        SIMPLIFIER( ((B<A)&(C>=A)),                                                  __iff((B==C), 0x0) );
+        SIMPLIFIER( ((B<A)|(C>=A)),                                                  __iff((B==C), 0x1) );
+        SIMPLIFIER( ((B<A)|(C>=A)),                                                  __iff((B<=C), 0x1) );
+        SIMPLIFIER( ((B<A)|(C>=A)),                                                  __iff((B<C), 0x1) );
+        SIMPLIFIER( ((B<A)&(C==A)),                                                  __iff((B>C), 0x0) );
+        SIMPLIFIER( ((B<A)&(C==A)),                                                  __iff((B>=C), 0x0) );
+        SIMPLIFIER( ((B<A)&(C==A)),                                                  __iff((B==C), 0x0) );
+        SIMPLIFIER( ((B<A)|(C==A)),                                                  __iff((B==C), (A>=B)) );
+        SIMPLIFIER( ((B<A)|(C==A)),                                                  __iff((B<C), (A>B)) );
+        SIMPLIFIER( ((B<A)&(C!=A)),                                                  __iff((B>C), (A>B)) );
+        SIMPLIFIER( ((B<A)&(C!=A)),                                                  __iff((B>=C), (A>B)) );
+        SIMPLIFIER( ((B<A)&(C!=A)),                                                  __iff((B==C), (A>B)) );
+        SIMPLIFIER( ((B<A)|(C!=A)),                                                  __iff((B==C), (A!=B)) );
+        SIMPLIFIER( ((B<A)|(C!=A)),                                                  __iff((B<C), 0x1) );
+        SIMPLIFIER( ((B<A)&(C<=A)),                                                  __iff((B>C), (A>B)) );
+        SIMPLIFIER( ((B<A)&(C<=A)),                                                  __iff((B>=C), (A>B)) );
+        SIMPLIFIER( ((B<A)&(C<=A)),                                                  __iff((B==C), (A>B)) );
+        SIMPLIFIER( ((B<A)|(C<=A)),                                                  __iff((B==C), (A>=B)) );
+        SIMPLIFIER( ((B<A)|(C<=A)),                                                  __iff((B<C), (A>B)) );
+        SIMPLIFIER( ((B<A)&(C<A)),                                                   __iff((B>C), (A>B)) );
+        SIMPLIFIER( ((B<A)&(C<A)),                                                   __iff((B>=C), (A>B)) );
+        SIMPLIFIER( ((B<A)&(C<A)),                                                   __iff((B==C), (A>B)) );
+        SIMPLIFIER( ((B<A)|(C<A)),                                                   __iff((B==C), (A>B)) );
+        SIMPLIFIER( ((B<A)|(C<A)),                                                   __iff((B<=C), (A>B)) );
+        SIMPLIFIER( ((B<A)|(C<A)),                                                   __iff((B<C), (A>B)) );
+        SIMPLIFIER( (__ugreat(B, A)&(C==A)),                                         __iff((B==C), 0x0) );
+        SIMPLIFIER( (__ugreat(B, A)&(C==A)),                                         __iff(__uless_eq(B, C), 0x0) );
+        SIMPLIFIER( (__ugreat(B, A)&(C==A)),                                         __iff(__uless(B, C), 0x0) );
+        SIMPLIFIER( (__ugreat(B, A)|(C==A)),                                         __iff((B==C), __uless_eq(A, B)) );
+        SIMPLIFIER( (__ugreat(B, A)|(C==A)),                                         __iff(__ugreat(B, C), __uless(A, B)) );
+        SIMPLIFIER( (__ugreat(B, A)&(C!=A)),                                         __iff((B==C), __uless(A, B)) );
+        SIMPLIFIER( (__ugreat(B, A)&(C!=A)),                                         __iff(__uless_eq(B, C), __uless(A, B)) );
+        SIMPLIFIER( (__ugreat(B, A)&(C!=A)),                                         __iff(__uless(B, C), __uless(A, B)) );
+        SIMPLIFIER( (__ugreat(B, A)|(C!=A)),                                         __iff((B==C), (A!=B)) );
+        SIMPLIFIER( (__ugreat(B, A)|(C!=A)),                                         __iff(__ugreat(B, C), 0x1) );
+        SIMPLIFIER( (__ugreat(B, A)&__ugreat(C, A)),                                 __iff((B==C), __uless(A, B)) );
+        SIMPLIFIER( (__ugreat(B, A)&__ugreat(C, A)),                                 __iff(__uless_eq(B, C), __uless(A, B)) );
+        SIMPLIFIER( (__ugreat(B, A)&__ugreat(C, A)),                                 __iff(__uless(B, C), __uless(A, B)) );
+        SIMPLIFIER( (__ugreat(B, A)|__ugreat(C, A)),                                 __iff((B==C), __uless(A, B)) );
+        SIMPLIFIER( (__ugreat(B, A)|__ugreat(C, A)),                                 __iff(__ugreat(B, C), __uless(A, B)) );
+        SIMPLIFIER( (__ugreat(B, A)|__ugreat(C, A)),                                 __iff(__ugreat_eq(B, C), __uless(A, B)) );
+        SIMPLIFIER( (__ugreat(B, A)&__ugreat_eq(C, A)),                              __iff((B==C), __uless(A, B)) );
+        SIMPLIFIER( (__ugreat(B, A)&__ugreat_eq(C, A)),                              __iff(__uless_eq(B, C), __uless(A, B)) );
+        SIMPLIFIER( (__ugreat(B, A)&__ugreat_eq(C, A)),                              __iff(__uless(B, C), __uless(A, B)) );
+        SIMPLIFIER( (__ugreat(B, A)|__ugreat_eq(C, A)),                              __iff((B==C), __uless_eq(A, B)) );
+        SIMPLIFIER( (__ugreat(B, A)|__ugreat_eq(C, A)),                              __iff(__ugreat(B, C), __uless(A, B)) );
+        SIMPLIFIER( (__ugreat(B, A)&__uless_eq(C, A)),                               __iff((B==C), 0x0) );
+        SIMPLIFIER( (__ugreat(B, A)&__uless_eq(C, A)),                               __iff(__uless_eq(B, C), 0x0) );
+        SIMPLIFIER( (__ugreat(B, A)&__uless_eq(C, A)),                               __iff(__uless(B, C), 0x0) );
+        SIMPLIFIER( (__ugreat(B, A)|__uless_eq(C, A)),                               __iff((B==C), 0x1) );
+        SIMPLIFIER( (__ugreat(B, A)|__uless_eq(C, A)),                               __iff(__ugreat(B, C), 0x1) );
+        SIMPLIFIER( (__ugreat(B, A)|__uless_eq(C, A)),                               __iff(__ugreat_eq(B, C), 0x1) );
+        SIMPLIFIER( (__ugreat(B, A)&__uless(C, A)),                                  __iff((B==C), 0x0) );
+        SIMPLIFIER( (__ugreat(B, A)&__uless(C, A)),                                  __iff(__uless_eq(B, C), 0x0) );
+        SIMPLIFIER( (__ugreat(B, A)&__uless(C, A)),                                  __iff(__uless(B, C), 0x0) );
+        SIMPLIFIER( (__ugreat(B, A)|__uless(C, A)),                                  __iff((B==C), (A!=B)) );
+        SIMPLIFIER( (__ugreat(B, A)|__uless(C, A)),                                  __iff(__ugreat(B, C), 0x1) );
+        SIMPLIFIER( (__ugreat_eq(B, A)&(C==A)),                                      __iff((B==C), (A==B)) );
+        SIMPLIFIER( (__ugreat_eq(B, A)&(C==A)),                                      __iff(__uless(B, C), 0x0) );
+        SIMPLIFIER( (__ugreat_eq(B, A)|(C==A)),                                      __iff((B==C), __uless_eq(A, B)) );
+        SIMPLIFIER( (__ugreat_eq(B, A)|(C==A)),                                      __iff(__ugreat(B, C), __uless_eq(A, B)) );
+        SIMPLIFIER( (__ugreat_eq(B, A)|(C==A)),                                      __iff(__ugreat_eq(B, C), __uless_eq(A, B)) );
+        SIMPLIFIER( (__ugreat_eq(B, A)&(C!=A)),                                      __iff((B==C), __uless(A, B)) );
+        SIMPLIFIER( (__ugreat_eq(B, A)&(C!=A)),                                      __iff(__uless(B, C), __uless_eq(A, B)) );
+        SIMPLIFIER( (__ugreat_eq(B, A)|(C!=A)),                                      __iff((B==C), 0x1) );
+        SIMPLIFIER( (__ugreat_eq(B, A)|(C!=A)),                                      __iff(__ugreat(B, C), 0x1) );
+        SIMPLIFIER( (__ugreat_eq(B, A)|(C!=A)),                                      __iff(__ugreat_eq(B, C), 0x1) );
+        SIMPLIFIER( (__ugreat_eq(B, A)&__ugreat(C, A)),                              __iff((B==C), __uless(A, B)) );
+        SIMPLIFIER( (__ugreat_eq(B, A)&__ugreat(C, A)),                              __iff(__uless(B, C), __uless_eq(A, B)) );
+        SIMPLIFIER( (__ugreat_eq(B, A)|__ugreat(C, A)),                              __iff((B==C), __uless_eq(A, B)) );
+        SIMPLIFIER( (__ugreat_eq(B, A)|__ugreat(C, A)),                              __iff(__ugreat(B, C), __uless_eq(A, B)) );
+        SIMPLIFIER( (__ugreat_eq(B, A)|__ugreat(C, A)),                              __iff(__ugreat_eq(B, C), __uless_eq(A, B)) );
+        SIMPLIFIER( (__ugreat_eq(B, A)&__ugreat_eq(C, A)),                           __iff((B==C), __uless_eq(A, B)) );
+        SIMPLIFIER( (__ugreat_eq(B, A)&__ugreat_eq(C, A)),                           __iff(__uless_eq(B, C), __uless_eq(A, B)) );
+        SIMPLIFIER( (__ugreat_eq(B, A)&__ugreat_eq(C, A)),                           __iff(__uless(B, C), __uless_eq(A, B)) );
+        SIMPLIFIER( (__ugreat_eq(B, A)|__ugreat_eq(C, A)),                           __iff((B==C), __uless_eq(A, B)) );
+        SIMPLIFIER( (__ugreat_eq(B, A)|__ugreat_eq(C, A)),                           __iff(__ugreat(B, C), __uless_eq(A, B)) );
+        SIMPLIFIER( (__ugreat_eq(B, A)|__ugreat_eq(C, A)),                           __iff(__ugreat_eq(B, C), __uless_eq(A, B)) );
+        SIMPLIFIER( (__ugreat_eq(B, A)&__uless_eq(C, A)),                            __iff((B==C), (A==B)) );
+        SIMPLIFIER( (__ugreat_eq(B, A)&__uless_eq(C, A)),                            __iff(__uless(B, C), 0x0) );
+        SIMPLIFIER( (__ugreat_eq(B, A)|__uless_eq(C, A)),                            __iff((B==C), 0x1) );
+        SIMPLIFIER( (__ugreat_eq(B, A)|__uless_eq(C, A)),                            __iff(__ugreat(B, C), 0x1) );
+        SIMPLIFIER( (__ugreat_eq(B, A)|__uless_eq(C, A)),                            __iff(__ugreat_eq(B, C), 0x1) );
+        SIMPLIFIER( (__ugreat_eq(B, A)&__uless(C, A)),                               __iff((B==C), 0x0) );
+        SIMPLIFIER( (__ugreat_eq(B, A)&__uless(C, A)),                               __iff(__uless_eq(B, C), 0x0) );
+        SIMPLIFIER( (__ugreat_eq(B, A)&__uless(C, A)),                               __iff(__uless(B, C), 0x0) );
+        SIMPLIFIER( (__ugreat_eq(B, A)|__uless(C, A)),                               __iff((B==C), 0x1) );
+        SIMPLIFIER( (__ugreat_eq(B, A)|__uless(C, A)),                               __iff(__ugreat(B, C), 0x1) );
+        SIMPLIFIER( (__ugreat_eq(B, A)|__uless(C, A)),                               __iff(__ugreat_eq(B, C), 0x1) );
+        SIMPLIFIER( (__uless_eq(B, A)&(C==A)),                                       __iff((B==C), (A==B)) );
+        SIMPLIFIER( (__uless_eq(B, A)&(C==A)),                                       __iff(__ugreat(B, C), 0x0) );
+        SIMPLIFIER( (__uless_eq(B, A)|(C==A)),                                       __iff((B==C), __ugreat_eq(A, B)) );
+        SIMPLIFIER( (__uless_eq(B, A)|(C==A)),                                       __iff(__uless_eq(B, C), __ugreat_eq(A, B)) );
+        SIMPLIFIER( (__uless_eq(B, A)|(C==A)),                                       __iff(__uless(B, C), __ugreat_eq(A, B)) );
+        SIMPLIFIER( (__uless_eq(B, A)&(C!=A)),                                       __iff((B==C), __ugreat(A, B)) );
+        SIMPLIFIER( (__uless_eq(B, A)&(C!=A)),                                       __iff(__ugreat(B, C), __ugreat_eq(A, B)) );
+        SIMPLIFIER( (__uless_eq(B, A)|(C!=A)),                                       __iff((B==C), 0x1) );
+        SIMPLIFIER( (__uless_eq(B, A)|(C!=A)),                                       __iff(__uless_eq(B, C), 0x1) );
+        SIMPLIFIER( (__uless_eq(B, A)|(C!=A)),                                       __iff(__uless(B, C), 0x1) );
+        SIMPLIFIER( (__uless_eq(B, A)&__ugreat(C, A)),                               __iff((B==C), 0x0) );
+        SIMPLIFIER( (__uless_eq(B, A)&__ugreat(C, A)),                               __iff(__ugreat(B, C), 0x0) );
+        SIMPLIFIER( (__uless_eq(B, A)&__ugreat(C, A)),                               __iff(__ugreat_eq(B, C), 0x0) );
+        SIMPLIFIER( (__uless_eq(B, A)|__ugreat(C, A)),                               __iff((B==C), 0x1) );
+        SIMPLIFIER( (__uless_eq(B, A)|__ugreat(C, A)),                               __iff(__uless_eq(B, C), 0x1) );
+        SIMPLIFIER( (__uless_eq(B, A)|__ugreat(C, A)),                               __iff(__uless(B, C), 0x1) );
+        SIMPLIFIER( (__uless_eq(B, A)&__ugreat_eq(C, A)),                            __iff((B==C), (A==B)) );
+        SIMPLIFIER( (__uless_eq(B, A)&__ugreat_eq(C, A)),                            __iff(__ugreat(B, C), 0x0) );
+        SIMPLIFIER( (__uless_eq(B, A)|__ugreat_eq(C, A)),                            __iff((B==C), 0x1) );
+        SIMPLIFIER( (__uless_eq(B, A)|__ugreat_eq(C, A)),                            __iff(__uless_eq(B, C), 0x1) );
+        SIMPLIFIER( (__uless_eq(B, A)|__ugreat_eq(C, A)),                            __iff(__uless(B, C), 0x1) );
+        SIMPLIFIER( (__uless_eq(B, A)&__uless_eq(C, A)),                             __iff((B==C), __ugreat_eq(A, B)) );
+        SIMPLIFIER( (__uless_eq(B, A)&__uless_eq(C, A)),                             __iff(__ugreat(B, C), __ugreat_eq(A, B)) );
+        SIMPLIFIER( (__uless_eq(B, A)&__uless_eq(C, A)),                             __iff(__ugreat_eq(B, C), __ugreat_eq(A, B)) );
+        SIMPLIFIER( (__uless_eq(B, A)|__uless_eq(C, A)),                             __iff((B==C), __ugreat_eq(A, B)) );
+        SIMPLIFIER( (__uless_eq(B, A)|__uless_eq(C, A)),                             __iff(__uless_eq(B, C), __ugreat_eq(A, B)) );
+        SIMPLIFIER( (__uless_eq(B, A)|__uless_eq(C, A)),                             __iff(__uless(B, C), __ugreat_eq(A, B)) );
+        SIMPLIFIER( (__uless_eq(B, A)&__uless(C, A)),                                __iff((B==C), __ugreat(A, B)) );
+        SIMPLIFIER( (__uless_eq(B, A)&__uless(C, A)),                                __iff(__ugreat(B, C), __ugreat_eq(A, B)) );
+        SIMPLIFIER( (__uless_eq(B, A)|__uless(C, A)),                                __iff((B==C), __ugreat_eq(A, B)) );
+        SIMPLIFIER( (__uless_eq(B, A)|__uless(C, A)),                                __iff(__uless_eq(B, C), __ugreat_eq(A, B)) );
+        SIMPLIFIER( (__uless_eq(B, A)|__uless(C, A)),                                __iff(__uless(B, C), __ugreat_eq(A, B)) );
+        SIMPLIFIER( (__uless(B, A)&(C==A)),                                          __iff((B==C), 0x0) );
+        SIMPLIFIER( (__uless(B, A)&(C==A)),                                          __iff(__ugreat(B, C), 0x0) );
+        SIMPLIFIER( (__uless(B, A)&(C==A)),                                          __iff(__ugreat_eq(B, C), 0x0) );
+        SIMPLIFIER( (__uless(B, A)|(C==A)),                                          __iff((B==C), __ugreat_eq(A, B)) );
+        SIMPLIFIER( (__uless(B, A)|(C==A)),                                          __iff(__uless(B, C), __ugreat(A, B)) );
+        SIMPLIFIER( (__uless(B, A)&(C!=A)),                                          __iff((B==C), __ugreat(A, B)) );
+        SIMPLIFIER( (__uless(B, A)&(C!=A)),                                          __iff(__ugreat(B, C), __ugreat(A, B)) );
+        SIMPLIFIER( (__uless(B, A)&(C!=A)),                                          __iff(__ugreat_eq(B, C), __ugreat(A, B)) );
+        SIMPLIFIER( (__uless(B, A)|(C!=A)),                                          __iff((B==C), (A!=B)) );
+        SIMPLIFIER( (__uless(B, A)|(C!=A)),                                          __iff(__uless(B, C), 0x1) );
+        SIMPLIFIER( (__uless(B, A)&__ugreat(C, A)),                                  __iff((B==C), 0x0) );
+        SIMPLIFIER( (__uless(B, A)&__ugreat(C, A)),                                  __iff(__ugreat(B, C), 0x0) );
+        SIMPLIFIER( (__uless(B, A)&__ugreat(C, A)),                                  __iff(__ugreat_eq(B, C), 0x0) );
+        SIMPLIFIER( (__uless(B, A)|__ugreat(C, A)),                                  __iff((B==C), (A!=B)) );
+        SIMPLIFIER( (__uless(B, A)|__ugreat(C, A)),                                  __iff(__uless(B, C), 0x1) );
+        SIMPLIFIER( (__uless(B, A)&__ugreat_eq(C, A)),                               __iff((B==C), 0x0) );
+        SIMPLIFIER( (__uless(B, A)&__ugreat_eq(C, A)),                               __iff(__ugreat(B, C), 0x0) );
+        SIMPLIFIER( (__uless(B, A)&__ugreat_eq(C, A)),                               __iff(__ugreat_eq(B, C), 0x0) );
+        SIMPLIFIER( (__uless(B, A)|__ugreat_eq(C, A)),                               __iff((B==C), 0x1) );
+        SIMPLIFIER( (__uless(B, A)|__ugreat_eq(C, A)),                               __iff(__uless_eq(B, C), 0x1) );
+        SIMPLIFIER( (__uless(B, A)|__ugreat_eq(C, A)),                               __iff(__uless(B, C), 0x1) );
+        SIMPLIFIER( (__uless(B, A)&__uless_eq(C, A)),                                __iff((B==C), __ugreat(A, B)) );
+        SIMPLIFIER( (__uless(B, A)&__uless_eq(C, A)),                                __iff(__ugreat(B, C), __ugreat(A, B)) );
+        SIMPLIFIER( (__uless(B, A)&__uless_eq(C, A)),                                __iff(__ugreat_eq(B, C), __ugreat(A, B)) );
+        SIMPLIFIER( (__uless(B, A)|__uless_eq(C, A)),                                __iff((B==C), __ugreat_eq(A, B)) );
+        SIMPLIFIER( (__uless(B, A)|__uless_eq(C, A)),                                __iff(__uless(B, C), __ugreat(A, B)) );
+        SIMPLIFIER( (__uless(B, A)&__uless(C, A)),                                   __iff((B==C), __ugreat(A, B)) );
+        SIMPLIFIER( (__uless(B, A)&__uless(C, A)),                                   __iff(__ugreat(B, C), __ugreat(A, B)) );
+        SIMPLIFIER( (__uless(B, A)&__uless(C, A)),                                   __iff(__ugreat_eq(B, C), __ugreat(A, B)) );
+        SIMPLIFIER( (__uless(B, A)|__uless(C, A)),                                   __iff((B==C), __ugreat(A, B)) );
+        SIMPLIFIER( (__uless(B, A)|__uless(C, A)),                                   __iff(__uless_eq(B, C), __ugreat(A, B)) );
+        SIMPLIFIER( (__uless(B, A)|__uless(C, A)),                                   __iff(__uless(B, C), __ugreat(A, B)) );
+        SIMPLIFIER( ((A>B)&(A>C)),                                                   __iff((B==(C+0x1)), (A>B)) );
+        SIMPLIFIER( ((A>B)|(A>C)),                                                   __iff((B==(C+0x1)), (A>=B)) );
+        SIMPLIFIER( ((A>B)|(A>C)),                                                   __iff((B<(C+0x1)), (A>B)) );
+        SIMPLIFIER( ((A>B)&(A>=C)),                                                  __iff((B==(C+0x1)), (A>B)) );
+        SIMPLIFIER( ((A>B)&(A==C)),                                                  __iff((B==(C+0x1)), 0x0) );
+        SIMPLIFIER( ((A>B)&(A!=C)),                                                  __iff((B==(C+0x1)), (A>B)) );
+        SIMPLIFIER( ((A>B)&(A<=C)),                                                  __iff((B==(C+0x1)), 0x0) );
+        SIMPLIFIER( ((A>B)|(A<=C)),                                                  __iff((B==(C+0x1)), (A!=B)) );
+        SIMPLIFIER( ((A>B)|(A<=C)),                                                  __iff((B<(C+0x1)), 0x1) );
+        SIMPLIFIER( ((A>B)&(A<C)),                                                   __iff((B==(C+0x1)), 0x0) );
+        SIMPLIFIER( ((A>=B)&(A>C)),                                                  __iff((B==(C+0x1)), (A>=B)) );
+        SIMPLIFIER( ((A>=B)|(A>C)),                                                  __iff((B==(C+0x1)), (A>=B)) );
+        SIMPLIFIER( ((A>=B)|(A>C)),                                                  __iff((B<=(C+0x1)), (A>=B)) );
+        SIMPLIFIER( ((A>=B)|(A>C)),                                                  __iff((B<(C+0x1)), (A>=B)) );
+        SIMPLIFIER( ((A>=B)&(A>=C)),                                                 __iff((B==(C+0x1)), (A>=B)) );
+        SIMPLIFIER( ((A>=B)|(A>=C)),                                                 __iff((B<(C+0x1)), (A>=B)) );
+        SIMPLIFIER( ((A>=B)&(A==C)),                                                 __iff((B==(C+0x1)), 0x0) );
+        SIMPLIFIER( ((A>=B)|(A==C)),                                                 __iff((B<(C+0x1)), (A>=B)) );
+        SIMPLIFIER( ((A>=B)&(A!=C)),                                                 __iff((B==(C+0x1)), (A>=B)) );
+        SIMPLIFIER( ((A>=B)|(A!=C)),                                                 __iff((B<(C+0x1)), 0x1) );
+        SIMPLIFIER( ((A>=B)&(A<=C)),                                                 __iff((B==(C+0x1)), 0x0) );
+        SIMPLIFIER( ((A>=B)|(A<=C)),                                                 __iff((B==(C+0x1)), 0x1) );
+        SIMPLIFIER( ((A>=B)|(A<=C)),                                                 __iff((B<=(C+0x1)), 0x1) );
+        SIMPLIFIER( ((A>=B)|(A<=C)),                                                 __iff((B<(C+0x1)), 0x1) );
+        SIMPLIFIER( ((A>=B)&(A<C)),                                                  __iff((B==(C+0x1)), 0x0) );
+        SIMPLIFIER( ((A>=B)|(A<C)),                                                  __iff((B<(C+0x1)), 0x1) );
+        SIMPLIFIER( ((A==B)&(A>C)),                                                  __iff((B==(C+0x1)), (A==B)) );
+        SIMPLIFIER( ((A==B)&(A>C)),                                                  __iff((B<(C+0x1)), 0x0) );
+        SIMPLIFIER( ((A==B)|(A>C)),                                                  __iff((B==(C+0x1)), (A>=B)) );
+        SIMPLIFIER( ((A==B)&(A>=C)),                                                 __iff((B==(C+0x1)), (A==B)) );
+        SIMPLIFIER( ((A==B)&(A==C)),                                                 __iff((B==(C+0x1)), 0x0) );
+        SIMPLIFIER( ((A==B)&(A!=C)),                                                 __iff((B==(C+0x1)), (A==B)) );
+        SIMPLIFIER( ((A==B)&(A<=C)),                                                 __iff((B==(C+0x1)), 0x0) );
+        SIMPLIFIER( ((A==B)&(A<=C)),                                                 __iff((B<(C+0x1)), (A==B)) );
+        SIMPLIFIER( ((A==B)|(A<=C)),                                                 __iff((B==(C+0x1)), (A<=B)) );
+        SIMPLIFIER( ((A==B)&(A<C)),                                                  __iff((B==(C+0x1)), 0x0) );
+        SIMPLIFIER( ((A==B)&__ugreat(A, C)),                                         __iff(__uless(B, (C+0x1)), 0x0) );
+        SIMPLIFIER( ((A==B)&__uless_eq(A, C)),                                       __iff(__uless(B, (C+0x1)), (A==B)) );
+        SIMPLIFIER( ((A!=B)&(A>C)),                                                  __iff((B==(C+0x1)), (A>B)) );
+        SIMPLIFIER( ((A!=B)|(A>C)),                                                  __iff((B==(C+0x1)), 0x1) );
+        SIMPLIFIER( ((A!=B)|(A>C)),                                                  __iff((B<(C+0x1)), (A!=B)) );
+        SIMPLIFIER( ((A!=B)|(A>=C)),                                                 __iff((B==(C+0x1)), 0x1) );
+        SIMPLIFIER( ((A!=B)|(A==C)),                                                 __iff((B==(C+0x1)), (A!=B)) );
+        SIMPLIFIER( ((A!=B)|(A!=C)),                                                 __iff((B==(C+0x1)), 0x1) );
+        SIMPLIFIER( ((A!=B)&(A<=C)),                                                 __iff((B==(C+0x1)), (A<B)) );
+        SIMPLIFIER( ((A!=B)|(A<=C)),                                                 __iff((B==(C+0x1)), (A!=B)) );
+        SIMPLIFIER( ((A!=B)|(A<=C)),                                                 __iff((B<(C+0x1)), 0x1) );
+        SIMPLIFIER( ((A!=B)|(A<C)),                                                  __iff((B==(C+0x1)), (A!=B)) );
+        SIMPLIFIER( ((A!=B)|__ugreat(A, C)),                                         __iff(__uless(B, (C+0x1)), (A!=B)) );
+        SIMPLIFIER( ((A!=B)|__uless_eq(A, C)),                                       __iff(__uless(B, (C+0x1)), 0x1) );
+        SIMPLIFIER( ((A<=B)&(A>C)),                                                  __iff((B==(C+0x1)), (A==B)) );
+        SIMPLIFIER( ((A<=B)&(A>C)),                                                  __iff((B<(C+0x1)), 0x0) );
+        SIMPLIFIER( ((A<=B)|(A>C)),                                                  __iff((B==(C+0x1)), 0x1) );
+        SIMPLIFIER( ((A<=B)|(A>=C)),                                                 __iff((B==(C+0x1)), 0x1) );
+        SIMPLIFIER( ((A<=B)|(A==C)),                                                 __iff((B==(C+0x1)), (A<=B)) );
+        SIMPLIFIER( ((A<=B)|(A!=C)),                                                 __iff((B==(C+0x1)), 0x1) );
+        SIMPLIFIER( ((A<=B)&(A<=C)),                                                 __iff((B==(C+0x1)), (A<B)) );
+        SIMPLIFIER( ((A<=B)&(A<=C)),                                                 __iff((B<(C+0x1)), (A<=B)) );
+        SIMPLIFIER( ((A<=B)|(A<=C)),                                                 __iff((B==(C+0x1)), (A<=B)) );
+        SIMPLIFIER( ((A<=B)|(A<C)),                                                  __iff((B==(C+0x1)), (A<=B)) );
+        SIMPLIFIER( ((A<B)&(A>C)),                                                   __iff((B==(C+0x1)), 0x0) );
+        SIMPLIFIER( ((A<B)&(A>C)),                                                   __iff((B<=(C+0x1)), 0x0) );
+        SIMPLIFIER( ((A<B)&(A>C)),                                                   __iff((B<(C+0x1)), 0x0) );
+        SIMPLIFIER( ((A<B)|(A>C)),                                                   __iff((B==(C+0x1)), 0x1) );
+        SIMPLIFIER( ((A<B)&(A>=C)),                                                  __iff((B<(C+0x1)), 0x0) );
+        SIMPLIFIER( ((A<B)|(A>=C)),                                                  __iff((B==(C+0x1)), 0x1) );
+        SIMPLIFIER( ((A<B)&(A==C)),                                                  __iff((B<(C+0x1)), 0x0) );
+        SIMPLIFIER( ((A<B)|(A==C)),                                                  __iff((B==(C+0x1)), (A<B)) );
+        SIMPLIFIER( ((A<B)&(A!=C)),                                                  __iff((B<(C+0x1)), (A<B)) );
+        SIMPLIFIER( ((A<B)|(A!=C)),                                                  __iff((B==(C+0x1)), 0x1) );
+        SIMPLIFIER( ((A<B)&(A<=C)),                                                  __iff((B==(C+0x1)), (A<B)) );
+        SIMPLIFIER( ((A<B)&(A<=C)),                                                  __iff((B<=(C+0x1)), (A<B)) );
+        SIMPLIFIER( ((A<B)&(A<=C)),                                                  __iff((B<(C+0x1)), (A<B)) );
+        SIMPLIFIER( ((A<B)|(A<=C)),                                                  __iff((B==(C+0x1)), (A<B)) );
+        SIMPLIFIER( ((A<B)&(A<C)),                                                   __iff((B<(C+0x1)), (A<B)) );
+        SIMPLIFIER( ((A<B)|(A<C)),                                                   __iff((B==(C+0x1)), (A<B)) );
+        SIMPLIFIER( (__ugreat(A, B)|__ugreat(A, C)),                                 __iff(__uless(B, (C+0x1)), __ugreat(A, B)) );
+        SIMPLIFIER( (__ugreat(A, B)|__uless_eq(A, C)),                               __iff(__uless(B, (C+0x1)), 0x1) );
+        SIMPLIFIER( (__ugreat_eq(A, B)|(A==C)),                                      __iff(__uless(B, (C+0x1)), __ugreat_eq(A, B)) );
+        SIMPLIFIER( (__ugreat_eq(A, B)|(A!=C)),                                      __iff(__uless(B, (C+0x1)), 0x1) );
+        SIMPLIFIER( (__ugreat_eq(A, B)|__ugreat(A, C)),                              __iff((B==(C+0x1)), __ugreat_eq(A, B)) );
+        SIMPLIFIER( (__ugreat_eq(A, B)|__ugreat(A, C)),                              __iff(__uless_eq(B, (C+0x1)), __ugreat_eq(A, B)) );
+        SIMPLIFIER( (__ugreat_eq(A, B)|__ugreat(A, C)),                              __iff(__uless(B, (C+0x1)), __ugreat_eq(A, B)) );
+        SIMPLIFIER( (__ugreat_eq(A, B)|__ugreat_eq(A, C)),                           __iff(__uless(B, (C+0x1)), __ugreat_eq(A, B)) );
+        SIMPLIFIER( (__ugreat_eq(A, B)|__uless_eq(A, C)),                            __iff((B==(C+0x1)), 0x1) );
+        SIMPLIFIER( (__ugreat_eq(A, B)|__uless_eq(A, C)),                            __iff(__uless_eq(B, (C+0x1)), 0x1) );
+        SIMPLIFIER( (__ugreat_eq(A, B)|__uless_eq(A, C)),                            __iff(__uless(B, (C+0x1)), 0x1) );
+        SIMPLIFIER( (__ugreat_eq(A, B)|__uless(A, C)),                               __iff(__uless(B, (C+0x1)), 0x1) );
+        SIMPLIFIER( (__uless_eq(A, B)&__ugreat(A, C)),                               __iff(__uless(B, (C+0x1)), 0x0) );
+        SIMPLIFIER( (__uless_eq(A, B)&__uless_eq(A, C)),                             __iff(__uless(B, (C+0x1)), __uless_eq(A, B)) );
+        SIMPLIFIER( (__uless(A, B)&(A==C)),                                          __iff(__uless(B, (C+0x1)), 0x0) );
+        SIMPLIFIER( (__uless(A, B)&(A!=C)),                                          __iff(__uless(B, (C+0x1)), __uless(A, B)) );
+        SIMPLIFIER( (__uless(A, B)&__ugreat(A, C)),                                  __iff((B==(C+0x1)), 0x0) );
+        SIMPLIFIER( (__uless(A, B)&__ugreat(A, C)),                                  __iff(__uless_eq(B, (C+0x1)), 0x0) );
+        SIMPLIFIER( (__uless(A, B)&__ugreat(A, C)),                                  __iff(__uless(B, (C+0x1)), 0x0) );
+        SIMPLIFIER( (__uless(A, B)&__ugreat_eq(A, C)),                               __iff(__uless(B, (C+0x1)), 0x0) );
+        SIMPLIFIER( (__uless(A, B)&__uless_eq(A, C)),                                __iff((B==(C+0x1)), __uless(A, B)) );
+        SIMPLIFIER( (__uless(A, B)&__uless_eq(A, C)),                                __iff(__uless_eq(B, (C+0x1)), __uless(A, B)) );
+        SIMPLIFIER( (__uless(A, B)&__uless_eq(A, C)),                                __iff(__uless(B, (C+0x1)), __uless(A, B)) );
+        SIMPLIFIER( (__uless(A, B)&__uless(A, C)),                                   __iff(__uless(B, (C+0x1)), __uless(A, B)) );
+        SIMPLIFIER( ((A>B)&(C>A)),                                                   __iff((B==(C+0x1)), 0x0) );
+        SIMPLIFIER( ((A>B)&(C>=A)),                                                  __iff((B==(C+0x1)), 0x0) );
+        SIMPLIFIER( ((A>B)|(C>=A)),                                                  __iff((B==(C+0x1)), (A!=B)) );
+        SIMPLIFIER( ((A>B)|(C>=A)),                                                  __iff((B<(C+0x1)), 0x1) );
+        SIMPLIFIER( ((A>B)&(C==A)),                                                  __iff((B==(C+0x1)), 0x0) );
+        SIMPLIFIER( ((A>B)&(C!=A)),                                                  __iff((B==(C+0x1)), (A>B)) );
+        SIMPLIFIER( ((A>B)&(C<=A)),                                                  __iff((B==(C+0x1)), (A>B)) );
+        SIMPLIFIER( ((A>B)&(C<A)),                                                   __iff((B==(C+0x1)), (A>B)) );
+        SIMPLIFIER( ((A>B)|(C<A)),                                                   __iff((B==(C+0x1)), (A>=B)) );
+        SIMPLIFIER( ((A>B)|(C<A)),                                                   __iff((B<(C+0x1)), (A>B)) );
+        SIMPLIFIER( ((A>=B)&(C>A)),                                                  __iff((B==(C+0x1)), 0x0) );
+        SIMPLIFIER( ((A>=B)|(C>A)),                                                  __iff((B<(C+0x1)), 0x1) );
+        SIMPLIFIER( ((A>=B)&(C>=A)),                                                 __iff((B==(C+0x1)), 0x0) );
+        SIMPLIFIER( ((A>=B)|(C>=A)),                                                 __iff((B==(C+0x1)), 0x1) );
+        SIMPLIFIER( ((A>=B)|(C>=A)),                                                 __iff((B<=(C+0x1)), 0x1) );
+        SIMPLIFIER( ((A>=B)|(C>=A)),                                                 __iff((B<(C+0x1)), 0x1) );
+        SIMPLIFIER( ((A>=B)&(C==A)),                                                 __iff((B==(C+0x1)), 0x0) );
+        SIMPLIFIER( ((A>=B)|(C==A)),                                                 __iff((B<(C+0x1)), (A>=B)) );
+        SIMPLIFIER( ((A>=B)&(C!=A)),                                                 __iff((B==(C+0x1)), (A>=B)) );
+        SIMPLIFIER( ((A>=B)|(C!=A)),                                                 __iff((B<(C+0x1)), 0x1) );
+        SIMPLIFIER( ((A>=B)&(C<=A)),                                                 __iff((B==(C+0x1)), (A>=B)) );
+        SIMPLIFIER( ((A>=B)|(C<=A)),                                                 __iff((B<(C+0x1)), (A>=B)) );
+        SIMPLIFIER( ((A>=B)&(C<A)),                                                  __iff((B==(C+0x1)), (A>=B)) );
+        SIMPLIFIER( ((A>=B)|(C<A)),                                                  __iff((B==(C+0x1)), (A>=B)) );
+        SIMPLIFIER( ((A>=B)|(C<A)),                                                  __iff((B<=(C+0x1)), (A>=B)) );
+        SIMPLIFIER( ((A>=B)|(C<A)),                                                  __iff((B<(C+0x1)), (A>=B)) );
+        SIMPLIFIER( ((A==B)&(C>A)),                                                  __iff((B==(C+0x1)), 0x0) );
+        SIMPLIFIER( ((A==B)&(C>=A)),                                                 __iff((B==(C+0x1)), 0x0) );
+        SIMPLIFIER( ((A==B)&(C>=A)),                                                 __iff((B<(C+0x1)), (A==B)) );
+        SIMPLIFIER( ((A==B)|(C>=A)),                                                 __iff((B==(C+0x1)), (A<=B)) );
+        SIMPLIFIER( ((A==B)&(C==A)),                                                 __iff((B==(C+0x1)), 0x0) );
+        SIMPLIFIER( ((A==B)&(C!=A)),                                                 __iff((B==(C+0x1)), (A==B)) );
+        SIMPLIFIER( ((A==B)&(C<=A)),                                                 __iff((B==(C+0x1)), (A==B)) );
+        SIMPLIFIER( ((A==B)&(C<A)),                                                  __iff((B==(C+0x1)), (A==B)) );
+        SIMPLIFIER( ((A==B)&(C<A)),                                                  __iff((B<(C+0x1)), 0x0) );
+        SIMPLIFIER( ((A==B)|(C<A)),                                                  __iff((B==(C+0x1)), (A>=B)) );
+        SIMPLIFIER( ((A==B)&__ugreat_eq(C, A)),                                      __iff(__uless(B, (C+0x1)), (A==B)) );
+        SIMPLIFIER( ((A==B)&__uless(C, A)),                                          __iff(__uless(B, (C+0x1)), 0x0) );
+        SIMPLIFIER( ((A!=B)|(C>A)),                                                  __iff((B==(C+0x1)), (A!=B)) );
+        SIMPLIFIER( ((A!=B)&(C>=A)),                                                 __iff((B==(C+0x1)), (A<B)) );
+        SIMPLIFIER( ((A!=B)|(C>=A)),                                                 __iff((B==(C+0x1)), (A!=B)) );
+        SIMPLIFIER( ((A!=B)|(C>=A)),                                                 __iff((B<(C+0x1)), 0x1) );
+        SIMPLIFIER( ((A!=B)|(C==A)),                                                 __iff((B==(C+0x1)), (A!=B)) );
+        SIMPLIFIER( ((A!=B)|(C!=A)),                                                 __iff((B==(C+0x1)), 0x1) );
+        SIMPLIFIER( ((A!=B)|(C<=A)),                                                 __iff((B==(C+0x1)), 0x1) );
+        SIMPLIFIER( ((A!=B)&(C<A)),                                                  __iff((B==(C+0x1)), (A>B)) );
+        SIMPLIFIER( ((A!=B)|(C<A)),                                                  __iff((B==(C+0x1)), 0x1) );
+        SIMPLIFIER( ((A!=B)|(C<A)),                                                  __iff((B<(C+0x1)), (A!=B)) );
+        SIMPLIFIER( ((A!=B)|__ugreat_eq(C, A)),                                      __iff(__uless(B, (C+0x1)), 0x1) );
+        SIMPLIFIER( ((A!=B)|__uless(C, A)),                                          __iff(__uless(B, (C+0x1)), (A!=B)) );
+        SIMPLIFIER( ((A<=B)|(C>A)),                                                  __iff((B==(C+0x1)), (A<=B)) );
+        SIMPLIFIER( ((A<=B)&(C>=A)),                                                 __iff((B==(C+0x1)), (A<B)) );
+        SIMPLIFIER( ((A<=B)&(C>=A)),                                                 __iff((B<(C+0x1)), (A<=B)) );
+        SIMPLIFIER( ((A<=B)|(C>=A)),                                                 __iff((B==(C+0x1)), (A<=B)) );
+        SIMPLIFIER( ((A<=B)|(C==A)),                                                 __iff((B==(C+0x1)), (A<=B)) );
+        SIMPLIFIER( ((A<=B)|(C!=A)),                                                 __iff((B==(C+0x1)), 0x1) );
+        SIMPLIFIER( ((A<=B)|(C<=A)),                                                 __iff((B==(C+0x1)), 0x1) );
+        SIMPLIFIER( ((A<=B)&(C<A)),                                                  __iff((B==(C+0x1)), (A==B)) );
+        SIMPLIFIER( ((A<=B)&(C<A)),                                                  __iff((B<(C+0x1)), 0x0) );
+        SIMPLIFIER( ((A<=B)|(C<A)),                                                  __iff((B==(C+0x1)), 0x1) );
+        SIMPLIFIER( ((A<B)&(C>A)),                                                   __iff((B<(C+0x1)), (A<B)) );
+        SIMPLIFIER( ((A<B)|(C>A)),                                                   __iff((B==(C+0x1)), (A<B)) );
+        SIMPLIFIER( ((A<B)&(C>=A)),                                                  __iff((B==(C+0x1)), (A<B)) );
+        SIMPLIFIER( ((A<B)&(C>=A)),                                                  __iff((B<=(C+0x1)), (A<B)) );
+        SIMPLIFIER( ((A<B)&(C>=A)),                                                  __iff((B<(C+0x1)), (A<B)) );
+        SIMPLIFIER( ((A<B)|(C>=A)),                                                  __iff((B==(C+0x1)), (A<B)) );
+        SIMPLIFIER( ((A<B)&(C==A)),                                                  __iff((B<(C+0x1)), 0x0) );
+        SIMPLIFIER( ((A<B)|(C==A)),                                                  __iff((B==(C+0x1)), (A<B)) );
+        SIMPLIFIER( ((A<B)&(C!=A)),                                                  __iff((B<(C+0x1)), (A<B)) );
+        SIMPLIFIER( ((A<B)|(C!=A)),                                                  __iff((B==(C+0x1)), 0x1) );
+        SIMPLIFIER( ((A<B)&(C<=A)),                                                  __iff((B<(C+0x1)), 0x0) );
+        SIMPLIFIER( ((A<B)|(C<=A)),                                                  __iff((B==(C+0x1)), 0x1) );
+        SIMPLIFIER( ((A<B)&(C<A)),                                                   __iff((B==(C+0x1)), 0x0) );
+        SIMPLIFIER( ((A<B)&(C<A)),                                                   __iff((B<=(C+0x1)), 0x0) );
+        SIMPLIFIER( ((A<B)&(C<A)),                                                   __iff((B<(C+0x1)), 0x0) );
+        SIMPLIFIER( ((A<B)|(C<A)),                                                   __iff((B==(C+0x1)), 0x1) );
+        SIMPLIFIER( (__ugreat(A, B)|__ugreat_eq(C, A)),                              __iff(__uless(B, (C+0x1)), 0x1) );
+        SIMPLIFIER( (__ugreat(A, B)|__uless(C, A)),                                  __iff(__uless(B, (C+0x1)), __ugreat(A, B)) );
+        SIMPLIFIER( (__ugreat_eq(A, B)|(C==A)),                                      __iff(__uless(B, (C+0x1)), __ugreat_eq(A, B)) );
+        SIMPLIFIER( (__ugreat_eq(A, B)|(C!=A)),                                      __iff(__uless(B, (C+0x1)), 0x1) );
+        SIMPLIFIER( (__ugreat_eq(A, B)|__ugreat(C, A)),                              __iff(__uless(B, (C+0x1)), 0x1) );
+        SIMPLIFIER( (__ugreat_eq(A, B)|__ugreat_eq(C, A)),                           __iff((B==(C+0x1)), 0x1) );
+        SIMPLIFIER( (__ugreat_eq(A, B)|__ugreat_eq(C, A)),                           __iff(__uless_eq(B, (C+0x1)), 0x1) );
+        SIMPLIFIER( (__ugreat_eq(A, B)|__ugreat_eq(C, A)),                           __iff(__uless(B, (C+0x1)), 0x1) );
+        SIMPLIFIER( (__ugreat_eq(A, B)|__uless_eq(C, A)),                            __iff(__uless(B, (C+0x1)), __ugreat_eq(A, B)) );
+        SIMPLIFIER( (__ugreat_eq(A, B)|__uless(C, A)),                               __iff((B==(C+0x1)), __ugreat_eq(A, B)) );
+        SIMPLIFIER( (__ugreat_eq(A, B)|__uless(C, A)),                               __iff(__uless_eq(B, (C+0x1)), __ugreat_eq(A, B)) );
+        SIMPLIFIER( (__ugreat_eq(A, B)|__uless(C, A)),                               __iff(__uless(B, (C+0x1)), __ugreat_eq(A, B)) );
+        SIMPLIFIER( (__uless_eq(A, B)&__ugreat_eq(C, A)),                            __iff(__uless(B, (C+0x1)), __uless_eq(A, B)) );
+        SIMPLIFIER( (__uless_eq(A, B)&__uless(C, A)),                                __iff(__uless(B, (C+0x1)), 0x0) );
+        SIMPLIFIER( (__uless(A, B)&(C==A)),                                          __iff(__uless(B, (C+0x1)), 0x0) );
+        SIMPLIFIER( (__uless(A, B)&(C!=A)),                                          __iff(__uless(B, (C+0x1)), __uless(A, B)) );
+        SIMPLIFIER( (__uless(A, B)&__ugreat(C, A)),                                  __iff(__uless(B, (C+0x1)), __uless(A, B)) );
+        SIMPLIFIER( (__uless(A, B)&__ugreat_eq(C, A)),                               __iff((B==(C+0x1)), __uless(A, B)) );
+        SIMPLIFIER( (__uless(A, B)&__ugreat_eq(C, A)),                               __iff(__uless_eq(B, (C+0x1)), __uless(A, B)) );
+        SIMPLIFIER( (__uless(A, B)&__ugreat_eq(C, A)),                               __iff(__uless(B, (C+0x1)), __uless(A, B)) );
+        SIMPLIFIER( (__uless(A, B)&__uless_eq(C, A)),                                __iff(__uless(B, (C+0x1)), 0x0) );
+        SIMPLIFIER( (__uless(A, B)&__uless(C, A)),                                   __iff((B==(C+0x1)), 0x0) );
+        SIMPLIFIER( (__uless(A, B)&__uless(C, A)),                                   __iff(__uless_eq(B, (C+0x1)), 0x0) );
+        SIMPLIFIER( (__uless(A, B)&__uless(C, A)),                                   __iff(__uless(B, (C+0x1)), 0x0) );
+        SIMPLIFIER( ((B>A)&(A>C)),                                                   __iff((B==(C+0x1)), 0x0) );
+        SIMPLIFIER( ((B>A)&(A>C)),                                                   __iff((B<=(C+0x1)), 0x0) );
+        SIMPLIFIER( ((B>A)&(A>C)),                                                   __iff((B<(C+0x1)), 0x0) );
+        SIMPLIFIER( ((B>A)|(A>C)),                                                   __iff((B==(C+0x1)), 0x1) );
+        SIMPLIFIER( ((B>A)&(A>=C)),                                                  __iff((B<(C+0x1)), 0x0) );
+        SIMPLIFIER( ((B>A)|(A>=C)),                                                  __iff((B==(C+0x1)), 0x1) );
+        SIMPLIFIER( ((B>A)&(A==C)),                                                  __iff((B<(C+0x1)), 0x0) );
+        SIMPLIFIER( ((B>A)|(A==C)),                                                  __iff((B==(C+0x1)), (A<B)) );
+        SIMPLIFIER( ((B>A)&(A!=C)),                                                  __iff((B<(C+0x1)), (A<B)) );
+        SIMPLIFIER( ((B>A)|(A!=C)),                                                  __iff((B==(C+0x1)), 0x1) );
+        SIMPLIFIER( ((B>A)&(A<=C)),                                                  __iff((B==(C+0x1)), (A<B)) );
+        SIMPLIFIER( ((B>A)&(A<=C)),                                                  __iff((B<=(C+0x1)), (A<B)) );
+        SIMPLIFIER( ((B>A)&(A<=C)),                                                  __iff((B<(C+0x1)), (A<B)) );
+        SIMPLIFIER( ((B>A)|(A<=C)),                                                  __iff((B==(C+0x1)), (A<B)) );
+        SIMPLIFIER( ((B>A)&(A<C)),                                                   __iff((B<(C+0x1)), (A<B)) );
+        SIMPLIFIER( ((B>A)|(A<C)),                                                   __iff((B==(C+0x1)), (A<B)) );
+        SIMPLIFIER( ((B>=A)&(A>C)),                                                  __iff((B==(C+0x1)), (A==B)) );
+        SIMPLIFIER( ((B>=A)&(A>C)),                                                  __iff((B<(C+0x1)), 0x0) );
+        SIMPLIFIER( ((B>=A)|(A>C)),                                                  __iff((B==(C+0x1)), 0x1) );
+        SIMPLIFIER( ((B>=A)|(A>=C)),                                                 __iff((B==(C+0x1)), 0x1) );
+        SIMPLIFIER( ((B>=A)|(A==C)),                                                 __iff((B==(C+0x1)), (A<=B)) );
+        SIMPLIFIER( ((B>=A)|(A!=C)),                                                 __iff((B==(C+0x1)), 0x1) );
+        SIMPLIFIER( ((B>=A)&(A<=C)),                                                 __iff((B==(C+0x1)), (A<B)) );
+        SIMPLIFIER( ((B>=A)&(A<=C)),                                                 __iff((B<(C+0x1)), (A<=B)) );
+        SIMPLIFIER( ((B>=A)|(A<=C)),                                                 __iff((B==(C+0x1)), (A<=B)) );
+        SIMPLIFIER( ((B>=A)|(A<C)),                                                  __iff((B==(C+0x1)), (A<=B)) );
+        SIMPLIFIER( ((B==A)&(A>C)),                                                  __iff((B==(C+0x1)), (A==B)) );
+        SIMPLIFIER( ((B==A)&(A>C)),                                                  __iff((B<(C+0x1)), 0x0) );
+        SIMPLIFIER( ((B==A)|(A>C)),                                                  __iff((B==(C+0x1)), (A>=B)) );
+        SIMPLIFIER( ((B==A)&(A>=C)),                                                 __iff((B==(C+0x1)), (A==B)) );
+        SIMPLIFIER( ((B==A)&(A==C)),                                                 __iff((B==(C+0x1)), 0x0) );
+        SIMPLIFIER( ((B==A)&(A!=C)),                                                 __iff((B==(C+0x1)), (A==B)) );
+        SIMPLIFIER( ((B==A)&(A<=C)),                                                 __iff((B==(C+0x1)), 0x0) );
+        SIMPLIFIER( ((B==A)&(A<=C)),                                                 __iff((B<(C+0x1)), (A==B)) );
+        SIMPLIFIER( ((B==A)|(A<=C)),                                                 __iff((B==(C+0x1)), (A<=B)) );
+        SIMPLIFIER( ((B==A)&(A<C)),                                                  __iff((B==(C+0x1)), 0x0) );
+        SIMPLIFIER( ((B==A)&__ugreat(A, C)),                                         __iff(__uless(B, (C+0x1)), 0x0) );
+        SIMPLIFIER( ((B==A)&__uless_eq(A, C)),                                       __iff(__uless(B, (C+0x1)), (A==B)) );
+        SIMPLIFIER( ((B!=A)&(A>C)),                                                  __iff((B==(C+0x1)), (A>B)) );
+        SIMPLIFIER( ((B!=A)|(A>C)),                                                  __iff((B==(C+0x1)), 0x1) );
+        SIMPLIFIER( ((B!=A)|(A>C)),                                                  __iff((B<(C+0x1)), (A!=B)) );
+        SIMPLIFIER( ((B!=A)|(A>=C)),                                                 __iff((B==(C+0x1)), 0x1) );
+        SIMPLIFIER( ((B!=A)|(A==C)),                                                 __iff((B==(C+0x1)), (A!=B)) );
+        SIMPLIFIER( ((B!=A)|(A!=C)),                                                 __iff((B==(C+0x1)), 0x1) );
+        SIMPLIFIER( ((B!=A)&(A<=C)),                                                 __iff((B==(C+0x1)), (A<B)) );
+        SIMPLIFIER( ((B!=A)|(A<=C)),                                                 __iff((B==(C+0x1)), (A!=B)) );
+        SIMPLIFIER( ((B!=A)|(A<=C)),                                                 __iff((B<(C+0x1)), 0x1) );
+        SIMPLIFIER( ((B!=A)|(A<C)),                                                  __iff((B==(C+0x1)), (A!=B)) );
+        SIMPLIFIER( ((B!=A)|__ugreat(A, C)),                                         __iff(__uless(B, (C+0x1)), (A!=B)) );
+        SIMPLIFIER( ((B!=A)|__uless_eq(A, C)),                                       __iff(__uless(B, (C+0x1)), 0x1) );
+        SIMPLIFIER( ((B<=A)&(A>C)),                                                  __iff((B==(C+0x1)), (A>=B)) );
+        SIMPLIFIER( ((B<=A)|(A>C)),                                                  __iff((B==(C+0x1)), (A>=B)) );
+        SIMPLIFIER( ((B<=A)|(A>C)),                                                  __iff((B<=(C+0x1)), (A>=B)) );
+        SIMPLIFIER( ((B<=A)|(A>C)),                                                  __iff((B<(C+0x1)), (A>=B)) );
+        SIMPLIFIER( ((B<=A)&(A>=C)),                                                 __iff((B==(C+0x1)), (A>=B)) );
+        SIMPLIFIER( ((B<=A)|(A>=C)),                                                 __iff((B<(C+0x1)), (A>=B)) );
+        SIMPLIFIER( ((B<=A)&(A==C)),                                                 __iff((B==(C+0x1)), 0x0) );
+        SIMPLIFIER( ((B<=A)|(A==C)),                                                 __iff((B<(C+0x1)), (A>=B)) );
+        SIMPLIFIER( ((B<=A)&(A!=C)),                                                 __iff((B==(C+0x1)), (A>=B)) );
+        SIMPLIFIER( ((B<=A)|(A!=C)),                                                 __iff((B<(C+0x1)), 0x1) );
+        SIMPLIFIER( ((B<=A)&(A<=C)),                                                 __iff((B==(C+0x1)), 0x0) );
+        SIMPLIFIER( ((B<=A)|(A<=C)),                                                 __iff((B==(C+0x1)), 0x1) );
+        SIMPLIFIER( ((B<=A)|(A<=C)),                                                 __iff((B<=(C+0x1)), 0x1) );
+        SIMPLIFIER( ((B<=A)|(A<=C)),                                                 __iff((B<(C+0x1)), 0x1) );
+        SIMPLIFIER( ((B<=A)&(A<C)),                                                  __iff((B==(C+0x1)), 0x0) );
+        SIMPLIFIER( ((B<=A)|(A<C)),                                                  __iff((B<(C+0x1)), 0x1) );
+        SIMPLIFIER( ((B<A)&(A>C)),                                                   __iff((B==(C+0x1)), (A>B)) );
+        SIMPLIFIER( ((B<A)|(A>C)),                                                   __iff((B==(C+0x1)), (A>=B)) );
+        SIMPLIFIER( ((B<A)|(A>C)),                                                   __iff((B<(C+0x1)), (A>B)) );
+        SIMPLIFIER( ((B<A)&(A>=C)),                                                  __iff((B==(C+0x1)), (A>B)) );
+        SIMPLIFIER( ((B<A)&(A==C)),                                                  __iff((B==(C+0x1)), 0x0) );
+        SIMPLIFIER( ((B<A)&(A!=C)),                                                  __iff((B==(C+0x1)), (A>B)) );
+        SIMPLIFIER( ((B<A)&(A<=C)),                                                  __iff((B==(C+0x1)), 0x0) );
+        SIMPLIFIER( ((B<A)|(A<=C)),                                                  __iff((B==(C+0x1)), (A!=B)) );
+        SIMPLIFIER( ((B<A)|(A<=C)),                                                  __iff((B<(C+0x1)), 0x1) );
+        SIMPLIFIER( ((B<A)&(A<C)),                                                   __iff((B==(C+0x1)), 0x0) );
+        SIMPLIFIER( (__ugreat(B, A)&(A==C)),                                         __iff(__uless(B, (C+0x1)), 0x0) );
+        SIMPLIFIER( (__ugreat(B, A)&(A!=C)),                                         __iff(__uless(B, (C+0x1)), __uless(A, B)) );
+        SIMPLIFIER( (__ugreat(B, A)&__ugreat(A, C)),                                 __iff((B==(C+0x1)), 0x0) );
+        SIMPLIFIER( (__ugreat(B, A)&__ugreat(A, C)),                                 __iff(__uless_eq(B, (C+0x1)), 0x0) );
+        SIMPLIFIER( (__ugreat(B, A)&__ugreat(A, C)),                                 __iff(__uless(B, (C+0x1)), 0x0) );
+        SIMPLIFIER( (__ugreat(B, A)&__ugreat_eq(A, C)),                              __iff(__uless(B, (C+0x1)), 0x0) );
+        SIMPLIFIER( (__ugreat(B, A)&__uless_eq(A, C)),                               __iff((B==(C+0x1)), __uless(A, B)) );
+        SIMPLIFIER( (__ugreat(B, A)&__uless_eq(A, C)),                               __iff(__uless_eq(B, (C+0x1)), __uless(A, B)) );
+        SIMPLIFIER( (__ugreat(B, A)&__uless_eq(A, C)),                               __iff(__uless(B, (C+0x1)), __uless(A, B)) );
+        SIMPLIFIER( (__ugreat(B, A)&__uless(A, C)),                                  __iff(__uless(B, (C+0x1)), __uless(A, B)) );
+        SIMPLIFIER( (__ugreat_eq(B, A)&__ugreat(A, C)),                              __iff(__uless(B, (C+0x1)), 0x0) );
+        SIMPLIFIER( (__ugreat_eq(B, A)&__uless_eq(A, C)),                            __iff(__uless(B, (C+0x1)), __uless_eq(A, B)) );
+        SIMPLIFIER( (__uless_eq(B, A)|(A==C)),                                       __iff(__uless(B, (C+0x1)), __ugreat_eq(A, B)) );
+        SIMPLIFIER( (__uless_eq(B, A)|(A!=C)),                                       __iff(__uless(B, (C+0x1)), 0x1) );
+        SIMPLIFIER( (__uless_eq(B, A)|__ugreat(A, C)),                               __iff((B==(C+0x1)), __ugreat_eq(A, B)) );
+        SIMPLIFIER( (__uless_eq(B, A)|__ugreat(A, C)),                               __iff(__uless_eq(B, (C+0x1)), __ugreat_eq(A, B)) );
+        SIMPLIFIER( (__uless_eq(B, A)|__ugreat(A, C)),                               __iff(__uless(B, (C+0x1)), __ugreat_eq(A, B)) );
+        SIMPLIFIER( (__uless_eq(B, A)|__ugreat_eq(A, C)),                            __iff(__uless(B, (C+0x1)), __ugreat_eq(A, B)) );
+        SIMPLIFIER( (__uless_eq(B, A)|__uless_eq(A, C)),                             __iff((B==(C+0x1)), 0x1) );
+        SIMPLIFIER( (__uless_eq(B, A)|__uless_eq(A, C)),                             __iff(__uless_eq(B, (C+0x1)), 0x1) );
+        SIMPLIFIER( (__uless_eq(B, A)|__uless_eq(A, C)),                             __iff(__uless(B, (C+0x1)), 0x1) );
+        SIMPLIFIER( (__uless_eq(B, A)|__uless(A, C)),                                __iff(__uless(B, (C+0x1)), 0x1) );
+        SIMPLIFIER( (__uless(B, A)|__ugreat(A, C)),                                  __iff(__uless(B, (C+0x1)), __ugreat(A, B)) );
+        SIMPLIFIER( (__uless(B, A)|__uless_eq(A, C)),                                __iff(__uless(B, (C+0x1)), 0x1) );
+        SIMPLIFIER( ((B>A)&(C>A)),                                                   __iff((B<(C+0x1)), (A<B)) );
+        SIMPLIFIER( ((B>A)|(C>A)),                                                   __iff((B==(C+0x1)), (A<B)) );
+        SIMPLIFIER( ((B>A)&(C>=A)),                                                  __iff((B==(C+0x1)), (A<B)) );
+        SIMPLIFIER( ((B>A)&(C>=A)),                                                  __iff((B<=(C+0x1)), (A<B)) );
+        SIMPLIFIER( ((B>A)&(C>=A)),                                                  __iff((B<(C+0x1)), (A<B)) );
+        SIMPLIFIER( ((B>A)|(C>=A)),                                                  __iff((B==(C+0x1)), (A<B)) );
+        SIMPLIFIER( ((B>A)&(C==A)),                                                  __iff((B<(C+0x1)), 0x0) );
+        SIMPLIFIER( ((B>A)|(C==A)),                                                  __iff((B==(C+0x1)), (A<B)) );
+        SIMPLIFIER( ((B>A)&(C!=A)),                                                  __iff((B<(C+0x1)), (A<B)) );
+        SIMPLIFIER( ((B>A)|(C!=A)),                                                  __iff((B==(C+0x1)), 0x1) );
+        SIMPLIFIER( ((B>A)&(C<=A)),                                                  __iff((B<(C+0x1)), 0x0) );
+        SIMPLIFIER( ((B>A)|(C<=A)),                                                  __iff((B==(C+0x1)), 0x1) );
+        SIMPLIFIER( ((B>A)&(C<A)),                                                   __iff((B==(C+0x1)), 0x0) );
+        SIMPLIFIER( ((B>A)&(C<A)),                                                   __iff((B<=(C+0x1)), 0x0) );
+        SIMPLIFIER( ((B>A)&(C<A)),                                                   __iff((B<(C+0x1)), 0x0) );
+        SIMPLIFIER( ((B>A)|(C<A)),                                                   __iff((B==(C+0x1)), 0x1) );
+        SIMPLIFIER( ((B>=A)|(C>A)),                                                  __iff((B==(C+0x1)), (A<=B)) );
+        SIMPLIFIER( ((B>=A)&(C>=A)),                                                 __iff((B==(C+0x1)), (A<B)) );
+        SIMPLIFIER( ((B>=A)&(C>=A)),                                                 __iff((B<(C+0x1)), (A<=B)) );
+        SIMPLIFIER( ((B>=A)|(C>=A)),                                                 __iff((B==(C+0x1)), (A<=B)) );
+        SIMPLIFIER( ((B>=A)|(C==A)),                                                 __iff((B==(C+0x1)), (A<=B)) );
+        SIMPLIFIER( ((B>=A)|(C!=A)),                                                 __iff((B==(C+0x1)), 0x1) );
+        SIMPLIFIER( ((B>=A)|(C<=A)),                                                 __iff((B==(C+0x1)), 0x1) );
+        SIMPLIFIER( ((B>=A)&(C<A)),                                                  __iff((B==(C+0x1)), (A==B)) );
+        SIMPLIFIER( ((B>=A)&(C<A)),                                                  __iff((B<(C+0x1)), 0x0) );
+        SIMPLIFIER( ((B>=A)|(C<A)),                                                  __iff((B==(C+0x1)), 0x1) );
+        SIMPLIFIER( ((B==A)&(C>A)),                                                  __iff((B==(C+0x1)), 0x0) );
+        SIMPLIFIER( ((B==A)&(C>=A)),                                                 __iff((B==(C+0x1)), 0x0) );
+        SIMPLIFIER( ((B==A)&(C>=A)),                                                 __iff((B<(C+0x1)), (A==B)) );
+        SIMPLIFIER( ((B==A)|(C>=A)),                                                 __iff((B==(C+0x1)), (A<=B)) );
+        SIMPLIFIER( ((B==A)&(C==A)),                                                 __iff((B==(C+0x1)), 0x0) );
+        SIMPLIFIER( ((B==A)&(C!=A)),                                                 __iff((B==(C+0x1)), (A==B)) );
+        SIMPLIFIER( ((B==A)&(C<=A)),                                                 __iff((B==(C+0x1)), (A==B)) );
+        SIMPLIFIER( ((B==A)&(C<A)),                                                  __iff((B==(C+0x1)), (A==B)) );
+        SIMPLIFIER( ((B==A)&(C<A)),                                                  __iff((B<(C+0x1)), 0x0) );
+        SIMPLIFIER( ((B==A)|(C<A)),                                                  __iff((B==(C+0x1)), (A>=B)) );
+        SIMPLIFIER( ((B==A)&__ugreat_eq(C, A)),                                      __iff(__uless(B, (C+0x1)), (A==B)) );
+        SIMPLIFIER( ((B==A)&__uless(C, A)),                                          __iff(__uless(B, (C+0x1)), 0x0) );
+        SIMPLIFIER( ((B!=A)|(C>A)),                                                  __iff((B==(C+0x1)), (A!=B)) );
+        SIMPLIFIER( ((B!=A)&(C>=A)),                                                 __iff((B==(C+0x1)), (A<B)) );
+        SIMPLIFIER( ((B!=A)|(C>=A)),                                                 __iff((B==(C+0x1)), (A!=B)) );
+        SIMPLIFIER( ((B!=A)|(C>=A)),                                                 __iff((B<(C+0x1)), 0x1) );
+        SIMPLIFIER( ((B!=A)|(C==A)),                                                 __iff((B==(C+0x1)), (A!=B)) );
+        SIMPLIFIER( ((B!=A)|(C!=A)),                                                 __iff((B==(C+0x1)), 0x1) );
+        SIMPLIFIER( ((B!=A)|(C<=A)),                                                 __iff((B==(C+0x1)), 0x1) );
+        SIMPLIFIER( ((B!=A)&(C<A)),                                                  __iff((B==(C+0x1)), (A>B)) );
+        SIMPLIFIER( ((B!=A)|(C<A)),                                                  __iff((B==(C+0x1)), 0x1) );
+        SIMPLIFIER( ((B!=A)|(C<A)),                                                  __iff((B<(C+0x1)), (A!=B)) );
+        SIMPLIFIER( ((B!=A)|__ugreat_eq(C, A)),                                      __iff(__uless(B, (C+0x1)), 0x1) );
+        SIMPLIFIER( ((B!=A)|__uless(C, A)),                                          __iff(__uless(B, (C+0x1)), (A!=B)) );
+        SIMPLIFIER( ((B<=A)&(C>A)),                                                  __iff((B==(C+0x1)), 0x0) );
+        SIMPLIFIER( ((B<=A)|(C>A)),                                                  __iff((B<(C+0x1)), 0x1) );
+        SIMPLIFIER( ((B<=A)&(C>=A)),                                                 __iff((B==(C+0x1)), 0x0) );
+        SIMPLIFIER( ((B<=A)|(C>=A)),                                                 __iff((B==(C+0x1)), 0x1) );
+        SIMPLIFIER( ((B<=A)|(C>=A)),                                                 __iff((B<=(C+0x1)), 0x1) );
+        SIMPLIFIER( ((B<=A)|(C>=A)),                                                 __iff((B<(C+0x1)), 0x1) );
+        SIMPLIFIER( ((B<=A)&(C==A)),                                                 __iff((B==(C+0x1)), 0x0) );
+        SIMPLIFIER( ((B<=A)|(C==A)),                                                 __iff((B<(C+0x1)), (A>=B)) );
+        SIMPLIFIER( ((B<=A)&(C!=A)),                                                 __iff((B==(C+0x1)), (A>=B)) );
+        SIMPLIFIER( ((B<=A)|(C!=A)),                                                 __iff((B<(C+0x1)), 0x1) );
+        SIMPLIFIER( ((B<=A)&(C<=A)),                                                 __iff((B==(C+0x1)), (A>=B)) );
+        SIMPLIFIER( ((B<=A)|(C<=A)),                                                 __iff((B<(C+0x1)), (A>=B)) );
+        SIMPLIFIER( ((B<=A)&(C<A)),                                                  __iff((B==(C+0x1)), (A>=B)) );
+        SIMPLIFIER( ((B<=A)|(C<A)),                                                  __iff((B==(C+0x1)), (A>=B)) );
+        SIMPLIFIER( ((B<=A)|(C<A)),                                                  __iff((B<=(C+0x1)), (A>=B)) );
+        SIMPLIFIER( ((B<=A)|(C<A)),                                                  __iff((B<(C+0x1)), (A>=B)) );
+        SIMPLIFIER( ((B<A)&(C>A)),                                                   __iff((B==(C+0x1)), 0x0) );
+        SIMPLIFIER( ((B<A)&(C>=A)),                                                  __iff((B==(C+0x1)), 0x0) );
+        SIMPLIFIER( ((B<A)|(C>=A)),                                                  __iff((B==(C+0x1)), (A!=B)) );
+        SIMPLIFIER( ((B<A)|(C>=A)),                                                  __iff((B<(C+0x1)), 0x1) );
+        SIMPLIFIER( ((B<A)&(C==A)),                                                  __iff((B==(C+0x1)), 0x0) );
+        SIMPLIFIER( ((B<A)&(C!=A)),                                                  __iff((B==(C+0x1)), (A>B)) );
+        SIMPLIFIER( ((B<A)&(C<=A)),                                                  __iff((B==(C+0x1)), (A>B)) );
+        SIMPLIFIER( ((B<A)&(C<A)),                                                   __iff((B==(C+0x1)), (A>B)) );
+        SIMPLIFIER( ((B<A)|(C<A)),                                                   __iff((B==(C+0x1)), (A>=B)) );
+        SIMPLIFIER( ((B<A)|(C<A)),                                                   __iff((B<(C+0x1)), (A>B)) );
+        SIMPLIFIER( (__ugreat(B, A)&(C==A)),                                         __iff(__uless(B, (C+0x1)), 0x0) );
+        SIMPLIFIER( (__ugreat(B, A)&(C!=A)),                                         __iff(__uless(B, (C+0x1)), __uless(A, B)) );
+        SIMPLIFIER( (__ugreat(B, A)&__ugreat(C, A)),                                 __iff(__uless(B, (C+0x1)), __uless(A, B)) );
+        SIMPLIFIER( (__ugreat(B, A)&__ugreat_eq(C, A)),                              __iff((B==(C+0x1)), __uless(A, B)) );
+        SIMPLIFIER( (__ugreat(B, A)&__ugreat_eq(C, A)),                              __iff(__uless_eq(B, (C+0x1)), __uless(A, B)) );
+        SIMPLIFIER( (__ugreat(B, A)&__ugreat_eq(C, A)),                              __iff(__uless(B, (C+0x1)), __uless(A, B)) );
+        SIMPLIFIER( (__ugreat(B, A)&__uless_eq(C, A)),                               __iff(__uless(B, (C+0x1)), 0x0) );
+        SIMPLIFIER( (__ugreat(B, A)&__uless(C, A)),                                  __iff((B==(C+0x1)), 0x0) );
+        SIMPLIFIER( (__ugreat(B, A)&__uless(C, A)),                                  __iff(__uless_eq(B, (C+0x1)), 0x0) );
+        SIMPLIFIER( (__ugreat(B, A)&__uless(C, A)),                                  __iff(__uless(B, (C+0x1)), 0x0) );
+        SIMPLIFIER( (__ugreat_eq(B, A)&__ugreat_eq(C, A)),                           __iff(__uless(B, (C+0x1)), __uless_eq(A, B)) );
+        SIMPLIFIER( (__ugreat_eq(B, A)&__uless(C, A)),                               __iff(__uless(B, (C+0x1)), 0x0) );
+        SIMPLIFIER( (__uless_eq(B, A)|(C==A)),                                       __iff(__uless(B, (C+0x1)), __ugreat_eq(A, B)) );
+        SIMPLIFIER( (__uless_eq(B, A)|(C!=A)),                                       __iff(__uless(B, (C+0x1)), 0x1) );
+        SIMPLIFIER( (__uless_eq(B, A)|__ugreat(C, A)),                               __iff(__uless(B, (C+0x1)), 0x1) );
+        SIMPLIFIER( (__uless_eq(B, A)|__ugreat_eq(C, A)),                            __iff((B==(C+0x1)), 0x1) );
+        SIMPLIFIER( (__uless_eq(B, A)|__ugreat_eq(C, A)),                            __iff(__uless_eq(B, (C+0x1)), 0x1) );
+        SIMPLIFIER( (__uless_eq(B, A)|__ugreat_eq(C, A)),                            __iff(__uless(B, (C+0x1)), 0x1) );
+        SIMPLIFIER( (__uless_eq(B, A)|__uless_eq(C, A)),                             __iff(__uless(B, (C+0x1)), __ugreat_eq(A, B)) );
+        SIMPLIFIER( (__uless_eq(B, A)|__uless(C, A)),                                __iff((B==(C+0x1)), __ugreat_eq(A, B)) );
+        SIMPLIFIER( (__uless_eq(B, A)|__uless(C, A)),                                __iff(__uless_eq(B, (C+0x1)), __ugreat_eq(A, B)) );
+        SIMPLIFIER( (__uless_eq(B, A)|__uless(C, A)),                                __iff(__uless(B, (C+0x1)), __ugreat_eq(A, B)) );
+        SIMPLIFIER( (__uless(B, A)|__ugreat_eq(C, A)),                               __iff(__uless(B, (C+0x1)), 0x1) );
+        SIMPLIFIER( (__uless(B, A)|__uless(C, A)),                                   __iff(__uless(B, (C+0x1)), __ugreat(A, B)) );
+        SIMPLIFIER( ((A>B)&(A>C)),                                                   __iff((B>(C-0x1)), (A>B)) );
+        SIMPLIFIER( ((A>B)|(A>C)),                                                   __iff((B==(C-0x1)), (A>B)) );
+        SIMPLIFIER( ((A>B)|(A>C)),                                                   __iff((B<=(C-0x1)), (A>B)) );
+        SIMPLIFIER( ((A>B)|(A>C)),                                                   __iff((B<(C-0x1)), (A>B)) );
+        SIMPLIFIER( ((A>B)&(A>=C)),                                                  __iff((B>(C-0x1)), (A>B)) );
+        SIMPLIFIER( ((A>B)&(A>=C)),                                                  __iff((B>=(C-0x1)), (A>B)) );
+        SIMPLIFIER( ((A>B)&(A>=C)),                                                  __iff((B==(C-0x1)), (A>B)) );
+        SIMPLIFIER( ((A>B)|(A>=C)),                                                  __iff((B==(C-0x1)), (A>B)) );
+        SIMPLIFIER( ((A>B)|(A>=C)),                                                  __iff((B<=(C-0x1)), (A>B)) );
+        SIMPLIFIER( ((A>B)|(A>=C)),                                                  __iff((B<(C-0x1)), (A>B)) );
+        SIMPLIFIER( ((A>B)&(A==C)),                                                  __iff((B>(C-0x1)), 0x0) );
+        SIMPLIFIER( ((A>B)|(A==C)),                                                  __iff((B==(C-0x1)), (A>B)) );
+        SIMPLIFIER( ((A>B)|(A==C)),                                                  __iff((B<=(C-0x1)), (A>B)) );
+        SIMPLIFIER( ((A>B)|(A==C)),                                                  __iff((B<(C-0x1)), (A>B)) );
+        SIMPLIFIER( ((A>B)&(A!=C)),                                                  __iff((B>(C-0x1)), (A>B)) );
+        SIMPLIFIER( ((A>B)|(A!=C)),                                                  __iff((B==(C-0x1)), 0x1) );
+        SIMPLIFIER( ((A>B)|(A!=C)),                                                  __iff((B<=(C-0x1)), 0x1) );
+        SIMPLIFIER( ((A>B)|(A!=C)),                                                  __iff((B<(C-0x1)), 0x1) );
+        SIMPLIFIER( ((A>B)&(A<=C)),                                                  __iff((B>(C-0x1)), 0x0) );
+        SIMPLIFIER( ((A>B)|(A<=C)),                                                  __iff((B==(C-0x1)), 0x1) );
+        SIMPLIFIER( ((A>B)|(A<=C)),                                                  __iff((B<=(C-0x1)), 0x1) );
+        SIMPLIFIER( ((A>B)|(A<=C)),                                                  __iff((B<(C-0x1)), 0x1) );
+        SIMPLIFIER( ((A>B)&(A<C)),                                                   __iff((B>(C-0x1)), 0x0) );
+        SIMPLIFIER( ((A>B)&(A<C)),                                                   __iff((B>=(C-0x1)), 0x0) );
+        SIMPLIFIER( ((A>B)&(A<C)),                                                   __iff((B==(C-0x1)), 0x0) );
+        SIMPLIFIER( ((A>B)|(A<C)),                                                   __iff((B==(C-0x1)), 0x1) );
+        SIMPLIFIER( ((A>B)|(A<C)),                                                   __iff((B<=(C-0x1)), 0x1) );
+        SIMPLIFIER( ((A>B)|(A<C)),                                                   __iff((B<(C-0x1)), 0x1) );
+        SIMPLIFIER( ((A>=B)|(A>C)),                                                  __iff((B==(C-0x1)), (A>=B)) );
+        SIMPLIFIER( ((A>=B)|(A>C)),                                                  __iff((B<=(C-0x1)), (A>=B)) );
+        SIMPLIFIER( ((A>=B)|(A>C)),                                                  __iff((B<(C-0x1)), (A>=B)) );
+        SIMPLIFIER( ((A>=B)&(A>=C)),                                                 __iff((B>(C-0x1)), (A>=B)) );
+        SIMPLIFIER( ((A>=B)&(A>=C)),                                                 __iff((B==(C-0x1)), (A>B)) );
+        SIMPLIFIER( ((A>=B)|(A>=C)),                                                 __iff((B==(C-0x1)), (A>=B)) );
+        SIMPLIFIER( ((A>=B)|(A>=C)),                                                 __iff((B<=(C-0x1)), (A>=B)) );
+        SIMPLIFIER( ((A>=B)|(A>=C)),                                                 __iff((B<(C-0x1)), (A>=B)) );
+        SIMPLIFIER( ((A>=B)|(A==C)),                                                 __iff((B==(C-0x1)), (A>=B)) );
+        SIMPLIFIER( ((A>=B)|(A==C)),                                                 __iff((B<=(C-0x1)), (A>=B)) );
+        SIMPLIFIER( ((A>=B)|(A==C)),                                                 __iff((B<(C-0x1)), (A>=B)) );
+        SIMPLIFIER( ((A>=B)|(A!=C)),                                                 __iff((B==(C-0x1)), 0x1) );
+        SIMPLIFIER( ((A>=B)|(A!=C)),                                                 __iff((B<=(C-0x1)), 0x1) );
+        SIMPLIFIER( ((A>=B)|(A!=C)),                                                 __iff((B<(C-0x1)), 0x1) );
+        SIMPLIFIER( ((A>=B)|(A<=C)),                                                 __iff((B==(C-0x1)), 0x1) );
+        SIMPLIFIER( ((A>=B)|(A<=C)),                                                 __iff((B<=(C-0x1)), 0x1) );
+        SIMPLIFIER( ((A>=B)|(A<=C)),                                                 __iff((B<(C-0x1)), 0x1) );
+        SIMPLIFIER( ((A>=B)&(A<C)),                                                  __iff((B>(C-0x1)), 0x0) );
+        SIMPLIFIER( ((A>=B)&(A<C)),                                                  __iff((B==(C-0x1)), (A==B)) );
+        SIMPLIFIER( ((A>=B)|(A<C)),                                                  __iff((B==(C-0x1)), 0x1) );
+        SIMPLIFIER( ((A>=B)|(A<C)),                                                  __iff((B<=(C-0x1)), 0x1) );
+        SIMPLIFIER( ((A>=B)|(A<C)),                                                  __iff((B<(C-0x1)), 0x1) );
+        SIMPLIFIER( ((A==B)&(A>C)),                                                  __iff((B==(C-0x1)), 0x0) );
+        SIMPLIFIER( ((A==B)&(A>C)),                                                  __iff((B<=(C-0x1)), 0x0) );
+        SIMPLIFIER( ((A==B)&(A>C)),                                                  __iff((B<(C-0x1)), 0x0) );
+        SIMPLIFIER( ((A==B)&(A>=C)),                                                 __iff((B>(C-0x1)), (A==B)) );
+        SIMPLIFIER( ((A==B)&(A>=C)),                                                 __iff((B==(C-0x1)), 0x0) );
+        SIMPLIFIER( ((A==B)&(A>=C)),                                                 __iff((B<=(C-0x1)), 0x0) );
+        SIMPLIFIER( ((A==B)&(A>=C)),                                                 __iff((B<(C-0x1)), 0x0) );
+        SIMPLIFIER( ((A==B)|(A>=C)),                                                 __iff((B==(C-0x1)), (A>=B)) );
+        SIMPLIFIER( ((A==B)&(A==C)),                                                 __iff((B==(C-0x1)), 0x0) );
+        SIMPLIFIER( ((A==B)&(A==C)),                                                 __iff((B<=(C-0x1)), 0x0) );
+        SIMPLIFIER( ((A==B)&(A==C)),                                                 __iff((B<(C-0x1)), 0x0) );
+        SIMPLIFIER( ((A==B)&(A!=C)),                                                 __iff((B==(C-0x1)), (A==B)) );
+        SIMPLIFIER( ((A==B)&(A!=C)),                                                 __iff((B<=(C-0x1)), (A==B)) );
+        SIMPLIFIER( ((A==B)&(A!=C)),                                                 __iff((B<(C-0x1)), (A==B)) );
+        SIMPLIFIER( ((A==B)&(A<=C)),                                                 __iff((B==(C-0x1)), (A==B)) );
+        SIMPLIFIER( ((A==B)&(A<=C)),                                                 __iff((B<=(C-0x1)), (A==B)) );
+        SIMPLIFIER( ((A==B)&(A<=C)),                                                 __iff((B<(C-0x1)), (A==B)) );
+        SIMPLIFIER( ((A==B)&(A<C)),                                                  __iff((B>(C-0x1)), 0x0) );
+        SIMPLIFIER( ((A==B)&(A<C)),                                                  __iff((B==(C-0x1)), (A==B)) );
+        SIMPLIFIER( ((A==B)&(A<C)),                                                  __iff((B<=(C-0x1)), (A==B)) );
+        SIMPLIFIER( ((A==B)&(A<C)),                                                  __iff((B<(C-0x1)), (A==B)) );
+        SIMPLIFIER( ((A==B)|(A<C)),                                                  __iff((B==(C-0x1)), (A<=B)) );
+        SIMPLIFIER( ((A==B)&__ugreat_eq(A, C)),                                      __iff(__ugreat(B, (C-0x1)), (A==B)) );
+        SIMPLIFIER( ((A==B)&__uless(A, C)),                                          __iff(__ugreat(B, (C-0x1)), 0x0) );
+        SIMPLIFIER( ((A!=B)|(A>C)),                                                  __iff((B==(C-0x1)), (A!=B)) );
+        SIMPLIFIER( ((A!=B)|(A>C)),                                                  __iff((B<=(C-0x1)), (A!=B)) );
+        SIMPLIFIER( ((A!=B)|(A>C)),                                                  __iff((B<(C-0x1)), (A!=B)) );
+        SIMPLIFIER( ((A!=B)&(A>=C)),                                                 __iff((B==(C-0x1)), (A>B)) );
+        SIMPLIFIER( ((A!=B)|(A>=C)),                                                 __iff((B>(C-0x1)), 0x1) );
+        SIMPLIFIER( ((A!=B)|(A>=C)),                                                 __iff((B==(C-0x1)), (A!=B)) );
+        SIMPLIFIER( ((A!=B)|(A>=C)),                                                 __iff((B<=(C-0x1)), (A!=B)) );
+        SIMPLIFIER( ((A!=B)|(A>=C)),                                                 __iff((B<(C-0x1)), (A!=B)) );
+        SIMPLIFIER( ((A!=B)|(A==C)),                                                 __iff((B==(C-0x1)), (A!=B)) );
+        SIMPLIFIER( ((A!=B)|(A==C)),                                                 __iff((B<=(C-0x1)), (A!=B)) );
+        SIMPLIFIER( ((A!=B)|(A==C)),                                                 __iff((B<(C-0x1)), (A!=B)) );
+        SIMPLIFIER( ((A!=B)|(A!=C)),                                                 __iff((B==(C-0x1)), 0x1) );
+        SIMPLIFIER( ((A!=B)|(A!=C)),                                                 __iff((B<=(C-0x1)), 0x1) );
+        SIMPLIFIER( ((A!=B)|(A!=C)),                                                 __iff((B<(C-0x1)), 0x1) );
+        SIMPLIFIER( ((A!=B)|(A<=C)),                                                 __iff((B==(C-0x1)), 0x1) );
+        SIMPLIFIER( ((A!=B)|(A<=C)),                                                 __iff((B<=(C-0x1)), 0x1) );
+        SIMPLIFIER( ((A!=B)|(A<=C)),                                                 __iff((B<(C-0x1)), 0x1) );
+        SIMPLIFIER( ((A!=B)&(A<C)),                                                  __iff((B==(C-0x1)), (A<B)) );
+        SIMPLIFIER( ((A!=B)|(A<C)),                                                  __iff((B>(C-0x1)), (A!=B)) );
+        SIMPLIFIER( ((A!=B)|(A<C)),                                                  __iff((B==(C-0x1)), 0x1) );
+        SIMPLIFIER( ((A!=B)|(A<C)),                                                  __iff((B<=(C-0x1)), 0x1) );
+        SIMPLIFIER( ((A!=B)|(A<C)),                                                  __iff((B<(C-0x1)), 0x1) );
+        SIMPLIFIER( ((A!=B)|__ugreat_eq(A, C)),                                      __iff(__ugreat(B, (C-0x1)), 0x1) );
+        SIMPLIFIER( ((A!=B)|__uless(A, C)),                                          __iff(__ugreat(B, (C-0x1)), (A!=B)) );
+        SIMPLIFIER( ((A<=B)&(A>C)),                                                  __iff((B==(C-0x1)), 0x0) );
+        SIMPLIFIER( ((A<=B)&(A>C)),                                                  __iff((B<=(C-0x1)), 0x0) );
+        SIMPLIFIER( ((A<=B)&(A>C)),                                                  __iff((B<(C-0x1)), 0x0) );
+        SIMPLIFIER( ((A<=B)|(A>C)),                                                  __iff((B>(C-0x1)), 0x1) );
+        SIMPLIFIER( ((A<=B)&(A>=C)),                                                 __iff((B==(C-0x1)), 0x0) );
+        SIMPLIFIER( ((A<=B)&(A>=C)),                                                 __iff((B<=(C-0x1)), 0x0) );
+        SIMPLIFIER( ((A<=B)&(A>=C)),                                                 __iff((B<(C-0x1)), 0x0) );
+        SIMPLIFIER( ((A<=B)|(A>=C)),                                                 __iff((B>(C-0x1)), 0x1) );
+        SIMPLIFIER( ((A<=B)|(A>=C)),                                                 __iff((B>=(C-0x1)), 0x1) );
+        SIMPLIFIER( ((A<=B)|(A>=C)),                                                 __iff((B==(C-0x1)), 0x1) );
+        SIMPLIFIER( ((A<=B)&(A==C)),                                                 __iff((B==(C-0x1)), 0x0) );
+        SIMPLIFIER( ((A<=B)&(A==C)),                                                 __iff((B<=(C-0x1)), 0x0) );
+        SIMPLIFIER( ((A<=B)&(A==C)),                                                 __iff((B<(C-0x1)), 0x0) );
+        SIMPLIFIER( ((A<=B)|(A==C)),                                                 __iff((B>(C-0x1)), (A<=B)) );
+        SIMPLIFIER( ((A<=B)&(A!=C)),                                                 __iff((B==(C-0x1)), (A<=B)) );
+        SIMPLIFIER( ((A<=B)&(A!=C)),                                                 __iff((B<=(C-0x1)), (A<=B)) );
+        SIMPLIFIER( ((A<=B)&(A!=C)),                                                 __iff((B<(C-0x1)), (A<=B)) );
+        SIMPLIFIER( ((A<=B)|(A!=C)),                                                 __iff((B>(C-0x1)), 0x1) );
+        SIMPLIFIER( ((A<=B)&(A<=C)),                                                 __iff((B==(C-0x1)), (A<=B)) );
+        SIMPLIFIER( ((A<=B)&(A<=C)),                                                 __iff((B<=(C-0x1)), (A<=B)) );
+        SIMPLIFIER( ((A<=B)&(A<=C)),                                                 __iff((B<(C-0x1)), (A<=B)) );
+        SIMPLIFIER( ((A<=B)|(A<=C)),                                                 __iff((B>(C-0x1)), (A<=B)) );
+        SIMPLIFIER( ((A<=B)&(A<C)),                                                  __iff((B==(C-0x1)), (A<=B)) );
+        SIMPLIFIER( ((A<=B)&(A<C)),                                                  __iff((B<=(C-0x1)), (A<=B)) );
+        SIMPLIFIER( ((A<=B)&(A<C)),                                                  __iff((B<(C-0x1)), (A<=B)) );
+        SIMPLIFIER( ((A<=B)|(A<C)),                                                  __iff((B>(C-0x1)), (A<=B)) );
+        SIMPLIFIER( ((A<=B)|(A<C)),                                                  __iff((B>=(C-0x1)), (A<=B)) );
+        SIMPLIFIER( ((A<=B)|(A<C)),                                                  __iff((B==(C-0x1)), (A<=B)) );
+        SIMPLIFIER( ((A<B)&(A>C)),                                                   __iff((B==(C-0x1)), 0x0) );
+        SIMPLIFIER( ((A<B)&(A>C)),                                                   __iff((B<=(C-0x1)), 0x0) );
+        SIMPLIFIER( ((A<B)&(A>C)),                                                   __iff((B<(C-0x1)), 0x0) );
+        SIMPLIFIER( ((A<B)&(A>=C)),                                                  __iff((B==(C-0x1)), 0x0) );
+        SIMPLIFIER( ((A<B)&(A>=C)),                                                  __iff((B<=(C-0x1)), 0x0) );
+        SIMPLIFIER( ((A<B)&(A>=C)),                                                  __iff((B<(C-0x1)), 0x0) );
+        SIMPLIFIER( ((A<B)|(A>=C)),                                                  __iff((B>(C-0x1)), 0x1) );
+        SIMPLIFIER( ((A<B)|(A>=C)),                                                  __iff((B==(C-0x1)), (A!=B)) );
+        SIMPLIFIER( ((A<B)&(A==C)),                                                  __iff((B==(C-0x1)), 0x0) );
+        SIMPLIFIER( ((A<B)&(A==C)),                                                  __iff((B<=(C-0x1)), 0x0) );
+        SIMPLIFIER( ((A<B)&(A==C)),                                                  __iff((B<(C-0x1)), 0x0) );
+        SIMPLIFIER( ((A<B)&(A!=C)),                                                  __iff((B==(C-0x1)), (A<B)) );
+        SIMPLIFIER( ((A<B)&(A!=C)),                                                  __iff((B<=(C-0x1)), (A<B)) );
+        SIMPLIFIER( ((A<B)&(A!=C)),                                                  __iff((B<(C-0x1)), (A<B)) );
+        SIMPLIFIER( ((A<B)&(A<=C)),                                                  __iff((B==(C-0x1)), (A<B)) );
+        SIMPLIFIER( ((A<B)&(A<=C)),                                                  __iff((B<=(C-0x1)), (A<B)) );
+        SIMPLIFIER( ((A<B)&(A<=C)),                                                  __iff((B<(C-0x1)), (A<B)) );
+        SIMPLIFIER( ((A<B)&(A<C)),                                                   __iff((B==(C-0x1)), (A<B)) );
+        SIMPLIFIER( ((A<B)&(A<C)),                                                   __iff((B<=(C-0x1)), (A<B)) );
+        SIMPLIFIER( ((A<B)&(A<C)),                                                   __iff((B<(C-0x1)), (A<B)) );
+        SIMPLIFIER( ((A<B)|(A<C)),                                                   __iff((B>(C-0x1)), (A<B)) );
+        SIMPLIFIER( ((A<B)|(A<C)),                                                   __iff((B==(C-0x1)), (A<=B)) );
+        SIMPLIFIER( (__ugreat(A, B)&(A==C)),                                         __iff(__ugreat(B, (C-0x1)), 0x0) );
+        SIMPLIFIER( (__ugreat(A, B)&(A!=C)),                                         __iff(__ugreat(B, (C-0x1)), __ugreat(A, B)) );
+        SIMPLIFIER( (__ugreat(A, B)&__ugreat(A, C)),                                 __iff(__ugreat(B, (C-0x1)), __ugreat(A, B)) );
+        SIMPLIFIER( (__ugreat(A, B)&__ugreat_eq(A, C)),                              __iff((B==(C-0x1)), __ugreat(A, B)) );
+        SIMPLIFIER( (__ugreat(A, B)&__ugreat_eq(A, C)),                              __iff(__ugreat(B, (C-0x1)), __ugreat(A, B)) );
+        SIMPLIFIER( (__ugreat(A, B)&__ugreat_eq(A, C)),                              __iff(__ugreat_eq(B, (C-0x1)), __ugreat(A, B)) );
+        SIMPLIFIER( (__ugreat(A, B)&__uless_eq(A, C)),                               __iff(__ugreat(B, (C-0x1)), 0x0) );
+        SIMPLIFIER( (__ugreat(A, B)&__uless(A, C)),                                  __iff((B==(C-0x1)), 0x0) );
+        SIMPLIFIER( (__ugreat(A, B)&__uless(A, C)),                                  __iff(__ugreat(B, (C-0x1)), 0x0) );
+        SIMPLIFIER( (__ugreat(A, B)&__uless(A, C)),                                  __iff(__ugreat_eq(B, (C-0x1)), 0x0) );
+        SIMPLIFIER( (__ugreat_eq(A, B)&__ugreat_eq(A, C)),                           __iff(__ugreat(B, (C-0x1)), __ugreat_eq(A, B)) );
+        SIMPLIFIER( (__ugreat_eq(A, B)&__uless(A, C)),                               __iff(__ugreat(B, (C-0x1)), 0x0) );
+        SIMPLIFIER( (__uless_eq(A, B)|(A==C)),                                       __iff(__ugreat(B, (C-0x1)), __uless_eq(A, B)) );
+        SIMPLIFIER( (__uless_eq(A, B)|(A!=C)),                                       __iff(__ugreat(B, (C-0x1)), 0x1) );
+        SIMPLIFIER( (__uless_eq(A, B)|__ugreat(A, C)),                               __iff(__ugreat(B, (C-0x1)), 0x1) );
+        SIMPLIFIER( (__uless_eq(A, B)|__ugreat_eq(A, C)),                            __iff((B==(C-0x1)), 0x1) );
+        SIMPLIFIER( (__uless_eq(A, B)|__ugreat_eq(A, C)),                            __iff(__ugreat(B, (C-0x1)), 0x1) );
+        SIMPLIFIER( (__uless_eq(A, B)|__ugreat_eq(A, C)),                            __iff(__ugreat_eq(B, (C-0x1)), 0x1) );
+        SIMPLIFIER( (__uless_eq(A, B)|__uless_eq(A, C)),                             __iff(__ugreat(B, (C-0x1)), __uless_eq(A, B)) );
+        SIMPLIFIER( (__uless_eq(A, B)|__uless(A, C)),                                __iff((B==(C-0x1)), __uless_eq(A, B)) );
+        SIMPLIFIER( (__uless_eq(A, B)|__uless(A, C)),                                __iff(__ugreat(B, (C-0x1)), __uless_eq(A, B)) );
+        SIMPLIFIER( (__uless_eq(A, B)|__uless(A, C)),                                __iff(__ugreat_eq(B, (C-0x1)), __uless_eq(A, B)) );
+        SIMPLIFIER( (__uless(A, B)|__ugreat_eq(A, C)),                               __iff(__ugreat(B, (C-0x1)), 0x1) );
+        SIMPLIFIER( (__uless(A, B)|__uless(A, C)),                                   __iff(__ugreat(B, (C-0x1)), __uless(A, B)) );
+        SIMPLIFIER( ((A>B)&(C>A)),                                                   __iff((B>(C-0x1)), 0x0) );
+        SIMPLIFIER( ((A>B)&(C>A)),                                                   __iff((B>=(C-0x1)), 0x0) );
+        SIMPLIFIER( ((A>B)&(C>A)),                                                   __iff((B==(C-0x1)), 0x0) );
+        SIMPLIFIER( ((A>B)|(C>A)),                                                   __iff((B==(C-0x1)), 0x1) );
+        SIMPLIFIER( ((A>B)|(C>A)),                                                   __iff((B<=(C-0x1)), 0x1) );
+        SIMPLIFIER( ((A>B)|(C>A)),                                                   __iff((B<(C-0x1)), 0x1) );
+        SIMPLIFIER( ((A>B)&(C>=A)),                                                  __iff((B>(C-0x1)), 0x0) );
+        SIMPLIFIER( ((A>B)|(C>=A)),                                                  __iff((B==(C-0x1)), 0x1) );
+        SIMPLIFIER( ((A>B)|(C>=A)),                                                  __iff((B<=(C-0x1)), 0x1) );
+        SIMPLIFIER( ((A>B)|(C>=A)),                                                  __iff((B<(C-0x1)), 0x1) );
+        SIMPLIFIER( ((A>B)&(C==A)),                                                  __iff((B>(C-0x1)), 0x0) );
+        SIMPLIFIER( ((A>B)|(C==A)),                                                  __iff((B==(C-0x1)), (A>B)) );
+        SIMPLIFIER( ((A>B)|(C==A)),                                                  __iff((B<=(C-0x1)), (A>B)) );
+        SIMPLIFIER( ((A>B)|(C==A)),                                                  __iff((B<(C-0x1)), (A>B)) );
+        SIMPLIFIER( ((A>B)&(C!=A)),                                                  __iff((B>(C-0x1)), (A>B)) );
+        SIMPLIFIER( ((A>B)|(C!=A)),                                                  __iff((B==(C-0x1)), 0x1) );
+        SIMPLIFIER( ((A>B)|(C!=A)),                                                  __iff((B<=(C-0x1)), 0x1) );
+        SIMPLIFIER( ((A>B)|(C!=A)),                                                  __iff((B<(C-0x1)), 0x1) );
+        SIMPLIFIER( ((A>B)&(C<=A)),                                                  __iff((B>(C-0x1)), (A>B)) );
+        SIMPLIFIER( ((A>B)&(C<=A)),                                                  __iff((B>=(C-0x1)), (A>B)) );
+        SIMPLIFIER( ((A>B)&(C<=A)),                                                  __iff((B==(C-0x1)), (A>B)) );
+        SIMPLIFIER( ((A>B)|(C<=A)),                                                  __iff((B==(C-0x1)), (A>B)) );
+        SIMPLIFIER( ((A>B)|(C<=A)),                                                  __iff((B<=(C-0x1)), (A>B)) );
+        SIMPLIFIER( ((A>B)|(C<=A)),                                                  __iff((B<(C-0x1)), (A>B)) );
+        SIMPLIFIER( ((A>B)&(C<A)),                                                   __iff((B>(C-0x1)), (A>B)) );
+        SIMPLIFIER( ((A>B)|(C<A)),                                                   __iff((B==(C-0x1)), (A>B)) );
+        SIMPLIFIER( ((A>B)|(C<A)),                                                   __iff((B<=(C-0x1)), (A>B)) );
+        SIMPLIFIER( ((A>B)|(C<A)),                                                   __iff((B<(C-0x1)), (A>B)) );
+        SIMPLIFIER( ((A>=B)&(C>A)),                                                  __iff((B>(C-0x1)), 0x0) );
+        SIMPLIFIER( ((A>=B)&(C>A)),                                                  __iff((B==(C-0x1)), (A==B)) );
+        SIMPLIFIER( ((A>=B)|(C>A)),                                                  __iff((B==(C-0x1)), 0x1) );
+        SIMPLIFIER( ((A>=B)|(C>A)),                                                  __iff((B<=(C-0x1)), 0x1) );
+        SIMPLIFIER( ((A>=B)|(C>A)),                                                  __iff((B<(C-0x1)), 0x1) );
+        SIMPLIFIER( ((A>=B)|(C>=A)),                                                 __iff((B==(C-0x1)), 0x1) );
+        SIMPLIFIER( ((A>=B)|(C>=A)),                                                 __iff((B<=(C-0x1)), 0x1) );
+        SIMPLIFIER( ((A>=B)|(C>=A)),                                                 __iff((B<(C-0x1)), 0x1) );
+        SIMPLIFIER( ((A>=B)|(C==A)),                                                 __iff((B==(C-0x1)), (A>=B)) );
+        SIMPLIFIER( ((A>=B)|(C==A)),                                                 __iff((B<=(C-0x1)), (A>=B)) );
+        SIMPLIFIER( ((A>=B)|(C==A)),                                                 __iff((B<(C-0x1)), (A>=B)) );
+        SIMPLIFIER( ((A>=B)|(C!=A)),                                                 __iff((B==(C-0x1)), 0x1) );
+        SIMPLIFIER( ((A>=B)|(C!=A)),                                                 __iff((B<=(C-0x1)), 0x1) );
+        SIMPLIFIER( ((A>=B)|(C!=A)),                                                 __iff((B<(C-0x1)), 0x1) );
+        SIMPLIFIER( ((A>=B)&(C<=A)),                                                 __iff((B>(C-0x1)), (A>=B)) );
+        SIMPLIFIER( ((A>=B)&(C<=A)),                                                 __iff((B==(C-0x1)), (A>B)) );
+        SIMPLIFIER( ((A>=B)|(C<=A)),                                                 __iff((B==(C-0x1)), (A>=B)) );
+        SIMPLIFIER( ((A>=B)|(C<=A)),                                                 __iff((B<=(C-0x1)), (A>=B)) );
+        SIMPLIFIER( ((A>=B)|(C<=A)),                                                 __iff((B<(C-0x1)), (A>=B)) );
+        SIMPLIFIER( ((A>=B)|(C<A)),                                                  __iff((B==(C-0x1)), (A>=B)) );
+        SIMPLIFIER( ((A>=B)|(C<A)),                                                  __iff((B<=(C-0x1)), (A>=B)) );
+        SIMPLIFIER( ((A>=B)|(C<A)),                                                  __iff((B<(C-0x1)), (A>=B)) );
+        SIMPLIFIER( ((A==B)&(C>A)),                                                  __iff((B>(C-0x1)), 0x0) );
+        SIMPLIFIER( ((A==B)&(C>A)),                                                  __iff((B==(C-0x1)), (A==B)) );
+        SIMPLIFIER( ((A==B)&(C>A)),                                                  __iff((B<=(C-0x1)), (A==B)) );
+        SIMPLIFIER( ((A==B)&(C>A)),                                                  __iff((B<(C-0x1)), (A==B)) );
+        SIMPLIFIER( ((A==B)|(C>A)),                                                  __iff((B==(C-0x1)), (A<=B)) );
+        SIMPLIFIER( ((A==B)&(C>=A)),                                                 __iff((B==(C-0x1)), (A==B)) );
+        SIMPLIFIER( ((A==B)&(C>=A)),                                                 __iff((B<=(C-0x1)), (A==B)) );
+        SIMPLIFIER( ((A==B)&(C>=A)),                                                 __iff((B<(C-0x1)), (A==B)) );
+        SIMPLIFIER( ((A==B)&(C==A)),                                                 __iff((B==(C-0x1)), 0x0) );
+        SIMPLIFIER( ((A==B)&(C==A)),                                                 __iff((B<=(C-0x1)), 0x0) );
+        SIMPLIFIER( ((A==B)&(C==A)),                                                 __iff((B<(C-0x1)), 0x0) );
+        SIMPLIFIER( ((A==B)&(C!=A)),                                                 __iff((B==(C-0x1)), (A==B)) );
+        SIMPLIFIER( ((A==B)&(C!=A)),                                                 __iff((B<=(C-0x1)), (A==B)) );
+        SIMPLIFIER( ((A==B)&(C!=A)),                                                 __iff((B<(C-0x1)), (A==B)) );
+        SIMPLIFIER( ((A==B)&(C<=A)),                                                 __iff((B>(C-0x1)), (A==B)) );
+        SIMPLIFIER( ((A==B)&(C<=A)),                                                 __iff((B==(C-0x1)), 0x0) );
+        SIMPLIFIER( ((A==B)&(C<=A)),                                                 __iff((B<=(C-0x1)), 0x0) );
+        SIMPLIFIER( ((A==B)&(C<=A)),                                                 __iff((B<(C-0x1)), 0x0) );
+        SIMPLIFIER( ((A==B)|(C<=A)),                                                 __iff((B==(C-0x1)), (A>=B)) );
+        SIMPLIFIER( ((A==B)&(C<A)),                                                  __iff((B==(C-0x1)), 0x0) );
+        SIMPLIFIER( ((A==B)&(C<A)),                                                  __iff((B<=(C-0x1)), 0x0) );
+        SIMPLIFIER( ((A==B)&(C<A)),                                                  __iff((B<(C-0x1)), 0x0) );
+        SIMPLIFIER( ((A==B)&__ugreat(C, A)),                                         __iff(__ugreat(B, (C-0x1)), 0x0) );
+        SIMPLIFIER( ((A==B)&__uless_eq(C, A)),                                       __iff(__ugreat(B, (C-0x1)), (A==B)) );
+        SIMPLIFIER( ((A!=B)&(C>A)),                                                  __iff((B==(C-0x1)), (A<B)) );
+        SIMPLIFIER( ((A!=B)|(C>A)),                                                  __iff((B>(C-0x1)), (A!=B)) );
+        SIMPLIFIER( ((A!=B)|(C>A)),                                                  __iff((B==(C-0x1)), 0x1) );
+        SIMPLIFIER( ((A!=B)|(C>A)),                                                  __iff((B<=(C-0x1)), 0x1) );
+        SIMPLIFIER( ((A!=B)|(C>A)),                                                  __iff((B<(C-0x1)), 0x1) );
+        SIMPLIFIER( ((A!=B)|(C>=A)),                                                 __iff((B==(C-0x1)), 0x1) );
+        SIMPLIFIER( ((A!=B)|(C>=A)),                                                 __iff((B<=(C-0x1)), 0x1) );
+        SIMPLIFIER( ((A!=B)|(C>=A)),                                                 __iff((B<(C-0x1)), 0x1) );
+        SIMPLIFIER( ((A!=B)|(C==A)),                                                 __iff((B==(C-0x1)), (A!=B)) );
+        SIMPLIFIER( ((A!=B)|(C==A)),                                                 __iff((B<=(C-0x1)), (A!=B)) );
+        SIMPLIFIER( ((A!=B)|(C==A)),                                                 __iff((B<(C-0x1)), (A!=B)) );
+        SIMPLIFIER( ((A!=B)|(C!=A)),                                                 __iff((B==(C-0x1)), 0x1) );
+        SIMPLIFIER( ((A!=B)|(C!=A)),                                                 __iff((B<=(C-0x1)), 0x1) );
+        SIMPLIFIER( ((A!=B)|(C!=A)),                                                 __iff((B<(C-0x1)), 0x1) );
+        SIMPLIFIER( ((A!=B)&(C<=A)),                                                 __iff((B==(C-0x1)), (A>B)) );
+        SIMPLIFIER( ((A!=B)|(C<=A)),                                                 __iff((B>(C-0x1)), 0x1) );
+        SIMPLIFIER( ((A!=B)|(C<=A)),                                                 __iff((B==(C-0x1)), (A!=B)) );
+        SIMPLIFIER( ((A!=B)|(C<=A)),                                                 __iff((B<=(C-0x1)), (A!=B)) );
+        SIMPLIFIER( ((A!=B)|(C<=A)),                                                 __iff((B<(C-0x1)), (A!=B)) );
+        SIMPLIFIER( ((A!=B)|(C<A)),                                                  __iff((B==(C-0x1)), (A!=B)) );
+        SIMPLIFIER( ((A!=B)|(C<A)),                                                  __iff((B<=(C-0x1)), (A!=B)) );
+        SIMPLIFIER( ((A!=B)|(C<A)),                                                  __iff((B<(C-0x1)), (A!=B)) );
+        SIMPLIFIER( ((A!=B)|__ugreat(C, A)),                                         __iff(__ugreat(B, (C-0x1)), (A!=B)) );
+        SIMPLIFIER( ((A!=B)|__uless_eq(C, A)),                                       __iff(__ugreat(B, (C-0x1)), 0x1) );
+        SIMPLIFIER( ((A<=B)&(C>A)),                                                  __iff((B==(C-0x1)), (A<=B)) );
+        SIMPLIFIER( ((A<=B)&(C>A)),                                                  __iff((B<=(C-0x1)), (A<=B)) );
+        SIMPLIFIER( ((A<=B)&(C>A)),                                                  __iff((B<(C-0x1)), (A<=B)) );
+        SIMPLIFIER( ((A<=B)|(C>A)),                                                  __iff((B>(C-0x1)), (A<=B)) );
+        SIMPLIFIER( ((A<=B)|(C>A)),                                                  __iff((B>=(C-0x1)), (A<=B)) );
+        SIMPLIFIER( ((A<=B)|(C>A)),                                                  __iff((B==(C-0x1)), (A<=B)) );
+        SIMPLIFIER( ((A<=B)&(C>=A)),                                                 __iff((B==(C-0x1)), (A<=B)) );
+        SIMPLIFIER( ((A<=B)&(C>=A)),                                                 __iff((B<=(C-0x1)), (A<=B)) );
+        SIMPLIFIER( ((A<=B)&(C>=A)),                                                 __iff((B<(C-0x1)), (A<=B)) );
+        SIMPLIFIER( ((A<=B)|(C>=A)),                                                 __iff((B>(C-0x1)), (A<=B)) );
+        SIMPLIFIER( ((A<=B)&(C==A)),                                                 __iff((B==(C-0x1)), 0x0) );
+        SIMPLIFIER( ((A<=B)&(C==A)),                                                 __iff((B<=(C-0x1)), 0x0) );
+        SIMPLIFIER( ((A<=B)&(C==A)),                                                 __iff((B<(C-0x1)), 0x0) );
+        SIMPLIFIER( ((A<=B)|(C==A)),                                                 __iff((B>(C-0x1)), (A<=B)) );
+        SIMPLIFIER( ((A<=B)&(C!=A)),                                                 __iff((B==(C-0x1)), (A<=B)) );
+        SIMPLIFIER( ((A<=B)&(C!=A)),                                                 __iff((B<=(C-0x1)), (A<=B)) );
+        SIMPLIFIER( ((A<=B)&(C!=A)),                                                 __iff((B<(C-0x1)), (A<=B)) );
+        SIMPLIFIER( ((A<=B)|(C!=A)),                                                 __iff((B>(C-0x1)), 0x1) );
+        SIMPLIFIER( ((A<=B)&(C<=A)),                                                 __iff((B==(C-0x1)), 0x0) );
+        SIMPLIFIER( ((A<=B)&(C<=A)),                                                 __iff((B<=(C-0x1)), 0x0) );
+        SIMPLIFIER( ((A<=B)&(C<=A)),                                                 __iff((B<(C-0x1)), 0x0) );
+        SIMPLIFIER( ((A<=B)|(C<=A)),                                                 __iff((B>(C-0x1)), 0x1) );
+        SIMPLIFIER( ((A<=B)|(C<=A)),                                                 __iff((B>=(C-0x1)), 0x1) );
+        SIMPLIFIER( ((A<=B)|(C<=A)),                                                 __iff((B==(C-0x1)), 0x1) );
+        SIMPLIFIER( ((A<=B)&(C<A)),                                                  __iff((B==(C-0x1)), 0x0) );
+        SIMPLIFIER( ((A<=B)&(C<A)),                                                  __iff((B<=(C-0x1)), 0x0) );
+        SIMPLIFIER( ((A<=B)&(C<A)),                                                  __iff((B<(C-0x1)), 0x0) );
+        SIMPLIFIER( ((A<=B)|(C<A)),                                                  __iff((B>(C-0x1)), 0x1) );
+        SIMPLIFIER( ((A<B)&(C>A)),                                                   __iff((B==(C-0x1)), (A<B)) );
+        SIMPLIFIER( ((A<B)&(C>A)),                                                   __iff((B<=(C-0x1)), (A<B)) );
+        SIMPLIFIER( ((A<B)&(C>A)),                                                   __iff((B<(C-0x1)), (A<B)) );
+        SIMPLIFIER( ((A<B)|(C>A)),                                                   __iff((B>(C-0x1)), (A<B)) );
+        SIMPLIFIER( ((A<B)|(C>A)),                                                   __iff((B==(C-0x1)), (A<=B)) );
+        SIMPLIFIER( ((A<B)&(C>=A)),                                                  __iff((B==(C-0x1)), (A<B)) );
+        SIMPLIFIER( ((A<B)&(C>=A)),                                                  __iff((B<=(C-0x1)), (A<B)) );
+        SIMPLIFIER( ((A<B)&(C>=A)),                                                  __iff((B<(C-0x1)), (A<B)) );
+        SIMPLIFIER( ((A<B)&(C==A)),                                                  __iff((B==(C-0x1)), 0x0) );
+        SIMPLIFIER( ((A<B)&(C==A)),                                                  __iff((B<=(C-0x1)), 0x0) );
+        SIMPLIFIER( ((A<B)&(C==A)),                                                  __iff((B<(C-0x1)), 0x0) );
+        SIMPLIFIER( ((A<B)&(C!=A)),                                                  __iff((B==(C-0x1)), (A<B)) );
+        SIMPLIFIER( ((A<B)&(C!=A)),                                                  __iff((B<=(C-0x1)), (A<B)) );
+        SIMPLIFIER( ((A<B)&(C!=A)),                                                  __iff((B<(C-0x1)), (A<B)) );
+        SIMPLIFIER( ((A<B)&(C<=A)),                                                  __iff((B==(C-0x1)), 0x0) );
+        SIMPLIFIER( ((A<B)&(C<=A)),                                                  __iff((B<=(C-0x1)), 0x0) );
+        SIMPLIFIER( ((A<B)&(C<=A)),                                                  __iff((B<(C-0x1)), 0x0) );
+        SIMPLIFIER( ((A<B)|(C<=A)),                                                  __iff((B>(C-0x1)), 0x1) );
+        SIMPLIFIER( ((A<B)|(C<=A)),                                                  __iff((B==(C-0x1)), (A!=B)) );
+        SIMPLIFIER( ((A<B)&(C<A)),                                                   __iff((B==(C-0x1)), 0x0) );
+        SIMPLIFIER( ((A<B)&(C<A)),                                                   __iff((B<=(C-0x1)), 0x0) );
+        SIMPLIFIER( ((A<B)&(C<A)),                                                   __iff((B<(C-0x1)), 0x0) );
+        SIMPLIFIER( (__ugreat(A, B)&(C==A)),                                         __iff(__ugreat(B, (C-0x1)), 0x0) );
+        SIMPLIFIER( (__ugreat(A, B)&(C!=A)),                                         __iff(__ugreat(B, (C-0x1)), __ugreat(A, B)) );
+        SIMPLIFIER( (__ugreat(A, B)&__ugreat(C, A)),                                 __iff((B==(C-0x1)), 0x0) );
+        SIMPLIFIER( (__ugreat(A, B)&__ugreat(C, A)),                                 __iff(__ugreat(B, (C-0x1)), 0x0) );
+        SIMPLIFIER( (__ugreat(A, B)&__ugreat(C, A)),                                 __iff(__ugreat_eq(B, (C-0x1)), 0x0) );
+        SIMPLIFIER( (__ugreat(A, B)&__ugreat_eq(C, A)),                              __iff(__ugreat(B, (C-0x1)), 0x0) );
+        SIMPLIFIER( (__ugreat(A, B)&__uless_eq(C, A)),                               __iff((B==(C-0x1)), __ugreat(A, B)) );
+        SIMPLIFIER( (__ugreat(A, B)&__uless_eq(C, A)),                               __iff(__ugreat(B, (C-0x1)), __ugreat(A, B)) );
+        SIMPLIFIER( (__ugreat(A, B)&__uless_eq(C, A)),                               __iff(__ugreat_eq(B, (C-0x1)), __ugreat(A, B)) );
+        SIMPLIFIER( (__ugreat(A, B)&__uless(C, A)),                                  __iff(__ugreat(B, (C-0x1)), __ugreat(A, B)) );
+        SIMPLIFIER( (__ugreat_eq(A, B)&__ugreat(C, A)),                              __iff(__ugreat(B, (C-0x1)), 0x0) );
+        SIMPLIFIER( (__ugreat_eq(A, B)&__uless_eq(C, A)),                            __iff(__ugreat(B, (C-0x1)), __ugreat_eq(A, B)) );
+        SIMPLIFIER( (__uless_eq(A, B)|(C==A)),                                       __iff(__ugreat(B, (C-0x1)), __uless_eq(A, B)) );
+        SIMPLIFIER( (__uless_eq(A, B)|(C!=A)),                                       __iff(__ugreat(B, (C-0x1)), 0x1) );
+        SIMPLIFIER( (__uless_eq(A, B)|__ugreat(C, A)),                               __iff((B==(C-0x1)), __uless_eq(A, B)) );
+        SIMPLIFIER( (__uless_eq(A, B)|__ugreat(C, A)),                               __iff(__ugreat(B, (C-0x1)), __uless_eq(A, B)) );
+        SIMPLIFIER( (__uless_eq(A, B)|__ugreat(C, A)),                               __iff(__ugreat_eq(B, (C-0x1)), __uless_eq(A, B)) );
+        SIMPLIFIER( (__uless_eq(A, B)|__ugreat_eq(C, A)),                            __iff(__ugreat(B, (C-0x1)), __uless_eq(A, B)) );
+        SIMPLIFIER( (__uless_eq(A, B)|__uless_eq(C, A)),                             __iff((B==(C-0x1)), 0x1) );
+        SIMPLIFIER( (__uless_eq(A, B)|__uless_eq(C, A)),                             __iff(__ugreat(B, (C-0x1)), 0x1) );
+        SIMPLIFIER( (__uless_eq(A, B)|__uless_eq(C, A)),                             __iff(__ugreat_eq(B, (C-0x1)), 0x1) );
+        SIMPLIFIER( (__uless_eq(A, B)|__uless(C, A)),                                __iff(__ugreat(B, (C-0x1)), 0x1) );
+        SIMPLIFIER( (__uless(A, B)|__ugreat(C, A)),                                  __iff(__ugreat(B, (C-0x1)), __uless(A, B)) );
+        SIMPLIFIER( (__uless(A, B)|__uless_eq(C, A)),                                __iff(__ugreat(B, (C-0x1)), 0x1) );
+        SIMPLIFIER( ((B>A)&(A>C)),                                                   __iff((B==(C-0x1)), 0x0) );
+        SIMPLIFIER( ((B>A)&(A>C)),                                                   __iff((B<=(C-0x1)), 0x0) );
+        SIMPLIFIER( ((B>A)&(A>C)),                                                   __iff((B<(C-0x1)), 0x0) );
+        SIMPLIFIER( ((B>A)&(A>=C)),                                                  __iff((B==(C-0x1)), 0x0) );
+        SIMPLIFIER( ((B>A)&(A>=C)),                                                  __iff((B<=(C-0x1)), 0x0) );
+        SIMPLIFIER( ((B>A)&(A>=C)),                                                  __iff((B<(C-0x1)), 0x0) );
+        SIMPLIFIER( ((B>A)|(A>=C)),                                                  __iff((B>(C-0x1)), 0x1) );
+        SIMPLIFIER( ((B>A)|(A>=C)),                                                  __iff((B==(C-0x1)), (A!=B)) );
+        SIMPLIFIER( ((B>A)&(A==C)),                                                  __iff((B==(C-0x1)), 0x0) );
+        SIMPLIFIER( ((B>A)&(A==C)),                                                  __iff((B<=(C-0x1)), 0x0) );
+        SIMPLIFIER( ((B>A)&(A==C)),                                                  __iff((B<(C-0x1)), 0x0) );
+        SIMPLIFIER( ((B>A)&(A!=C)),                                                  __iff((B==(C-0x1)), (A<B)) );
+        SIMPLIFIER( ((B>A)&(A!=C)),                                                  __iff((B<=(C-0x1)), (A<B)) );
+        SIMPLIFIER( ((B>A)&(A!=C)),                                                  __iff((B<(C-0x1)), (A<B)) );
+        SIMPLIFIER( ((B>A)&(A<=C)),                                                  __iff((B==(C-0x1)), (A<B)) );
+        SIMPLIFIER( ((B>A)&(A<=C)),                                                  __iff((B<=(C-0x1)), (A<B)) );
+        SIMPLIFIER( ((B>A)&(A<=C)),                                                  __iff((B<(C-0x1)), (A<B)) );
+        SIMPLIFIER( ((B>A)&(A<C)),                                                   __iff((B==(C-0x1)), (A<B)) );
+        SIMPLIFIER( ((B>A)&(A<C)),                                                   __iff((B<=(C-0x1)), (A<B)) );
+        SIMPLIFIER( ((B>A)&(A<C)),                                                   __iff((B<(C-0x1)), (A<B)) );
+        SIMPLIFIER( ((B>A)|(A<C)),                                                   __iff((B>(C-0x1)), (A<B)) );
+        SIMPLIFIER( ((B>A)|(A<C)),                                                   __iff((B==(C-0x1)), (A<=B)) );
+        SIMPLIFIER( ((B>=A)&(A>C)),                                                  __iff((B==(C-0x1)), 0x0) );
+        SIMPLIFIER( ((B>=A)&(A>C)),                                                  __iff((B<=(C-0x1)), 0x0) );
+        SIMPLIFIER( ((B>=A)&(A>C)),                                                  __iff((B<(C-0x1)), 0x0) );
+        SIMPLIFIER( ((B>=A)|(A>C)),                                                  __iff((B>(C-0x1)), 0x1) );
+        SIMPLIFIER( ((B>=A)&(A>=C)),                                                 __iff((B==(C-0x1)), 0x0) );
+        SIMPLIFIER( ((B>=A)&(A>=C)),                                                 __iff((B<=(C-0x1)), 0x0) );
+        SIMPLIFIER( ((B>=A)&(A>=C)),                                                 __iff((B<(C-0x1)), 0x0) );
+        SIMPLIFIER( ((B>=A)|(A>=C)),                                                 __iff((B>(C-0x1)), 0x1) );
+        SIMPLIFIER( ((B>=A)|(A>=C)),                                                 __iff((B>=(C-0x1)), 0x1) );
+        SIMPLIFIER( ((B>=A)|(A>=C)),                                                 __iff((B==(C-0x1)), 0x1) );
+        SIMPLIFIER( ((B>=A)&(A==C)),                                                 __iff((B==(C-0x1)), 0x0) );
+        SIMPLIFIER( ((B>=A)&(A==C)),                                                 __iff((B<=(C-0x1)), 0x0) );
+        SIMPLIFIER( ((B>=A)&(A==C)),                                                 __iff((B<(C-0x1)), 0x0) );
+        SIMPLIFIER( ((B>=A)|(A==C)),                                                 __iff((B>(C-0x1)), (A<=B)) );
+        SIMPLIFIER( ((B>=A)&(A!=C)),                                                 __iff((B==(C-0x1)), (A<=B)) );
+        SIMPLIFIER( ((B>=A)&(A!=C)),                                                 __iff((B<=(C-0x1)), (A<=B)) );
+        SIMPLIFIER( ((B>=A)&(A!=C)),                                                 __iff((B<(C-0x1)), (A<=B)) );
+        SIMPLIFIER( ((B>=A)|(A!=C)),                                                 __iff((B>(C-0x1)), 0x1) );
+        SIMPLIFIER( ((B>=A)&(A<=C)),                                                 __iff((B==(C-0x1)), (A<=B)) );
+        SIMPLIFIER( ((B>=A)&(A<=C)),                                                 __iff((B<=(C-0x1)), (A<=B)) );
+        SIMPLIFIER( ((B>=A)&(A<=C)),                                                 __iff((B<(C-0x1)), (A<=B)) );
+        SIMPLIFIER( ((B>=A)|(A<=C)),                                                 __iff((B>(C-0x1)), (A<=B)) );
+        SIMPLIFIER( ((B>=A)&(A<C)),                                                  __iff((B==(C-0x1)), (A<=B)) );
+        SIMPLIFIER( ((B>=A)&(A<C)),                                                  __iff((B<=(C-0x1)), (A<=B)) );
+        SIMPLIFIER( ((B>=A)&(A<C)),                                                  __iff((B<(C-0x1)), (A<=B)) );
+        SIMPLIFIER( ((B>=A)|(A<C)),                                                  __iff((B>(C-0x1)), (A<=B)) );
+        SIMPLIFIER( ((B>=A)|(A<C)),                                                  __iff((B>=(C-0x1)), (A<=B)) );
+        SIMPLIFIER( ((B>=A)|(A<C)),                                                  __iff((B==(C-0x1)), (A<=B)) );
+        SIMPLIFIER( ((B==A)&(A>C)),                                                  __iff((B==(C-0x1)), 0x0) );
+        SIMPLIFIER( ((B==A)&(A>C)),                                                  __iff((B<=(C-0x1)), 0x0) );
+        SIMPLIFIER( ((B==A)&(A>C)),                                                  __iff((B<(C-0x1)), 0x0) );
+        SIMPLIFIER( ((B==A)&(A>=C)),                                                 __iff((B>(C-0x1)), (A==B)) );
+        SIMPLIFIER( ((B==A)&(A>=C)),                                                 __iff((B==(C-0x1)), 0x0) );
+        SIMPLIFIER( ((B==A)&(A>=C)),                                                 __iff((B<=(C-0x1)), 0x0) );
+        SIMPLIFIER( ((B==A)&(A>=C)),                                                 __iff((B<(C-0x1)), 0x0) );
+        SIMPLIFIER( ((B==A)|(A>=C)),                                                 __iff((B==(C-0x1)), (A>=B)) );
+        SIMPLIFIER( ((B==A)&(A==C)),                                                 __iff((B==(C-0x1)), 0x0) );
+        SIMPLIFIER( ((B==A)&(A==C)),                                                 __iff((B<=(C-0x1)), 0x0) );
+        SIMPLIFIER( ((B==A)&(A==C)),                                                 __iff((B<(C-0x1)), 0x0) );
+        SIMPLIFIER( ((B==A)&(A!=C)),                                                 __iff((B==(C-0x1)), (A==B)) );
+        SIMPLIFIER( ((B==A)&(A!=C)),                                                 __iff((B<=(C-0x1)), (A==B)) );
+        SIMPLIFIER( ((B==A)&(A!=C)),                                                 __iff((B<(C-0x1)), (A==B)) );
+        SIMPLIFIER( ((B==A)&(A<=C)),                                                 __iff((B==(C-0x1)), (A==B)) );
+        SIMPLIFIER( ((B==A)&(A<=C)),                                                 __iff((B<=(C-0x1)), (A==B)) );
+        SIMPLIFIER( ((B==A)&(A<=C)),                                                 __iff((B<(C-0x1)), (A==B)) );
+        SIMPLIFIER( ((B==A)&(A<C)),                                                  __iff((B>(C-0x1)), 0x0) );
+        SIMPLIFIER( ((B==A)&(A<C)),                                                  __iff((B==(C-0x1)), (A==B)) );
+        SIMPLIFIER( ((B==A)&(A<C)),                                                  __iff((B<=(C-0x1)), (A==B)) );
+        SIMPLIFIER( ((B==A)&(A<C)),                                                  __iff((B<(C-0x1)), (A==B)) );
+        SIMPLIFIER( ((B==A)|(A<C)),                                                  __iff((B==(C-0x1)), (A<=B)) );
+        SIMPLIFIER( ((B==A)&__ugreat_eq(A, C)),                                      __iff(__ugreat(B, (C-0x1)), (A==B)) );
+        SIMPLIFIER( ((B==A)&__uless(A, C)),                                          __iff(__ugreat(B, (C-0x1)), 0x0) );
+        SIMPLIFIER( ((B!=A)|(A>C)),                                                  __iff((B==(C-0x1)), (A!=B)) );
+        SIMPLIFIER( ((B!=A)|(A>C)),                                                  __iff((B<=(C-0x1)), (A!=B)) );
+        SIMPLIFIER( ((B!=A)|(A>C)),                                                  __iff((B<(C-0x1)), (A!=B)) );
+        SIMPLIFIER( ((B!=A)&(A>=C)),                                                 __iff((B==(C-0x1)), (A>B)) );
+        SIMPLIFIER( ((B!=A)|(A>=C)),                                                 __iff((B>(C-0x1)), 0x1) );
+        SIMPLIFIER( ((B!=A)|(A>=C)),                                                 __iff((B==(C-0x1)), (A!=B)) );
+        SIMPLIFIER( ((B!=A)|(A>=C)),                                                 __iff((B<=(C-0x1)), (A!=B)) );
+        SIMPLIFIER( ((B!=A)|(A>=C)),                                                 __iff((B<(C-0x1)), (A!=B)) );
+        SIMPLIFIER( ((B!=A)|(A==C)),                                                 __iff((B==(C-0x1)), (A!=B)) );
+        SIMPLIFIER( ((B!=A)|(A==C)),                                                 __iff((B<=(C-0x1)), (A!=B)) );
+        SIMPLIFIER( ((B!=A)|(A==C)),                                                 __iff((B<(C-0x1)), (A!=B)) );
+        SIMPLIFIER( ((B!=A)|(A!=C)),                                                 __iff((B==(C-0x1)), 0x1) );
+        SIMPLIFIER( ((B!=A)|(A!=C)),                                                 __iff((B<=(C-0x1)), 0x1) );
+        SIMPLIFIER( ((B!=A)|(A!=C)),                                                 __iff((B<(C-0x1)), 0x1) );
+        SIMPLIFIER( ((B!=A)|(A<=C)),                                                 __iff((B==(C-0x1)), 0x1) );
+        SIMPLIFIER( ((B!=A)|(A<=C)),                                                 __iff((B<=(C-0x1)), 0x1) );
+        SIMPLIFIER( ((B!=A)|(A<=C)),                                                 __iff((B<(C-0x1)), 0x1) );
+        SIMPLIFIER( ((B!=A)&(A<C)),                                                  __iff((B==(C-0x1)), (A<B)) );
+        SIMPLIFIER( ((B!=A)|(A<C)),                                                  __iff((B>(C-0x1)), (A!=B)) );
+        SIMPLIFIER( ((B!=A)|(A<C)),                                                  __iff((B==(C-0x1)), 0x1) );
+        SIMPLIFIER( ((B!=A)|(A<C)),                                                  __iff((B<=(C-0x1)), 0x1) );
+        SIMPLIFIER( ((B!=A)|(A<C)),                                                  __iff((B<(C-0x1)), 0x1) );
+        SIMPLIFIER( ((B!=A)|__ugreat_eq(A, C)),                                      __iff(__ugreat(B, (C-0x1)), 0x1) );
+        SIMPLIFIER( ((B!=A)|__uless(A, C)),                                          __iff(__ugreat(B, (C-0x1)), (A!=B)) );
+        SIMPLIFIER( ((B<=A)|(A>C)),                                                  __iff((B==(C-0x1)), (A>=B)) );
+        SIMPLIFIER( ((B<=A)|(A>C)),                                                  __iff((B<=(C-0x1)), (A>=B)) );
+        SIMPLIFIER( ((B<=A)|(A>C)),                                                  __iff((B<(C-0x1)), (A>=B)) );
+        SIMPLIFIER( ((B<=A)&(A>=C)),                                                 __iff((B>(C-0x1)), (A>=B)) );
+        SIMPLIFIER( ((B<=A)&(A>=C)),                                                 __iff((B==(C-0x1)), (A>B)) );
+        SIMPLIFIER( ((B<=A)|(A>=C)),                                                 __iff((B==(C-0x1)), (A>=B)) );
+        SIMPLIFIER( ((B<=A)|(A>=C)),                                                 __iff((B<=(C-0x1)), (A>=B)) );
+        SIMPLIFIER( ((B<=A)|(A>=C)),                                                 __iff((B<(C-0x1)), (A>=B)) );
+        SIMPLIFIER( ((B<=A)|(A==C)),                                                 __iff((B==(C-0x1)), (A>=B)) );
+        SIMPLIFIER( ((B<=A)|(A==C)),                                                 __iff((B<=(C-0x1)), (A>=B)) );
+        SIMPLIFIER( ((B<=A)|(A==C)),                                                 __iff((B<(C-0x1)), (A>=B)) );
+        SIMPLIFIER( ((B<=A)|(A!=C)),                                                 __iff((B==(C-0x1)), 0x1) );
+        SIMPLIFIER( ((B<=A)|(A!=C)),                                                 __iff((B<=(C-0x1)), 0x1) );
+        SIMPLIFIER( ((B<=A)|(A!=C)),                                                 __iff((B<(C-0x1)), 0x1) );
+        SIMPLIFIER( ((B<=A)|(A<=C)),                                                 __iff((B==(C-0x1)), 0x1) );
+        SIMPLIFIER( ((B<=A)|(A<=C)),                                                 __iff((B<=(C-0x1)), 0x1) );
+        SIMPLIFIER( ((B<=A)|(A<=C)),                                                 __iff((B<(C-0x1)), 0x1) );
+        SIMPLIFIER( ((B<=A)&(A<C)),                                                  __iff((B>(C-0x1)), 0x0) );
+        SIMPLIFIER( ((B<=A)&(A<C)),                                                  __iff((B==(C-0x1)), (A==B)) );
+        SIMPLIFIER( ((B<=A)|(A<C)),                                                  __iff((B==(C-0x1)), 0x1) );
+        SIMPLIFIER( ((B<=A)|(A<C)),                                                  __iff((B<=(C-0x1)), 0x1) );
+        SIMPLIFIER( ((B<=A)|(A<C)),                                                  __iff((B<(C-0x1)), 0x1) );
+        SIMPLIFIER( ((B<A)&(A>C)),                                                   __iff((B>(C-0x1)), (A>B)) );
+        SIMPLIFIER( ((B<A)|(A>C)),                                                   __iff((B==(C-0x1)), (A>B)) );
+        SIMPLIFIER( ((B<A)|(A>C)),                                                   __iff((B<=(C-0x1)), (A>B)) );
+        SIMPLIFIER( ((B<A)|(A>C)),                                                   __iff((B<(C-0x1)), (A>B)) );
+        SIMPLIFIER( ((B<A)&(A>=C)),                                                  __iff((B>(C-0x1)), (A>B)) );
+        SIMPLIFIER( ((B<A)&(A>=C)),                                                  __iff((B>=(C-0x1)), (A>B)) );
+        SIMPLIFIER( ((B<A)&(A>=C)),                                                  __iff((B==(C-0x1)), (A>B)) );
+        SIMPLIFIER( ((B<A)|(A>=C)),                                                  __iff((B==(C-0x1)), (A>B)) );
+        SIMPLIFIER( ((B<A)|(A>=C)),                                                  __iff((B<=(C-0x1)), (A>B)) );
+        SIMPLIFIER( ((B<A)|(A>=C)),                                                  __iff((B<(C-0x1)), (A>B)) );
+        SIMPLIFIER( ((B<A)&(A==C)),                                                  __iff((B>(C-0x1)), 0x0) );
+        SIMPLIFIER( ((B<A)|(A==C)),                                                  __iff((B==(C-0x1)), (A>B)) );
+        SIMPLIFIER( ((B<A)|(A==C)),                                                  __iff((B<=(C-0x1)), (A>B)) );
+        SIMPLIFIER( ((B<A)|(A==C)),                                                  __iff((B<(C-0x1)), (A>B)) );
+        SIMPLIFIER( ((B<A)&(A!=C)),                                                  __iff((B>(C-0x1)), (A>B)) );
+        SIMPLIFIER( ((B<A)|(A!=C)),                                                  __iff((B==(C-0x1)), 0x1) );
+        SIMPLIFIER( ((B<A)|(A!=C)),                                                  __iff((B<=(C-0x1)), 0x1) );
+        SIMPLIFIER( ((B<A)|(A!=C)),                                                  __iff((B<(C-0x1)), 0x1) );
+        SIMPLIFIER( ((B<A)&(A<=C)),                                                  __iff((B>(C-0x1)), 0x0) );
+        SIMPLIFIER( ((B<A)|(A<=C)),                                                  __iff((B==(C-0x1)), 0x1) );
+        SIMPLIFIER( ((B<A)|(A<=C)),                                                  __iff((B<=(C-0x1)), 0x1) );
+        SIMPLIFIER( ((B<A)|(A<=C)),                                                  __iff((B<(C-0x1)), 0x1) );
+        SIMPLIFIER( ((B<A)&(A<C)),                                                   __iff((B>(C-0x1)), 0x0) );
+        SIMPLIFIER( ((B<A)&(A<C)),                                                   __iff((B>=(C-0x1)), 0x0) );
+        SIMPLIFIER( ((B<A)&(A<C)),                                                   __iff((B==(C-0x1)), 0x0) );
+        SIMPLIFIER( ((B<A)|(A<C)),                                                   __iff((B==(C-0x1)), 0x1) );
+        SIMPLIFIER( ((B<A)|(A<C)),                                                   __iff((B<=(C-0x1)), 0x1) );
+        SIMPLIFIER( ((B<A)|(A<C)),                                                   __iff((B<(C-0x1)), 0x1) );
+        SIMPLIFIER( (__ugreat(B, A)|__ugreat_eq(A, C)),                              __iff(__ugreat(B, (C-0x1)), 0x1) );
+        SIMPLIFIER( (__ugreat(B, A)|__uless(A, C)),                                  __iff(__ugreat(B, (C-0x1)), __uless(A, B)) );
+        SIMPLIFIER( (__ugreat_eq(B, A)|(A==C)),                                      __iff(__ugreat(B, (C-0x1)), __uless_eq(A, B)) );
+        SIMPLIFIER( (__ugreat_eq(B, A)|(A!=C)),                                      __iff(__ugreat(B, (C-0x1)), 0x1) );
+        SIMPLIFIER( (__ugreat_eq(B, A)|__ugreat(A, C)),                              __iff(__ugreat(B, (C-0x1)), 0x1) );
+        SIMPLIFIER( (__ugreat_eq(B, A)|__ugreat_eq(A, C)),                           __iff((B==(C-0x1)), 0x1) );
+        SIMPLIFIER( (__ugreat_eq(B, A)|__ugreat_eq(A, C)),                           __iff(__ugreat(B, (C-0x1)), 0x1) );
+        SIMPLIFIER( (__ugreat_eq(B, A)|__ugreat_eq(A, C)),                           __iff(__ugreat_eq(B, (C-0x1)), 0x1) );
+        SIMPLIFIER( (__ugreat_eq(B, A)|__uless_eq(A, C)),                            __iff(__ugreat(B, (C-0x1)), __uless_eq(A, B)) );
+        SIMPLIFIER( (__ugreat_eq(B, A)|__uless(A, C)),                               __iff((B==(C-0x1)), __uless_eq(A, B)) );
+        SIMPLIFIER( (__ugreat_eq(B, A)|__uless(A, C)),                               __iff(__ugreat(B, (C-0x1)), __uless_eq(A, B)) );
+        SIMPLIFIER( (__ugreat_eq(B, A)|__uless(A, C)),                               __iff(__ugreat_eq(B, (C-0x1)), __uless_eq(A, B)) );
+        SIMPLIFIER( (__uless_eq(B, A)&__ugreat_eq(A, C)),                            __iff(__ugreat(B, (C-0x1)), __ugreat_eq(A, B)) );
+        SIMPLIFIER( (__uless_eq(B, A)&__uless(A, C)),                                __iff(__ugreat(B, (C-0x1)), 0x0) );
+        SIMPLIFIER( (__uless(B, A)&(A==C)),                                          __iff(__ugreat(B, (C-0x1)), 0x0) );
+        SIMPLIFIER( (__uless(B, A)&(A!=C)),                                          __iff(__ugreat(B, (C-0x1)), __ugreat(A, B)) );
+        SIMPLIFIER( (__uless(B, A)&__ugreat(A, C)),                                  __iff(__ugreat(B, (C-0x1)), __ugreat(A, B)) );
+        SIMPLIFIER( (__uless(B, A)&__ugreat_eq(A, C)),                               __iff((B==(C-0x1)), __ugreat(A, B)) );
+        SIMPLIFIER( (__uless(B, A)&__ugreat_eq(A, C)),                               __iff(__ugreat(B, (C-0x1)), __ugreat(A, B)) );
+        SIMPLIFIER( (__uless(B, A)&__ugreat_eq(A, C)),                               __iff(__ugreat_eq(B, (C-0x1)), __ugreat(A, B)) );
+        SIMPLIFIER( (__uless(B, A)&__uless_eq(A, C)),                                __iff(__ugreat(B, (C-0x1)), 0x0) );
+        SIMPLIFIER( (__uless(B, A)&__uless(A, C)),                                   __iff((B==(C-0x1)), 0x0) );
+        SIMPLIFIER( (__uless(B, A)&__uless(A, C)),                                   __iff(__ugreat(B, (C-0x1)), 0x0) );
+        SIMPLIFIER( (__uless(B, A)&__uless(A, C)),                                   __iff(__ugreat_eq(B, (C-0x1)), 0x0) );
+        SIMPLIFIER( ((B>A)&(C>A)),                                                   __iff((B==(C-0x1)), (A<B)) );
+        SIMPLIFIER( ((B>A)&(C>A)),                                                   __iff((B<=(C-0x1)), (A<B)) );
+        SIMPLIFIER( ((B>A)&(C>A)),                                                   __iff((B<(C-0x1)), (A<B)) );
+        SIMPLIFIER( ((B>A)|(C>A)),                                                   __iff((B>(C-0x1)), (A<B)) );
+        SIMPLIFIER( ((B>A)|(C>A)),                                                   __iff((B==(C-0x1)), (A<=B)) );
+        SIMPLIFIER( ((B>A)&(C>=A)),                                                  __iff((B==(C-0x1)), (A<B)) );
+        SIMPLIFIER( ((B>A)&(C>=A)),                                                  __iff((B<=(C-0x1)), (A<B)) );
+        SIMPLIFIER( ((B>A)&(C>=A)),                                                  __iff((B<(C-0x1)), (A<B)) );
+        SIMPLIFIER( ((B>A)&(C==A)),                                                  __iff((B==(C-0x1)), 0x0) );
+        SIMPLIFIER( ((B>A)&(C==A)),                                                  __iff((B<=(C-0x1)), 0x0) );
+        SIMPLIFIER( ((B>A)&(C==A)),                                                  __iff((B<(C-0x1)), 0x0) );
+        SIMPLIFIER( ((B>A)&(C!=A)),                                                  __iff((B==(C-0x1)), (A<B)) );
+        SIMPLIFIER( ((B>A)&(C!=A)),                                                  __iff((B<=(C-0x1)), (A<B)) );
+        SIMPLIFIER( ((B>A)&(C!=A)),                                                  __iff((B<(C-0x1)), (A<B)) );
+        SIMPLIFIER( ((B>A)&(C<=A)),                                                  __iff((B==(C-0x1)), 0x0) );
+        SIMPLIFIER( ((B>A)&(C<=A)),                                                  __iff((B<=(C-0x1)), 0x0) );
+        SIMPLIFIER( ((B>A)&(C<=A)),                                                  __iff((B<(C-0x1)), 0x0) );
+        SIMPLIFIER( ((B>A)|(C<=A)),                                                  __iff((B>(C-0x1)), 0x1) );
+        SIMPLIFIER( ((B>A)|(C<=A)),                                                  __iff((B==(C-0x1)), (A!=B)) );
+        SIMPLIFIER( ((B>A)&(C<A)),                                                   __iff((B==(C-0x1)), 0x0) );
+        SIMPLIFIER( ((B>A)&(C<A)),                                                   __iff((B<=(C-0x1)), 0x0) );
+        SIMPLIFIER( ((B>A)&(C<A)),                                                   __iff((B<(C-0x1)), 0x0) );
+        SIMPLIFIER( ((B>=A)&(C>A)),                                                  __iff((B==(C-0x1)), (A<=B)) );
+        SIMPLIFIER( ((B>=A)&(C>A)),                                                  __iff((B<=(C-0x1)), (A<=B)) );
+        SIMPLIFIER( ((B>=A)&(C>A)),                                                  __iff((B<(C-0x1)), (A<=B)) );
+        SIMPLIFIER( ((B>=A)|(C>A)),                                                  __iff((B>(C-0x1)), (A<=B)) );
+        SIMPLIFIER( ((B>=A)|(C>A)),                                                  __iff((B>=(C-0x1)), (A<=B)) );
+        SIMPLIFIER( ((B>=A)|(C>A)),                                                  __iff((B==(C-0x1)), (A<=B)) );
+        SIMPLIFIER( ((B>=A)&(C>=A)),                                                 __iff((B==(C-0x1)), (A<=B)) );
+        SIMPLIFIER( ((B>=A)&(C>=A)),                                                 __iff((B<=(C-0x1)), (A<=B)) );
+        SIMPLIFIER( ((B>=A)&(C>=A)),                                                 __iff((B<(C-0x1)), (A<=B)) );
+        SIMPLIFIER( ((B>=A)|(C>=A)),                                                 __iff((B>(C-0x1)), (A<=B)) );
+        SIMPLIFIER( ((B>=A)&(C==A)),                                                 __iff((B==(C-0x1)), 0x0) );
+        SIMPLIFIER( ((B>=A)&(C==A)),                                                 __iff((B<=(C-0x1)), 0x0) );
+        SIMPLIFIER( ((B>=A)&(C==A)),                                                 __iff((B<(C-0x1)), 0x0) );
+        SIMPLIFIER( ((B>=A)|(C==A)),                                                 __iff((B>(C-0x1)), (A<=B)) );
+        SIMPLIFIER( ((B>=A)&(C!=A)),                                                 __iff((B==(C-0x1)), (A<=B)) );
+        SIMPLIFIER( ((B>=A)&(C!=A)),                                                 __iff((B<=(C-0x1)), (A<=B)) );
+        SIMPLIFIER( ((B>=A)&(C!=A)),                                                 __iff((B<(C-0x1)), (A<=B)) );
+        SIMPLIFIER( ((B>=A)|(C!=A)),                                                 __iff((B>(C-0x1)), 0x1) );
+        SIMPLIFIER( ((B>=A)&(C<=A)),                                                 __iff((B==(C-0x1)), 0x0) );
+        SIMPLIFIER( ((B>=A)&(C<=A)),                                                 __iff((B<=(C-0x1)), 0x0) );
+        SIMPLIFIER( ((B>=A)&(C<=A)),                                                 __iff((B<(C-0x1)), 0x0) );
+        SIMPLIFIER( ((B>=A)|(C<=A)),                                                 __iff((B>(C-0x1)), 0x1) );
+        SIMPLIFIER( ((B>=A)|(C<=A)),                                                 __iff((B>=(C-0x1)), 0x1) );
+        SIMPLIFIER( ((B>=A)|(C<=A)),                                                 __iff((B==(C-0x1)), 0x1) );
+        SIMPLIFIER( ((B>=A)&(C<A)),                                                  __iff((B==(C-0x1)), 0x0) );
+        SIMPLIFIER( ((B>=A)&(C<A)),                                                  __iff((B<=(C-0x1)), 0x0) );
+        SIMPLIFIER( ((B>=A)&(C<A)),                                                  __iff((B<(C-0x1)), 0x0) );
+        SIMPLIFIER( ((B>=A)|(C<A)),                                                  __iff((B>(C-0x1)), 0x1) );
+        SIMPLIFIER( ((B==A)&(C>A)),                                                  __iff((B>(C-0x1)), 0x0) );
+        SIMPLIFIER( ((B==A)&(C>A)),                                                  __iff((B==(C-0x1)), (A==B)) );
+        SIMPLIFIER( ((B==A)&(C>A)),                                                  __iff((B<=(C-0x1)), (A==B)) );
+        SIMPLIFIER( ((B==A)&(C>A)),                                                  __iff((B<(C-0x1)), (A==B)) );
+        SIMPLIFIER( ((B==A)|(C>A)),                                                  __iff((B==(C-0x1)), (A<=B)) );
+        SIMPLIFIER( ((B==A)&(C>=A)),                                                 __iff((B==(C-0x1)), (A==B)) );
+        SIMPLIFIER( ((B==A)&(C>=A)),                                                 __iff((B<=(C-0x1)), (A==B)) );
+        SIMPLIFIER( ((B==A)&(C>=A)),                                                 __iff((B<(C-0x1)), (A==B)) );
+        SIMPLIFIER( ((B==A)&(C==A)),                                                 __iff((B==(C-0x1)), 0x0) );
+        SIMPLIFIER( ((B==A)&(C==A)),                                                 __iff((B<=(C-0x1)), 0x0) );
+        SIMPLIFIER( ((B==A)&(C==A)),                                                 __iff((B<(C-0x1)), 0x0) );
+        SIMPLIFIER( ((B==A)&(C!=A)),                                                 __iff((B==(C-0x1)), (A==B)) );
+        SIMPLIFIER( ((B==A)&(C!=A)),                                                 __iff((B<=(C-0x1)), (A==B)) );
+        SIMPLIFIER( ((B==A)&(C!=A)),                                                 __iff((B<(C-0x1)), (A==B)) );
+        SIMPLIFIER( ((B==A)&(C<=A)),                                                 __iff((B>(C-0x1)), (A==B)) );
+        SIMPLIFIER( ((B==A)&(C<=A)),                                                 __iff((B==(C-0x1)), 0x0) );
+        SIMPLIFIER( ((B==A)&(C<=A)),                                                 __iff((B<=(C-0x1)), 0x0) );
+        SIMPLIFIER( ((B==A)&(C<=A)),                                                 __iff((B<(C-0x1)), 0x0) );
+        SIMPLIFIER( ((B==A)|(C<=A)),                                                 __iff((B==(C-0x1)), (A>=B)) );
+        SIMPLIFIER( ((B==A)&(C<A)),                                                  __iff((B==(C-0x1)), 0x0) );
+        SIMPLIFIER( ((B==A)&(C<A)),                                                  __iff((B<=(C-0x1)), 0x0) );
+        SIMPLIFIER( ((B==A)&(C<A)),                                                  __iff((B<(C-0x1)), 0x0) );
+        SIMPLIFIER( ((B==A)&__ugreat(C, A)),                                         __iff(__ugreat(B, (C-0x1)), 0x0) );
+        SIMPLIFIER( ((B==A)&__uless_eq(C, A)),                                       __iff(__ugreat(B, (C-0x1)), (A==B)) );
+        SIMPLIFIER( ((B!=A)&(C>A)),                                                  __iff((B==(C-0x1)), (A<B)) );
+        SIMPLIFIER( ((B!=A)|(C>A)),                                                  __iff((B>(C-0x1)), (A!=B)) );
+        SIMPLIFIER( ((B!=A)|(C>A)),                                                  __iff((B==(C-0x1)), 0x1) );
+        SIMPLIFIER( ((B!=A)|(C>A)),                                                  __iff((B<=(C-0x1)), 0x1) );
+        SIMPLIFIER( ((B!=A)|(C>A)),                                                  __iff((B<(C-0x1)), 0x1) );
+        SIMPLIFIER( ((B!=A)|(C>=A)),                                                 __iff((B==(C-0x1)), 0x1) );
+        SIMPLIFIER( ((B!=A)|(C>=A)),                                                 __iff((B<=(C-0x1)), 0x1) );
+        SIMPLIFIER( ((B!=A)|(C>=A)),                                                 __iff((B<(C-0x1)), 0x1) );
+        SIMPLIFIER( ((B!=A)|(C==A)),                                                 __iff((B==(C-0x1)), (A!=B)) );
+        SIMPLIFIER( ((B!=A)|(C==A)),                                                 __iff((B<=(C-0x1)), (A!=B)) );
+        SIMPLIFIER( ((B!=A)|(C==A)),                                                 __iff((B<(C-0x1)), (A!=B)) );
+        SIMPLIFIER( ((B!=A)|(C!=A)),                                                 __iff((B==(C-0x1)), 0x1) );
+        SIMPLIFIER( ((B!=A)|(C!=A)),                                                 __iff((B<=(C-0x1)), 0x1) );
+        SIMPLIFIER( ((B!=A)|(C!=A)),                                                 __iff((B<(C-0x1)), 0x1) );
+        SIMPLIFIER( ((B!=A)&(C<=A)),                                                 __iff((B==(C-0x1)), (A>B)) );
+        SIMPLIFIER( ((B!=A)|(C<=A)),                                                 __iff((B>(C-0x1)), 0x1) );
+        SIMPLIFIER( ((B!=A)|(C<=A)),                                                 __iff((B==(C-0x1)), (A!=B)) );
+        SIMPLIFIER( ((B!=A)|(C<=A)),                                                 __iff((B<=(C-0x1)), (A!=B)) );
+        SIMPLIFIER( ((B!=A)|(C<=A)),                                                 __iff((B<(C-0x1)), (A!=B)) );
+        SIMPLIFIER( ((B!=A)|(C<A)),                                                  __iff((B==(C-0x1)), (A!=B)) );
+        SIMPLIFIER( ((B!=A)|(C<A)),                                                  __iff((B<=(C-0x1)), (A!=B)) );
+        SIMPLIFIER( ((B!=A)|(C<A)),                                                  __iff((B<(C-0x1)), (A!=B)) );
+        SIMPLIFIER( ((B!=A)|__ugreat(C, A)),                                         __iff(__ugreat(B, (C-0x1)), (A!=B)) );
+        SIMPLIFIER( ((B!=A)|__uless_eq(C, A)),                                       __iff(__ugreat(B, (C-0x1)), 0x1) );
+        SIMPLIFIER( ((B<=A)&(C>A)),                                                  __iff((B>(C-0x1)), 0x0) );
+        SIMPLIFIER( ((B<=A)&(C>A)),                                                  __iff((B==(C-0x1)), (A==B)) );
+        SIMPLIFIER( ((B<=A)|(C>A)),                                                  __iff((B==(C-0x1)), 0x1) );
+        SIMPLIFIER( ((B<=A)|(C>A)),                                                  __iff((B<=(C-0x1)), 0x1) );
+        SIMPLIFIER( ((B<=A)|(C>A)),                                                  __iff((B<(C-0x1)), 0x1) );
+        SIMPLIFIER( ((B<=A)|(C>=A)),                                                 __iff((B==(C-0x1)), 0x1) );
+        SIMPLIFIER( ((B<=A)|(C>=A)),                                                 __iff((B<=(C-0x1)), 0x1) );
+        SIMPLIFIER( ((B<=A)|(C>=A)),                                                 __iff((B<(C-0x1)), 0x1) );
+        SIMPLIFIER( ((B<=A)|(C==A)),                                                 __iff((B==(C-0x1)), (A>=B)) );
+        SIMPLIFIER( ((B<=A)|(C==A)),                                                 __iff((B<=(C-0x1)), (A>=B)) );
+        SIMPLIFIER( ((B<=A)|(C==A)),                                                 __iff((B<(C-0x1)), (A>=B)) );
+        SIMPLIFIER( ((B<=A)|(C!=A)),                                                 __iff((B==(C-0x1)), 0x1) );
+        SIMPLIFIER( ((B<=A)|(C!=A)),                                                 __iff((B<=(C-0x1)), 0x1) );
+        SIMPLIFIER( ((B<=A)|(C!=A)),                                                 __iff((B<(C-0x1)), 0x1) );
+        SIMPLIFIER( ((B<=A)&(C<=A)),                                                 __iff((B>(C-0x1)), (A>=B)) );
+        SIMPLIFIER( ((B<=A)&(C<=A)),                                                 __iff((B==(C-0x1)), (A>B)) );
+        SIMPLIFIER( ((B<=A)|(C<=A)),                                                 __iff((B==(C-0x1)), (A>=B)) );
+        SIMPLIFIER( ((B<=A)|(C<=A)),                                                 __iff((B<=(C-0x1)), (A>=B)) );
+        SIMPLIFIER( ((B<=A)|(C<=A)),                                                 __iff((B<(C-0x1)), (A>=B)) );
+        SIMPLIFIER( ((B<=A)|(C<A)),                                                  __iff((B==(C-0x1)), (A>=B)) );
+        SIMPLIFIER( ((B<=A)|(C<A)),                                                  __iff((B<=(C-0x1)), (A>=B)) );
+        SIMPLIFIER( ((B<=A)|(C<A)),                                                  __iff((B<(C-0x1)), (A>=B)) );
+        SIMPLIFIER( ((B<A)&(C>A)),                                                   __iff((B>(C-0x1)), 0x0) );
+        SIMPLIFIER( ((B<A)&(C>A)),                                                   __iff((B>=(C-0x1)), 0x0) );
+        SIMPLIFIER( ((B<A)&(C>A)),                                                   __iff((B==(C-0x1)), 0x0) );
+        SIMPLIFIER( ((B<A)|(C>A)),                                                   __iff((B==(C-0x1)), 0x1) );
+        SIMPLIFIER( ((B<A)|(C>A)),                                                   __iff((B<=(C-0x1)), 0x1) );
+        SIMPLIFIER( ((B<A)|(C>A)),                                                   __iff((B<(C-0x1)), 0x1) );
+        SIMPLIFIER( ((B<A)&(C>=A)),                                                  __iff((B>(C-0x1)), 0x0) );
+        SIMPLIFIER( ((B<A)|(C>=A)),                                                  __iff((B==(C-0x1)), 0x1) );
+        SIMPLIFIER( ((B<A)|(C>=A)),                                                  __iff((B<=(C-0x1)), 0x1) );
+        SIMPLIFIER( ((B<A)|(C>=A)),                                                  __iff((B<(C-0x1)), 0x1) );
+        SIMPLIFIER( ((B<A)&(C==A)),                                                  __iff((B>(C-0x1)), 0x0) );
+        SIMPLIFIER( ((B<A)|(C==A)),                                                  __iff((B==(C-0x1)), (A>B)) );
+        SIMPLIFIER( ((B<A)|(C==A)),                                                  __iff((B<=(C-0x1)), (A>B)) );
+        SIMPLIFIER( ((B<A)|(C==A)),                                                  __iff((B<(C-0x1)), (A>B)) );
+        SIMPLIFIER( ((B<A)&(C!=A)),                                                  __iff((B>(C-0x1)), (A>B)) );
+        SIMPLIFIER( ((B<A)|(C!=A)),                                                  __iff((B==(C-0x1)), 0x1) );
+        SIMPLIFIER( ((B<A)|(C!=A)),                                                  __iff((B<=(C-0x1)), 0x1) );
+        SIMPLIFIER( ((B<A)|(C!=A)),                                                  __iff((B<(C-0x1)), 0x1) );
+        SIMPLIFIER( ((B<A)&(C<=A)),                                                  __iff((B>(C-0x1)), (A>B)) );
+        SIMPLIFIER( ((B<A)&(C<=A)),                                                  __iff((B>=(C-0x1)), (A>B)) );
+        SIMPLIFIER( ((B<A)&(C<=A)),                                                  __iff((B==(C-0x1)), (A>B)) );
+        SIMPLIFIER( ((B<A)|(C<=A)),                                                  __iff((B==(C-0x1)), (A>B)) );
+        SIMPLIFIER( ((B<A)|(C<=A)),                                                  __iff((B<=(C-0x1)), (A>B)) );
+        SIMPLIFIER( ((B<A)|(C<=A)),                                                  __iff((B<(C-0x1)), (A>B)) );
+        SIMPLIFIER( ((B<A)&(C<A)),                                                   __iff((B>(C-0x1)), (A>B)) );
+        SIMPLIFIER( ((B<A)|(C<A)),                                                   __iff((B==(C-0x1)), (A>B)) );
+        SIMPLIFIER( ((B<A)|(C<A)),                                                   __iff((B<=(C-0x1)), (A>B)) );
+        SIMPLIFIER( ((B<A)|(C<A)),                                                   __iff((B<(C-0x1)), (A>B)) );
+        SIMPLIFIER( (__ugreat(B, A)|__ugreat(C, A)),                                 __iff(__ugreat(B, (C-0x1)), __uless(A, B)) );
+        SIMPLIFIER( (__ugreat(B, A)|__uless_eq(C, A)),                               __iff(__ugreat(B, (C-0x1)), 0x1) );
+        SIMPLIFIER( (__ugreat_eq(B, A)|(C==A)),                                      __iff(__ugreat(B, (C-0x1)), __uless_eq(A, B)) );
+        SIMPLIFIER( (__ugreat_eq(B, A)|(C!=A)),                                      __iff(__ugreat(B, (C-0x1)), 0x1) );
+        SIMPLIFIER( (__ugreat_eq(B, A)|__ugreat(C, A)),                              __iff((B==(C-0x1)), __uless_eq(A, B)) );
+        SIMPLIFIER( (__ugreat_eq(B, A)|__ugreat(C, A)),                              __iff(__ugreat(B, (C-0x1)), __uless_eq(A, B)) );
+        SIMPLIFIER( (__ugreat_eq(B, A)|__ugreat(C, A)),                              __iff(__ugreat_eq(B, (C-0x1)), __uless_eq(A, B)) );
+        SIMPLIFIER( (__ugreat_eq(B, A)|__ugreat_eq(C, A)),                           __iff(__ugreat(B, (C-0x1)), __uless_eq(A, B)) );
+        SIMPLIFIER( (__ugreat_eq(B, A)|__uless_eq(C, A)),                            __iff((B==(C-0x1)), 0x1) );
+        SIMPLIFIER( (__ugreat_eq(B, A)|__uless_eq(C, A)),                            __iff(__ugreat(B, (C-0x1)), 0x1) );
+        SIMPLIFIER( (__ugreat_eq(B, A)|__uless_eq(C, A)),                            __iff(__ugreat_eq(B, (C-0x1)), 0x1) );
+        SIMPLIFIER( (__ugreat_eq(B, A)|__uless(C, A)),                               __iff(__ugreat(B, (C-0x1)), 0x1) );
+        SIMPLIFIER( (__uless_eq(B, A)&__ugreat(C, A)),                               __iff(__ugreat(B, (C-0x1)), 0x0) );
+        SIMPLIFIER( (__uless_eq(B, A)&__uless_eq(C, A)),                             __iff(__ugreat(B, (C-0x1)), __ugreat_eq(A, B)) );
+        SIMPLIFIER( (__uless(B, A)&(C==A)),                                          __iff(__ugreat(B, (C-0x1)), 0x0) );
+        SIMPLIFIER( (__uless(B, A)&(C!=A)),                                          __iff(__ugreat(B, (C-0x1)), __ugreat(A, B)) );
+        SIMPLIFIER( (__uless(B, A)&__ugreat(C, A)),                                  __iff((B==(C-0x1)), 0x0) );
+        SIMPLIFIER( (__uless(B, A)&__ugreat(C, A)),                                  __iff(__ugreat(B, (C-0x1)), 0x0) );
+        SIMPLIFIER( (__uless(B, A)&__ugreat(C, A)),                                  __iff(__ugreat_eq(B, (C-0x1)), 0x0) );
+        SIMPLIFIER( (__uless(B, A)&__ugreat_eq(C, A)),                               __iff(__ugreat(B, (C-0x1)), 0x0) );
+        SIMPLIFIER( (__uless(B, A)&__uless_eq(C, A)),                                __iff((B==(C-0x1)), __ugreat(A, B)) );
+        SIMPLIFIER( (__uless(B, A)&__uless_eq(C, A)),                                __iff(__ugreat(B, (C-0x1)), __ugreat(A, B)) );
+        SIMPLIFIER( (__uless(B, A)&__uless_eq(C, A)),                                __iff(__ugreat_eq(B, (C-0x1)), __ugreat(A, B)) );
+        SIMPLIFIER( (__uless(B, A)&__uless(C, A)),                                   __iff(__ugreat(B, (C-0x1)), __ugreat(A, B)) );
+
+#undef SIMPLIFIER
+#endif
+        return boolean_simplifiers;
+    }
 
 	constexpr auto overflow = [ ] ( auto a, auto b ) { return ((a<0)==(b<0))&((a<0)!=((a+b)<0)); };
 	constexpr auto underflow = [ ] ( auto a, auto b ) { return ((a<0)!=(b<0))&((a<0)!=((a-b)<0)); };
