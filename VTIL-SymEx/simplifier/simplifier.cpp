@@ -42,7 +42,6 @@ namespace vtil::symbolic
 		}
 	};
 
-
 	// Implement lookup-table based dynamic tables.
 	//
 	using static_directive_table_entry =  std::pair<directive::instance::reference, directive::instance::reference>;
@@ -219,6 +218,7 @@ namespace vtil::symbolic
 	{
 		using namespace logger;
 
+
 		if ( max_depth == 0 )
 			throw join_depth_exception{};
 
@@ -287,48 +287,30 @@ namespace vtil::symbolic
 		if ( exp->op == math::operator_id::ucast ||
 			 exp->op == math::operator_id::cast )
 		{
-			// If the temporary disable flag to prevent stack overflow is set:
+			// Simplify left hand side with the exact same arguments.
 			//
-			static thread_local bool temp_disable = false;
-			if ( temp_disable )
+			expression::reference exp_new = exp->lhs;
+			bool simplified = simplify_expression( exp_new, pretty, max_depth - 1, unpack );
+			bitcnt_t new_size = math::narrow_cast<bitcnt_t>( *exp->rhs->get() );
+
+			// Invoke resize with failure on explicit cast:
+			//
+			( +exp_new )->resize( new_size, exp->op == math::operator_id::cast, true );
+
+			// If implicit resize failed:
+			//
+			if ( exp_new->size() != new_size )
 			{
-				// Toggle temporary disable bit.
+				// If operand was simplified, indicate success.
 				//
-				temp_disable = false;
-
-				// If left hand side simplifies:
-				//
-				expression::reference op_ref = exp->lhs;
-				if ( simplify_expression( op_ref, pretty, max_depth - 1, unpack ) )
+				if ( simplified )
 				{
-					// Own the reference and relocate the pointer.
-					//
-					auto [exp_new, op_new] = exp.own( &exp->lhs );
-
-					// Update the expression and indicate success.
-					//
-					*op_new = op_ref;
-					exp_new->update( false );
+					( +exp )->lhs = exp_new;
 					success_flag = true;
 				}
-
-				// Toggle temporary disable bit.
-				//
-				temp_disable = true;
 			}
 			else
 			{
-				// Simplify left hand side with the exact same arguments.
-				//
-				expression::reference exp_new = exp->lhs;
-				bool simplified = simplify_expression( exp_new, pretty, max_depth - 1, unpack );
-
-				// Toggle temporary disable bit and invoke resize.
-				//
-				temp_disable = true;
-				( +exp_new )->resize( math::narrow_cast<bitcnt_t>( *exp->rhs->get() ), exp->op == math::operator_id::cast );
-				temp_disable = false;
-
 				// If operand was simplified or if the complexity reduced, indicate success. 
 				//
 				if ( simplified || exp_new->complexity < exp->complexity )
@@ -337,8 +319,9 @@ namespace vtil::symbolic
 					success_flag = true;
 				}
 			}
-			cache_entry = *exp;
+
 			( +exp )->simplify_hint = true;
+			cache_entry = *exp;
 			return success_flag;
 		}
 

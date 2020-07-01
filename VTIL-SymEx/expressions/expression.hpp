@@ -167,11 +167,11 @@ namespace vtil::symbolic
 		// Resizes the expression, if not constant, expression::resize will try to propagate 
 		// the operation as deep as possible.
 		//
-		expression& resize( bitcnt_t new_size, bool signed_cast = false );
-		expression resize( bitcnt_t new_size, bool signed_cast = false ) const 
+		expression& resize( bitcnt_t new_size, bool signed_cast = false, bool no_explicit = false );
+		expression resize( bitcnt_t new_size, bool signed_cast = false, bool no_explicit = false ) const
 		{ 
 			if ( size() == new_size ) return *this;
-			return clone().resize( new_size, signed_cast ); 
+			return clone().resize( new_size, signed_cast, no_explicit );
 		}
 
 		// Simplifies and optionally prettifies the expression.

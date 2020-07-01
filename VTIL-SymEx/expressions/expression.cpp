@@ -73,7 +73,7 @@ namespace vtil::symbolic
 	// Resizes the expression, if not constant, expression::resize will try to propagate 
 	// the operation as deep as possible.
 	//
-	expression& expression::resize( bitcnt_t new_size, bool signed_cast )
+	expression& expression::resize( bitcnt_t new_size, bool signed_cast, bool no_explicit )
 	{
 		// If requested size is equal, skip.
 		//
@@ -127,6 +127,7 @@ namespace vtil::symbolic
 			}
 			else
 			{
+				if ( no_explicit ) return *this;
 				if ( signed_cast )
 					*this = __cast( *this, new_size );
 				else
@@ -147,6 +148,7 @@ namespace vtil::symbolic
 				}
 				else
 				{
+					if ( no_explicit ) return *this;
 					if ( signed_cast )
 						*this = __cast( *this, new_size );
 					else
@@ -165,6 +167,7 @@ namespace vtil::symbolic
 				}
 				else
 				{
+					if ( no_explicit ) return *this;
 					if ( signed_cast )
 						*this = __cast( *this, new_size );
 					else
@@ -180,6 +183,7 @@ namespace vtil::symbolic
 				}
 				else
 				{
+					if ( no_explicit ) return *this;
 					if ( signed_cast )
 						*this = __cast( *this, new_size );
 					else
@@ -222,6 +226,7 @@ namespace vtil::symbolic
 				//
 				else
 				{
+					if ( no_explicit ) return *this;
 					if ( signed_cast )
 						*this = __cast( *this, new_size );
 					else
@@ -251,6 +256,7 @@ namespace vtil::symbolic
 				}
 				else
 				{
+					if ( no_explicit ) return *this;
 					*this = __cast( *this, new_size );
 				}
 				break;
@@ -271,6 +277,7 @@ namespace vtil::symbolic
 					//
 					if ( new_size < value.size() && ( op == math::operator_id::udivide || op == math::operator_id::uremainder ))
 					{
+						if ( no_explicit ) return *this;
 						*this = __ucast( *this, new_size );
 						break;
 					}
@@ -280,6 +287,7 @@ namespace vtil::symbolic
 				}
 				else
 				{
+					if ( no_explicit ) return *this;
 					*this = __cast( *this, new_size );
 				}
 				break;
@@ -310,6 +318,7 @@ namespace vtil::symbolic
 						break;
 					}
 
+					if ( no_explicit ) return *this;
 					*this = __ucast( *this, new_size );
 				}
 				break;
@@ -325,6 +334,7 @@ namespace vtil::symbolic
 					//
 					if ( signed_cast )
 					{
+						if ( no_explicit ) return *this;
 						*this = __cast( *this, new_size );
 						break;
 					}
@@ -375,6 +385,7 @@ namespace vtil::symbolic
 				//
 				else
 				{
+					if ( no_explicit ) return *this;
 					*this = __ucast( *this, new_size );
 				}
 				break;
@@ -388,6 +399,7 @@ namespace vtil::symbolic
 			// If no handler found:
 			//
 			default:
+				if ( no_explicit ) return *this;
 				if ( signed_cast )
 					*this = __cast( *this, new_size );
 				else
@@ -527,7 +539,6 @@ namespace vtil::symbolic
 
 				switch ( op )
 				{
-					
 					case math::operator_id::bitwise_and:
 					case math::operator_id::bitwise_or:
 					case math::operator_id::bitwise_xor:
@@ -536,9 +547,11 @@ namespace vtil::symbolic
 					case math::operator_id::uremainder:
 					case math::operator_id::umax_value:
 					case math::operator_id::umin_value:
+					{
 						if ( lhs->size() != value.size() ) ( +lhs )->resize( value.size(), false );
 						if ( rhs->size() != value.size() ) ( +rhs )->resize( value.size(), false );
 						break;
+					}
 					case math::operator_id::multiply_high:
 					case math::operator_id::multiply:
 					case math::operator_id::divide:
@@ -547,9 +560,11 @@ namespace vtil::symbolic
 					case math::operator_id::subtract:
 					case math::operator_id::max_value:
 					case math::operator_id::min_value:
+					{
 						if ( lhs->size() != value.size() ) ( +lhs )->resize( value.size(), true );
 						if ( rhs->size() != value.size() ) ( +rhs )->resize( value.size(), true );
 						break;
+					}
 					case math::operator_id::ugreater:
 					case math::operator_id::ugreater_eq:
 					case math::operator_id::uless_eq:
@@ -609,10 +624,10 @@ namespace vtil::symbolic
 				//
 				complexity *= desc->complexity_coeff;
 
-				hash_t operand_hashes[] = { lhs->hash(), rhs->hash() };
 				// If operator is commutative, sort the array so that the
 				// positioning does not matter.
 				//
+				hash_t operand_hashes[] = { lhs->hash(), rhs->hash() };
 				if ( desc->is_commutative )
 					std::sort( operand_hashes, std::end( operand_hashes ) );
 				
