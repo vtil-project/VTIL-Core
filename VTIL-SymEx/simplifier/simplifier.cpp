@@ -306,6 +306,7 @@ namespace vtil::symbolic
 				if ( simplified )
 				{
 					( +exp )->lhs = exp_new;
+					( +exp )->update( false );
 					success_flag = true;
 				}
 			}
