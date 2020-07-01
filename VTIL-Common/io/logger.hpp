@@ -33,7 +33,6 @@
 #include <string>
 #include <mutex>
 #include "formatting.hpp"
-#include "../util/thread_identifier.hpp"
 
 // If inline assembly is supported use it, otherwise rely on intrinsics to emit INT3.
 //
