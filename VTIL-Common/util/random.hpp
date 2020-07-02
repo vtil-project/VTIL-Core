@@ -46,4 +46,17 @@ namespace vtil
 	{
 		return std::uniform_int_distribution<T>{min, max}( impl::local_rng );
 	}
+	
+	// Same as above but in vectorized format.
+	//
+	template<typename T, size_t... I>
+	static std::array<T, sizeof...( I )> make_random_n( T min, T max, std::index_sequence<I...> )
+	{
+		return { ( I, make_random<T>( min ,max ) )... };
+	}
+	template<typename T, size_t N>
+	static auto make_random_n( T min = std::numeric_limits<T>::min(), T max = std::numeric_limits<T>::max() )
+	{
+		return make_random_n<T>( min, max, std::make_index_sequence<N>{} );
+	}
 };
