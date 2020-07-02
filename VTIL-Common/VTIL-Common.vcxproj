@@ -148,6 +148,7 @@
     <ClInclude Include="util\concept.hpp" />
     <ClInclude Include="util\constexpr_random.hpp" />
     <ClInclude Include="util\copy_on_write.hpp" />
+    <ClInclude Include="util\static_warning.hpp" />
     <ClInclude Include="util\thread_identifier.hpp" />
     <ClInclude Include="util\multivariate.hpp" />
     <ClInclude Include="util\dynamic_size.hpp" />
@@ -165,7 +166,6 @@
     <ClInclude Include="util\reverse_iterator.hpp" />
     <ClInclude Include="util\sinkhole.hpp" />
     <ClInclude Include="util\stack_container.hpp" />
-    <ClInclude Include="util\tuple_visit.hpp" />
     <ClInclude Include="util\zip.hpp" />
     <ClInclude Include="util\variant.hpp" />
   </ItemGroup>

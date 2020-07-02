@@ -181,10 +181,10 @@
     <ClInclude Include="util\object_pool.hpp">
       <Filter>Utility</Filter>
     </ClInclude>
-    <ClInclude Include="util\tuple_visit.hpp">
+    <ClInclude Include="util\thread_identifier.hpp">
       <Filter>Utility</Filter>
     </ClInclude>
-    <ClInclude Include="util\thread_identifier.hpp">
+    <ClInclude Include="util\static_warning.hpp">
       <Filter>Utility</Filter>
     </ClInclude>
   </ItemGroup>

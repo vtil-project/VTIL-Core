@@ -26,21 +26,31 @@
 // POSSIBILITY OF SUCH DAMAGE.        
 //
 #pragma once
-#include <tuple>
-#include <type_traits>
 
-namespace vtil
-{
-	template<typename T, typename Fn, size_t... I>
-	static void tuple_visit( const T& obj, Fn callable, std::index_sequence<I...> )
-	{
-		static constexpr auto ignore = [ ] ( ... ) {};
-		ignore( ( callable( std::get<I>( obj ) ), 0 )... );
-	}
 
-	template<typename Fn, typename... Tx>
-	static void tuple_visit( const std::tuple<Tx...>& obj, Fn&& callable )
-	{
-		return tuple_visit( obj, std::forward<Fn>( callable ), std::index_sequence_for<Tx...>{} );
-	}
-};
+#define ____SW_SX2(x, y) x##y
+#define ____SW_SX1(x, y) ____SW_SX2(x, y)
+
+#ifdef _MSC_VER
+	#define static_warning(condition, message) 				        \
+		static constexpr auto ____SW_SX1(____sw_, __LINE__) = []{   \
+			__pragma( warning( push ) )                             \
+			__pragma( warning( 1:4996 ) )                           \
+			struct [[deprecated( message )]] make_warning {};       \
+			if constexpr ( !( condition ) )                         \
+				make_warning{};                                     \
+			__pragma( warning( pop ) )                              \
+            return 0;                                               \
+		}													
+#else															
+	#define static_warning(condition, message)                      \
+		static constexpr auto ____SW_SX1(____sw_, __LINE__) = []{   \
+			_Pragma("GCC diagnostic push")                          \
+			_Pragma("-Wdeprecated")                                 \
+			struct [[deprecated( message )]] make_warning {};       \
+			if constexpr ( !( condition ) )                         \
+				make_warning{};                                     \
+			_Pragma("GCC diagnostic pop")                           \
+            return 0;                                               \
+		}
+#endif
