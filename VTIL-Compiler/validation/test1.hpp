@@ -31,7 +31,7 @@
 
 namespace vtil::optimizer::validation
 {
-	struct symbolic_test1 : unit_test
+	struct test1 : unit_test
 	{
 		std::unique_ptr<routine> generate() const override;
 		bool validate( const routine* rtn ) const override;
