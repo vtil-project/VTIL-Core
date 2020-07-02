@@ -33,6 +33,8 @@ namespace vtil::optimizer::validation
 	//
 	bool verify_symbolic( const routine* rtn, const std::vector<uint64_t>& parameters, const std::vector<observable_action>& action_log )
 	{
+		symbolic::cache_guard _g{};
+
 		auto action_it = action_log.begin();
 		auto action_end = action_log.end();
 
