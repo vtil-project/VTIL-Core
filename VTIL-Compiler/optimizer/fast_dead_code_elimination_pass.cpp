@@ -155,7 +155,7 @@ namespace vtil::optimizer
 						{
 							// Update read mask.
 							//
-							reg_read_masks.emplace( reg_id, -1ULL & ~write_mask );
+							reg_read_masks.emplace( reg_id, ~0ULL & ~write_mask );
 						}
 
 						// Break out as we've found a write, and instructions contain only one.
@@ -247,7 +247,7 @@ namespace vtil::optimizer
 				//
 				if ( type >= operand_type::write )
 				{
-					reg_read_masks[register_id( reg )] = -1ULL;
+					reg_read_masks[register_id( reg )] = ~0ULL;
 					break;
 				}
 			}

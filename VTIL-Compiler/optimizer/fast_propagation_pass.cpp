@@ -351,7 +351,7 @@ namespace vtil::optimizer
 
 						// If the store mask is full, just emit a mov and break out.
 						//
-						if ( store_mask == -1ULL )
+						if ( store_mask == ~0ULL )
 						{
 							blk->insert( prev_it, { &ins::mov, { { final_tmp }, { ins_reg } } } );
 							break;
