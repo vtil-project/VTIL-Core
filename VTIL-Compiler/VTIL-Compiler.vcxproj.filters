@@ -33,6 +33,12 @@
     </ClCompile>
     <ClCompile Include="optimizer\fast_dead_code_elimination_pass.cpp" />
     <ClCompile Include="optimizer\fast_propagation_pass.cpp" />
+    <ClCompile Include="validation\test1.cpp">
+      <Filter>Validation</Filter>
+    </ClCompile>
+    <ClCompile Include="validation\pass_validation.cpp">
+      <Filter>Validation</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Includes">
@@ -92,6 +98,15 @@
       <Filter>Optimization Passes</Filter>
     </ClInclude>
     <ClInclude Include="validation\pass_validation.hpp">
+      <Filter>Validation</Filter>
+    </ClInclude>
+    <ClInclude Include="validation\test1.hpp">
+      <Filter>Validation</Filter>
+    </ClInclude>
+    <ClInclude Include="includes\vtil\optimizer-tests">
+      <Filter>Includes</Filter>
+    </ClInclude>
+    <ClInclude Include="validation\unit_test.hpp">
       <Filter>Validation</Filter>
     </ClInclude>
   </ItemGroup>

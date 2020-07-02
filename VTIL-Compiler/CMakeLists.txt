@@ -6,6 +6,9 @@ add_library(${PROJECT_NAME} STATIC
     common/auxiliaries.hpp
     common/interface.hpp
     validation/pass_validation.hpp
+    validation/unit_test.hpp
+    validation/test1.hpp
+    validation/test1.cpp
     optimizer/bblock_extension_pass.cpp
     optimizer/bblock_extension_pass.hpp
     optimizer/branch_correction_pass.cpp
