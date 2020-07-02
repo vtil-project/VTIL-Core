@@ -14,6 +14,7 @@ add_library(${PROJECT_NAME} STATIC
     arch/arm64/arm64_register_details.cpp
     arch/arm64/arm64_register_details.hpp
     arch/register_mapping.hpp
+    ext/colony.hpp
     formats/image_descriptor.hpp
     formats/winpe.cpp
     formats/winpe.hpp
@@ -47,6 +48,7 @@ add_library(${PROJECT_NAME} STATIC
     util/numeric_iterator.hpp
     util/optional_reference.hpp
     util/range.hpp
+    util/random.hpp
     util/reducable.hpp
     util/reverse_iterator.hpp
     util/sinkhole.hpp
@@ -54,7 +56,6 @@ add_library(${PROJECT_NAME} STATIC
     util/variant.cpp
     util/variant.hpp
     util/zip.hpp
-    util/colony.hpp
     util/object_pool.hpp
     util/static_warning.hpp
 )

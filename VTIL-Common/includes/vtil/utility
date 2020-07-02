@@ -21,3 +21,4 @@
 #include "../../util/numeric_iterator.hpp"
 #include "../../util/multivariate.hpp"
 #include "../../util/static_warning.hpp"
+#include "../../util/random.hpp"

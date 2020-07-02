@@ -32,8 +32,6 @@
 #pragma warning(disable:4267)
 namespace vtil
 {
-	using magic_t = uint64_t;
-
 #pragma pack(push, 1)
 	struct file_header
 	{
