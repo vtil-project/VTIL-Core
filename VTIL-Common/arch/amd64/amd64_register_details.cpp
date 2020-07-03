@@ -129,6 +129,9 @@ namespace vtil::amd64
         { X86_REG_R15W,		{ X86_REG_R15,		0,		2	} },
         { X86_REG_R15B,		{ X86_REG_R15,		0,		1	} },
 
+        { X86_REG_RIP,	    { X86_REG_RIP,	    0,		8	} },
+        { X86_REG_EIP,	    { X86_REG_RIP,	    0,		4	} },
+
         { X86_REG_EFLAGS,	{ X86_REG_EFLAGS,	0,		8	} },
     };
 
