@@ -73,13 +73,13 @@ namespace vtil::optimizer
 				// Check if this destination is plausible or not.
 				//
 				vip_t target = ( *it )->entry_vip;
-				bool impossible = true;
+				bool plausible = false;
 				for ( auto& branch : branch_info.destinations )
-					impossible &= ( branch != target ).get<bool>().value_or( false );
+					plausible |= ( branch == target ).get<bool>().value_or( true );
 
 				// If it is not:
 				//
-				if ( impossible )
+				if ( !plausible )
 				{
 					// Delete prev and next links.
 					//
