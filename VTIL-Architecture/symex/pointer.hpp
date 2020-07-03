@@ -82,17 +82,16 @@ namespace vtil::symbolic
 		pointer() { xpointer.fill( 0 ); }
 		pointer( std::nullptr_t ) : pointer() {}
 
+		// Construct from symbolic expression.
+		//
+		pointer( const expression& base );
+
 		// Default copy/move.
 		//
 		pointer( pointer&& ) = default;
 		pointer( const pointer& ) = default;
 		pointer& operator=( pointer&& ) = default;
 		pointer& operator=( const pointer& ) = default;
-
-		// Construct from symbolic expression.
-		//
-		pointer( expression&& base );
-		pointer( const expression& base ) : pointer( expression{ base } ) {}
 
 		// Simple pointer offseting.
 		//

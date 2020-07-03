@@ -74,6 +74,10 @@ namespace vtil::symbolic
 		//
 		bool simplify_hint = false;
 
+		// Disables implicit auto-simplification for the expression if is set.
+		//
+		bool is_lazy = false;
+
 		// Default constructor and copy/move.
 		//
 		expression() = default;
@@ -163,11 +167,21 @@ namespace vtil::symbolic
 		// Resizes the expression, if not constant, expression::resize will try to propagate 
 		// the operation as deep as possible.
 		//
-		expression& resize( bitcnt_t new_size, bool signed_cast = false );
+		expression& resize( bitcnt_t new_size, bool signed_cast = false, bool no_explicit = false );
+		expression resize( bitcnt_t new_size, bool signed_cast = false, bool no_explicit = false ) const
+		{ 
+			if ( size() == new_size ) return *this;
+			return clone().resize( new_size, signed_cast, no_explicit );
+		}
 
 		// Simplifies and optionally prettifies the expression.
 		//
 		expression& simplify( bool prettify = false );
+		expression simplify( bool prettify = false ) const 
+		{ 
+			if ( simplify_hint && !prettify ) return *this;
+			return clone().simplify( prettify ); 
+		}
 
 		// Returns whether the given expression is identical to the current instance.
 		// - Note: basic comparison opeators should not be overloaded since expression is of type
@@ -242,6 +256,11 @@ namespace vtil::symbolic
 		// Simple way to invoke copy constructor using a pointer.
 		//
 		expression clone() const { return *this; }
+
+		// Disables simplifications for the expression (and it's future parents) 
+		// when set, can be reset by ::simplify().
+		//
+		expression& make_lazy() { is_lazy = true; return *this; }
 	};
 
 	// Boxed expression solves the aforementioned problem by creating a type that can be 

@@ -31,6 +31,14 @@
     <ClCompile Include="optimizer\symbolic_rewrite_pass.cpp">
       <Filter>Optimization Passes</Filter>
     </ClCompile>
+    <ClCompile Include="optimizer\fast_dead_code_elimination_pass.cpp" />
+    <ClCompile Include="optimizer\fast_propagation_pass.cpp" />
+    <ClCompile Include="validation\test1.cpp">
+      <Filter>Validation</Filter>
+    </ClCompile>
+    <ClCompile Include="validation\pass_validation.cpp">
+      <Filter>Validation</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Includes">
@@ -41,6 +49,9 @@
     </Filter>
     <Filter Include="Optimization Passes">
       <UniqueIdentifier>{93550fd4-29f0-496a-ba4a-c90fcf11efb1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Validation">
+      <UniqueIdentifier>{f83c7d39-9ba8-44f4-8f92-369c8f23ed35}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -79,6 +90,24 @@
     </ClInclude>
     <ClInclude Include="optimizer\symbolic_rewrite_pass.hpp">
       <Filter>Optimization Passes</Filter>
+    </ClInclude>
+    <ClInclude Include="optimizer\fast_dead_code_elimination_pass.hpp">
+      <Filter>Optimization Passes</Filter>
+    </ClInclude>
+    <ClInclude Include="optimizer\fast_propagation_pass.hpp">
+      <Filter>Optimization Passes</Filter>
+    </ClInclude>
+    <ClInclude Include="validation\pass_validation.hpp">
+      <Filter>Validation</Filter>
+    </ClInclude>
+    <ClInclude Include="validation\test1.hpp">
+      <Filter>Validation</Filter>
+    </ClInclude>
+    <ClInclude Include="includes\vtil\optimizer-tests">
+      <Filter>Includes</Filter>
+    </ClInclude>
+    <ClInclude Include="validation\unit_test.hpp">
+      <Filter>Validation</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

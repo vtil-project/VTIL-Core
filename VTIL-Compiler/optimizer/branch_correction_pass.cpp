@@ -73,13 +73,13 @@ namespace vtil::optimizer
 				// Check if this destination is plausible or not.
 				//
 				vip_t target = ( *it )->entry_vip;
-				bool impossible = true;
+				bool plausible = false;
 				for ( auto& branch : branch_info.destinations )
-					impossible &= ( branch != target ).get<bool>().value_or( false );
+					plausible |= ( branch == target ).get<bool>().value_or( true );
 
 				// If it is not:
 				//
-				if ( impossible )
+				if ( !plausible )
 				{
 					// Delete prev and next links.
 					//
@@ -220,13 +220,40 @@ namespace vtil::optimizer
 		{
 			// Delete non-referenced blocks entirely.
 			//
-			for ( auto it = rtn->explored_blocks.begin(); it != rtn->explored_blocks.end(); )
+			bool repeat;
+			do
 			{
-				if ( it->second->prev.size() == 0 && it->second != rtn->entry_point )
-					it = rtn->explored_blocks.erase( it );
-				else
-					++it;
+				repeat = false;
+
+				for ( auto it = rtn->explored_blocks.begin(); it != rtn->explored_blocks.end(); )
+				{
+					if ( it->second->prev.size() == 0 && it->second != rtn->entry_point )
+					{
+						// For each destination:
+						//
+						for ( auto& block : it->second->next )
+						{
+							// Remove the link.
+							//
+							block->prev.erase( std::remove( block->prev.begin(), block->prev.end(), it->second ), block->prev.end() );
+							
+							// If no prev link left, repeat logic.
+							//
+							repeat |= block->prev.empty();
+						}
+
+						// Erase block.
+						//
+						it = rtn->explored_blocks.erase( it );
+					}
+					else
+					{
+						++it;
+					}
+				}
+				
 			}
+			while ( repeat );
 
 			// Return counter as is.
 			//

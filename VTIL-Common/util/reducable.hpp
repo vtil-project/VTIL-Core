@@ -46,7 +46,7 @@
     auto reduce() {                                                   \
         return vtil::reference_as_tuple( __VA_ARGS__ );               \
     }                                                                 \
-    auto reduce() const {                                             \
+    constexpr auto reduce() const {                                   \
         return vtil::reference_as_tuple( __VA_ARGS__ );               \
     }                                                                 \
     REDUCABLE_EXPLICIT_INHERIT_CXX20()                          
@@ -134,21 +134,21 @@ namespace vtil
         // due to the type not being defined yet, however we can proxy it.
         //
         template<typename Tx>
-        static auto reduce_proxy( Tx& p ) { return p.reduce(); }
+        static constexpr auto reduce_proxy( Tx& p ) { return p.reduce(); }
 
         template<typename Tx, typename F = decltype( std::declval<Tx>().reduce() )>
-        static auto reduce_proxy( const Tx& p )
+        static constexpr auto reduce_proxy( const Tx& p )
         {
             return ( typename impl::apply_each_t<impl::add_dconst_t, F> ) reduce_proxy( ( Tx& ) p );
         }
 
         // Only the base type can construct/copy/move this type.
         //
-        reducable() = default;
-        reducable( reducable&& ) = default;
-        reducable( const reducable& ) = default;
-        reducable& operator=( reducable&& ) = default;
-        reducable& operator=( const reducable& ) = default;
+        constexpr reducable() = default;
+        constexpr reducable( reducable&& ) = default;
+        constexpr reducable( const reducable& ) = default;
+        constexpr reducable& operator=( reducable&& ) = default;
+        constexpr reducable& operator=( const reducable& ) = default;
 
     public:
         // Define basic comparison operators using std::tuple.
@@ -173,7 +173,7 @@ namespace vtil
 
         // Define the [const T::reduce()] for the base type just for convinience.
         //
-        auto reduce() const { return reduce_proxy( ( const T& ) *this ); }
+        constexpr auto reduce() const { return reduce_proxy( ( const T& ) *this ); }
     };
 
     // Helper used to create reduced tuples.

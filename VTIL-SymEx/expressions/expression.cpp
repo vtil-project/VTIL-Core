@@ -73,7 +73,7 @@ namespace vtil::symbolic
 	// Resizes the expression, if not constant, expression::resize will try to propagate 
 	// the operation as deep as possible.
 	//
-	expression& expression::resize( bitcnt_t new_size, bool signed_cast )
+	expression& expression::resize( bitcnt_t new_size, bool signed_cast, bool no_explicit )
 	{
 		// If requested size is equal, skip.
 		//
@@ -117,6 +117,26 @@ namespace vtil::symbolic
 			}*/
 		}
 
+		// If expression is lazy, delay it.
+		//
+		if ( is_lazy )
+		{
+			if ( is_constant() )
+			{
+				value = value.resize( new_size, signed_cast );
+			}
+			else
+			{
+				if ( no_explicit ) return *this;
+				if ( signed_cast )
+					*this = __cast( *this, new_size );
+				else
+					*this = __ucast( *this, new_size );
+			}
+			update( false );
+			return *this;
+		}
+
 		switch ( op )
 		{
 			// If constant resize the value, if variable apply the operation as is.
@@ -128,6 +148,7 @@ namespace vtil::symbolic
 				}
 				else
 				{
+					if ( no_explicit ) return *this;
 					if ( signed_cast )
 						*this = __cast( *this, new_size );
 					else
@@ -146,6 +167,7 @@ namespace vtil::symbolic
 				}
 				else
 				{
+					if ( no_explicit ) return *this;
 					if ( signed_cast )
 						*this = __cast( *this, new_size );
 					else
@@ -161,6 +183,7 @@ namespace vtil::symbolic
 				}
 				else
 				{
+					if ( no_explicit ) return *this;
 					if ( signed_cast )
 						*this = __cast( *this, new_size );
 					else
@@ -203,6 +226,7 @@ namespace vtil::symbolic
 				//
 				else
 				{
+					if ( no_explicit ) return *this;
 					if ( signed_cast )
 						*this = __cast( *this, new_size );
 					else
@@ -232,6 +256,7 @@ namespace vtil::symbolic
 				}
 				else
 				{
+					if ( no_explicit ) return *this;
 					*this = __cast( *this, new_size );
 				}
 				break;
@@ -252,6 +277,7 @@ namespace vtil::symbolic
 					//
 					if ( new_size < value.size() && ( op == math::operator_id::udivide || op == math::operator_id::uremainder ))
 					{
+						if ( no_explicit ) return *this;
 						*this = __ucast( *this, new_size );
 						break;
 					}
@@ -261,6 +287,7 @@ namespace vtil::symbolic
 				}
 				else
 				{
+					if ( no_explicit ) return *this;
 					*this = __cast( *this, new_size );
 				}
 				break;
@@ -291,6 +318,7 @@ namespace vtil::symbolic
 						break;
 					}
 
+					if ( no_explicit ) return *this;
 					*this = __ucast( *this, new_size );
 				}
 				break;
@@ -306,6 +334,7 @@ namespace vtil::symbolic
 					//
 					if ( signed_cast )
 					{
+						if ( no_explicit ) return *this;
 						*this = __cast( *this, new_size );
 						break;
 					}
@@ -356,6 +385,7 @@ namespace vtil::symbolic
 				//
 				else
 				{
+					if ( no_explicit ) return *this;
 					*this = __ucast( *this, new_size );
 				}
 				break;
@@ -369,6 +399,7 @@ namespace vtil::symbolic
 			// If no handler found:
 			//
 			default:
+				if ( no_explicit ) return *this;
 				if ( signed_cast )
 					*this = __cast( *this, new_size );
 				else
@@ -385,6 +416,15 @@ namespace vtil::symbolic
 	//
 	expression& expression::update( bool auto_simplify )
 	{
+		// Propagate lazyness.
+		//
+		if ( ( lhs && lhs->is_lazy ) ||
+			 ( rhs && rhs->is_lazy ) )
+		{
+			auto_simplify = false;
+			is_lazy = true;
+		}
+
 		// If it's not a full expression tree:
 		//
 		if ( !is_expression() )
@@ -470,6 +510,20 @@ namespace vtil::symbolic
 					value = math::evaluate_partial( op, lhs->value, rhs->value );
 				}
 
+				// Speculative simplification, if value is known replace with a constant, this 
+				// is a major performance boost with lazy expressions as child copies and large 
+				// destruction chains are completely avoided. Lazy expressions are meant to
+				// delay complex simplification rather than block all simplification so this
+				// step is totally fine.
+				//
+				if ( ( is_lazy || auto_simplify ) && value.is_known() )
+				{
+					lhs = {}; rhs = {};
+					op = math::operator_id::invalid;
+					is_lazy = false;
+					return update( false );
+				}
+
 				// Handle size mismatches.
 				//
 				const auto optimistic_size = [ ] ( symbolic::expression::reference& lhs,
@@ -485,7 +539,6 @@ namespace vtil::symbolic
 
 				switch ( op )
 				{
-					
 					case math::operator_id::bitwise_and:
 					case math::operator_id::bitwise_or:
 					case math::operator_id::bitwise_xor:
@@ -494,9 +547,11 @@ namespace vtil::symbolic
 					case math::operator_id::uremainder:
 					case math::operator_id::umax_value:
 					case math::operator_id::umin_value:
+					{
 						if ( lhs->size() != value.size() ) ( +lhs )->resize( value.size(), false );
 						if ( rhs->size() != value.size() ) ( +rhs )->resize( value.size(), false );
 						break;
+					}
 					case math::operator_id::multiply_high:
 					case math::operator_id::multiply:
 					case math::operator_id::divide:
@@ -505,9 +560,11 @@ namespace vtil::symbolic
 					case math::operator_id::subtract:
 					case math::operator_id::max_value:
 					case math::operator_id::min_value:
+					{
 						if ( lhs->size() != value.size() ) ( +lhs )->resize( value.size(), true );
 						if ( rhs->size() != value.size() ) ( +rhs )->resize( value.size(), true );
 						break;
+					}
 					case math::operator_id::ugreater:
 					case math::operator_id::ugreater_eq:
 					case math::operator_id::uless_eq:
@@ -567,10 +624,10 @@ namespace vtil::symbolic
 				//
 				complexity *= desc->complexity_coeff;
 
-				hash_t operand_hashes[] = { lhs->hash(), rhs->hash() };
 				// If operator is commutative, sort the array so that the
 				// positioning does not matter.
 				//
+				hash_t operand_hashes[] = { lhs->hash(), rhs->hash() };
 				if ( desc->is_commutative )
 					std::sort( operand_hashes, std::end( operand_hashes ) );
 				
@@ -606,6 +663,17 @@ namespace vtil::symbolic
 			//
 			if ( auto_simplify ) simplify();
 		}
+
+		// Clear lazyness from children.
+		//
+		if ( is_lazy )
+		{
+			if ( lhs && lhs->is_lazy )
+				( +lhs )->is_lazy = false;
+			if ( rhs && rhs->is_lazy )
+				( +rhs )->is_lazy = false;
+		}
+
 		return *this;
 	}
 
@@ -613,6 +681,10 @@ namespace vtil::symbolic
 	//
 	expression& expression::simplify( bool prettify )
 	{
+		// Reset lazyness.
+		//
+		is_lazy = false;
+
 		// By changing the prototype of simplify_expression from f(expression&) to
 		// f(expression::reference&), we gain an important performance benefit that is
 		// a significantly less amount of copies made. Cache will also store references 
@@ -652,6 +724,12 @@ namespace vtil::symbolic
 		//
 		if ( is_identical( other ) )
 			return true;
+
+		// Filter by known bits.
+		//
+		if ( ( other.known_one() & known_zero() ) ||
+			 ( other.known_zero() & known_one() ))
+			return false;
 
 		// Simplify both expressions.
 		//

@@ -112,26 +112,36 @@
     <ClCompile Include="optimizer\bblock_extension_pass.cpp" />
     <ClCompile Include="optimizer\branch_correction_pass.cpp" />
     <ClCompile Include="optimizer\dead_code_elimination_pass.cpp" />
+    <ClCompile Include="optimizer\fast_dead_code_elimination_pass.cpp" />
+    <ClCompile Include="optimizer\fast_propagation_pass.cpp" />
     <ClCompile Include="optimizer\istack_ref_substitution_pass.cpp" />
     <ClCompile Include="optimizer\mov_propagation_pass.cpp" />
     <ClCompile Include="optimizer\register_renaming_pass.cpp" />
     <ClCompile Include="optimizer\stack_pinning_pass.cpp" />
     <ClCompile Include="optimizer\stack_propagation_pass.cpp" />
     <ClCompile Include="optimizer\symbolic_rewrite_pass.cpp" />
+    <ClCompile Include="validation\pass_validation.cpp" />
+    <ClCompile Include="validation\test1.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="common\apply_all.hpp" />
     <ClInclude Include="common\auxiliaries.hpp" />
     <ClInclude Include="common\interface.hpp" />
+    <ClInclude Include="includes\vtil\optimizer-tests" />
     <ClInclude Include="optimizer\bblock_extension_pass.hpp" />
     <ClInclude Include="optimizer\branch_correction_pass.hpp" />
     <ClInclude Include="optimizer\dead_code_elimination_pass.hpp" />
+    <ClInclude Include="optimizer\fast_dead_code_elimination_pass.hpp" />
+    <ClInclude Include="optimizer\fast_propagation_pass.hpp" />
     <ClInclude Include="optimizer\istack_ref_substitution_pass.hpp" />
     <ClInclude Include="optimizer\mov_propagation_pass.hpp" />
     <ClInclude Include="optimizer\register_renaming_pass.hpp" />
     <ClInclude Include="optimizer\stack_pinning_pass.hpp" />
     <ClInclude Include="optimizer\stack_propagation_pass.hpp" />
     <ClInclude Include="optimizer\symbolic_rewrite_pass.hpp" />
+    <ClInclude Include="validation\pass_validation.hpp" />
+    <ClInclude Include="validation\test1.hpp" />
+    <ClInclude Include="validation\unit_test.hpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="includes\vtil\compiler" />

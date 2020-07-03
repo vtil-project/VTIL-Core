@@ -32,8 +32,10 @@
 
 namespace vtil::symbolic::directive
 {
-	extern const std::vector<std::pair<instance::reference, instance::reference>> boolean_simplifiers;
+	extern std::vector<std::pair<instance::reference, instance::reference>> boolean_simplifiers;
 	extern const std::vector<std::pair<instance::reference, instance::reference>> boolean_joiners;
+
+	const std::vector<std::pair<instance::reference, instance::reference>>& build_boolean_simplifiers();
 
     /*
     Auto generated using:

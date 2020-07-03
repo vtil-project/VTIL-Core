@@ -97,7 +97,7 @@ namespace vtil::symbolic
 
 	// Construct from symbolic expression.
 	//
-	pointer::pointer( expression&& _base ) : base( std::move( _base ) )
+	pointer::pointer( const expression& _base ) : base( _base.simplify() )
 	{
 		// Determine pointer strength and the flags.
 		//
@@ -128,7 +128,7 @@ namespace vtil::symbolic
 		//
 		for ( auto [xptr, key] : zip( xpointer, xpointer_keys ) )
 		{
-			xptr = base.get( [ k = uint64_t( key ) ]( const unique_identifier& uid )
+			xptr = base.get( [ k = uint64_t( key >> 1 ) ]( const unique_identifier& uid )
 			{
 				// Hash the identifier of the value with the current key and mask it.
 				//

@@ -181,21 +181,21 @@ namespace vtil::math
         {   +1,       false,    2,    true,           "&",        "and",         1      },
         {   +1,       false,    2,    true,           "|",        "or",          1      },
         {   +1,       false,    2,    true,           "^",        "xor",         1      },
-        {   +1,       false,    2,    false,          ">>",       "shr",         2      },
-        {   +1,       false,    2,    false,          "<<",       "shl",         2      },
+        {   +1,       false,    2,    false,          ">>",       "shr",         1.5    },
+        {   +1,       false,    2,    false,          "<<",       "shl",         1.5    },
         {   +1,       false,    2,    false,          ">]",       "rotr",        0.5    },
         {   +1,       false,    2,    false,          "[<",       "rotl",        0.5    },
         {   -1,       true,     1,    false,          "-",        "neg",         1      },
         {   -1,       true,     2,    true,           "+",        "add",         1      },
         {   -1,       true,     2,    false,          "-",        "sub",         1      },
-        {   -1,       true,     2,    true,           "h*",       "mulhi",       2.5    },
-        {   -1,       true,     2,    true,           "*",        "mul",         2.5    },
-        {   -1,       true,     2,    false,          "/",        "div",         2.5    },
-        {   -1,       true,     2,    false,          "%",        "rem",         2.5    },
-        {   -1,       false,    2,    true,           "uh*",      "umulhi",      2.5    },
-        {   -1,       false,    2,    true,           "u*",       "umul",        2.5    },
-        {   -1,       false,    2,    false,          "u/",       "udiv",        2.5    },
-        {   -1,       false,    2,    false,          "u%",       "urem",        2.5    },
+        {   -1,       true,     2,    true,           "h*",       "mulhi",       1.3    },
+        {   -1,       true,     2,    true,           "*",        "mul",         1.3    },
+        {   -1,       true,     2,    false,          "/",        "div",         1.3    },
+        {   -1,       true,     2,    false,          "%",        "rem",         1.3    },
+        {   -1,       false,    2,    true,           "uh*",      "umulhi",      1.3    },
+        {   -1,       false,    2,    true,           "u*",       "umul",        1.3    },
+        {   -1,       false,    2,    false,          "u/",       "udiv",        1.3    },
+        {   -1,       false,    2,    false,          "u%",       "urem",        1.3    },
         {    0,       false,    2,    false,          nullptr,    "__ucast",     1      },
         {   -1,       true,     2,    false,          nullptr,    "__cast",      1      },
         {   +1,       false,    1,    false,          nullptr,    "__popcnt",    1      },
@@ -223,7 +223,7 @@ namespace vtil::math
         {   +1,       false,    2,    false,          "u<",       "uless",       1      },
     };
     static_assert( std::size( descriptors ) == size_t( operator_id::max ), "Operator descriptor table is invalid." );
-    static const operator_desc* descriptor_of( operator_id id ) 
+    static constexpr const operator_desc* descriptor_of( operator_id id ) 
     { 
         return ( operator_id::invalid < id && id < operator_id::max ) ? &descriptors[ ( size_t ) id ] : nullptr; 
     }

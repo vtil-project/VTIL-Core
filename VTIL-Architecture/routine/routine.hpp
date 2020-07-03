@@ -47,7 +47,7 @@ namespace vtil
 	{
 		// Mutex guarding the whole structure, more information on thread-safety can be found at basic_block.hpp.
 		//
-		mutable critical_section mutex;
+		mutable std::recursive_mutex mutex;
 
 		// Physical architecture routine is bound to.
 		//

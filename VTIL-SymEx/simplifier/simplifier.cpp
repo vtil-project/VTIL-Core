@@ -42,7 +42,6 @@ namespace vtil::symbolic
 		}
 	};
 
-
 	// Implement lookup-table based dynamic tables.
 	//
 	using static_directive_table_entry =  std::pair<directive::instance::reference, directive::instance::reference>;
@@ -66,7 +65,7 @@ namespace vtil::symbolic
 	static auto& get_pack_descriptors( math::operator_id op ) { static auto tbl = build_dynamic_table( directive::pack_descriptors ); return tbl[ ( size_t ) op ]; }
 	static auto& get_join_descriptors( math::operator_id op ) { static auto tbl = build_dynamic_table( directive::join_descriptors ); return tbl[ ( size_t ) op ]; }
 	static auto& get_unpack_descriptors( math::operator_id op ) { static auto tbl = build_dynamic_table( directive::unpack_descriptors ); return tbl[ ( size_t ) op ]; }
-	static auto& get_boolean_simplifiers( math::operator_id op ) { static auto tbl = build_dynamic_table( directive::boolean_simplifiers ); return tbl[ ( size_t ) op ]; }
+	static auto& get_boolean_simplifiers( math::operator_id op ) { static auto boolean_simplifiers = directive::build_boolean_simplifiers(); static auto tbl = build_dynamic_table( boolean_simplifiers ); return tbl[ ( size_t ) op ]; }
 	static auto& get_universal_simplifiers( math::operator_id op ) { static auto tbl = build_dynamic_table( directive::universal_simplifiers ); return tbl[ ( size_t ) op ]; }
 
 	// Simplifier cache and its accessor.
@@ -128,12 +127,97 @@ namespace vtil::symbolic
 		return false;
 	}
 
+	// Checks if the expression can be interpreted as a vector-boolean expression.
+	//
+	static std::pair<bool, const expression*> match_boolean_expression( const expression::reference& exp )
+	{
+		switch ( exp->op )
+		{
+			// If constant / variable, indicate success and return self if variable:
+			//
+			case math::operator_id::invalid:
+			{
+				if ( exp->is_variable() ) return { true, &*exp };
+				else                      return { true, nullptr };
+			}
+
+			// If bitwise not, continue from rhs.
+			//
+			case math::operator_id::bitwise_not:
+				return match_boolean_expression( exp->rhs );
+
+			// Bitwise OR/AND/XOR match both sides, if both were succesful
+			// and had matching/null UIDs, indicate success.
+			//
+			case math::operator_id::bitwise_or:
+			case math::operator_id::bitwise_and:
+			case math::operator_id::bitwise_xor:
+			{
+				auto [m1, p1] = match_boolean_expression( exp->lhs );
+				if ( !m1 ) return { false, nullptr };
+				auto [m2, p2] = match_boolean_expression( exp->rhs );
+				if ( !m2 ) return { false, nullptr };
+
+				if ( !p2 ) return { true, p1 };
+				if ( !p1 ) return { true, p2 };
+
+				if ( p1->uid == p2->uid )
+					return { true, p1 };
+				else
+					return { false, nullptr };
+			}
+
+			// Illegal operation, fail.
+			//
+			default:
+				return { false, nullptr };
+		}
+	}
+
+	// Attempts to normalize a vector-boolean expression into a simpler format.
+	//
+	static bool simplify_boolean_expression( expression::reference& exp )
+	{
+		// If it does not match a basic boolean expression, return false.
+		//
+		auto [is_match, uid_base] = match_boolean_expression( exp );
+		if ( !is_match ) return false;
+
+		// Evaluate for both states.
+		//
+		auto r0 = exp->evaluate( [ & ] ( auto& uid ) { return 0ull; } );
+		auto r1 = exp->evaluate( [ & ] ( auto& uid ) { return ~0ull; } );
+
+		// Calculate normal form AND/OR/XOR masks.
+		//
+		uint64_t and_mask = { ~( r0.known_zero() & r1.known_zero() ) };
+		uint64_t or_mask = { r0.known_one() & r1.known_one() };
+		uint64_t xor_mask = { r0.known_one() & r1.known_zero() };
+
+		// Apply each mask if not no-op.
+		//
+		expression exp_new = uid_base->clone();
+		if ( and_mask != ~0ull )  exp_new = exp_new & expression{ and_mask, exp->size() };
+		if ( xor_mask )           exp_new = exp_new ^ expression{ xor_mask, exp->size() };
+		if ( or_mask )            exp_new = exp_new | expression{ or_mask,  exp->size() };
+
+		// If complexity was higher or equal, fail.
+		//
+		if ( exp_new.complexity >= exp->complexity ) return false;
+		
+		// Apply and return.
+		//
+		*+exp = exp_new;
+		return true;
+	}
+
 	// Attempts to simplify the expression given, returns whether the simplification
 	// succeeded or not.
 	//
 	bool simplify_expression( expression::reference& exp, bool pretty, int64_t max_depth, bool unpack )
 	{
 		using namespace logger;
+
 
 		if ( max_depth == 0 )
 			throw join_depth_exception{};
@@ -150,6 +234,17 @@ namespace vtil::symbolic
 			if ( pretty )
 				prettify_expression( exp );
 			return false;
+		}
+
+		// If expression has known value, return as is.
+		//
+		if ( exp->value.is_known() )
+		{
+			*+exp = expression{ exp->value.known_one(), exp->value.size() };
+#if VTIL_SYMEX_SIMPLIFY_VERBOSE
+			log<CON_CYN>( "= %s [By evaluation]\n", *exp );
+#endif
+			return true;
 		}
 
 #if VTIL_SYMEX_SIMPLIFY_VERBOSE
@@ -192,48 +287,31 @@ namespace vtil::symbolic
 		if ( exp->op == math::operator_id::ucast ||
 			 exp->op == math::operator_id::cast )
 		{
-			// If the temporary disable flag to prevent stack overflow is set:
+			// Simplify left hand side with the exact same arguments.
 			//
-			static thread_local bool temp_disable = false;
-			if ( temp_disable )
+			expression::reference exp_new = exp->lhs;
+			bool simplified = simplify_expression( exp_new, pretty, max_depth - 1, unpack );
+			bitcnt_t new_size = math::narrow_cast<bitcnt_t>( *exp->rhs->get() );
+
+			// Invoke resize with failure on explicit cast:
+			//
+			( +exp_new )->resize( new_size, exp->op == math::operator_id::cast, true );
+
+			// If implicit resize failed:
+			//
+			if ( exp_new->size() != new_size )
 			{
-				// Toggle temporary disable bit.
+				// If operand was simplified, indicate success.
 				//
-				temp_disable = false;
-
-				// If left hand side simplifies:
-				//
-				expression::reference op_ref = exp->lhs;
-				if ( simplify_expression( op_ref, pretty, max_depth - 1, unpack ) )
+				if ( simplified )
 				{
-					// Own the reference and relocate the pointer.
-					//
-					auto [exp_new, op_new] = exp.own( &exp->lhs );
-
-					// Update the expression and indicate success.
-					//
-					*op_new = op_ref;
-					exp_new->update( false );
+					( +exp )->lhs = exp_new;
+					( +exp )->update( false );
 					success_flag = true;
 				}
-
-				// Toggle temporary disable bit.
-				//
-				temp_disable = true;
 			}
 			else
 			{
-				// Simplify left hand side with the exact same arguments.
-				//
-				expression::reference exp_new = exp->lhs;
-				bool simplified = simplify_expression( exp_new, pretty, max_depth - 1, unpack );
-
-				// Toggle temporary disable bit and invoke resize.
-				//
-				temp_disable = true;
-				( +exp_new )->resize( math::narrow_cast<bitcnt_t>( *exp->rhs->get() ), exp->op == math::operator_id::cast );
-				temp_disable = false;
-
 				// If operand was simplified or if the complexity reduced, indicate success. 
 				//
 				if ( simplified || exp_new->complexity < exp->complexity )
@@ -242,9 +320,23 @@ namespace vtil::symbolic
 					success_flag = true;
 				}
 			}
-			cache_entry = *exp;
+
 			( +exp )->simplify_hint = true;
+			cache_entry = *exp;
 			return success_flag;
+		}
+
+		// If expression matches a basic boolean expression, simplify through that first:
+		//
+		if ( simplify_boolean_expression( exp ) )
+		{
+			// Recurse, and indicate success.
+			//
+			simplify_expression( exp, pretty, max_depth - 1 );
+			( +exp )->simplify_hint = true;
+			cache_entry = *exp;
+			success_flag = true;
+			return true;
 		}
 
 		// Simplify operands first if not done already.
@@ -372,7 +464,7 @@ namespace vtil::symbolic
 				simplify_expression( exp_new, pretty, max_depth );
 				( +exp_new )->simplify_hint = true;
 				cache_entry = exp_new;
-				success_flag = true;
+				success_flag = !exp->is_identical( *exp_new );
 				exp = exp_new;
 				return success_flag;
 			}
@@ -399,7 +491,7 @@ namespace vtil::symbolic
 					simplify_expression( exp_new, pretty, max_depth );
 					( +exp_new )->simplify_hint = true;
 					cache_entry = exp_new;
-					success_flag = true;
+					success_flag = !exp->is_identical( *exp_new );
 					exp = exp_new;
 					return success_flag;
 				}
@@ -424,7 +516,7 @@ namespace vtil::symbolic
 				simplify_expression( exp_new, pretty, max_depth - 1 );
 				( +exp_new )->simplify_hint = true;
 				cache_entry = exp_new;
-				success_flag = true;
+				success_flag = !exp->is_identical( *exp_new );
 				exp = exp_new;
 				return success_flag;
 			}
@@ -452,7 +544,7 @@ namespace vtil::symbolic
 					simplify_expression( exp_new, pretty, max_depth - 1 );
 					( +exp_new )->simplify_hint = true;
 					cache_entry = exp_new;
-					success_flag = true;
+					success_flag = !exp->is_identical( *exp_new );
 					exp = exp_new;
 					return success_flag;
 				}
@@ -481,7 +573,7 @@ namespace vtil::symbolic
 					//
 					( +exp_new )->simplify_hint = true;
 					cache_entry = exp_new;
-					success_flag = true;
+					success_flag = !exp->is_identical( *exp_new );
 					exp = exp_new;
 					return success_flag;
 				}

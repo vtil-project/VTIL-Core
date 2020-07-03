@@ -249,42 +249,42 @@ namespace vtil::math
     public:
         // Default constructor, will result in invalid bit-vector.
         //
-        bit_vector() = default;
+        constexpr bit_vector() = default;
 
         // Constructs a bit-vector where all bits are set according to the state.
         // - Declared explicit to avoid construction from integers.
         //
-        explicit bit_vector( bitcnt_t bit_count ) :                                      
+        constexpr explicit bit_vector( bitcnt_t bit_count ) :                                      
             bit_count( bit_count ),     unknown_bits( fill( bit_count ) ),                  known_bits( 0 ) {}
                                                                                                                                           
         // Constructs a bit-vector where all bits are known.												                              
         //																									                              
-        bit_vector( uint64_t value, bitcnt_t bit_count ) :                               
+        constexpr bit_vector( uint64_t value, bitcnt_t bit_count ) :                               
             bit_count( bit_count ),     unknown_bits( 0 ),                                  known_bits( value & fill( bit_count ) ) {}
                                                                                                                                             
         // Constructs a bit-vector where bits are partially known.											                                
         //																									                                
-        bit_vector( uint64_t known_bits, uint64_t unknown_bits, bitcnt_t bit_count ) :   
+        constexpr bit_vector( uint64_t known_bits, uint64_t unknown_bits, bitcnt_t bit_count ) :   
             bit_count( bit_count ),     unknown_bits( unknown_bits & fill( bit_count ) ),   known_bits( known_bits & ( ~unknown_bits ) & fill( bit_count ) ) {}
 
         // Some helpers to access the internal state.
         //
-        uint64_t value_mask() const { return fill( bit_count ); }
-        uint64_t unknown_mask() const { return unknown_bits; }
-        uint64_t known_mask() const { return fill( bit_count ) & ~unknown_bits; }
-        uint64_t known_one() const { return known_bits; }
-        uint64_t known_zero() const { return ~( unknown_bits | known_bits ); }
-        bool all_zero() const { return unknown_bits == 0 && !known_bits; }
-        bool all_one() const { return unknown_bits == 0 && ( known_bits == fill( bit_count ) ); }
-        bool is_valid() const { return bit_count != 0; }
-        bool is_known() const { return bit_count && unknown_bits == 0; }
-        bool is_unknown() const { return !bit_count || unknown_bits != 0; }
-        bitcnt_t size() const { return bit_count; }
+        constexpr uint64_t value_mask() const { return fill( bit_count ); }
+        constexpr uint64_t unknown_mask() const { return unknown_bits; }
+        constexpr uint64_t known_mask() const { return fill( bit_count ) & ~unknown_bits; }
+        constexpr uint64_t known_one() const { return known_bits; }
+        constexpr uint64_t known_zero() const { return ~( unknown_bits | known_bits ); }
+        constexpr bool all_zero() const { return unknown_bits == 0 && !known_bits; }
+        constexpr bool all_one() const { return unknown_bits == 0 && ( known_bits == fill( bit_count ) ); }
+        constexpr bool is_valid() const { return bit_count != 0; }
+        constexpr bool is_known() const { return bit_count && unknown_bits == 0; }
+        constexpr bool is_unknown() const { return !bit_count || unknown_bits != 0; }
+        constexpr bitcnt_t size() const { return bit_count; }
 
         // Gets the value represented, and nullopt if vector has unknown bits.
         //
         template<typename type>
-        std::optional<type> get() const
+        constexpr std::optional<type> get() const
         {
             if ( is_known() )
             {
@@ -296,7 +296,7 @@ namespace vtil::math
             return std::nullopt;
         }
         template<bool as_signed = false, typename type = std::conditional_t<as_signed, int64_t, uint64_t>>
-        std::optional<type> get() const { return get<type>(); }
+        constexpr std::optional<type> get() const { return get<type>(); }
 
         // Extends or shrinks the the vector.
         //
@@ -323,12 +323,12 @@ namespace vtil::math
 
         // Gets the state of the bit at the index given.
         //
-        bit_state at( bitcnt_t n ) const
+        constexpr bit_state at( bitcnt_t n ) const
         {
             if ( unknown_bits & ( 1ull << n ) ) return bit_state::unknown;
             return bit_state( ( ( ( known_bits >> n ) & 1 ) << 1 ) - 1 );
         }
-        bit_state operator[]( bitcnt_t n ) const { return at( n ); }
+        constexpr bit_state operator[]( bitcnt_t n ) const { return at( n ); }
 
         // Conversion to human-readable format.
         //

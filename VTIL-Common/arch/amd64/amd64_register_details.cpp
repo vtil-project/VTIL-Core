@@ -42,7 +42,7 @@ namespace vtil::amd64
 {
     // List of all physical registers and the base registers they map to <0> at offset <1> of size <2>.
     //
-    static const std::map<x86_reg, register_mapping> register_mappings
+    const std::map<x86_reg, register_mapping> register_mappings
     {
         /* [Instance]           [Base]       [Offset] [Size]  */
         { X86_REG_RAX,		{ X86_REG_RAX,		0,		8	} },

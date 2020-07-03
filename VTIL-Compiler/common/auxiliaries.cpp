@@ -555,28 +555,28 @@ namespace vtil::optimizer::aux
 					{
 						if ( exp.op == math::operator_id::value_if )
 						{
-							if ( exp.lhs->equals( cnd_out ) )
+							if ( exp.lhs->is_identical( cnd_out ) )
 							{
 								exp = state ? *exp.rhs : 0;
-								confirmed = true;
+								confirmed |= !state;
 							}
-							else if ( exp.lhs->equals( ~cnd_out ) )
+							else if ( exp.lhs->is_identical( ~cnd_out ) )
 							{
 								exp = state ? 0 : *exp.rhs;
-								confirmed = true;
+								confirmed |= !state;
 							}
 						}
 						else if ( ( exp.value.unknown_mask() | exp.value.known_one() ) == 1 )
 						{
-							if ( exp.equals( cnd_out ) )
+							if ( exp.is_identical( cnd_out ) )
 							{
 								exp = { state, exp.size() };
-								confirmed = true;
+								confirmed |= !state;
 							}
-							else if ( exp.equals( ~cnd_out ) )
+							else if ( exp.is_identical( ~cnd_out ) )
 							{
 								exp = { state ^ 1, exp.size() };
-								confirmed = true;
+								confirmed |= !state;
 							}
 						}
 						else if ( exp.is_variable() && exp.uid.get<symbolic::variable>().is_memory() )

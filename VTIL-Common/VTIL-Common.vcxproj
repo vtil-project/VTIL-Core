@@ -116,6 +116,7 @@
     </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="ext\colony.hpp" />
     <ClInclude Include="formats\image_descriptor.hpp" />
     <ClInclude Include="formats\winpe.hpp" />
     <ClInclude Include="arch\amd64\amd64_assembler.hpp" />
@@ -144,11 +145,12 @@
     <ClInclude Include="query\range_iterator_contract.hpp" />
     <ClInclude Include="query\recursive_view.hpp" />
     <ClInclude Include="query\view.hpp" />
-    <ClInclude Include="util\colony.hpp" />
     <ClInclude Include="util\concept.hpp" />
     <ClInclude Include="util\constexpr_random.hpp" />
     <ClInclude Include="util\copy_on_write.hpp" />
-    <ClInclude Include="util\critical_section.hpp" />
+    <ClInclude Include="util\random.hpp" />
+    <ClInclude Include="util\static_warning.hpp" />
+    <ClInclude Include="util\thread_identifier.hpp" />
     <ClInclude Include="util\multivariate.hpp" />
     <ClInclude Include="util\dynamic_size.hpp" />
     <ClInclude Include="util\conditional_lock.hpp" />
@@ -178,7 +180,7 @@
     <ClCompile Include="arch\arm64\arm64_register_details.cpp" />
     <ClCompile Include="io\logger.cpp" />
     <ClCompile Include="math\operators.cpp" />
-    <ClCompile Include="util\critical_section.cpp" />
+    <ClCompile Include="util\thread_identifier.cpp" />
     <ClCompile Include="util\variant.cpp" />
   </ItemGroup>
   <ItemGroup>

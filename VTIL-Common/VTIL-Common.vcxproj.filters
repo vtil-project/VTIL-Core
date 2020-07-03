@@ -29,6 +29,9 @@
     <Filter Include="Architecture\arm64">
       <UniqueIdentifier>{cee1cbfd-3d49-43f8-9efc-77d85f117d5f}</UniqueIdentifier>
     </Filter>
+    <Filter Include="External">
+      <UniqueIdentifier>{3062bc5f-e00e-4154-804d-97d4c9f9ecbc}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="io\asserts.hpp">
@@ -84,9 +87,6 @@
     </ClInclude>
     <ClInclude Include="query\fixed_iterator.hpp">
       <Filter>Queries</Filter>
-    </ClInclude>
-    <ClInclude Include="util\critical_section.hpp">
-      <Filter>Utility</Filter>
     </ClInclude>
     <ClInclude Include="util\copy_on_write.hpp">
       <Filter>Utility</Filter>
@@ -178,10 +178,19 @@
     <ClInclude Include="arch\arm64\arm64_register_details.hpp">
       <Filter>Architecture\arm64</Filter>
     </ClInclude>
-    <ClInclude Include="util\colony.hpp">
+    <ClInclude Include="util\object_pool.hpp">
       <Filter>Utility</Filter>
     </ClInclude>
-    <ClInclude Include="util\object_pool.hpp">
+    <ClInclude Include="util\thread_identifier.hpp">
+      <Filter>Utility</Filter>
+    </ClInclude>
+    <ClInclude Include="util\static_warning.hpp">
+      <Filter>Utility</Filter>
+    </ClInclude>
+    <ClInclude Include="ext\colony.hpp">
+      <Filter>External</Filter>
+    </ClInclude>
+    <ClInclude Include="util\random.hpp">
       <Filter>Utility</Filter>
     </ClInclude>
   </ItemGroup>
@@ -191,9 +200,6 @@
     </ClCompile>
     <ClCompile Include="math\operators.cpp">
       <Filter>Math</Filter>
-    </ClCompile>
-    <ClCompile Include="util\critical_section.cpp">
-      <Filter>Utility</Filter>
     </ClCompile>
     <ClCompile Include="util\variant.cpp">
       <Filter>Utility</Filter>
@@ -218,6 +224,9 @@
     </ClCompile>
     <ClCompile Include="formats\winpe.cpp">
       <Filter>Formats</Filter>
+    </ClCompile>
+    <ClCompile Include="util\thread_identifier.cpp">
+      <Filter>Utility</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

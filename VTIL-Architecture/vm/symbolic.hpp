@@ -35,6 +35,10 @@ namespace vtil
 	//
 	struct symbolic_vm : vm_interface
 	{
+		// Flag to make I/O lazy.
+		//
+		bool lazy_io = false;
+
 		// State of the virtual machine.
 		//
 		symbolic::memory memory_state;
@@ -61,6 +65,10 @@ namespace vtil
 		// Writes the given expression to the memory.
 		//
 		void write_memory( const symbolic::expression& pointer, symbolic::expression value ) override;
+
+		// Override execute to enforce lazyness.
+		//
+		bool execute( const instruction& ins ) override;
 
 		// Resets the virtual machine state.
 		//

@@ -50,6 +50,10 @@ namespace vtil::amd64
 	//
 	using register_mapping = vtil::register_mapping<x86_reg>;
 
+	// List of all physical registers and the base registers they map to <0> at offset <1> of size <2>.
+	//
+	extern const std::map<x86_reg, register_mapping> register_mappings;
+
 	// Gets the offset<0> and size<1> of the mapping for the given register.
 	//
 	register_mapping resolve_mapping( uint8_t _reg );

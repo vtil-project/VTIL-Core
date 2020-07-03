@@ -133,7 +133,7 @@ namespace vtil::optimizer
 			{
 				// If value is unchanged, skip.
 				//
-				auto k = pair.first; auto v = pair.second;
+				auto k = pair.first; auto v = pair.second.simplify();
 				symbolic::expression v0 = symbolic::make_register_ex( k );
 				if ( v0.equals( v ) )
 					continue;
@@ -207,7 +207,7 @@ namespace vtil::optimizer
 			//
 			for ( const auto& [k, _v] : vm.memory_state )
 			{
-				auto v = _v;
+				auto v = _v.simplify();
 				symbolic::expression v0 = symbolic::make_memory_ex( k, v.size() );
 
 				// If value is unchanged, skip.

@@ -74,7 +74,7 @@ namespace vtil::symbolic
 				//
 				if ( speculative_condition )
 				{
-					if ( dir->lhs && !translate( sym, dir->lhs, bit_cnt, true, max_depth ) ) return {};
+					if ( dir->lhs && !translate( sym, dir->lhs, 0, true, max_depth ) ) return {};
 					if ( !translate( sym, dir->rhs, bit_cnt, true, max_depth ) ) return {};
 					return dummy_expression;
 				}
@@ -361,7 +361,12 @@ namespace vtil::symbolic
 				// Make sure the size matches.
 				//
 				if ( exp_new->size() != exp->size() )
+				{
+					log( "\n" );
+					log<CON_RED>( "Input  (%d bits):   %s\n", exp->size(), exp->to_string() );
+					log<CON_RED>( "Output (%d bits):   %s\n", exp_new->size(), exp_new->to_string() );
 					error( "Directive '%s' => '%s' left the simplifier unbalanced.", from->to_string(), to->to_string() );
+				}
 
 #if VTIL_SYMEX_SIMPLIFY_VERBOSE
 				// Log state and return the expression.

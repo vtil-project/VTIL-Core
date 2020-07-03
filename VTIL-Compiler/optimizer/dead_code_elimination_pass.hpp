@@ -37,7 +37,7 @@ namespace vtil::optimizer
 	struct dead_code_elimination_pass : pass_interface<true>
 	{
 		cached_tracer ctrace;
-		std::set<basic_block*> visited;
+		std::unordered_set<basic_block*> visited;
 
 		size_t pass( basic_block* blk, bool xblock = false ) override;
 
