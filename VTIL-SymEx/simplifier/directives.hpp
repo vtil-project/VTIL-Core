@@ -195,8 +195,8 @@ namespace vtil::symbolic::directive
         { __ucast(A,B)|(__ucast((0x1+~(A>>U)), B)<<C),       __iff((B>__bcnt(A))&(U==(__bcnt(A)-1))&(C==__bcnt(A))&(__bcnt(A)!=1), __cast(A,B)) },
         { __ucast(A,B)|((~(__ucast(A,B)>>U)+0x1)<<C),        __iff((B>__bcnt(A))&(U==(__bcnt(A)-1))&(C==__bcnt(A))&(__bcnt(A)!=1), __cast(A,B)) },
         { (((((~(A>>B))|-0x2)+0x1)<<U)|A),                   __iff((U==(B+1))&(__bcnt(A)!=1), __cast(__ucast(A,U),__bcnt(A))) },
-
-        // Prefer immediates with their real sign.
+       
+        /*// Prefer immediates with their real sign. 
         //
         { A+U,                                               __iff(U<0, A-!(-U)) },
         { A-U,                                               __iff(U<0, A+!(-U)) },
@@ -216,10 +216,10 @@ namespace vtil::symbolic::directive
         { (B^C)-A,                                           (B+C-A)-((B&C)<<1) },
 		{ A-(B|C),                                           (A-B-C)+(B&C) },
         { A-(B^C),                                           (A-B-C)+((B&C)<<1) },
-        { A*(B+C),                                           A*B+A*C }, 
+        { A*(B+C),                                           A*B+A*C },
         { A*(B-C),                                           A*B-A*C },
         { A*(B&~C),                                          A*B+(-A)*(B&C) },
-           
+          
         // MBA to bitwise.
         //
         { A-(A&B),                                           A&~B },
@@ -229,8 +229,7 @@ namespace vtil::symbolic::directive
         { (A+B)-((A&B)<<1),                                  A^B },
         { (A-B)+((~A&B)*2),                                  A^B },
         { (A-B)+((~A&B)<<1),                                 A^B },
-        { U-(c(X,U)&B),                                      U&!(~X|~B) },
-
+        { U-(c(X,U)&B),                                      U&!(~X|~B) },*/
     };
 
     // Describes the way operands of two operators join each other.
@@ -295,7 +294,8 @@ namespace vtil::symbolic::directive
 
         // XOR:
         //
-        { A^(B&C),                                            s(~(B&!(A&C)))&s(A|(B&C)) },
+        //{ A^(B&C),                                            s(~(B&!(A&C)))&s(A|(B&C)) }, 
+        { A^(B&C),                                            s(A|(B&C))&s(~(B&!(A&C))) },
         { A^(B|C),                                            s(B|!(A|C))&s(~(A&(B|C))) },
         { A^(B^C),                                            B^!(A^C) },
         { A^(B<<U),                                           !(!(A>>U)^B)<<U|s(A&((1<<U)-1)) },
@@ -371,12 +371,11 @@ namespace vtil::symbolic::directive
         // Lower immediate urem/udiv/mul into and/shr/shl where possible.
         //
         { A*U,                                                __iff(__popcnt(U)==1, A<<!(__bsf(U)-1)) },
-        { B+A*U,                                              __iff(__popcnt(-U)==1, B-(A<<!(__bsf(-U)-1))) },
-
-        { A+(A<<U),                                           A*!(1+(1<<U)) },
-        { B+(A<<U),                                           B+A*!(1<<U) },
-        { B-(A<<U),                                           B-A*!(1<<U) },
-        { B*(A<<U),                                           B*A*!(1<<U) },
+        { A+(A<<U),                                           A*!(1 + (1<<U)) },
+        //{ B+A*U,                                              __iff(__popcnt(-U)==1, B-(A<<!(__bsf(-U)-1))) }, 
+        //{ B+(A<<U),                                           B+A*!(1<<U) }, 
+        //{ B-(A<<U),                                           B-A*!(1<<U) }, 
+        //{ B*(A<<U),                                           B*A*!(1<<U) }, 
         { urem(A,U),                                          __iff(__popcnt(U)==1, A&!(U-1)) },
         { udiv(A,U),                                          __iff(__popcnt(U)==1, A>>!(__bsf(U)-1)) },
 
