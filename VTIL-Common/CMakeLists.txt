@@ -67,12 +67,8 @@ target_link_libraries(${PROJECT_NAME} capstone-static keystone)
 # Linking (indirectly) to VTIL-Common will automatically propagate these flags
 # https://www.youtube.com/watch?v=bsXLMQ6WgIk
 
-# https://crascit.com/2015/03/28/enabling-cxx11-in-cmake/
-set_target_properties(${PROJECT_NAME} PROPERTIES
-    CXX_STANDARD 20
-    CXX_STANDARD_REQUIRED YES
-    CXX_EXTENSIONS NO
-)
+# https://cmake.org/cmake/help/v3.14/manual/cmake-compile-features.7.html#requiring-language-standards
+target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_20)
 
 # For portability on non-MSVC compilers, add some compile options
 if(CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
@@ -100,8 +96,6 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
 endif()
 
 if(MSVC)
-    # Supress CRT security warnings
-    target_compile_definitions(${PROJECT_NAME} PUBLIC _CRT_SECURE_NO_WARNINGS)
     # -fpermissive MSVC equivalent
     target_compile_options(${PROJECT_NAME} PUBLIC /permissive-)
 endif()
