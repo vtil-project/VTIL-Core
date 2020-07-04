@@ -263,6 +263,11 @@ namespace vtil::logger
 		state::get()->padding = old_padding;
 	}
 
+	// Allows to place a hook onto the error function, this is mainly used for
+	// the python project to avoid crasing the process.
+	//
+	inline std::function<void( std::string )> error_hook;
+
 	// Prints an error message and breaks the execution.
 	//
 	template<typename... params>
@@ -274,6 +279,11 @@ namespace vtil::logger
 			fmt,
 			format::fix_parameter<params>( std::forward<params>( ps ) )...
 		);
+
+		if ( error_hook != nullptr )
+		{
+			error_hook( message );
+		}
 
 		// Error will stop any execution so feel free to ignore any locks. Print error message.
 		//
