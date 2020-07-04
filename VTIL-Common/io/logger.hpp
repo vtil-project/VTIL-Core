@@ -32,6 +32,7 @@
 #include <cstdlib>
 #include <string>
 #include <mutex>
+#include <functional>
 #include "formatting.hpp"
 
 // If inline assembly is supported use it, otherwise rely on intrinsics to emit INT3.
@@ -263,6 +264,11 @@ namespace vtil::logger
 		state::get()->padding = old_padding;
 	}
 
+	// Allows to place a hook onto the error function, this is mainly used for
+	// the python project to avoid crasing the process.
+	//
+	inline std::function<void( const std::string& )> error_hook;
+
 	// Prints an error message and breaks the execution.
 	//
 	template<typename... params>
@@ -274,6 +280,10 @@ namespace vtil::logger
 			fmt,
 			format::fix_parameter<params>( std::forward<params>( ps ) )...
 		);
+
+		// If there is an active hook, call into it.
+		//
+		if ( error_hook ) error_hook( message );
 
 		// Error will stop any execution so feel free to ignore any locks. Print error message.
 		//

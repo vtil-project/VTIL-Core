@@ -41,7 +41,6 @@ namespace vtil::assert
 			line_number,
 			condition_str
 		);
-		logger::impl::noreturn_helper();
 	}
 };
 
