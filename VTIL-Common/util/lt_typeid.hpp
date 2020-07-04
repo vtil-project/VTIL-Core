@@ -57,4 +57,7 @@ namespace vtil
 		//
 		inline static const size_t value = calculate();
 	};
+
+	template<typename T>
+	static const size_t& lt_typeid_v = lt_typeid<std::decay_t<T>>::value;
 };

@@ -222,7 +222,7 @@ namespace vtil
 		hash_t operator()( const std::optional<T>& value ) const noexcept
 		{
 			if ( value ) return make_hash( *value );
-			else         return lt_typeid<T>::get();
+			else         return lt_typeid_v<T>;
 		}
 	};
 
