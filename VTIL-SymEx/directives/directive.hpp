@@ -33,7 +33,7 @@
 
 namespace vtil::symbolic::directive
 {
-    // Directive variables with mathching constraints:
+    // Directive variables with matching constraints:
     //
     enum matching_type
     {

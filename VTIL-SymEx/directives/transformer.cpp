@@ -69,7 +69,7 @@ namespace vtil::symbolic
 			//
 			else
 			{
-				// If speculative condition parsing no need to build an expression, simplfy
+				// If speculative condition parsing no need to build an expression, simply
 				// check if all operands can also be speculatively built.
 				//
 				if ( speculative_condition )

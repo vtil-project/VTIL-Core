@@ -1,21 +1,19 @@
 project(VTIL-SymEx)
 
+file(GLOB_RECURSE SOURCES CONFIGURE_DEPENDS *.cpp *.hpp)
+file(GLOB_RECURSE INCLUDES CONFIGURE_DEPENDS includes/*)
+
 add_library(${PROJECT_NAME} STATIC
-    directives/directive.cpp
-    directives/directive.hpp
-    directives/fast_matcher.hpp
-    directives/transformer.cpp
-    directives/transformer.hpp
-    expressions/expression.cpp
-    expressions/expression.hpp
-    expressions/unique_identifier.cpp
-    expressions/unique_identifier.hpp
-    simplifier/boolean_directives.cpp
-    simplifier/boolean_directives.hpp
-    simplifier/directives.hpp
-    simplifier/simplifier.cpp
-    simplifier/simplifier.hpp
+    ${SOURCES}
+    ${INCLUDES}
 )
+
+source_group(TREE ${PROJECT_SOURCE_DIR} FILES ${SOURCES} ${INCLUDES})
 
 target_include_directories(${PROJECT_NAME} PUBLIC includes)
 target_link_libraries(${PROJECT_NAME} VTIL-Common)
+
+if(MSVC)
+    # /bigobj for reasons
+    target_compile_options(${PROJECT_NAME} PRIVATE /bigobj)
+endif()
