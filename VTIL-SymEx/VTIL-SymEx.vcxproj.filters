@@ -19,7 +19,9 @@
     <ClCompile Include="simplifier\boolean_directives.cpp">
       <Filter>Simplifier</Filter>
     </ClCompile>
-    <ClCompile Include="simplifier\directives.cpp" />
+    <ClCompile Include="simplifier\directives.cpp">
+      <Filter>Simplifier</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="directives\directive.hpp">
