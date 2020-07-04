@@ -47,12 +47,12 @@ namespace vtil::optimizer
 		// Analyse the branch first locally, next globally.
 		//
 		cached_tracer local_tracer = {};
-		auto lbranch_info = aux::analyze_branch( blk, &local_tracer, false, false );
+		auto lbranch_info = aux::analyze_branch( blk, &local_tracer, {} );
 		ctracer.mtx.lock();
 		for ( auto& [k, v] : local_tracer.cache )
 			ctracer.cache[ k ] = v;
 		ctracer.mtx.unlock();
-		auto branch_info = aux::analyze_branch( blk, &ctracer, xblock );
+		auto branch_info = aux::analyze_branch( blk, &ctracer, { .cross_block = true, .pack = true, .resolve_opaque = true } );
 
 		// If branching to real, assert single next block.
 		//

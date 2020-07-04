@@ -483,7 +483,7 @@ namespace vtil::optimizer::aux
 	// Returns each possible branch destination of the given basic block in the format of:
 	// - [is_real, target] x N
 	//
-	branch_info analyze_branch( const basic_block* blk, tracer* tracer, bool xblock, bool pack )
+	branch_info analyze_branch( const basic_block* blk, tracer* tracer, branch_analysis_flags flags )
 	{
 		// If block is not complete, return empty vector.
 		//
@@ -495,8 +495,8 @@ namespace vtil::optimizer::aux
 		const auto trace = [ & ] ( symbolic::variable&& lookup )
 		{
 			auto exp = tracer->trace( std::move( lookup ) );
-			if ( xblock ) exp = tracer->rtrace_exp( std::move( exp ) );
-			if ( pack )   exp = symbolic::variable::pack_all( exp );
+			if ( flags.cross_block ) exp = tracer->rtrace_exp( std::move( exp ) );
+			if ( flags.pack )        exp = symbolic::variable::pack_all( exp );
 			return exp;
 		};
 
@@ -583,10 +583,12 @@ namespace vtil::optimizer::aux
 						{
 							auto& var = exp.uid.get<symbolic::variable>();
 						
-							bool xblock_org = xblock;
-							xblock = false;
+							// Disable cross block tracing while we trace the pointer.
+							//
+							branch_analysis_flags orig_flags = flags;
+							flags.cross_block = false;
 							symbolic::pointer exp_ptr = var.mem().decay().clone().transform( transform_cc );
-							xblock = xblock_org;
+							flags = orig_flags;
 
 							if ( exp_ptr != var.mem().base )
 								exp = trace( symbolic::variable{ std::next( var.at ), { exp_ptr, var.mem().bit_count } } );
@@ -639,7 +641,7 @@ namespace vtil::optimizer::aux
 			// If condition can be resolved in compile time:
 			//
 			symbolic::expression cc = trace( { branch, branch->operands[ 0 ].reg() } );
-			if ( cc.is_constant() )
+			if ( flags.resolve_opaque && cc.is_constant() )
 			{
 				// Redirect to jmp resolver.
 				//
