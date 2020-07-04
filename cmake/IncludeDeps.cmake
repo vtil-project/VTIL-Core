@@ -17,9 +17,17 @@ macro(FetchDep name git)
     FetchContent_MakeAvailable(${name})
 endmacro()
 
+# Set CMake options for dependencies
+set(CAPSTONE_BUILD_TESTS OFF CACHE BOOL "")
+set(CAPSTONE_BUILD_CSTOOL OFF CACHE BOOL "")
+set(CAPSTONE_BUILD_STATIC_RUNTIME OFF CACHE BOOL "")
+set(CAPSTONE_BUILD_SHARED OFF CACHE BOOL "")
+set(KEYSTONE_BUILD_STATIC_RUNTIME OFF CACHE BOOL "")
+set(BUILD_LIBS_ONLY ON CACHE BOOL "")
+
 # Actually fetch dependencies
 FetchDep(Capstone "https://github.com/aquynh/capstone.git")
-FetchDep(Keystone "https://github.com/keystone-engine/keystone.git")
+FetchDep(Keystone "https://github.com/mrexodia/keystone.git")
 
 # These CMake projects erroneously do not specify INTERFACE include directory, so
 # we need to add it ourselves.
