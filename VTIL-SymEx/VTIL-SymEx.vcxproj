@@ -114,6 +114,7 @@
     <ClCompile Include="expressions\expression.cpp" />
     <ClCompile Include="expressions\unique_identifier.cpp" />
     <ClCompile Include="simplifier\boolean_directives.cpp" />
+    <ClCompile Include="simplifier\directives.cpp" />
     <ClCompile Include="simplifier\simplifier.cpp" />
   </ItemGroup>
   <ItemGroup>
