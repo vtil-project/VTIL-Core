@@ -36,7 +36,7 @@
 // [Configuration]
 // Determine whether we should use safe variants or not.
 //
-#if _DEBUG && not defined(VTIL_VARIANT_SAFE)
+#if defined(_DEBUG) && not defined(VTIL_VARIANT_SAFE)
 	#if defined(_CPPRTTI)
 		#define VTIL_VARIANT_SAFE	_CPPRTTI
 	#elif defined(__GXX_RTTI)
