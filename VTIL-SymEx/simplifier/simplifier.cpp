@@ -328,16 +328,17 @@ namespace vtil::symbolic
 
 		// If expression matches a basic boolean expression, simplify through that first:
 		//
-		if ( simplify_boolean_expression( exp ) )
-		{
-			// Recurse, and indicate success.
-			//
-			simplify_expression( exp, pretty, max_depth - 1 );
-			( +exp )->simplify_hint = true;
-			cache_entry = *exp;
-			success_flag = true;
-			return true;
-		}
+
+		//if ( simplify_boolean_expression( exp ) )
+		//{
+		//	// Recurse, and indicate success.
+		//	//
+		//	simplify_expression( exp, pretty, max_depth - 1 );
+		//	( +exp )->simplify_hint = true;
+		//	cache_entry = *exp;
+		//	success_flag = true;
+		//	return true;
+		//}
 
 		// Simplify operands first if not done already.
 		//
