@@ -31,13 +31,15 @@
     <ClCompile Include="optimizer\symbolic_rewrite_pass.cpp">
       <Filter>Optimization Passes</Filter>
     </ClCompile>
-    <ClCompile Include="optimizer\fast_dead_code_elimination_pass.cpp" />
     <ClCompile Include="optimizer\fast_propagation_pass.cpp" />
     <ClCompile Include="validation\test1.cpp">
       <Filter>Validation</Filter>
     </ClCompile>
     <ClCompile Include="validation\pass_validation.cpp">
       <Filter>Validation</Filter>
+    </ClCompile>
+    <ClCompile Include="optimizer\fast_dead_code_elimination_pass.cpp">
+      <Filter>Optimization Passes</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
