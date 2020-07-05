@@ -66,8 +66,8 @@ namespace vtil::optimizer
 				{
 					// Replace with a stack shift.
 					//
-					it->base = &ins::vpinr;
-					it->operands = { { REG_SP } };
+					it->base = &ins::nop;
+					it->operands = {};
 					blk->shift_sp( *shift_offset, true, it );
 
 					// Flush tracer cache.
