@@ -33,9 +33,9 @@ namespace vtil::optimizer::aux
 {
 	struct branch_analysis_flags
 	{
-		uint32_t cross_block    : 1 = false;
-		uint32_t pack           : 1 = false;
-		uint32_t resolve_opaque : 1 = false;
+		uint32_t cross_block    : 1;
+		uint32_t pack           : 1;
+		uint32_t resolve_opaque : 1;
 	};
 
 	// Simple structure describing branch details.
