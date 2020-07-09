@@ -116,13 +116,13 @@ namespace vtil::query
 			// Apply to each path recursively.
 			//
 			for ( auto& path : paths )
-				path = path.flatten( force );
+				path.flatten( force );
 
 			// If single possible path or force mode:
 			//
 			if ( paths.size() == 1 || force )
 			{
-				std::vector paths_p = paths;
+				std::vector paths_p = std::move( paths );
 				paths.clear();
 
 				for ( auto& r : paths_p )
@@ -131,12 +131,12 @@ namespace vtil::query
 					//
 					is_looping |= r.is_looping;
 					if( !r.paths.empty() )
-						paths.insert( paths.end(), r.paths.begin(), r.paths.end() );
+						paths.insert( paths.end(), std::make_move_iterator( r.paths.begin() ), std::make_move_iterator( r.paths.end() ) );
 
 					// Either combine vectors or use the addition operator.
 					//
 					if constexpr ( is_std_vector<result_type>::value )
-						result.insert( result.end(), r.result.begin(), r.result.end() );
+						result.insert( result.end(), std::make_move_iterator( r.result.begin() ), std::make_move_iterator( r.result.end() ) );
 					else
 						result += r.result;
 				}
@@ -341,7 +341,7 @@ namespace vtil::query
 							//
 							recursive_result<result_type, container_type> result = view_new.for_each<enumerator_type, return_type, result_type>( enumerator );
 							result.is_looping = partial_loop;
-							output.paths.push_back( result );
+							output.paths.emplace_back( std::move( result ) );
 						}
 						// Otherwise:
 						//
