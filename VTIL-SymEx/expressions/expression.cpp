@@ -731,6 +731,20 @@ namespace vtil::symbolic
 			 ( other.known_zero() & known_one() ))
 			return false;
 
+		// Try evaluating with 2 random values, if values do not match, expressions cannot be equivalent.
+		//
+		static constexpr auto eval_keys = make_crandom_n<2>();
+		for ( uint64_t key : eval_keys )
+		{
+			auto eval_helper = [ = ] ( const unique_identifier& uid ) 
+			{
+				return uid.hash() ^ key;
+			};
+			if ( this->evaluate( eval_helper ).known_one() != 
+				 other.evaluate( eval_helper ).known_one() )
+				return false;
+		}
+
 		// Simplify both expressions.
 		//
 		expression a = expression{ *this }.simplify();
