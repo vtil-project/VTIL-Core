@@ -28,6 +28,7 @@
 #pragma once
 #include <string>
 #include <cstring>
+#include <cstdio>
 #include <type_traits>
 #include <chrono>
 #include "../util/concept.hpp"
@@ -195,9 +196,9 @@ namespace vtil::format
 		{
 			static constexpr auto flt2str = [ ] ( float f ) -> std::string
 			{
-				char buf[ 32 ];
-				sprintf_s( buf, "%.2f", f );
-				return buf;
+				char buffer[ 32 ];
+				snprintf( buffer, 32, "%.2f", f );
+				return buffer;
 			};
 
 			static constexpr std::tuple<base_type, const char*, bool> durations[] = 
@@ -219,9 +220,9 @@ namespace vtil::format
 		}
 		else
 		{
-			char pointer_string[ 32 ];
-			sprintf_s( pointer_string, "%p", &x );
-			return "[" + dynamic_type_name( x ) + "@" + std::string( pointer_string ) + "]";
+			char buffer[ 32 ];
+			snprintf( buffer, 32, "%p", &x );
+			return "[" + dynamic_type_name( x ) + "@" + std::string( buffer ) + "]";
 		}
 	}
 
