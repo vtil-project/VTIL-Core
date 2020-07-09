@@ -34,10 +34,6 @@ namespace vtil::optimizer
 	//
 	size_t isymbolic_rewrite_pass::pass( basic_block* blk, bool xblock )
 	{
-		// Acquire shared mutex and create cached tracer.
-		//
-		cached_tracer ctracer = {};
-
 		// Determine the temporary sizes in the block.
 		//
 		std::map<std::pair<uint64_t, uint64_t>, bitcnt_t> temp_sizes;
@@ -140,7 +136,7 @@ namespace vtil::optimizer
 
 				// If register value is not used after this instruction, skip from emitted state.
 				//
-				if ( !aux::is_used( { std::prev( limit ), k }, false, &ctracer ) )
+				if ( !aux::is_used( { std::prev( limit ), k }, false, nullptr ) )
 					continue;
 				
 				// Try minimizing expression size.
