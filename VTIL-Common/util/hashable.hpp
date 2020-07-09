@@ -37,11 +37,7 @@
 // Determine the size of vtil::hash_t.
 //
 #ifndef VTIL_HASH_SIZE
-	#ifdef _DEBUG
-		#define VTIL_HASH_SIZE 64
-	#else
-		#define VTIL_HASH_SIZE 128
-	#endif
+	#define VTIL_HASH_SIZE 64
 #endif
 
 // Include the hash header file for the hash type we use

@@ -56,7 +56,7 @@ namespace vtil::symbolic
 		organized_directive_table table;
 		for ( auto [table, op] : zip( table, iindices() ) )
 			for( auto& directive : container )
-				if ( directive.first->op == ( math::operator_id )op )
+				if ( directive.first->op == ( math::operator_id ) op )
 					table.emplace_back( directive.first.get(), directive.second.get() );
 		return table;
 	};
@@ -217,7 +217,6 @@ namespace vtil::symbolic
 	bool simplify_expression( expression::reference& exp, bool pretty, int64_t max_depth, bool unpack )
 	{
 		using namespace logger;
-
 
 		if ( max_depth == 0 )
 			throw join_depth_exception{};
