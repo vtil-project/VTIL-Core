@@ -22,3 +22,4 @@
 #include "../../util/multivariate.hpp"
 #include "../../util/static_warning.hpp"
 #include "../../util/random.hpp"
+#include "../../util/profiler.hpp"
