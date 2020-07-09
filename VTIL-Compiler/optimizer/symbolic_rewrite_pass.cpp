@@ -302,6 +302,12 @@ namespace vtil::optimizer
 				it = std::next( limit );
 				temporary_block.sp_index = it.is_end() ? blk->sp_index : it->sp_index;
 			}
+			// Otherwise break from the loop.
+			//
+			else
+			{
+				break;
+			}
 
 			// Reset virtual machine state.
 			//

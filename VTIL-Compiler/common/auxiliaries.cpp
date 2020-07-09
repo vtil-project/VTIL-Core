@@ -89,6 +89,15 @@ namespace vtil::optimizer::aux
 		//
 		symbolic::variable ptr_var;
 
+		// If improperly terminated block, declare used.
+		//
+		constexpr auto is_improper_end = [ ] ( const il_const_iterator& it ) 
+		{
+			return std::next( it ).is_end() && it.container->next.empty() && it->base != &ins::vexit;
+		};
+		if( is_improper_end( var.at ) )
+			return true;
+
 		// If memory variable:
 		//
 		if ( var.is_memory() )
@@ -220,7 +229,9 @@ namespace vtil::optimizer::aux
 						}
 					}
 
-					return false;
+					// If improperly terminated block, declare used, else skip.
+					//
+					return is_improper_end( it );
 				} );
 		}
 		// If register variable:
@@ -304,7 +315,9 @@ namespace vtil::optimizer::aux
 							query::rlocal( variable_mask ) &= ~op.reg().get_mask();
 					}
 
-					return false;
+					// If improperly terminated block, declare used, else skip.
+					//
+					return is_improper_end( it );
 				} );
 		}
 
