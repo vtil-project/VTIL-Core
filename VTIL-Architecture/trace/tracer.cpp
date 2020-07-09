@@ -136,17 +136,23 @@ namespace vtil
 			if ( !exp.is_variable() )
 				return;
 
-			// If transformation is not already cached, transform it.
+			// Apply transformation.
 			//
 			symbolic::variable& var = exp.uid.get<symbolic::variable>();
-			auto& cached_result = cache[ var ];
-			if ( !cached_result )
-				cached_result = fn( var );
-
-			// Apply the transformation.
-			//
-			exp = cached_result;
-		} );
+			if ( auto it = cache.find( var ); it != cache.end() )
+			{
+				if ( it->second ) 
+					exp = it->second;
+			}
+			else
+			{
+				auto res = fn( var );
+				auto [cit, _] = cache.emplace( var, std::move( res ) );
+				
+				if( cit->second )
+					exp = cit->second;
+			}
+		}, true, false );
 	}
 
 
@@ -163,24 +169,22 @@ namespace vtil
         scope_padding _p( 1 );
 #endif
 
-        // For each unique variable:
-        //
-		std::set<symbolic::unique_identifier> variables;
-        ref.count_unique_variables( &variables );
+		std::optional<bool> result = {};
+		transform_variables( ref, [ & ] ( const symbolic::variable& _var ) -> symbolic::expression
+		{
+			// If result is already decided, return as is.
+			//
+			if ( result.has_value() ) 
+				return {};
 
-		std::unordered_map<symbolic::unique_identifier, symbolic::expression, hasher<>> propagation_result;
-		propagation_result.reserve( variables.size() );
-
-        for ( auto& uid : variables )
-        {
-            // Move the variable to reference the previous block.
+			// Move the variable to reference the previous block.
             //
-            symbolic::variable var = uid.get<symbolic::variable>();
+            symbolic::variable var = _var;
 
             // Skip if variable is position indepdendent or not at the beginning of the block.
             //
             if ( !var.at.is_valid() || !var.at.is_begin() )
-                continue;
+				return {};
 
             // If register:
             //
@@ -203,7 +207,7 @@ namespace vtil
                 // If volatile iterator cannot be moved, skip.
                 //
                 if ( var.reg().flags & register_volatile )
-                    continue;
+					return {};
             }
             // If memory, propagate the pointer.
             //
@@ -220,8 +224,11 @@ namespace vtil
 				//
 				symbolic::expression& mem_ptr = mem.base.base;
 				propagate( mem_ptr, it, tracer, nullptr, limit );
-				if ( !mem_ptr ) 
-					return false;
+				if ( !mem_ptr )
+				{
+					result = false;
+					return {};
+				}
 				mem = { symbolic::expression{ mem_ptr }, mem.bit_count };
 
 #if VTIL_OPT_TRACE_VERBOSE
@@ -237,35 +244,33 @@ namespace vtil
 
             // Trace the variable in the destination block, fail if it fails.
             //
-			symbolic::expression& var_traced = propagation_result[ uid ];
+			symbolic::expression var_traced;
 			if ( prev_link )
 				rtrace_primitive( var_traced, var, tracer, prev_link, limit );
 			else
 				var_traced = tracer->trace( var );
 			if ( !var_traced )
-				return ref.is_variable();
+			{
+				result = ref.is_variable();
+				return {};
+			}
 
             // If we are tracing the value of RSP, add the stack pointer delta between blocks.
             //
-            if ( var.is_register() && var.reg().is_stack_pointer() )
+            if ( var.is_register() && var.reg().is_stack_pointer() && it.container->sp_offset )
                 var_traced = var_traced + it.container->sp_offset;
-        }
-
-		// Rewrite the expression.
-		//
-		ref.transform( [ & ] ( symbolic::expression& exp )
-		{
-			if ( exp.is_variable() )
-			{
-				auto it = propagation_result.find( exp.uid );
-				if( it != propagation_result.end() )
-					exp = it->second;
-			}
-		}, true, false );
+			return var_traced;
+		} );
 
         // Return the result.
         //
-		return false;
+		if ( !result.has_value() )
+		{
+			ref.simplify();
+			return false;
+		}
+		ref = {};
+		return *result;
     }
 
 	// Internal implementation of ::rtrace with a path history.
@@ -541,12 +546,12 @@ namespace vtil
 	{
 		symbolic::expression out = exp;
 		transform_variables( out, [ & ] ( const symbolic::variable& var ) { return trace( var ); } );
-		return out;
+		return out.simplify();
 	}
 	symbolic::expression tracer::rtrace_exp( const symbolic::expression& exp, int64_t limit )
 	{
 		symbolic::expression out = exp;
 		transform_variables( out, [ & ] ( const symbolic::variable& var ) { return rtrace( var, limit ); } );
-		return out;
+		return out.simplify();
 	}
 };

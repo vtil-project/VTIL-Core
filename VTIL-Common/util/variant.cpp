@@ -117,7 +117,7 @@ namespace vtil
 			{
 				// Redirect to the copy constructor.
 				//
-				new ( this ) variant( ( variant& ) src );
+				new ( this ) variant( ( const variant& ) src );
 
 				// Free the object stored in source.
 				//
@@ -132,7 +132,7 @@ namespace vtil
 			// Steal the stored external pointer.
 			//
 			is_inline = false;
-			ext = std::move( src.ext );
+			ext = src.ext;
 		}
 
 		// Inherit the inline/copy/destruction traits from source.
