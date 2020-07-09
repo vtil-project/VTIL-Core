@@ -27,7 +27,7 @@
 // VTIL namespace should be able to use literals by default without having to include it.
 //
 #include <chrono>
-#include <xstring>
+#include <string>
 namespace vtil
 {
 	using namespace std::literals::string_literals;
