@@ -95,7 +95,6 @@ namespace vtil::optimizer
 	//
 	using collective_cross_pass = combine_pass<
 		collective_routine_correction_pass,
-		collective_propagation_pass,
 		symbolic_rewrite_pass<true>,
 		collective_propagation_pass,
 		exhaust_pass<
