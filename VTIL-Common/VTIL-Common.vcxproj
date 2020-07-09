@@ -148,6 +148,7 @@
     <ClInclude Include="util\concept.hpp" />
     <ClInclude Include="util\constexpr_random.hpp" />
     <ClInclude Include="util\copy_on_write.hpp" />
+    <ClInclude Include="util\profiler.hpp" />
     <ClInclude Include="util\random.hpp" />
     <ClInclude Include="util\static_warning.hpp" />
     <ClInclude Include="util\thread_identifier.hpp" />

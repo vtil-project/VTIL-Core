@@ -34,16 +34,25 @@ namespace vtil
 	// Times the callable given and returns pair [result, duration] if it has 
 	// a return value or just [duration].
 	//
-	template<typename func>
-	static auto profile( func f )
+	template<typename T>
+	static auto profile( const T& f )
 	{
-		auto t0 = std::chrono::steady_clock::now();
-		auto res = f();
-		auto t1 = std::chrono::steady_clock::now();
-	
-		if constexpr ( std::is_same_v<decltype( res ), void> )
+		using result_t = decltype( std::declval<T>()() );
+
+		if constexpr ( std::is_same_v<result_t, void> )
+		{
+			auto t0 = std::chrono::steady_clock::now();
+			f();
+			auto t1 = std::chrono::steady_clock::now();
 			return t1 - t0;
+		}
 		else
+		{
+
+			auto t0 = std::chrono::steady_clock::now();
+			result_t res = f();
+			auto t1 = std::chrono::steady_clock::now();
 			return std::make_pair( res, t1 - t0 );
+		}
 	}
 };
