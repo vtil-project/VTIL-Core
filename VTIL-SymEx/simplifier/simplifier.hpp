@@ -39,37 +39,12 @@
 
 namespace vtil::symbolic
 {
-	using simplifier_cache_t = std::unordered_map<boxed_expression, std::pair<expression::reference, bool>, hasher<>>;
-
 	// Attempts to simplify the expression given, returns whether the simplification
 	// succeeded or not.
 	//
 	bool simplify_expression( expression::reference& exp, bool pretty = false, int64_t max_depth = -1, bool unpack = true );
 
-	// Purges/references the current thread's simplifier cache.
+	// Purges the current thread's simplifier cache.
 	//
-	simplifier_cache_t& ref_simplifier_cache();
-	static void purge_simplifier_cache() { ref_simplifier_cache().clear(); }
-
-	// RAII hack to purge the cache once the we're out of scope.
-	//
-	struct cache_guard
-	{
-		// Constructor saves the current size of the simplifier cache, dummy argument 
-		// we take here is required since the compiler will not invoke this constructor otherwise.
-		//
-		size_t previous_size = 0;
-		cache_guard( bool _ = false )
-		{
-			previous_size = ref_simplifier_cache().size();
-		}
-
-		// Destructor resets simplifier cache to its original size.
-		//
-		~cache_guard()
-		{
-			auto& cache = ref_simplifier_cache();
-			cache.erase( std::next( cache.begin(), previous_size ), cache.end() );
-		}
-	};
+	void purge_simplifier_cache();
 };

@@ -68,10 +68,22 @@ namespace vtil::symbolic
 	static auto& get_boolean_simplifiers( math::operator_id op ) { static auto boolean_simplifiers = directive::build_boolean_simplifiers(); static auto tbl = build_dynamic_table( boolean_simplifiers ); return tbl[ ( size_t ) op ]; }
 	static auto& get_universal_simplifiers( math::operator_id op ) { static auto tbl = build_dynamic_table( directive::universal_simplifiers ); return tbl[ ( size_t ) op ]; }
 
-	// Simplifier cache and its accessor.
+	// Simplifier cache and its accessors.
 	//
+	using simplifier_cache_t = std::unordered_map<boxed_expression, std::pair<expression::reference, bool>, hasher<>>;
 	static thread_local simplifier_cache_t simplifier_cache;
-	simplifier_cache_t& ref_simplifier_cache() { return simplifier_cache; }
+
+	void purge_simplifier_cache()
+	{
+		simplifier_cache.clear();
+	}
+
+	static std::tuple<expression::reference&, bool&, bool> lookup_simplifier_cache( const expression& exp )
+	{
+		static const std::pair default_value = { expression::reference{}, false };
+		auto [it, inserted] = simplifier_cache.emplace( ( boxed_expression& ) exp, default_value );
+		return { it->second.first, it->second.second, !inserted };
+	}
 
 	// Attempts to prettify the expression given.
 	//
@@ -255,19 +267,22 @@ namespace vtil::symbolic
 		log( "(Hash: %s)\n", exp->hash() );
 #endif
 
+		// Lookup the expression in the cache.
+		//
+		auto [cache_entry, success_flag, found] = lookup_simplifier_cache( *exp );
+
 		// If we resolved a valid cache entry:
 		//
-		auto cache_it = simplifier_cache.find( ( boxed_expression& ) *exp );
-		if ( cache_it != simplifier_cache.end() )
+		if ( found )
 		{
 			// Replace with the cached entry if simplifies.
 			//
-			if ( cache_it->second.first.is_valid() && cache_it->second.second )
+			if ( cache_entry && success_flag )
 			{
 #if VTIL_SYMEX_SIMPLIFY_VERBOSE
-				log<CON_YLW>( "= %s (From cache, Success: %d)\n", *cache_it->second.first, cache_it->second.second );
+				log<CON_YLW>( "= %s (From cache, Success: %d)\n", *cache_entry, success_flag );
 #endif
-				exp = *cache_it->second.first;
+				exp = cache_entry;
 				return true;
 			}
 #if VTIL_SYMEX_SIMPLIFY_VERBOSE
@@ -275,11 +290,6 @@ namespace vtil::symbolic
 #endif
 			return false;
 		}
-
-		// Otherwise create a new cache entry with {invalid, false} by default.
-		//
-		cache_it = simplifier_cache.insert( { ( boxed_expression& ) *exp, { {}, false } } ).first;
-		auto& [cache_entry, success_flag] = cache_it->second;
 
 		// If trying to simplify resizing:
 		//
