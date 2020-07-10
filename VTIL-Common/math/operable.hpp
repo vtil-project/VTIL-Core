@@ -47,10 +47,12 @@
 //
 namespace vtil::math
 {
+    struct operable_tag {};
+
     // Declare base operable type.
     //
     template<typename base_type>
-    struct operable
+    struct operable : operable_tag
     {
         // Value of the operand.
         //
@@ -87,12 +89,12 @@ namespace vtil::math
         }
     };
 
-    // Whether the type is a operable<?> instance or not.
+    // Whether the type is a operable instance or not.
     //
     template<typename T>
-    static constexpr bool is_custom_operable_v = std::is_base_of_v<operable<T>, T>;
+    static constexpr bool is_custom_operable_v = std::is_base_of_v<operable_tag, T>;
     
-    // Whether the type is operable in combination with an operable<?> instance or not.
+    // Whether the type is operable in combination with an operable instance or not.
     //
     template<typename T>
     static constexpr bool is_operable_v = std::is_integral_v<T> || is_custom_operable_v<T>;

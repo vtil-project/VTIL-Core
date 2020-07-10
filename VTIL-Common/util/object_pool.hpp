@@ -83,7 +83,7 @@ namespace vtil
 			return &buckets[ get_thread_id() % VTIL_OBJECT_POOL_BUCKETS ];
 		}
 
-		inline T* allocate( size_t count )
+		inline T* allocate( size_t count = 1 )
 		{
 			// Must not be used to allocate an array.
 			//
@@ -105,7 +105,7 @@ namespace vtil
 			it->iterator = ( generic_iterator& ) it;
 			return ( T* ) it->raw_data;
 		}
-		inline void deallocate( T* pointer, size_t count ) noexcept
+		inline void deallocate( T* pointer, size_t count = 1 ) noexcept
 		{
 			// Must not be used to deallocate an array.
 			//
