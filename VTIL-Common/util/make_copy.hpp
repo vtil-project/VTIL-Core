@@ -30,12 +30,11 @@
 
 namespace vtil
 {
-	// A simple helper that creates a constant reference to the default constructed value of the type.
+	// A simple helper that creates a copy of the given type, forced to as a reference.
 	//
-	template<typename T, auto... params>
-	inline static const T& make_default()
-	{
-		static const T v = { params... };
-		return v;
+	template<typename T>
+	inline static T make_copy( const T& x ) 
+	{ 
+		return x; 
 	}
 };

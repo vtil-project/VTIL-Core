@@ -6,6 +6,7 @@
 #include "../../arch/operands.hpp"
 #include "../../routine/routine.hpp"
 #include "../../routine/basic_block.hpp"
+#include "../../routine/routine_helpers.hpp"
 #include "../../routine/instruction.hpp"
 #include "../../routine/serialization.hpp"
 #include "../../symex/memory.hpp"
