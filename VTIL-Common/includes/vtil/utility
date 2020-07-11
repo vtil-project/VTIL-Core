@@ -26,6 +26,7 @@
 #include "../../util/bitmap.hpp"
 #include "../../util/make_default.hpp"
 #include "../../util/make_copy.hpp"
+#include "../../util/enumerator.hpp"
 
 // VTIL namespace should be able to use literals by default without having to include it.
 //
