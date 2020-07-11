@@ -27,6 +27,7 @@
 //
 #pragma once
 #include <vtil/arch>
+#include <unordered_map>
 #include "../common/interface.hpp"
 
 namespace vtil::optimizer
@@ -37,7 +38,7 @@ namespace vtil::optimizer
 	struct stack_propagation_pass : pass_interface<>
 	{
 		std::shared_mutex mtx;
-		std::map<symbolic::variable, register_desc> revive_list;
+		std::unordered_map<symbolic::variable, register_desc, hasher<>> revive_list;
 		size_t pass( basic_block* blk, bool xblock = false ) override;
 	};
 };
