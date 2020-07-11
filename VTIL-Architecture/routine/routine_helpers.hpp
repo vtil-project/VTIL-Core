@@ -45,7 +45,8 @@ namespace vtil
 			if constexpr ( !fwd )
 			{
 				// If iterator is at destination or is invalid, return.
-				if ( it == dst || !it.is_valid() ) return;
+				if ( it == dst || !it.is_valid() ) 
+					return false;
 
 				// Skip one.
 				std::advance( it, -1 );
