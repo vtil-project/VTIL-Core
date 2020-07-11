@@ -250,7 +250,7 @@ namespace vtil::optimizer
 					// Try to extract the offset from the compound expression.
 					//
 					int64_t offset = 0;
-					symbolic::expression exp = symbolic::variable::pack_all( k.base ).simplify( true );
+					symbolic::expression exp = symbolic::variable::pack_all( *k.base ).simplify( true );
 					if ( !exp.is_constant() )
 					{
 						using namespace symbolic::directive;
