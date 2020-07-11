@@ -211,6 +211,30 @@ namespace vtil
 		delete block;
 	}
 
+
+	// Returns the number of basic blocks and instructions in the routine.
+	//
+	size_t routine::num_blocks() const
+	{
+		// Acquire the routine mutex.
+		//
+		std::lock_guard g{ this->mutex }; 
+		return explored_blocks.size();
+	}
+	size_t routine::num_instructions() const
+	{
+		// Acquire the routine mutex.
+		//
+		std::lock_guard g{ this->mutex };
+
+		// Sum up instructions in every block.
+		//
+		size_t n = 0;
+		for ( auto& [_, blk] : explored_blocks )
+			n += blk->size();
+		return n;
+	}
+
 	// Routine structures free all basic blocks they own upon their destruction.
 	//
 	routine::~routine()

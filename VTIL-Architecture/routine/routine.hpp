@@ -169,6 +169,11 @@ namespace vtil
 		//
 		void delete_block( basic_block* block );
 
+		// Returns the number of basic blocks and instructions in the routine.
+		//
+		size_t num_blocks() const;
+		size_t num_instructions() const;
+
 		// Routine structures free all basic blocks they own upon their destruction.
 		//
 		~routine();
