@@ -127,6 +127,14 @@ namespace vtil
 	//
 	static void transform_variables( symbolic::expression& inout, const std::function<symbolic::expression(const symbolic::variable&)>& fn )
 	{
+		// Take fast path if single variable.
+		//
+		if ( inout.is_variable() )
+		{
+			inout = fn( inout.uid.get<symbolic::variable>() );
+			return;
+		}
+
 		std::unordered_map<symbolic::variable, symbolic::expression, hasher<>> cache;
 		cache.reserve( inout.depth );
 		inout.transform( [ &cache, &fn ] ( symbolic::expression& exp )
@@ -222,14 +230,14 @@ namespace vtil
 #endif
 				// Fail if propagation fails.
 				//
-				symbolic::expression& mem_ptr = mem.base.base;
-				propagate( mem_ptr, it, tracer, nullptr, limit );
+				symbolic::expression::reference mem_ptr = mem.base.base;
+				propagate( *+mem_ptr, it, tracer, nullptr, limit );
 				if ( !mem_ptr )
 				{
 					result = false;
 					return {};
 				}
-				mem = { symbolic::expression{ mem_ptr }, mem.bit_count };
+				mem = { mem_ptr, mem.bit_count };
 
 #if VTIL_OPT_TRACE_VERBOSE
                 // Log new pointer.
