@@ -106,9 +106,9 @@ namespace vtil
 						if ( enumerate_instructions<callback, iterator_type, fwd>( make_copy<callback>( fn ), make_it( blk ), dst, visit ) )
 							return true;
 					}
-					return false;
 				}
 			}
+			return false;
 		}
 	};
 

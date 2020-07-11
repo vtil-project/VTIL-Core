@@ -35,8 +35,7 @@
 #include "../arch/register_desc.hpp"
 
 // [Configuration]
-// Determine whether we should use the simplification of (A-B) as the delta 
-// or the value estimated by the xpointers, and the number of xpointers we use.
+// Determine the number of xpointers we use to estimate overlapping.
 //
 #ifndef VTIL_SYM_PTR_XPTR_KEYS
 	#define VTIL_SYM_PTR_XPTR_KEYS 4
