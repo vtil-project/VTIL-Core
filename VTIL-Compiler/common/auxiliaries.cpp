@@ -80,15 +80,6 @@ namespace vtil::optimizer::aux
 			return tracer->rtrace_p( std::move( lookup ) );
 		};
 
-		// Create a dummy query and allocate the variable mask.
-		//
-		uint64_t variable_mask;
-		auto blueprint = query::dummy<il_const_iterator>().unproject();
-
-		// Allocate dummy pointer.
-		//
-		symbolic::variable ptr_var;
-
 		// If improperly terminated block, declare used.
 		//
 		constexpr auto is_improper_end = [ ] ( const il_const_iterator& it ) 
@@ -102,12 +93,10 @@ namespace vtil::optimizer::aux
 		//
 		if ( var.is_memory() )
 		{
-			ptr_var = var;
-
 			// If it can't be simplified into $sp + C, assume used.
 			//
 			std::optional delta_o = var.mem().decay().evaluate( [ ] ( const symbolic::unique_identifier& uid )
-															-> std::optional<uint64_t>
+																-> std::optional<uint64_t>
 			{
 				auto var = uid.get<symbolic::variable>();
 				if ( var.is_register() && var.reg().is_stack_pointer() )
@@ -115,272 +104,127 @@ namespace vtil::optimizer::aux
 				return std::nullopt;
 			} ).get<true>();
 			if ( !delta_o ) return true;
-
-			// Create a mask for the variable and a path.
-			//
-			variable_mask = math::fill( var.mem().bit_count );
-
-			// Declare iteration logic.
-			//
-			blueprint
-
-				// @ Clear from the active mask per overwrite.
-				.run( [ & ] ( const il_const_iterator& it ) 
-				{
-					auto& pvar = query::rlocal( ptr_var );
-
-					// Propagate pointer if needed.
-					//
-					if ( pvar.at.container != it.container )
-					{
-						if ( pvar.at.container->sp_index == 0 )
-						{
-							symbolic::expression exp = pvar.mem().decay();
-							exp = 
-								exp
-								- pvar.at.container->sp_offset 
-								+ symbolic::variable{ it.container->begin(), REG_SP }.to_expression()
-								- symbolic::variable{ pvar.at.container->begin(), REG_SP }.to_expression();
-							pvar = symbolic::variable{ it.container->begin(), { symbolic::pointer{ exp }, pvar.mem().bit_count } };
-						}
-					}
-
-					// If instruction is branching, check if stack is discarded.
-					//
-					if ( it->base->is_branching() && it.container->owner->routine_convention.purge_stack )
-					{
-						// Assert this instruction does not read memory.
-						//
-						fassert( !it->base->reads_memory() );
-
-						// Determine the displacement between high write and discarded limit.
-						//
-						symbolic::expression write_high = pvar.mem().decay() + ( pvar.mem().bit_count / 8 );
-						symbolic::expression discard_limit = rel_ptr( { it, REG_SP } ) + it->sp_offset;
-						std::optional disp = ( write_high - discard_limit ).get<true>();
-
-						// If displacement is an immediate value and is below 0, declare discarded.
-						//
-						if ( disp && *disp <= 0 )
-							query::rlocal( variable_mask ) = 0;
-					}
-
-					// Skip if variable is not written to by this instruction.
-					//
-					auto details = pvar.written_by( it, tracer, !is_restricted );
-					if ( !details ) return;
-
-					// If also read or if unknown access, skip.
-					//
-					if ( details.is_unknown() || details.read )
-						return;
-
-					// Clear the mask.
-					//
-					query::rlocal( variable_mask ) &= ~math::fill( details.bit_count, details.bit_offset );
-				} )
-
-				// | Skip further checks if value is dead.
-				.whilst( [ & ] ( const il_const_iterator& it ) { return query::rlocal( variable_mask ) != 0; } )
-
-				// >> Select the instructions that read the value previously written.
-				.where( [ & ] ( const il_const_iterator& it )
-				{
-					auto& pvar = query::rlocal( ptr_var );
-
-					// Skip if variable is not read by this instruction.
-					//
-					auto details = pvar.read_by( it, tracer, !is_restricted );
-					if ( !details ) return false;
-
-					// If unknown access, continue.
-					//
-					if ( details.is_unknown() )
-						return true;
-
-					// If an alive part of the value is read, continue.
-					//
-					if ( query::rlocal( variable_mask ) & math::fill( details.bit_count, details.bit_offset ) )
-						return true;
-
-					// If we are exiting the virtual machine:
-					//
-					if ( it->base->is_branching_real() )
-					{
-						// Use the symbolic variable API.
-						//
-						if ( auto details = pvar.accessed_by( it, tracer, !is_restricted ) )
-						{
-							// If unknown, assume used.
-							//
-							if ( details.is_unknown() )
-								return true;
-
-							// If read from, declare used.
-							//
-							uint64_t adjusted_mask = math::fill( details.bit_count, details.bit_offset );
-							if ( details.read && ( adjusted_mask & query::rlocal( variable_mask ) ) )
-								return true;
-
-							// If written to, clear mask.
-							//
-							if ( details.write )
-								query::rlocal( variable_mask ) &= ~adjusted_mask;
-						}
-					}
-
-					// If improperly terminated block, declare used, else skip.
-					//
-					return is_improper_end( it );
-				} );
 		}
-		// If register variable:
+
+		// Declare iteration logic.
 		//
-		else
+		bool is_used = false;
+		bool is_nr_dead = false;
+		uint64_t mask_0 = var.is_memory() ? math::fill( var.mem().bit_count ) : var.reg().get_mask();
+		auto enumerator = [ &, mask = mask_0, skip_count = 0, local_var = var ]( const il_const_iterator& it ) mutable
 		{
-			auto& reg = var.reg();
-
-			// If volatile register, assume used.
-			//
-			if ( reg.is_volatile() )
-				return true;
-
-			// Create a mask for the variable.
-			//
-			variable_mask = reg.get_mask();
-
-			// If local register, strip recursive flag.
-			//
-			if ( reg.is_local() )
-				rec = false;
-
-			// Declare iteration logic.
-			//
-			blueprint
-				// | Skip further checks if value is dead.
-				.whilst( [ & ] ( const il_const_iterator& it ) { return query::rlocal( variable_mask ) != 0; } )
-
-				// >> Select the instructions that read the value previously written.
-				.where( [ & ] ( const il_const_iterator& it )
-				{
-					// For each register this instruction reads from:
-					//
-					for ( auto [op, type] : it->enum_operands() )
-					{
-						if ( type == operand_type::write || !op.is_register() )
-							continue;
-
-						// If register overlaps, and value is alive, pick.
-						//
-						if ( op.reg().overlaps( reg ) && ( query::rlocal( variable_mask ) & op.reg().get_mask() ) )
-							return true;
-					}
-
-					// If we are exiting the virtual machine:
-					//
-					if ( it->base->is_branching_real() )
-					{
-						// Use the symbolic variable API.
-						//
-						if ( auto details = var.accessed_by( it, tracer ) )
-						{
-							// If unknown, assume used.
-							//
-							if ( details.is_unknown() )
-								return true;
-
-							// If read from, declare used.
-							//
-							uint64_t adjusted_mask = math::fill( details.bit_count, details.bit_offset + reg.bit_offset );
-							if ( details.read && ( adjusted_mask & query::rlocal( variable_mask ) ) )
-								return true;
-
-							// If written to, clear mask.
-							//
-							if ( details.write )
-								query::rlocal( variable_mask ) &= ~adjusted_mask;
-						}
-					}
-
-					// For each register this instruction overwrites:
-					//
-					for ( auto [op, type] : it->enum_operands() )
-					{
-						if ( type != operand_type::write )
-							continue;
-
-						// If register overlaps, strip from mask.
-						//
-						if ( op.reg().overlaps( reg ) )
-							query::rlocal( variable_mask ) &= ~op.reg().get_mask();
-					}
-
-					// If improperly terminated block, declare used, else skip.
-					//
-					return is_improper_end( it );
-				} );
-		}
-
-		// Start the query depending on the recursiveness and return result.
-		//
-		if ( rec )
-		{
-			int skip_count = 0;
-
-			// => Begin forward iterating query:
-			return query::create_recursive( var.at, +1 )
-
-				// >> Skip one.
-				.where( [ & ] ( auto& ) { return query::rlocal( skip_count )++ >= 1; } )
-
-				// @ Make the current mask local per recursion.
-				.bind( variable_mask, ptr_var, skip_count )
-
-				// @ Attach controller.
-				.control( blueprint.to_controller() )
-
-				// := Project to iterator form.
-				.unproject()
-
-				// <= Return used if any instruction reading from this value is hit.
-				.first_g().has_value();
-		}
-		else
-		{
-			// => Begin forward iterating query:
-			auto res = query::create( var.at, +1 )
-
-				// >> Skip one.
-				.skip( 1 )
-
-				// @ Attach controller.
-				.control( blueprint.to_controller() )
-
-				// := Project to iterator form.
-				.unproject()
-
-				// <= Return first result.
-				.first();
-
-			// If found an instruction reading the value, indicate so.
-			//
-			if ( res.has_value() ) 
-				return true;
-
-			// If mask is not cleared and query was restricted:
-			//
-			if ( is_restricted && variable_mask )
+			const auto declare_used = [ & ] ()
 			{
-				// Report used if global register and block is not exiting vm.
+				is_used = true;
+				return enumerator::obreak_r;
+			};
+
+			// Skip first instruction.
+			//
+			if ( skip_count++ == 0 )
+				return enumerator::ocontinue;
+			
+			// If memory variable:
+			//
+			if ( var.is_memory() )
+			{
+				// Propagate pointer if needed.
 				//
-				if ( !var.at.container->is_complete() || var.at.container->stream.back().base != &ins::vexit )
-					return !var.is_register() || !var.reg().is_local();
+				if ( local_var.at.container != it.container )
+				{
+					if ( local_var.at.container->sp_index == 0 )
+					{
+						symbolic::expression exp = local_var.mem().decay();
+						exp =
+							exp
+							- local_var.at.container->sp_offset
+							+ symbolic::variable{ it.container->begin(), REG_SP }.to_expression()
+							- symbolic::variable{ local_var.at.container->begin(), REG_SP }.to_expression();
+						local_var = symbolic::variable{ it.container->begin(), { symbolic::pointer{ exp }, local_var.mem().bit_count } };
+					}
+				}
+
+				// If instruction is branching, check if stack is discarded.
+				//
+				if ( it->base->is_branching() && it.container->owner->routine_convention.purge_stack )
+				{
+					// Assert this instruction does not read memory.
+					//
+					fassert( !it->base->reads_memory() );
+
+					// Determine the displacement between high write and discarded limit.
+					//
+					symbolic::expression write_high = local_var.mem().decay() + ( local_var.mem().bit_count / 8 );
+					symbolic::expression discard_limit = rel_ptr( { it, REG_SP } ) + it->sp_offset;
+					std::optional disp = ( write_high - discard_limit ).get<true>();
+
+					// If displacement is an immediate value and is below 0, declare discarded.
+					//
+					if ( disp && *disp <= 0 )
+					{
+						mask = 0;
+						is_nr_dead = true;
+						return enumerator::obreak;
+					}
+					// TODO: Partial discarding??
+				}
 			}
 
-			// Report not used.
+			// Check if variable is accessed by this instruction.
 			//
+			auto details = local_var.accessed_by( it, tracer, !is_restricted );
+
+			// If possible read, declare used.
+			//
+			if ( details.read )
+			{
+				if ( details.is_unknown() || ( mask & math::fill( details.bit_count, details.bit_offset ) ) )
+					return declare_used();
+			}
+			// If known overwrite:
+			//
+			else if ( details.write && !details.is_unknown() )
+			{
+				// Clear the mask.
+				//
+				mask &= ~math::fill( details.bit_count, details.bit_offset );
+			}
+
+			// Break if value is dead.
+			//
+			if ( !mask )
+			{
+				is_nr_dead = true;
+				return enumerator::obreak;
+			}
+
+			// If improperly terminated block, declare used, else skip.
+			//
+			return is_improper_end( it ) ? declare_used() : enumerator::ocontinue;
+		};
+
+		// Invoke the enumerator.
+		//
+		var.at.container->owner->enumerate(
+			enumerator,
+			var.at,
+			rec ? il_const_iterator{} : var.at.container->end()
+		);
+
+		// If found an instruction reading the value, indicate so.
+		//
+		if ( is_used ) 
+			return true;
+
+		// If query was not restricted or if mask is dead, declare not-used.
+		//
+		if ( !is_restricted || is_nr_dead ) 
 			return false;
-		}
+
+		// Report used if global register and block is not exiting vm.
+		//
+		return ( !var.at.container->is_complete() || var.at.container->stream.back().base != &ins::vexit ) && 
+			   ( !var.is_register() || var.reg().is_global() );
 	}
 
 	// Helper to check if the given symbolic variable's value is preserved upto [dst].

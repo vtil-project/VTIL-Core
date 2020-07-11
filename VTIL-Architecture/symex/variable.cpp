@@ -437,7 +437,7 @@ namespace vtil::symbolic
 				// Report unknown access: (TODO: Proper parsing!)
 				// - We can estimate usage based on registers passed, maybe?
 				//
-				return { .bit_count = var.bit_count(), .unknown = true };
+				return { .bit_count = var.bit_count(), .read = true, .write = true, .unknown = true, };
 			}
 		}
 
