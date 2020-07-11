@@ -27,26 +27,74 @@
 //
 #pragma once
 #include <vtil/arch>
-#include <thread>
 #include <vtil/io>
 #include <chrono>
+#include <algorithm>
+#include <functional>
+#include <thread>
+#include <future>
+
+// [Configuration]
+// Determine whether or not to use parallel transformations and thread pooling.
+//
+#ifndef VTIL_OPT_USE_THREAD_POOLING
+	#define VTIL_OPT_USE_PARALLEL_TRANSFORM true
+	#define VTIL_OPT_USE_THREAD_POOLING     false
+#endif
 
 namespace vtil::optimizer
 {
 	// Passes every block through the transformer given in parallel, returns the 
 	// number of instances where this transformation was applied.
 	//
-	static size_t transform_parallel( routine* rtn, const std::function<size_t( basic_block* )>& fn )
+	template<typename T, typename... Tx>
+	static size_t transform_parallel( routine* rtn, T&& fn, Tx&&... args )
 	{
+		// Declare worker and allocate the final result.
+		//
 		std::atomic<size_t> n = { 0 };
-		std::vector<std::thread> pool;
-		pool.reserve( rtn->explored_blocks.size() );
-		rtn->for_each( [ & ] ( auto* blk )
+		auto worker = [ & ] ( basic_block* blk )
 		{
-			pool.emplace_back( [ & ] ( auto* b ) { n += fn( b ); }, blk );
-		} );
-		for ( auto& thread : pool )
-			thread.join();
+			n += fn( blk, args... );
+		};
+
+		// If parallel transformation is disabled, use fallback.
+		//
+		if constexpr ( !VTIL_OPT_USE_PARALLEL_TRANSFORM )
+		{
+			rtn->for_each( worker );
+		}
+		// If thread pooling is enabled, use std::future.
+		//
+		else if constexpr ( VTIL_OPT_USE_THREAD_POOLING )
+		{
+			std::vector<std::future<void>> pool;
+			pool.reserve( rtn->explored_blocks.size() );
+
+			rtn->for_each( [ & ] ( basic_block* blk )
+			{
+				pool.emplace_back( std::async( std::launch::async, worker, blk ) );
+			} );
+
+			std::for_each( pool.begin(), pool.end(), std::mem_fn( &std::future<void>::wait ) );
+		}
+		// If thread pooling is disabled, use std::thread.
+		//
+		else
+		{
+			std::vector<std::thread> pool;
+			pool.reserve( rtn->explored_blocks.size() );
+
+			rtn->for_each( [ & ] ( auto* blk )
+			{
+				pool.emplace_back( worker, blk );
+			} );
+
+			std::for_each( pool.begin(), pool.end(), std::mem_fn( &std::thread::join ) );
+		}
+
+		// Return final result.
+		//
 		return n;
 	}
 
