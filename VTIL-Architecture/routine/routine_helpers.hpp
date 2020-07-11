@@ -40,6 +40,17 @@ namespace vtil
 		template<typename callback, typename iterator_type, bool fwd, typename visit_callback>
 		static bool enumerate_instructions( callback&& fn, iterator_type it, const iterator_type& dst, visit_callback& visit )
 		{
+			// If enumerating backwards:
+			//
+			if constexpr ( !fwd )
+			{
+				// If iterator is at destination or is invalid, return.
+				if ( it == dst || !it.is_valid() ) return;
+
+				// Skip one.
+				std::advance( it, -1 );
+			}
+
 			// Until we reach the destination:
 			//
 			const std::vector<basic_block*>* links = nullptr;
@@ -60,10 +71,10 @@ namespace vtil
 				if ( order.should_break )
 					return order.global_break;
 
-				// If we reached the end of the block, set links and break.
+				// If we reached the beginning of the block, set links and break.
 				// - Backwards
 				//
-				if ( !fwd && it.is_end() )
+				if ( !fwd && it.is_begin() )
 				{
 					links = &it.container->prev;
 					break;
