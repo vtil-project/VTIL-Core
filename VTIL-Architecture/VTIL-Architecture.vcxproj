@@ -19,6 +19,7 @@
     <ClInclude Include="misc\debug.hpp" />
     <ClInclude Include="routine\basic_block.hpp" />
     <ClInclude Include="routine\call_convention.hpp" />
+    <ClInclude Include="routine\routine_helpers.hpp" />
     <ClInclude Include="routine\instruction.hpp" />
     <ClInclude Include="routine\routine.hpp" />
     <ClInclude Include="routine\serialization.hpp" />

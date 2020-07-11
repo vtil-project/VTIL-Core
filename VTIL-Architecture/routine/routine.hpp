@@ -169,6 +169,15 @@ namespace vtil
 		//
 		void delete_block( basic_block* block );
 
+		// Enumerates every instruction in the routine forward/backward, within the boundaries if specified.
+		// - enumerate_bwd should pass a valid src as multiple exists are allowed.
+		// -- @ routine_helpers.hpp
+		//
+		template<typename callback, typename iterator_type = il_iterator>
+		void enumerate( callback fn, const iterator_type& src = {}, const iterator_type& dst = {} ) const;
+		template<typename callback, typename iterator_type = il_iterator>
+		void enumerate_bwd( callback fn, const iterator_type& src = {}, const iterator_type& dst = {} ) const;
+
 		// Returns the number of basic blocks and instructions in the routine.
 		//
 		size_t num_blocks() const;

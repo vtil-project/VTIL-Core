@@ -87,6 +87,9 @@
     <ClInclude Include="arch\identifier.hpp">
       <Filter>Architecture</Filter>
     </ClInclude>
+    <ClInclude Include="routine\routine_helpers.hpp">
+      <Filter>Instruction Stream</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="arch\instruction_desc.cpp">
