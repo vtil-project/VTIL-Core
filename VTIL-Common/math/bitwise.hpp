@@ -106,6 +106,42 @@ namespace vtil::math
 #endif
     }
 
+    // Used to find a bit with a specific value in a linear memory region.
+    //
+    static constexpr size_t bit_npos = ( size_t ) -1;
+    
+    template<typename T>
+    static size_t find_bit( const T* begin, const T* end, bool value )
+    {
+        static constexpr size_t bit_size = sizeof( T ) * 8;
+        using uint_t = std::make_unsigned_t<T>;
+        using int_t =  std::make_signed_t<T>;
+
+        // Generate the xor mask, if we're looking for 1, -!1 will evaluate to 0,
+        // otherwise -!0 will evaluate to 0xFF.. in order to flip all bits.
+        //
+        uint_t xor_mask = ( uint_t ) ( -( ( int_t ) !value ) );
+
+        // Loop each block:
+        //
+        size_t n = 0;
+        for ( auto it = begin; it != end; it++, n += bit_size )
+        {
+            // If we could find the bit in the block:
+            //
+            if ( bitcnt_t i = math::lsb( *it ^ xor_mask ) )
+            {
+                // Return after adjusting the index.
+                //
+                return n + i - 1;
+            }
+        }
+
+        // Return invalid index.
+        //
+        return bit_npos;
+    }
+
     // Generate a mask for the given variable size and offset.
     //
     static constexpr uint64_t fill( bitcnt_t bit_count, bitcnt_t bit_offset = 0 )

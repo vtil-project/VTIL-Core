@@ -23,6 +23,7 @@
 #include "../../util/static_warning.hpp"
 #include "../../util/random.hpp"
 #include "../../util/profiler.hpp"
+#include "../../util/bitmap.hpp"
 
 // VTIL namespace should be able to use literals by default without having to include it.
 //

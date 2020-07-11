@@ -29,13 +29,16 @@
 #include <mutex>
 #include <atomic>
 #include "../ext/colony.hpp"
+#include "../util/bitmap.hpp"
 #include "thread_identifier.hpp"
 
 // [Configuration]
-// Determine the number of buckets we allocate.
+// Determine the number of buckets and the rellocation buffer entries we allocate and reserve.
 //
 #ifndef VTIL_OBJECT_POOL_BUCKETS
-	#define	VTIL_OBJECT_POOL_BUCKETS 512
+	#define	VTIL_OBJECT_POOL_BUCKETS         512
+	#define VTIL_OBJECT_POOL_REALLOC_BUFFER  1024
+	#define VTIL_OBJECT_POOL_REALLOC_RESERVE 512
 #endif
 namespace vtil
 {
@@ -48,7 +51,7 @@ namespace vtil
 
 		// Define a type-less iterator to store in the value entry.
 		//
-		using generic_iterator = typename  plf::colony<bool>::iterator;
+		using generic_iterator = typename plf::colony<bool>::iterator;
 		struct object_entry
 		{
 			void* bucket;
@@ -83,15 +86,90 @@ namespace vtil
 			return &buckets[ get_thread_id() % VTIL_OBJECT_POOL_BUCKETS ];
 		}
 
+		// Define a simple buffer used for fast "reallocation".
+		//
+		struct reallocation_buffer
+		{
+			bitmap<VTIL_OBJECT_POOL_REALLOC_BUFFER> state = {};
+			T* entries[ VTIL_OBJECT_POOL_REALLOC_BUFFER ] = {};
+
+			// Pushes the given pointer to the buffer.
+			//
+			bool push( T* p )
+			{
+				size_t n = state.find( false );
+				if ( n == math::bit_npos ) return false;
+				state.set( n, true );
+				entries[ n ] = p;
+				return true;
+			}
+
+			// Tries to pop an entry from the buffer, returns nullptr on failure.
+			//
+			T* pop()
+			{
+				size_t n = state.find( true );
+				if ( n == math::bit_npos ) return nullptr;
+				state.set( n, false );
+				return std::exchange( entries[ n ], nullptr );
+			}
+
+			// Deallocate any leftovers upon destruction.
+			//
+			~reallocation_buffer()
+			{
+				auto entry_it = entries;
+				for ( auto it = std::begin( state.blocks ); it != std::end( state.blocks ); it++, entry_it += 64 )
+					for ( size_t i = 0; i < 64; i++, *it >>= 1 )
+						if( *it & 1 )
+							object_pool<T>{}.deallocate( entry_it[ i ] );
+			}
+		};
+		inline static thread_local reallocation_buffer buffer = {};
+
 		inline T* allocate( size_t count = 1 )
 		{
 			// Must not be used to allocate an array.
 			//
 			fassert( count == 1 );
 
+			// Try the fast path where possible.
+			//
+			if ( auto p = buffer.pop() )
+				return p;
+
 			// Get current bucket.
 			//
 			colony_bucket* bucket = get_bucket();
+
+			// If buffer is empty, populate it.
+			//
+			if ( buffer.state.find( true ) == math::bit_npos )
+			{
+				static constexpr size_t reserved_count = VTIL_OBJECT_POOL_REALLOC_RESERVE & ~7;
+
+				// Lock the mutex.
+				//
+				std::lock_guard _g{ bucket->mtx };
+
+				// Insert N reserved entries and insert them.
+				//
+				for ( size_t n = 0; n < reserved_count; n++ )
+				{
+					type_iterator it = bucket->colony.emplace();
+					it->bucket = bucket;
+					it->iterator = ( generic_iterator& ) it;
+					buffer.entries[ n ] = ( T* ) it->raw_data;
+				}
+				memset( buffer.state.blocks, 0xFF, reserved_count / 8 );
+
+				// Allocate an additional entry and return it.
+				//
+				type_iterator it = bucket->colony.emplace();
+				it->bucket = bucket;
+				it->iterator = ( generic_iterator& ) it;
+				return ( T* ) it->raw_data;
+			}
 
 			// Lock the mutex, emplace an empty object and unlock.
 			//
@@ -105,11 +183,17 @@ namespace vtil
 			it->iterator = ( generic_iterator& ) it;
 			return ( T* ) it->raw_data;
 		}
+
 		inline void deallocate( T* pointer, size_t count = 1 ) noexcept
 		{
 			// Must not be used to deallocate an array.
 			//
 			fassert( count == 1 );
+
+			// Try the fast path where possible.
+			//
+			if ( buffer.push( pointer ) )
+				return;
 
 			// Get the object header from the pointer.
 			//
