@@ -165,7 +165,7 @@ namespace vtil
 
 		// If object is inline, calculate the inline address, otherwise return the external pointer.
 		//
-		return is_inline ? calc_inline_address( inl, std::end( inl ), size, align ) : ( uint64_t ) ext;
+		return is_inline ? calc_inline_address<true>( inl, std::end( inl ), size, align ) : ( uint64_t ) ext;
 	}
 
 	// Allocates the space for an object of the given properties and returns the pointer.
