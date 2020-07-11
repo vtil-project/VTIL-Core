@@ -39,7 +39,7 @@ namespace vtil::optimizer
 
 		symbolic::expression trace( const symbolic::variable& lookup ) override
 		{
-			if( bypass )
+			if( bypass || lookup.at.is_end() )
 				return cached_tracer::trace( lookup );
 
 			// If iterator is at a str instruction and we're 
@@ -252,7 +252,10 @@ namespace vtil::optimizer
 		for ( auto [it, ins, var] : ins_revive_swap_buffer )
 		{
 			it->base = ins;
-			it->operands = { it->operands[ 0 ], aux::revive_register( var, it ) };
+
+			auto& rev = revive_list[ var ];
+			if ( !rev.is_valid() ) rev = aux::revive_register( var, it );
+			it->operands = { it->operands[ 0 ], rev };
 			it->is_valid( true );
 		}
 		return ins_swap_buffer.size() + ins_revive_swap_buffer.size();
