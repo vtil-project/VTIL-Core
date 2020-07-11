@@ -157,8 +157,8 @@ namespace vtil
 			{
 				if ( !is_valid() ) return "invalid";
 				if ( is_end() )    return format::str( "end@block#%llx", container->entry_vip );
-				if ( is_begin() )  return format::str( "#0@block%llx",   container->entry_vip );
-				else               return format::str( "#d@block%llx",   std::distance( container->begin(), *this ), container->entry_vip );
+				if ( is_begin() )  return format::str( "begin@block%llx",   container->entry_vip );
+				else               return format::str( "#%04d@block%llx",   std::distance( container->begin(), *this ), container->entry_vip );
 			}
 
 			// Make hashable.
