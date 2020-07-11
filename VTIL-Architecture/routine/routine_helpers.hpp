@@ -35,12 +35,12 @@ namespace vtil
 {
 	namespace impl
 	{
-		template<typename callback, typename iterator_type, bool fwd>
-		static void enumerate_instructions( callback&& fn, iterator_type it, const iterator_type& dst, path_set& set )
+		template<typename callback, typename iterator_type, bool fwd, typename visit_callback>
+		static void enumerate_instructions( callback&& fn, iterator_type it, const iterator_type& dst, visit_callback& visit )
 		{
-			// If already in path-set, skip.
+			// Skip if we should not visit this block.
 			//
-			if ( !set.emplace( it.container ).second )
+			if ( !visit( it.container ) )
 				return;
 
 			// Until we reach the destination:
@@ -82,8 +82,8 @@ namespace vtil
 				constexpr auto make_it = [ ] ( basic_block* blk ) -> iterator_type { return fwd ? blk->begin() : blk->end(); };
 
 				for ( auto i = links->end() - 1; i != links->begin(); i-- )
-					enumerate_instructions<callback, iterator_type, fwd>( make_copy<callback>( fn ), make_it( *i ), dst, set );
-				enumerate_instructions<callback, iterator_type, fwd>( std::forward<callback>( fn ), make_it( links->front() ), dst, set );
+					enumerate_instructions<callback, iterator_type, fwd>( make_copy<callback>( fn ), make_it( *i ), dst, visit );
+				enumerate_instructions<callback, iterator_type, fwd>( std::forward<callback>( fn ), make_it( links->front() ), dst, visit );
 			}
 		}
 	};
@@ -94,24 +94,52 @@ namespace vtil
 	void routine::enumerate( callback fn, const iterator_type& src, const iterator_type& dst ) const
 	{
 		path_set set = {};
+		const path_set* set_allowed = dst.is_valid() ? &src.container->owner->get_path( src.container, dst.container ) : nullptr;
+
+		auto visitor = [ & ] ( basic_block* blk )
+		{
+			// Should be in allowed list if relevant.
+			//
+			if ( set_allowed && !set_allowed->contains( blk ) )
+				return false;
+
+			// Should not be in path-set.
+			//
+			return set.emplace( blk ).second;
+		};
+
 		impl::enumerate_instructions<callback, iterator_type, true>
 		(
 			std::move( fn ), 
 			src,
 			dst, 
-			set 
+			visitor
 		);
 	}
 	template<typename callback, typename iterator_type>
 	void routine::enumerate_bwd( callback fn, const iterator_type& src, const iterator_type& dst ) const
 	{
 		path_set set = {};
+		const path_set* set_allowed = dst.is_valid() ? &src.container->owner->get_path_bwd( src.container, dst.container ) : nullptr;
+
+		auto visitor = [ & ] ( basic_block* blk )
+		{
+			// Should be in allowed list if relevant.
+			//
+			if ( set_allowed && !set_allowed->contains( blk ) )
+				return false;
+
+			// Should not be in path-set.
+			//
+			return set.emplace( blk ).second;
+		};
+
 		impl::enumerate_instructions<callback, iterator_type, false>
 		(
 			std::move( fn ), 
 			src, 
 			dst, 
-			set 
+			visitor
 		);
 	}
 };
