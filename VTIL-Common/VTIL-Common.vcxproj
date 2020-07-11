@@ -147,6 +147,7 @@
     <ClInclude Include="query\range_iterator_contract.hpp" />
     <ClInclude Include="query\recursive_view.hpp" />
     <ClInclude Include="query\view.hpp" />
+    <ClInclude Include="util\bitmap.hpp" />
     <ClInclude Include="util\concept.hpp" />
     <ClInclude Include="util\constexpr_random.hpp" />
     <ClInclude Include="util\copy_on_write.hpp" />
