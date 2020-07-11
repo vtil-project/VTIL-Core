@@ -165,7 +165,7 @@ namespace vtil::optimizer
 
 					// Create store mask.
 					//
-					auto store_mask = math::fill( sz, offset_mod * 8 );
+					auto store_mask = math::fill( sz, math::narrow_cast<bitcnt_t>( offset_mod * 8 ) );
 
 					// Do cache lookup. If this mask shadows an existing write, overwrite. Otherwise, add entry to cache.
 					//
@@ -269,7 +269,7 @@ namespace vtil::optimizer
 
 				// Create read mask.
 				//
-				auto read_mask = math::fill( sz, offset_mod * 8 );
+				auto read_mask = math::fill( sz, math::narrow_cast<bitcnt_t>( offset_mod * 8 ) );
 
 				// Do a cache lookup. Find all stores that overlap this load.
 				//
