@@ -35,7 +35,7 @@ namespace vtil
 	// a return value or just [duration].
 	//
 	template<typename T>
-	static auto profile( const T& f )
+	static auto profile( T&& f )
 	{
 		using result_t = decltype( std::declval<T>()() );
 
@@ -54,5 +54,16 @@ namespace vtil
 			auto t1 = std::chrono::steady_clock::now();
 			return std::make_pair( res, t1 - t0 );
 		}
+	}
+
+	// Same as ::profile but ignores the return value and runs N times.
+	//
+	template<typename T>
+	static auto profile_n( T&& f, size_t n )
+	{
+		auto t0 = std::chrono::steady_clock::now();
+		while( n-- != 0 ) f();
+		auto t1 = std::chrono::steady_clock::now();
+		return t1 - t0;
 	}
 };
