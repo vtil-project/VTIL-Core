@@ -55,7 +55,7 @@ namespace vtil
 			using ret_type = decltype( fn( std::declval<Tx&&>()... ) );
 
 			if constexpr ( std::is_same_v<ret_type, void> )
-				return odefault;
+				return fn( std::forward<Tx>( args )... ), odefault;
 			else if constexpr ( std::is_same_v<ret_type, tagged_order> )
 				return fn( std::forward<Tx>( args )... );
 			else
