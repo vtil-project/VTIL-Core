@@ -452,12 +452,12 @@ namespace vtil::query
 				collect();
 				return std::nullopt;
 			}
-			catch ( result_wrapper&& ex )
+			catch ( result_wrapper& ex )
 			{
 				// Restore local state and return.
 				//
 				impl::local_state = prev_state;
-				return ex.result;
+				return std::move( ex.result );
 			}
 		}
 	};
