@@ -367,20 +367,14 @@ namespace vtil::optimizer::aux
 			if ( res.has_value() ) 
 				return true;
 
-			// If mask is not cleared:
+			// If mask is not cleared and query was restricted:
 			//
-			if ( variable_mask != 0 )
+			if ( is_restricted && variable_mask )
 			{
-				// If query was restricted, report used if not local register.
+				// Report used if global register and block is not exiting vm.
 				//
-				if ( is_restricted )
-				{
-					// If block is complete and is exiting vm, report not used.
-					//
-					if ( var.at.container->is_complete() && var.at.container->stream.back().base == &ins::vexit )
-						return false;
+				if ( !var.at.container->is_complete() || var.at.container->stream.back().base != &ins::vexit )
 					return !var.is_register() || !var.reg().is_local();
-				}
 			}
 
 			// Report not used.
@@ -413,52 +407,27 @@ namespace vtil::optimizer::aux
 				return false;
 		}
 
-		// If block-local check:
+		// Create enumerator and return is_alive after execution.
 		//
-		if( var.at.container == dst.container )
+		bool is_alive = true;
+		auto check = [ & ] ( const il_const_iterator& it )
 		{
-			// => Begin a foward iterating query.
+			// If instruction writes to the variable:
 			//
-			auto res = query::create( var.at, +1 )
-				// | Stop execution if the destination is reached.
-				.until( dst )
-				// := Project back to the iterator type.
-				.unproject()
-				// >> Skip until we find a write into the variable queried.
-				.where( [ & ] ( const il_const_iterator& i ) { return var.written_by( i, tracer ); } )
-				// <= Return first match.
-				.first();
+			if ( var.written_by( it, tracer, rec ) )
+			{
+				// Mark dead and break recursively.
+				//
+				is_alive = false;
+				return enumerator::obreak_r;
+			}
 
-			// If no match was found, register is alive.
+			// If not, continue iteration.
 			//
-			return !res.has_value();
-		}
-		// If cross-block check:
-		//
-		else
-		{
-			// Restrict iterator.
-			//
-			auto it_rstr = il_const_iterator{ var.at }
-				.clear_restrictions()
-				.restrict_path( dst.container, true );
-
-			// => Begin a foward iterating recursive query.
-			//
-			auto res = query::create_recursive( it_rstr, +1 )
-				// | Stop execution if the destination is reached.
-				.until( dst )
-				// := Project back to the iterator type.
-				.unproject()
-				// >> Skip until we find a write into the variable queried.
-				.where( [ & ] ( const il_const_iterator& i ) { return var.written_by( i, tracer, rec ); } )
-				// <= Return first match, if found register is dead.
-				.first_g();
-
-			// If no match was found, register is alive.
-			//
-			return !res.has_value();
-		}
+			return enumerator::ocontinue;
+		};
+		dst.container->owner->enumerate( check, var.at, dst );
+		return is_alive;
 	}
 
 	// Revives the value of the given variable to be used by the point specified.

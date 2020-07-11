@@ -39,7 +39,7 @@
 //
 #ifndef VTIL_OPT_USE_THREAD_POOLING
 	#define VTIL_OPT_USE_PARALLEL_TRANSFORM true
-	#define VTIL_OPT_USE_THREAD_POOLING     false
+	#define VTIL_OPT_USE_THREAD_POOLING     true
 #endif
 
 namespace vtil::optimizer
