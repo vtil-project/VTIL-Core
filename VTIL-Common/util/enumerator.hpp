@@ -41,11 +41,10 @@ namespace vtil
 		{ 
 			bool should_break = false;
 			bool global_break = false;
-			constexpr bool operator==( tagged_order other ) const { return should_break == other.should_break; }
 		};
-		static constexpr tagged_order obreak =    { .should_break = true, .global_break = false };
-		static constexpr tagged_order obreak_r =  { .should_break = true, .global_break = true };
-		static constexpr tagged_order ocontinue = {}, odefault = {};
+		static constexpr tagged_order obreak =    { .should_break = true,  .global_break = false };
+		static constexpr tagged_order obreak_r =  { .should_break = true,  .global_break = true  };
+		static constexpr tagged_order ocontinue = { .should_break = false, .global_break = false };
 
 		// Enumeratee should use this function to get order from any callee.
 		//
@@ -55,7 +54,7 @@ namespace vtil
 			using ret_type = decltype( fn( std::declval<Tx&&>()... ) );
 
 			if constexpr ( std::is_same_v<ret_type, void> )
-				return fn( std::forward<Tx>( args )... ), odefault;
+				return fn( std::forward<Tx>( args )... ), ocontinue;
 			else if constexpr ( std::is_same_v<ret_type, tagged_order> )
 				return fn( std::forward<Tx>( args )... );
 			else
