@@ -118,11 +118,13 @@ namespace vtil
 
 		// Invokes the enumerator passed for each basic block this routine contains.
 		//
-		void for_each( const std::function<void( basic_block* )>& enumerator )
+		template<typename T>
+		void for_each( T&& fn )
 		{
 			std::lock_guard _g( mutex );
 			for ( auto& [vip, block] : explored_blocks )
-				enumerator( block );
+				if ( enumerator::invoke( fn, block ).should_break )
+					return;
 		}
 
 		// Gets the calling convention for the given VIP (that resolves into VXCALL.
