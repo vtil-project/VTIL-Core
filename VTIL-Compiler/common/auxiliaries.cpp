@@ -80,7 +80,7 @@ namespace vtil::optimizer::aux
 			return tracer->rtrace_p( std::move( lookup ) );
 		};
 
-		// If improperly terminated block, declare used.
+		// If at the end of improperly terminated block, declare used.
 		//
 		constexpr auto is_improper_end = [ ] ( const il_const_iterator& it ) 
 		{
@@ -104,13 +104,14 @@ namespace vtil::optimizer::aux
 				return std::nullopt;
 			} ).get<true>();
 			if ( !delta_o ) return true;
+			// TODO: Trace pointer.
 		}
 
 		// Declare iteration logic.
 		//
 		bool is_used = false;
 		bool is_nr_dead = false;
-		uint64_t mask_0 = var.is_memory() ? math::fill( var.mem().bit_count ) : var.reg().get_mask();
+		uint64_t mask_0 = math::fill( var.bit_count() );
 		auto enumerator = [ &, mask = mask_0, skip_count = 0, local_var = var ]( const il_const_iterator& it ) mutable
 		{
 			const auto declare_used = [ & ] ()

@@ -56,6 +56,7 @@ namespace vtil::optimizer
 		auto worker = [ & ] ( basic_block* blk )
 		{
 			n += fn( blk, args... );
+			symbolic::purge_simplifier_cache();
 		};
 
 		// If parallel transformation is disabled, use fallback.
