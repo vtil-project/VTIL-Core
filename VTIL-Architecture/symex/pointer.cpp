@@ -97,12 +97,12 @@ namespace vtil::symbolic
 
 	// Construct from symbolic expression.
 	//
-	pointer::pointer( const expression& _base ) : base( _base.simplify() )
+	pointer::pointer( const expression::reference& _base ) : base( _base->simplify_hint ? _base : _base->simplify() )
 	{
 		// Determine pointer strength and the flags.
 		//
 		strength = +1;
-		base.evaluate( [ & ] ( const unique_identifier& uid )
+		base->evaluate( [ & ] ( const unique_identifier& uid )
 		{
 			// If variable is a register that is a restricted base pointer:
 			//
@@ -128,7 +128,7 @@ namespace vtil::symbolic
 		//
 		for ( auto [xptr, key] : zip( xpointer, xpointer_keys ) )
 		{
-			xptr = base.get( [ k = uint64_t( key >> 1 ) ]( const unique_identifier& uid )
+			xptr = base->get( [ k = uint64_t( key >> 1 ) ]( const unique_identifier& uid )
 			{
 				// Hash the identifier of the value with the current key and mask it.
 				//
@@ -154,7 +154,7 @@ namespace vtil::symbolic
 	pointer pointer::operator+( int64_t dst ) const
 	{
 		pointer copy = *this;
-		copy.base = std::move( copy.base ).decay() + dst;
+		copy.base = std::move( copy.base ) + dst;
 		std::transform(
 			std::begin( xpointer ), std::end( xpointer ),
 			std::begin( copy.xpointer ),
@@ -171,7 +171,7 @@ namespace vtil::symbolic
 		for ( size_t n = 1; n < xpointer.size(); n++ )
 			if ( ( xpointer[ n ] - o.xpointer[ n ] ) != delta )
 				return std::nullopt;
-		return ( base.decay() - o.base.decay() ).get<true>();
+		return ( base - o.base ).get<true>();
 	}
 
 	// Checks whether the two pointers can overlap in terms of real destination, 

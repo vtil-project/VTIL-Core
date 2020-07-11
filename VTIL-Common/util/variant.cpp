@@ -33,6 +33,7 @@ namespace vtil
 	// Calculates the address of an inline object within the region [begin-end]
 	// with the given size and alignment properties.
 	//
+	template<bool get>
 	static uint64_t calc_inline_address( const void* begin, const void* end, size_t size, size_t align )
 	{
 		// Calculate inline boundaries. 
@@ -44,6 +45,10 @@ namespace vtil
 		//
 		uint64_t align_mask = align - 1;
 		uint64_t ptr_a = ( ptr + align_mask ) & ~align_mask;
+
+		// Skip overflow check if getter.
+		//
+		if constexpr ( get ) return ptr_a;
 
 		// If overflows, return null, else return the aligned address.
 		//
@@ -169,7 +174,7 @@ namespace vtil
 	{
 		// Calculate the inline address, if successful reference the inline object.
 		//
-		if ( uint64_t inline_adr = calc_inline_address( inl, std::end( inl ), size, align ) )
+		if ( uint64_t inline_adr = calc_inline_address<false>( inl, std::end( inl ), size, align ) )
 		{
 			is_inline = true;
 			return ( void* ) inline_adr;

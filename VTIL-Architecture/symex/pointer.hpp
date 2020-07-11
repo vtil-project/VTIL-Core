@@ -39,7 +39,7 @@
 // or the value estimated by the xpointers, and the number of xpointers we use.
 //
 #ifndef VTIL_SYM_PTR_XPTR_KEYS
-	#define VTIL_SYM_PTR_XPTR_KEYS 8
+	#define VTIL_SYM_PTR_XPTR_KEYS 4
 #endif
 
 namespace vtil::symbolic
@@ -63,7 +63,7 @@ namespace vtil::symbolic
 		// The symbolic expression that will represent the virtual address 
 		// if resolved to an immediate value.
 		// 
-		boxed_expression base;
+		expression::reference base;
 
 		// Special flags of the registers the base contains.
 		//
@@ -84,7 +84,8 @@ namespace vtil::symbolic
 
 		// Construct from symbolic expression.
 		//
-		pointer( const expression& base );
+		pointer( const expression::reference& base );
+		pointer( const expression& base ) : pointer( expression::reference{ base } ) {}
 
 		// Default copy/move.
 		//
@@ -115,10 +116,10 @@ namespace vtil::symbolic
 
 		// Conversion to human-readable format.
 		//
-		std::string to_string() const { return base.to_string(); }
+		std::string to_string() const { return base ? base->to_string() : "null"; }
 
 		// Define reduction.
 		//
-		REDUCE_TO( flags, strength, xpointer, base );
+		REDUCE_TO( flags, strength, xpointer, ( boxed_expression& ) ( base ? *base : impl::null_expression ) );
 	};
 };

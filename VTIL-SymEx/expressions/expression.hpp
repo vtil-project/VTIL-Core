@@ -262,6 +262,13 @@ namespace vtil::symbolic
 		//
 		expression& make_lazy() { is_lazy = true; return *this; }
 	};
+	
+	// Constant null expression that can be used as a reference.
+	//
+	namespace impl
+	{
+		static const expression null_expression = {};
+	};
 
 	// Boxed expression solves the aforementioned problem by creating a type that can be 
 	// used for the storage of an expression in a way that it is meant to be comparable.

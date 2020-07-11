@@ -76,8 +76,8 @@ namespace vtil::symbolic
 		{
 			// If two pointers' origins mismatch, propagate first.
 			//
-			auto o1 = get_pointer_origin( p1.base );
-			auto o2 = get_pointer_origin( p2.base );
+			auto o1 = get_pointer_origin( *p1.base );
+			auto o2 = get_pointer_origin( *p2.base );
 			if ( o1 != o2 && o1 && o2 )
 			{
 				// Allocate temporary storage for new pointers.
@@ -92,8 +92,8 @@ namespace vtil::symbolic
 				{
 					// Transform base pointer:
 					//
-					symbolic::expression base = in->base;
-					base.transform( [ & ] ( symbolic::expression& exp )
+					symbolic::expression::reference base = in->base;
+					( +base )->transform( [ & ] ( symbolic::expression& exp )
 					{
 						// Skip if not variable.
 						//
@@ -165,8 +165,8 @@ namespace vtil::symbolic
 			//
 			else if ( xblock && tracer && !p1.can_overlap_s( p2 ) )
 			{
-				pointer p1r = { tracer->rtrace_exp( p1.base ) };
-				pointer p2r = { tracer->rtrace_exp( p2.base ) };
+				pointer p1r = { tracer->rtrace_exp( *p1.base ) };
+				pointer p2r = { tracer->rtrace_exp( *p2.base ) };
 				return fill_displacement( details, p1r, p2r, nullptr, false );
 			}
 			// If all fails, declare unknown.
@@ -495,7 +495,7 @@ namespace vtil::symbolic
 
 			// Must have a valid pointer of 64 bits.
 			//
-			validate( mem.base.base && mem.base.base.size() == 64 );
+			validate( mem.decay() && mem.decay().size() == 64 );
 
 			// Bit count should be within (0, 64] and byte-addressable.
 			//

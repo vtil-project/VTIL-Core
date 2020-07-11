@@ -230,8 +230,8 @@ namespace vtil
 #endif
 				// Fail if propagation fails.
 				//
-				symbolic::expression mem_ptr = mem.base.base;
-				propagate( mem_ptr, it, tracer, nullptr, limit );
+				symbolic::expression::reference mem_ptr = std::move( mem.base.base );
+				propagate( *+mem_ptr, it, tracer, nullptr, limit );
 				if ( !mem_ptr )
 				{
 					result = false;

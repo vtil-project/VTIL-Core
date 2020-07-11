@@ -101,7 +101,7 @@ namespace vtil::symbolic
 			// - Always return constant since this value should not be modified 
 			//   without recomputation of the xpointers.
 			//
-			const expression& decay() const { return base.base.decay(); }
+			const expression& decay() const { return base.base ? *base.base : impl::null_expression; }
 
 			// Declare reduction.
 			//
