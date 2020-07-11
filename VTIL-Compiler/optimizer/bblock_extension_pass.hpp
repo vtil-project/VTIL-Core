@@ -38,7 +38,7 @@ namespace vtil::optimizer
 	{
 		// List of blocks we have already visited, refreshed per xpass call.
 		//
-		std::set<basic_block*> visit_list;
+		path_set visited;
 
 		size_t pass( basic_block* blk, bool xblock = false ) override;
 		size_t xpass( routine* rtn ) override;

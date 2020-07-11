@@ -34,11 +34,12 @@ namespace vtil::optimizer
 	//
 	size_t bblock_extension_pass::pass( basic_block* blk, bool xblock )
 	{
-		// Skip if local optimization or if already visited.
+		fassert( xblock );
+
+		// Skip if already visited.
 		//
-		if ( !xblock || visit_list.contains( blk ) )
+		if ( !visited.emplace( blk ).second )
 			return 0;
-		visit_list.insert( blk );
 
 		// While we can form an extended basic block:
 		//
@@ -120,8 +121,9 @@ namespace vtil::optimizer
 	}
 	size_t bblock_extension_pass::xpass( routine* rtn )
 	{
-		// Invoke recursive extender.
+		// Invoke recursive optimizer starting from entry point.
 		//
+		visited.reserve( rtn->explored_blocks.size() );
 		return pass( rtn->entry_point, true );
 	}
 };

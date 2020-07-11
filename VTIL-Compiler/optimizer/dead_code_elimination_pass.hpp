@@ -37,7 +37,7 @@ namespace vtil::optimizer
 	struct dead_code_elimination_pass : pass_interface<true>
 	{
 		cached_tracer ctrace;
-		std::unordered_set<basic_block*> visited;
+		path_set visited;
 
 		size_t pass( basic_block* blk, bool xblock = false ) override;
 
@@ -45,17 +45,21 @@ namespace vtil::optimizer
 		//
 		size_t cpass( basic_block* blk )
 		{
-			if ( visited.contains( blk ) )
+			// Skip if already visited.
+			//
+			if ( !visited.emplace( blk ).second )
 				return 0;
-			visited.insert( blk );
+
+			// Recurse into children, then invoke self.
+			//
 			size_t count = 0;
 			for ( basic_block* block : blk->next )
 				count += cpass( block );
-			count += pass( blk, true );
-			return count;
+			return count + pass( blk, true );
 		}
 		size_t xpass( routine* rtn ) override
 		{
+			visited.reserve( rtn->explored_blocks.size() );
 			return cpass( rtn->entry_point );
 		}
 	};
