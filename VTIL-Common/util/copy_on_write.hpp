@@ -39,6 +39,16 @@
 	#define _AddressOfReturnAddress() __builtin_frame_address(0)
 #endif
 
+// Include the platform specific header for alloca and declare estimated control block size.
+//
+#ifdef _MSC_VER
+	#define TOOLCHAIN_SPTR_CBLOCK_SIZE 0x40 // ~0x28
+	#include <malloc.h>
+#else
+	#define TOOLCHAIN_SPTR_CBLOCK_SIZE 0x80 // No measured points.
+	#include <alloca.h>
+#endif
+
 // The copy-on-write interface defined here is used to avoid deep duplications of 
 // containers such as trees when a VTIL routine is working with them.
 //
@@ -206,11 +216,52 @@ namespace vtil
 		T* operator+() { return own(); }
 	};
 
+	// Declare control block allocator.
+	//
+	template<typename T>
+	struct stack_cblock_allocator : std::allocator<T>
+	{
+		template <typename T2>
+		struct rebind { using other = stack_cblock_allocator<T2>; };
+
+		// Region on stack assigned for this allocator.
+		//
+		void* ptr = nullptr;
+
+		// Default, rebinding and initial constructors.
+		//
+		constexpr stack_cblock_allocator() {}
+		constexpr stack_cblock_allocator( void* ptr ) : ptr( ptr ) {};
+		template <typename T2>
+		constexpr stack_cblock_allocator( const stack_cblock_allocator<T2>& o ) : ptr( o.ptr ) {}
+
+		// Only equivalent if the pointer is shared.
+		//
+		template<typename T2>
+		constexpr bool operator==( stack_cblock_allocator& o ) const { return ptr == o.ptr; }
+
+		// Declare the allocator and the deallocator.
+		//
+		inline T* allocate( size_t n, const void* = 0 )
+		{
+			// Check for unexpected behaviour.
+			//
+			static_assert( sizeof( T ) < TOOLCHAIN_SPTR_CBLOCK_SIZE, "Adjust toolchain shared pointer size, resource exhaustion." );
+			if ( n != 1 )   logger::error( "Unexpected shared_ptr behaviour, allocating array of %d.\n", n );
+			if ( !ptr )     logger::error( "Unexpected shared_ptr behaviour, resource exhausted. (1)\n" );
+			
+			// Return the pointer stored, swap it with nulltpr.
+			//
+			return ( T* ) std::exchange( ptr, nullptr );
+		}
+		inline void deallocate( T* p, size_t n ) {}
+	};
+
 	// Local references are used to create copy-on-write references to values on stack, 
 	// note that they should not be stored under any condition.
 	//
 	template<typename T>
-	__forceinline static shared_reference<T> make_local_reference( T* variable_pointer )
+	__forceinline static shared_reference<T> make_local_reference( T* variable_pointer, void* cblock_space = alloca( TOOLCHAIN_SPTR_CBLOCK_SIZE ) )
 	{
 		// Save current frame address.
 		//
@@ -224,7 +275,7 @@ namespace vtil
 			// Should not be destructed above current frame.
 			//
 			fassert( creation_frame >= _AddressOfReturnAddress() );
-		} };
+		}, stack_cblock_allocator<uint8_t>{ cblock_space } };
 
 		// Mark as locked and return.
 		//
