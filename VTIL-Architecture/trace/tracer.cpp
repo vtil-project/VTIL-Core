@@ -204,11 +204,10 @@ namespace vtil
                 //
 				if ( var.reg().flags & register_local )
 				{
-					warning( 
-						"Local variable %s is used before value assignment (Block %x:%x).\n", 
-						var, 
-						var.at.container->owner->entry_point->entry_vip, 
-						var.at.container->entry_vip 
+					warning(
+						"Local variable %s is used before value assignment (Block %x).\n",
+						var,
+						var.at.container->entry_vip
 					);
 				}
 
