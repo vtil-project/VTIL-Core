@@ -614,14 +614,7 @@ namespace vtil::symbolic
 	{
 		// List of ideal packers.
 		//
-		static constexpr std::pair<bitcnt_t, bitcnt_t> ideal_packers[] =
-		{
-			{ 1,  0 }, // Any boolean register.
-			{ 8,  0 }, // Low byte,  e.g. AL.
-			{ 8,  8 }, // High byte, e.g. AH.
-			{ 16, 0 }, // Low word,  e.g. AX.
-			{ 32, 0 }, // Low dword, e.g. EAX.
-		};
+		static constexpr bitcnt_t ideal_packers[] = { 1, 8, 16, 32 };
 
 		// Copy expression and recurse into it.
 		//
@@ -640,72 +633,76 @@ namespace vtil::symbolic
 
 			// Check if the unknown mask matches that of an ideal packer.
 			//
-			auto it = std::find_if( ideal_packers, std::end( ideal_packers ), [ & ] ( auto& pair )
+			auto it = std::find_if( ideal_packers, std::end( ideal_packers ), [ & ] ( auto& n )
 			{
-				return math::fill( pair.first ) == exp.unknown_mask();
+				return math::fill( n ) == exp.unknown_mask();
 			} );
 			if ( it == std::end( ideal_packers ) )
 				return;
 
+			// For each ideal packer:
+			//
+			bitcnt_t bitsize = *it;
+
 			// Clone and resize the expression.
 			//
-			auto exp_resized = exp.clone().resize( it->first );
+			auto exp_resized = exp.clone().resize( bitsize );
 
-			// If top node is not __ucast, skip.
+			// If top node is not __ucast, fail.
 			//
 			if ( exp_resized.op != math::operator_id::ucast )
 				return;
 
-			// Until we reach the end of the list and the size is the same:
+			// If node is not shift right, use zero offset.
 			//
-			for ( ; it != std::end( ideal_packers ) && it->first == exp_resized.size(); it++ )
+			bitcnt_t offset;
+			auto node = exp_resized.lhs;
+			if ( node->op != math::operator_id::shift_right )
 			{
-				auto node = exp_resized.lhs;
-
-				// If expected bit offset is non-zero:
-				//
-				if ( it->second != 0 )
-				{
-					// If node is not shift right, skip.
-					//
-					if ( node->op != math::operator_id::shift_right )
-						continue;
-
-					// If node is not shifting as expected, skip.
-					//
-					if ( !node->rhs->equals( it->second ) )
-						continue;
-
-					// Skip to the real operand.
-					//
-					node = node->lhs;
-				}
-
-				// Skip if top node is not a variable.
-				//
-				if ( !node->is_variable() )
-					continue;
-
-				// Break if the variable is not a register.
-				//
-				const variable& var = node->uid.get<variable>();
-				if ( !var.is_register() )
-					break;
-
-				// Break if cannot be fit.
-				//
-				const register_desc& reg = var.reg();
-				if ( reg.bit_count < it->first )
-					break;
-
-				// Found a match, rewrite the expression and stop iterating.
-				//
-				variable var_new = var;
-				var_new.reg().bit_count = it->first;
-				var_new.reg().bit_offset += it->second;
-				exp = expression{ var_new, it->first }.resize( exp.size() );
-				break;
+				offset = 0;
 			}
+			// If rhs is constant, use as is for offset.
+			//
+			else if ( auto n = node->rhs->get() )
+			{
+				offset = *n;
+				node = node->lhs;
+			}
+			// Otherwise, fail.
+			//
+			else
+			{
+				return;
+			}
+
+			// Fail if top node is not a variable.
+			//
+			if ( !node->is_variable() )
+				return;
+
+			// Fail if the variable is not a register.
+			//
+			const variable& var = node->uid.get<variable>();
+			if ( !var.is_register() )
+				return;
+
+			// Fail if cannot be fit.
+			//
+			const register_desc& reg = var.reg();
+			if ( reg.bit_count < bitsize )
+				return;
+
+			// Fail if final bit offset is not aligned.
+			//
+			if ( ( reg.bit_offset + offset ) % bitsize )
+				return;
+
+			// Rewrite the expression.
+			//
+			variable var_new = var;
+			var_new.reg().bit_count = bitsize;
+			var_new.reg().bit_offset += offset;
+			exp = expression{ var_new, bitsize }.resize( exp.size() );
 		} );
 		return exp;
 	}
