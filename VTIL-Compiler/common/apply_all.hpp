@@ -46,24 +46,12 @@ namespace vtil::optimizer
 
 	// Fast local passes.
 	//
-
 	using fast_local_passes = nop_pass; /* exhaust_pass<
 		//fast_local_dead_code_elimination_pass,
 		//fast_reg_propagation_pass,
 		//fast_mem_propagation_pass,
 		zero_pass<//fast_local_dead_code_elimination_pass>
 	>;*/
-
-	// Initial routine correction passes.
-	//
-	using collective_routine_correction_pass = combine_pass<
-		stack_pinning_pass,
-		istack_ref_substitution_pass,
-		//fast_local_passes,
-		branch_correction_pass,
-		bblock_extension_pass//,
-		//fast_dead_code_elimination_pass
-	>;
 
 	// Exhaustive propagation pass.
 	//
@@ -94,9 +82,14 @@ namespace vtil::optimizer
 	// Cross optimization pass.
 	//
 	using collective_cross_pass = combine_pass<
-		collective_routine_correction_pass,
+		stack_pinning_pass,
+		istack_ref_substitution_pass,
+		//fast_local_passes,
+		bblock_extension_pass,
 		symbolic_rewrite_pass<true>,
+		branch_correction_pass,
 		collective_propagation_pass,
+		//fast_dead_code_elimination_pass,
 		exhaust_pass<
 			conditional_pass<
 				symbolic_rewrite_pass<false>,
