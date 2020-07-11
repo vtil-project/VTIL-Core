@@ -255,9 +255,12 @@ namespace vtil::optimizer
 			}
 			while ( repeat );
 
-			// Return counter as is.
+			// Flush paths.
 			//
 			rtn->flush_paths();
+			
+			// Return counter as is.
+			//
 			return cnt;
 		}
 		return 0;

@@ -107,8 +107,8 @@ namespace vtil
 				// Set as the current allowed paths list.
 				//
 				paths_allowed = forward
-					? &container->owner->path_cache[ 0 ][ container ][ dst ]
-					: &container->owner->path_cache[ 1 ][ dst ][ container ];
+					? &container->owner->get_path( container, dst )
+					: &container->owner->get_path( container, dst );
 
 				// Declare the current iterator path restricted.
 				//

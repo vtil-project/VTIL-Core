@@ -30,6 +30,43 @@
 
 namespace vtil
 {
+	// Gets (forward/backward) path from src to dst.
+	//
+	const path_set& routine::get_path( const basic_block* src, const basic_block* dst ) const
+	{
+		if ( auto it = path_cache[ 0 ].find( src ); it != path_cache[ 0 ].end() )
+			if ( auto it2 = it->second.find( dst ); it2 != it->second.end() )
+				return it2->second;
+		return make_default<path_set>();
+	}
+	const path_set& routine::get_path_bwd( const basic_block* src, const basic_block* dst ) const
+	{
+		if ( auto it = path_cache[ 1 ].find( dst ); it != path_cache[ 1 ].end() )
+			if ( auto it2 = it->second.find( src ); it2 != it->second.end() )
+				return it2->second;
+		return make_default<path_set>();
+	}
+
+	// Simple helpers to check if (forward/backward) path from src to dst exists.
+	//
+	bool routine::has_path( const basic_block* src, const basic_block* dst ) const
+	{
+		return get_path( src, dst ).size() != 0;
+	}
+	bool routine::has_path_bwd( const basic_block* src, const basic_block* dst ) const
+	{
+		return get_path( src, dst ).size() != 0;
+	}
+
+	// Checks whether the block is in a loop.
+	//
+	bool routine::is_looping( const basic_block* blk ) const
+	{
+		for ( auto next : blk->next )
+			if ( has_path( next, blk ) )
+				return true;
+		return false;
+	}
 	// Explores the given path, reserved for internal use.
 	//
 	void routine::explore_path( const basic_block* src, const basic_block* dst )
@@ -108,6 +145,70 @@ namespace vtil
 		path_cache[ 0 ].clear();
 		path_cache[ 1 ].clear();
 		explore_path( nullptr, entry_point );
+	}
+
+	// Deletes a block, should have no links or links must be nullified (no back-links).
+	//
+	void routine::delete_block( basic_block* block )
+	{
+		// Acquire the routine mutex.
+		//
+		std::lock_guard g{ this->mutex };
+
+		// Assert that links are nullified.
+		//
+		for ( auto nxt : block->next )
+			fassert( std::find( nxt->prev.begin(), nxt->prev.end(), block ) == nxt->prev.end() );
+		for ( auto nxt : block->prev )
+			fassert( std::find( nxt->next.begin(), nxt->next.end(), block ) == nxt->next.end() );
+
+		// Enumerate both forwards and backwards caches.
+		//
+		for ( auto& cache : path_cache )
+		{
+			// Enumerate path_map.
+			//
+			for ( auto it = cache.begin(); it != cache.end(); )
+			{
+				// If entry key references deleted block, erase it and continue.
+				//
+				if ( it->first == block )
+				{
+					it = cache.erase( it );
+					continue;
+				}
+
+				// Enumerate std::map<const basic_block*, path_set>
+				//
+				for ( auto it2 = it->second.begin(); it2 != it->second.end(); )
+				{
+					// If entry key references deleted block, erase it and continue.
+					//
+					if ( it2->first == block )
+					{
+						it2 = it->second.erase( it2 );
+						continue;
+					}
+
+					// Remove any references from set.
+					//
+					it2->second.erase( block );
+
+					// Continue iteration.
+					//
+					it2++;
+				}
+
+				// Continue iteration.
+				//
+				it++;
+			}
+		}
+
+		// Remove from explored blocks and delete it.
+		//
+		explored_blocks.erase( block->entry_vip );
+		delete block;
 	}
 
 	// Routine structures free all basic blocks they own upon their destruction.

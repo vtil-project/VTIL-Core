@@ -108,8 +108,8 @@ namespace vtil::symbolic
 
 						// Determine all paths and path restrict the iterator.
 						//
-						auto& pathset_1 = o1->owner->path_cache[ 1 ][ o1 ][ var.at.container ];
-						auto& pathset_2 = o2->owner->path_cache[ 1 ][ o2 ][ var.at.container ];
+						auto& pathset_1 = o1->owner->get_path_bwd( var.at.container, o1 );
+						auto& pathset_2 = o1->owner->get_path_bwd( var.at.container, o2 );
 						var.at.is_path_restricted = true;
 
 						// If only one of the paths are valid for backwards iteration:
