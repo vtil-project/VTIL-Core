@@ -124,10 +124,17 @@ namespace vtil::optimizer
 				if ( type >= operand_type::write || !op.is_register() )
 					continue;
 
+				// Skip if stack pointer, volatile, or read-only.
+				//
+				if ( op.reg().is_stack_pointer() ||
+					 op.reg().is_volatile() ||
+					 op.reg().is_read_only() )
+					continue;
+
 				// Declare bypass point and trace it.
 				//
 				mtracer.bypass = it;
-				auto res = xblock ? mtracer.rtrace_p( { it, op.reg() } ) : mtracer.trace_p( { it, op.reg() } );
+				auto res = ( xblock && op.reg().is_global() ) ? mtracer.rtrace_p( { it, op.reg() } ) : mtracer.trace_p( { it, op.reg() } );
 
 				// Skip if invalid result or if we resolved it into an expression.
 				//
