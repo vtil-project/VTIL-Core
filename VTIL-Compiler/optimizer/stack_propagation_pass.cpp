@@ -78,7 +78,7 @@ namespace vtil::optimizer
 				//
 				auto& var = result.uid.get<symbolic::variable>();
 				if ( var.is_memory() && !aux::is_local( var.mem().decay() ) )
-					return tracer::rtrace( var, limit );
+					return cached_tracer::rtrace( var, limit );
 			}
 			return result;
 		}

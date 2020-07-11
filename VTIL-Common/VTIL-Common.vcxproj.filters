@@ -199,6 +199,9 @@
     <ClInclude Include="util\bitmap.hpp">
       <Filter>Utility</Filter>
     </ClInclude>
+    <ClInclude Include="util\make_default.hpp">
+      <Filter>Utility</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="io\logger.cpp">

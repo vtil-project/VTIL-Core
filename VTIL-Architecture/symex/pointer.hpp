@@ -120,6 +120,6 @@ namespace vtil::symbolic
 
 		// Define reduction.
 		//
-		REDUCE_TO( flags, strength, xpointer, ( boxed_expression& ) ( base ? *base : impl::null_expression ) );
+		REDUCE_TO( flags, strength, xpointer, ( boxed_expression& ) ( base ? *base : make_default<expression>() ) );
 	};
 };
