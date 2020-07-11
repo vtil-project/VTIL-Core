@@ -108,7 +108,7 @@ namespace vtil
 				//
 				paths_allowed = forward
 					? &container->owner->get_path( container, dst )
-					: &container->owner->get_path( container, dst );
+					: &container->owner->get_path_bwd( container, dst );
 
 				// Declare the current iterator path restricted.
 				//
