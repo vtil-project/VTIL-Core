@@ -328,7 +328,7 @@ namespace vtil::optimizer::aux
 			int skip_count = 0;
 
 			// => Begin forward iterating query:
-			auto res = query::create_recursive( var.at, +1 )
+			return query::create_recursive( var.at, +1 )
 
 				// >> Skip one.
 				.where( [ & ] ( auto& ) { return query::rlocal( skip_count )++ >= 1; } )
@@ -342,12 +342,8 @@ namespace vtil::optimizer::aux
 				// := Project to iterator form.
 				.unproject()
 
-				// <= Return first result and flatten the tree.
-				.first().flatten( true );
-
-			// Return used if any instruction reading from this value is hit.
-			//
-			return !res.result.empty();
+				// <= Return used if any instruction reading from this value is hit.
+				.first_g().has_value();
 		}
 		else
 		{
@@ -456,12 +452,12 @@ namespace vtil::optimizer::aux
 				.unproject()
 				// >> Skip until we find a write into the variable queried.
 				.where( [ & ] ( const il_const_iterator& i ) { return var.written_by( i, tracer, rec ); } )
-				// <= Return first match.
-				.first();
+				// <= Return first match, if found register is dead.
+				.first_g();
 
 			// If no match was found, register is alive.
 			//
-			return res.flatten( true ).result.empty();
+			return !res.has_value();
 		}
 	}
 
