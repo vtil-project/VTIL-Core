@@ -84,11 +84,12 @@ namespace vtil::optimizer
 	using collective_cross_pass = combine_pass<
 		stack_pinning_pass,
 		istack_ref_substitution_pass,
-		//fast_local_passes,
 		bblock_extension_pass,
 		symbolic_rewrite_pass<true>,
 		branch_correction_pass,
 		collective_propagation_pass,
+		symbolic_rewrite_pass<true>,
+		apply_each<local_pass, collective_propagation_pass>,
 		//fast_dead_code_elimination_pass,
 		exhaust_pass<
 			conditional_pass<

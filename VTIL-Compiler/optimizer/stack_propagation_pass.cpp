@@ -142,6 +142,8 @@ namespace vtil::optimizer
 				//
 				symbolic::pointer ptr = { ltracer.cached_tracer::trace_p( { it, REG_SP } ) + it->memory_location().second };
 				symbolic::variable var = { it, { ptr, it->access_size() } };
+				var.at.paths_allowed = &it.container->owner->get_path( it.container->owner->entry_point, it.container );
+				var.at.is_path_restricted = true;
 				symbolic::expression exp = xblock ? ltracer.rtrace( var ) : ltracer.cached_tracer::trace( var );
 
 				// Resize and pack variables.
