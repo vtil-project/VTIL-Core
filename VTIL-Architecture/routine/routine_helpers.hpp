@@ -35,13 +35,15 @@ namespace vtil
 {
 	namespace impl
 	{
+		// Takes an additional visitor compared to original, returns true if it should break from all.
+		//
 		template<typename callback, typename iterator_type, bool fwd, typename visit_callback>
-		static void enumerate_instructions( callback&& fn, iterator_type it, const iterator_type& dst, visit_callback& visit )
+		static bool enumerate_instructions( callback&& fn, iterator_type it, const iterator_type& dst, visit_callback& visit )
 		{
 			// Skip if we should not visit this block.
 			//
 			if ( !visit( it.container ) )
-				return;
+				return false;
 
 			// Until we reach the destination:
 			//
@@ -57,9 +59,11 @@ namespace vtil
 					break;
 				}
 
-				// Invoke callback.
+				// Invoke callback, break if requested so.
 				//
-				fn( it );
+				enumerator::tagged_order order = enumerator::invoke( fn, it );
+				if ( order.should_break )
+					return order.global_break;
 
 				// If we reached the end of the block, set links and break.
 				// - Backwards
@@ -82,8 +86,9 @@ namespace vtil
 				constexpr auto make_it = [ ] ( basic_block* blk ) -> iterator_type { return fwd ? blk->begin() : blk->end(); };
 
 				for ( auto i = links->end() - 1; i != links->begin(); i-- )
-					enumerate_instructions<callback, iterator_type, fwd>( make_copy<callback>( fn ), make_it( *i ), dst, visit );
-				enumerate_instructions<callback, iterator_type, fwd>( std::forward<callback>( fn ), make_it( links->front() ), dst, visit );
+					if ( enumerate_instructions<callback, iterator_type, fwd>( make_copy<callback>( fn ), make_it( *i ), dst, visit ) )
+						return true;
+				return enumerate_instructions<callback, iterator_type, fwd>( std::forward<callback>( fn ), make_it( links->front() ), dst, visit );
 			}
 		}
 	};
