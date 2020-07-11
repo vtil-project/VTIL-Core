@@ -105,7 +105,7 @@ namespace vtil::query
 
 		// Invalidates current query.
 		//
-		void stop() { iterator = prev(); direction = 0; }
+		void stop() { direction = 0; }
 
 		// Value that next() processed previously.
 		//
