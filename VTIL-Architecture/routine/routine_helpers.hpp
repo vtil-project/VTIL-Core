@@ -97,7 +97,7 @@ namespace vtil
 		impl::enumerate_instructions<callback, iterator_type, true>
 		(
 			std::move( fn ), 
-			src.is_valid() ? src : entry_point->begin(), 
+			src,
 			dst, 
 			set 
 		);
