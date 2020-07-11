@@ -40,14 +40,9 @@ namespace vtil
 		template<typename callback, typename iterator_type, bool fwd, typename visit_callback>
 		static bool enumerate_instructions( callback&& fn, iterator_type it, const iterator_type& dst, visit_callback& visit )
 		{
-			// Skip if we should not visit this block.
-			//
-			if ( !visit( it.container ) )
-				return false;
-
 			// Until we reach the destination:
 			//
-			std::vector<basic_block*>* links = nullptr;
+			const std::vector<basic_block*>* links = nullptr;
 			while ( it != dst )
 			{
 				// If we reached the end of the block, set links and break.
@@ -83,12 +78,36 @@ namespace vtil
 			//
 			if ( links && !links->empty() )
 			{
-				constexpr auto make_it = [ ] ( basic_block* blk ) -> iterator_type { return fwd ? blk->begin() : blk->end(); };
+				constexpr auto make_it = [ ] ( basic_block* blk ) -> iterator_type 
+				{ 
+					return fwd ? blk->begin() : blk->end(); 
+				};
 
-				for ( auto i = links->end() - 1; i != links->begin(); i-- )
-					if ( enumerate_instructions<callback, iterator_type, fwd>( make_copy<callback>( fn ), make_it( *i ), dst, visit ) )
-						return true;
-				return enumerate_instructions<callback, iterator_type, fwd>( std::forward<callback>( fn ), make_it( links->front() ), dst, visit );
+				// If there is a single link, forward functor instead of copying.
+				//
+				if ( links->size() == 1 )
+				{
+					return visit( links->front() )
+						&& enumerate_instructions<callback, iterator_type, fwd>( std::forward<callback>( fn ), make_it( links->front() ), dst, visit );
+				}
+				else
+				{
+					// For each link:
+					//
+					for ( basic_block* blk : *links )
+					{
+						// Skip if we should not visit.
+						//
+						if ( !visit( blk ) )
+							continue;
+
+						// Invoke enumerator, propagate value if true.
+						//
+						if ( enumerate_instructions<callback, iterator_type, fwd>( make_copy<callback>( fn ), make_it( blk ), dst, visit ) )
+							return true;
+					}
+					return false;
+				}
 			}
 		}
 	};
@@ -98,9 +117,23 @@ namespace vtil
 	template<typename callback, typename iterator_type>
 	void routine::enumerate( callback fn, const iterator_type& src, const iterator_type& dst ) const
 	{
+		// Allocate a visit list and fetch allowed list for the path if relevant.
+		//
 		path_set set = {};
-		const path_set* set_allowed = dst.is_valid() ? &src.container->owner->get_path( src.container, dst.container ) : nullptr;
+		const path_set* set_allowed;
+		if ( dst.is_valid() )
+		{
+			set_allowed = &src.container->owner->get_path( src.container, dst.container );
+			set.reserve( set_allowed->size() );
+		}
+		else
+		{
+			set_allowed = nullptr;
+			set.reserve( src.container->owner->num_blocks() );
+		}
 
+		// Declare visitor and check if we have a path from dst to src if constraint.
+		//
 		auto visitor = [ & ] ( basic_block* blk )
 		{
 			// Should be in allowed list if relevant.
@@ -112,7 +145,10 @@ namespace vtil
 			//
 			return set.emplace( blk ).second;
 		};
+		if ( set_allowed && set_allowed->empty() ) return;
 
+		// Begin enumeration.
+		//
 		impl::enumerate_instructions<callback, iterator_type, true>
 		(
 			std::move( fn ), 
@@ -124,9 +160,23 @@ namespace vtil
 	template<typename callback, typename iterator_type>
 	void routine::enumerate_bwd( callback fn, const iterator_type& src, const iterator_type& dst ) const
 	{
+		// Allocate a visit list and fetch allowed list for the path if relevant.
+		//
 		path_set set = {};
-		const path_set* set_allowed = dst.is_valid() ? &src.container->owner->get_path_bwd( src.container, dst.container ) : nullptr;
-
+		const path_set* set_allowed;
+		if ( dst.is_valid() )
+		{
+			set_allowed = &src.container->owner->get_path_bwd( src.container, dst.container );
+			set.reserve( set_allowed->size() );
+		}
+		else
+		{
+			set_allowed = nullptr;
+			set.reserve( src.container->num_blocks() );
+		}
+		
+		// Declare visitor and check if we have a path from dst to src if constraint.
+		//
 		auto visitor = [ & ] ( basic_block* blk )
 		{
 			// Should be in allowed list if relevant.
@@ -138,7 +188,10 @@ namespace vtil
 			//
 			return set.emplace( blk ).second;
 		};
+		if ( set_allowed && set_allowed->empty() ) return;
 
+		// Begin enumeration.
+		//
 		impl::enumerate_instructions<callback, iterator_type, false>
 		(
 			std::move( fn ), 
