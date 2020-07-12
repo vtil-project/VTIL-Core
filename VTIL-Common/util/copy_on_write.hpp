@@ -32,24 +32,6 @@
 #include <atomic>
 #include "../io/asserts.hpp"
 #include "object_pool.hpp"
-
-// Define _AddressOfReturnAddress() for compilers that do not have it.
-//
-#if not defined(_MSC_VER) and not defined(__INTELLISENSE__)
-	#define __forceinline __attribute__((always_inline))
-	#define _AddressOfReturnAddress() __builtin_frame_address(0)
-#endif
-
-// Include the platform specific header for alloca and declare estimated control block size.
-//
-#ifdef _MSC_VER
-	#define TOOLCHAIN_SPTR_CBLOCK_SIZE 0x40 // ~0x28
-	#include <malloc.h>
-#else
-	#define TOOLCHAIN_SPTR_CBLOCK_SIZE 0x80 // No measured points.
-	#include <alloca.h>
-#endif
-
 // The copy-on-write interface defined here is used to avoid deep duplications of 
 // containers such as trees when a VTIL routine is working with them.
 //
