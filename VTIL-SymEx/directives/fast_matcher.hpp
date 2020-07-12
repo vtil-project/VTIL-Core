@@ -34,9 +34,9 @@ namespace vtil::symbolic::directive
 { 
 	// Internal representation of the Variable -> Expression mapping. 
 	// 
-	struct symbol_table_t 
+	struct symbol_table_t
 	{ 
-		expression::reference lookup_table[ number_of_lookup_indices ]; 
+		weak_reference<expression> lookup_table[ number_of_lookup_indices ];
  
 		// Adds the mapping of a variable to an expression. 
 		// 
@@ -74,7 +74,7 @@ namespace vtil::symbolic::directive
  
 		// Translates a variable to the matching expression. 
 		// 
-		expression::reference translate( const instance* dir ) const 
+		const expression::reference& translate( const instance* dir ) const 
 		{ 
 			// Assert the looked up type is variable. 
 			// 
@@ -82,9 +82,9 @@ namespace vtil::symbolic::directive
  
 			// Translate using the lookup table. 
 			// 
-			return lookup_table[ dir->lookup_index ]; 
+			return ( const expression::reference& ) lookup_table[ dir->lookup_index ].make_shared();
 		}
-		expression::reference translate( const instance& dir ) const { return translate( &dir ); }
+		const expression::reference& translate( const instance& dir ) const { return translate( &dir ); }
 	}; 
  
 	// Tries to match the the given expression with the directive and fills the  
@@ -158,7 +158,7 @@ namespace vtil::symbolic::directive
  
 				// Push the saved table into the results and update the iterator. 
 				// 
-				results->push_back( std::move( tmp ) ); 
+				results->emplace_back( std::move( tmp ) ); 
 				index = results->size() - 1; 
  
 				// Try matching the directive's LHS with expression's RHS. 

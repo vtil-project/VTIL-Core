@@ -41,7 +41,6 @@
     <ClCompile Include="routine\routine.cpp" />
     <ClCompile Include="routine\serialization.cpp" />
     <ClCompile Include="symex\pointer.cpp" />
-    <ClCompile Include="symex\translation.cpp" />
     <ClCompile Include="symex\variable.cpp" />
     <ClCompile Include="trace\cached_tracer.cpp" />
     <ClCompile Include="trace\tracer.cpp" />
@@ -145,6 +144,7 @@
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <FloatingPointModel>Fast</FloatingPointModel>
       <AdditionalOptions>/bigobj %(AdditionalOptions)</AdditionalOptions>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>

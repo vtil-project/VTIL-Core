@@ -37,7 +37,6 @@
 // 
 #if not defined(_MSC_VER) and not defined(__INTELLISENSE__) 
 	#define __forceinline __attribute__((always_inline)) 
-	#define _AddressOfReturnAddress() __builtin_frame_address(0) 
 #endif 
 
 // The copy-on-write interface defined here is used to avoid deep duplications of 
@@ -267,6 +266,65 @@ namespace vtil
 		// Constructor invokes reset.
 		//
 		~shared_reference() { reset(); }
+	};
+
+	// Weak references are used to store shared references without implying 
+	// ownership. This class should not be used together with temporaries.
+	//
+	template<typename T>
+	struct weak_reference
+	{
+		uint64_t combined_value;
+
+		// Default null constructor.
+		//
+		weak_reference() : combined_value( 0 ) {}
+		
+		// Reference borrowing constructor/assignment.
+		//
+		weak_reference( const shared_reference<T>& ref ) 
+			: combined_value( ref.combined_value ) { dassert( !ref.temporary ); }
+		weak_reference& operator=( const shared_reference<T>& ref ) 
+		{
+			dassert( !ref.temporary ); 
+			combined_value = ref.combined_value; 
+			return *this;
+		}
+		
+		// Copy constructor/assignment.
+		//
+		weak_reference( const weak_reference& o ) 
+			: combined_value( o.combined_value ) {}
+		weak_reference( weak_reference&& o ) 
+			: combined_value( o.combined_value ) {}
+		weak_reference& operator=( weak_reference o )
+		{
+			combined_value = o.combined_value;
+			return *this;
+		}
+
+		// Basic comparison operators are redirected to the pointer type.
+		//
+		bool operator<( const weak_reference& o ) const { return combined_value < o.combined_value; }
+		bool operator==( const weak_reference& o ) const { return combined_value == o.combined_value; }
+		bool operator<( const shared_reference<T>& o ) const { return combined_value < o.combined_value; }
+		bool operator==( const shared_reference<T>& o ) const { return combined_value == o.combined_value; }
+
+		// Redirect pointer and dereferencing operator to the reference and cast to const-qualified equivalent.
+		//
+		const T* get() const { return ( const T* ) combined_value; }
+		const T* operator->() const { return get(); }
+		const T& operator*() const { return *get(); }
+
+		// Simple validity checks.
+		//
+		bool is_valid() const { return get(); }
+		explicit operator bool() const { return is_valid(); }
+		
+		// Convert to shared reference, will cause it to actually reference if decays, huge hack but will work
+		// and be really efficient because of the way shared references work.
+		//
+		const shared_reference<T>& make_shared() const { return *( const shared_reference<T>* ) &combined_value; }
 	};
 
 	// Explicit temporary reference creation.

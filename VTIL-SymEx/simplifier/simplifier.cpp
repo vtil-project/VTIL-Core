@@ -405,6 +405,57 @@ namespace vtil::symbolic
 			return success_flag;
 		}
 
+		// Enumerate each universal simplifier:
+		//
+		for ( auto [dir_src, dir_dst] : get_universal_simplifiers( exp->op ) )
+		{
+			// If we can transform the expression by the directive set:
+			//
+			if ( auto exp_new = transform( exp, dir_src, dir_dst, {}, max_depth ) )
+			{
+#if VTIL_SYMEX_SIMPLIFY_VERBOSE
+				log<CON_GRN>( "[Simplify] %s => %s\n", *dir_src, *dir_dst );
+				log<CON_GRN>( "= %s [By simplify directive]\n", *exp_new );
+#endif
+				// Recurse, set the hint and return the simplified instance.
+				//
+				simplify_expression( exp_new, pretty, max_depth );
+				exp_new->simplify_hint = true;
+				cache_entry = exp_new;
+				if( success_flag = !exp->is_identical( *exp_new ) )
+					exp = exp_new;
+				return success_flag;
+			}
+		}
+
+		// If it is a boolean expression:
+		//
+		if ( exp->size() == 1 )
+		{
+			// Enumerate each universal simplifier:
+			//
+			for ( auto [dir_src, dir_dst] : get_boolean_simplifiers( exp->op ) )
+			{
+				// If we can transform the expression by the directive set:
+				//
+				if ( auto exp_new = transform( exp, dir_src, dir_dst, {}, max_depth ) )
+				{
+#if VTIL_SYMEX_SIMPLIFY_VERBOSE
+					log<CON_GRN>( "[Simplify] %s => %s\n", *dir_src, *dir_dst );
+					log<CON_GRN>( "= %s [By simplify directive]\n", *exp_new );
+#endif
+					// Recurse, set the hint and return the simplified instance.
+					//
+					simplify_expression( exp_new, pretty, max_depth );
+					exp_new->simplify_hint = true;
+					cache_entry = exp_new;
+					if ( success_flag = !exp->is_identical( *exp_new ) )
+						exp = exp_new;
+					return success_flag;
+				}
+			}
+		}
+
 		// Declare the filter.
 		//
 		expression_filter_t filter;
@@ -459,57 +510,6 @@ namespace vtil::symbolic
 				simplify_expression( exp_new, false, max_depth - 1 );
 				return exp_new->complexity < exp->complexity;
 			};
-		}
-
-		// Enumerate each universal simplifier:
-		//
-		for ( auto [dir_src, dir_dst] : get_universal_simplifiers( exp->op ) )
-		{
-			// If we can transform the expression by the directive set:
-			//
-			if ( auto exp_new = transform( exp, dir_src, dir_dst, {}, max_depth ) )
-			{
-#if VTIL_SYMEX_SIMPLIFY_VERBOSE
-				log<CON_GRN>( "[Simplify] %s => %s\n", *dir_src, *dir_dst );
-				log<CON_GRN>( "= %s [By simplify directive]\n", *exp_new );
-#endif
-				// Recurse, set the hint and return the simplified instance.
-				//
-				simplify_expression( exp_new, pretty, max_depth );
-				exp_new->simplify_hint = true;
-				cache_entry = exp_new;
-				if( success_flag = !exp->is_identical( *exp_new ) )
-					exp = exp_new;
-				return success_flag;
-			}
-		}
-
-		// If it is a boolean expression:
-		//
-		if ( exp->size() == 1 )
-		{
-			// Enumerate each universal simplifier:
-			//
-			for ( auto [dir_src, dir_dst] : get_boolean_simplifiers( exp->op ) )
-			{
-				// If we can transform the expression by the directive set:
-				//
-				if ( auto exp_new = transform( exp, dir_src, dir_dst, {}, max_depth ) )
-				{
-#if VTIL_SYMEX_SIMPLIFY_VERBOSE
-					log<CON_GRN>( "[Simplify] %s => %s\n", *dir_src, *dir_dst );
-					log<CON_GRN>( "= %s [By simplify directive]\n", *exp_new );
-#endif
-					// Recurse, set the hint and return the simplified instance.
-					//
-					simplify_expression( exp_new, pretty, max_depth );
-					exp_new->simplify_hint = true;
-					cache_entry = exp_new;
-					if ( success_flag = !exp->is_identical( *exp_new ) )
-						exp = exp_new;
-					return success_flag;
-				}
-			}
 		}
 
 		// Enumerate each join descriptor:

@@ -268,7 +268,7 @@ namespace vtil::symbolic
 
 		// Match the expresison.
 		//
-		stack_vector<symbol_table_t, 4> results;
+		stack_vector<symbol_table_t, 8> results;
 		if ( !fast_match( &results, from, exp ) ) return {};
 
 		// If a filter is provided:

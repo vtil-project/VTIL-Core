@@ -125,9 +125,6 @@
     <ClCompile Include="trace\cached_tracer.cpp">
       <Filter>Value Tracing</Filter>
     </ClCompile>
-    <ClCompile Include="symex\translation.cpp">
-      <Filter>SymEx Integration</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="VTIL-Architecture.licenseheader" />
