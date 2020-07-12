@@ -107,7 +107,7 @@ namespace vtil::symbolic
 		// be cases where it already has passed it and this flag was not set. Albeit those cases will most 
 		// likely not cause performance issues due to the caching system.
 		//
-		bool simplify_hint = false;
+		mutable bool simplify_hint = false;
 
 		// Disables implicit auto-simplification for the expression if is set.
 		//
