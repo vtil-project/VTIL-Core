@@ -35,52 +35,37 @@ namespace vtil::optimizer
 	//
 	struct lazy_tracer : cached_tracer
 	{
-		bool bypass = false;
+		il_const_iterator bypass = {};
 
 		symbolic::expression::reference trace( const symbolic::variable& lookup ) override
 		{
-			if( bypass )
+			// Bypass if at the beginning of block//query.
+			//
+			if ( !bypass.is_valid() || lookup.at == bypass || lookup.at.is_end() || lookup.at->base->is_branching() || lookup.is_memory() )
 				return cached_tracer::trace( lookup );
 
-			// If iterator is at a str instruction and we're 
-			// looking up the stored operand, return without tracing.
+			// If instruction does not access memory, return as is.
 			//
-			if ( !lookup.at.is_end() && lookup.at->base == &ins::str &&
-				 lookup.is_register() && lookup.at->operands[ 2 ].is_register() &&
-				 lookup.reg() == lookup.at->operands[ 2 ].reg() &&
-				 !lookup.reg().is_stack_pointer() )
-			{
+			if ( !lookup.at->base->accesses_memory() )
 				return lookup.to_expression();
-			}
 
-			// Fallback to default tracer.
+			// If query overlaps base, return.
 			//
-			bypass = true;
-			auto result = cached_tracer::trace( lookup );
-			bypass = false;
-			return result;
-		}
-
-		symbolic::expression::reference rtrace( const symbolic::variable& lookup, int64_t limit = -1 ) override
-		{
-			// Invoke default tracer and store the result.
-			//
-			bool recursive_flag_prev = recursive_flag;
-			recursive_flag = true;
-			symbolic::expression::reference result = cached_tracer::trace( lookup );
-			recursive_flag = recursive_flag_prev;
-			
-			// If result is a variable:
-			//
-			if ( result->is_variable() )
+			if ( lookup.is_register() && lookup.reg().overlaps( lookup.at->memory_location().first ) )
 			{
-				// If result is a non-local memory variable, invoke rtrace primitive.
-				//
-				auto& var = result->uid.get<symbolic::variable>();
-				if ( var.is_memory() && !aux::is_local( *var.mem().decay() ) )
-					return cached_tracer::rtrace( var, limit );
+				il_const_iterator prev = std::exchange( bypass, {} );
+				auto res = cached_tracer::trace( lookup );
+				bypass = std::move( prev );
+				return res;
 			}
-			return result;
+			// If register, continue tracing.
+			//
+			if( lookup.is_register() )
+				return cached_tracer::trace( lookup );
+
+			// Return without tracing.
+			//
+			return lookup.to_expression();
 		}
 	};
 
@@ -95,7 +80,6 @@ namespace vtil::optimizer
 		// Create tracers.
 		//
 		lazy_tracer ltracer = {};
-		cached_tracer ctracer = {};
 
 		// Allocate the swap buffers.
 		//
@@ -127,7 +111,9 @@ namespace vtil::optimizer
 				//
 				symbolic::pointer ptr = { ltracer.cached_tracer::trace_p( { it, REG_SP } ) + it->memory_location().second };
 				symbolic::variable var = { it, { ptr, it->access_size() } };
+				ltracer.bypass = it;
 				auto exp = xblock ? ltracer.rtrace( var ) : ltracer.cached_tracer::trace( var );
+				ltracer.bypass = {};
 
 				// Resize and pack variables.
 				//
@@ -181,7 +167,7 @@ namespace vtil::optimizer
 
 					// If value is not alive, try hijacking the value declaration.
 					//
-					if ( !aux::is_alive( rvar, it, xblock, &ctracer ) )
+					if ( !aux::is_alive( rvar, it, xblock, nullptr ) )
 					{
 						// Must be a valid (and non-end) iterator.
 						//
