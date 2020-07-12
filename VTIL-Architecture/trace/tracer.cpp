@@ -322,7 +322,7 @@ namespace vtil
 
 				// For each path:
 				//
-				bool potential_loop = it_list.size() > 1 || it_list[ 0 ].container == lookup.at.container;
+				bool potential_loop = true;// it_list.size() > 1 || it_list[ 0 ].container == lookup.at.container; // TODO: Fix
 				for ( auto& it : it_list )
 				{
 					// If we've taken this path more than twice, skip it.
