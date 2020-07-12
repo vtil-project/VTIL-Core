@@ -108,14 +108,13 @@ namespace vtil
 			// Read the source operand and byte-align.
 			//
 			auto src = cvt_operand( 2 );
-			bitcnt_t bsize = ( src->size() + 7 ) & ~7;
-			if ( src->size() != bsize ) ( +src )->resize( bsize );
+			src.resize( ( src->size() + 7 ) & ~7 );
 
 			// Query base pointer without using the wrapper to skip SP adjustment and 
 			// add offset. Write the source to the pointer.
 			//
 			auto [base, offset] = ins.memory_location();
-			write_memory( read_register( base ) + offset, *src );
+			write_memory( read_register( base ) + offset, std::move( src ) );
 			return true;
 		}
 		// If any symbolic operator:
@@ -176,7 +175,7 @@ namespace vtil
 
 			// Write the result to the destination register.
 			//
-			write_register( ins.operands[ 0 ].reg(), result );
+			write_register( ins.operands[ 0 ].reg(), std::move( result ) );
 
 			// Operand 0 should always be the result for this class.
 			//

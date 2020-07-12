@@ -123,7 +123,6 @@ namespace vtil
 		// The original reference and current state.
 		//
 		std::shared_ptr<T> reference;
-		bool is_owning = false;
 		bool is_locked = false;
 
 		// Null reference construction.
@@ -134,17 +133,17 @@ namespace vtil
 		// Owning reference constructor.
 		//
 		template<typename... params, typename = impl::enable_if_constructor<shared_reference<T>, params...>>
-		shared_reference( params&&... p ) : reference( impl::make_shared<T>( std::forward<params>( p )... ) ), is_owning( true ) {}
+		shared_reference( params&&... p ) : reference( impl::make_shared<T>( std::forward<params>( p )... ) ) {}
 
 		// Copy-on-write reference construction and assignment.
 		//
 		shared_reference( const shared_reference& ref ) : reference( ref.reference ), is_locked( ref.is_locked ) {}
-		shared_reference& operator=( const shared_reference& o ) { reference = o.reference; is_locked = o.is_locked; is_owning = false; return *this; }
+		shared_reference& operator=( const shared_reference& o ) { reference = o.reference; is_locked = o.is_locked; return *this; }
 
 		// Construction and assignment operator for rvalue references.
 		//
-		shared_reference( shared_reference&& ref ) noexcept : reference( std::exchange( ref.reference, {} ) ), is_locked( ref.is_locked ), is_owning( ref.is_owning ) {}
-		shared_reference& operator=( shared_reference&& o ) noexcept { reference = std::exchange( o.reference, {} ); is_locked = o.is_locked; is_owning = o.is_owning; return *this; }
+		shared_reference( shared_reference&& ref ) noexcept : reference( std::exchange( ref.reference, {} ) ), is_locked( ref.is_locked ) {}
+		shared_reference& operator=( shared_reference&& o ) noexcept { reference = std::exchange( o.reference, {} ); is_locked = o.is_locked; return *this; }
 
 		// Simple validity checks.
 		//
@@ -154,7 +153,7 @@ namespace vtil
 		// Locks the current reference, a locked reference cannot be upgraded
 		// to a copy-on-write reference as is.
 		//
-		shared_reference& lock() { is_locked = true; is_owning = false; return *this; }
+		shared_reference& lock() { is_locked = true; return *this; }
 
 		// Converts this reference to an owning one if it is not one already and 
 		// returns the pointer to the base type with no const-qualifiers.
@@ -163,25 +162,18 @@ namespace vtil
 		{
 			fassert( is_valid() );
 
-			// If copy-on-write, convert to owning first.
+			// If use counter is above 1 or reference is locked, we need 
+			// to make a copy before modifying the reference.
 			//
-			if ( !is_owning )
+			if ( reference.use_count() > 1 || is_locked )
 			{
-				// If use counter is above 1 or reference is locked, we need 
-				// to make a copy before modifying the reference.
-				//
-				if ( reference.use_count() > 1 || is_locked )
-				{
-					T v = *reference;
-					reference = {};
-					reference = impl::make_shared<T>( std::move( v ) );
-				}
-
-				// Mark as unlocked and owning.
-				//
-				is_owning = true;
-				is_locked = false;
+				std::shared_ptr<T> new_ref = impl::make_shared<T>( *reference );
+				reference = std::move( new_ref );
 			}
+
+			// Mark as unlocked.
+			//
+			is_locked = false;
 
 			// Redirect the operator to the reference.
 			//

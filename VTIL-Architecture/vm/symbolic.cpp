@@ -57,7 +57,7 @@ namespace vtil
 		if ( desc.bit_count == size && desc.bit_offset == 0 )
 		{
 			register_state.erase( desc );
-			register_state.emplace( desc, value );
+			register_state.emplace( desc, std::move( value ) );
 		}
 		else
 		{
