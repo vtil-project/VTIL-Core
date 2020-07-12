@@ -73,15 +73,18 @@ namespace vtil::symbolic
 	using simplifier_cache_t = std::unordered_map<expression::reference, std::pair<expression::reference, bool>, 
 		                                          expression::reference::hasher, 
 		                                          expression::reference::if_identical                          >;
-	static thread_local simplifier_cache_t simplifier_cache;
+
+	static constexpr size_t simplifier_bucket_count = 4;
+	static thread_local simplifier_cache_t simplifier_cache[ simplifier_bucket_count ];
 	void purge_simplifier_cache()
 	{
-		simplifier_cache.clear();
+		for( auto& bucket : simplifier_cache )
+			bucket.clear();
 	}
 
 	static std::tuple<expression::reference&, bool&, bool> lookup_simplifier_cache( const expression::reference& exp )
 	{
-		auto [it, inserted] = simplifier_cache.emplace( exp, make_default<std::pair<expression::reference, bool>>() );
+		auto [it, inserted] = simplifier_cache[ ( size_t ) exp->op % simplifier_bucket_count ].emplace( exp, make_default<std::pair<expression::reference, bool>>() );
 		return { it->second.first, it->second.second, !inserted };
 	}
 
@@ -473,7 +476,9 @@ namespace vtil::symbolic
 
 				// Save current cache iterator.
 				//
-				auto it0 = simplifier_cache.end();
+				simplifier_cache_t::iterator it_snapshot[ simplifier_bucket_count ];
+				for ( size_t n = 0; n < simplifier_bucket_count; n++ )
+					it_snapshot[ n ] = simplifier_cache[ n ].end();
 
 				// Try simplifying with maximum depth set as expression's
 				// depth times two and pass if complexity was reduced.
@@ -488,7 +493,8 @@ namespace vtil::symbolic
 				//
 				catch ( join_depth_exception& )
 				{
-					simplifier_cache.erase( it0, simplifier_cache.end() );
+					for( size_t n = 0; n < simplifier_bucket_count; n++ )
+						simplifier_cache[ n ].erase( it_snapshot[ n ], simplifier_cache[ n ].end() );
 					return false;
 				}
 			};
