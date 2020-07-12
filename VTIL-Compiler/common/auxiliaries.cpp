@@ -314,12 +314,13 @@ namespace vtil::optimizer::aux
 
 		// Declare tracer.
 		//
+
 		const auto trace = [ & ] ( symbolic::variable&& lookup )
 		{
-			symbolic::expression::reference exp;
-			if ( flags.cross_block ) exp = tracer->rtrace( std::move( lookup ) );
-			else                     exp = tracer->trace( std::move( lookup ) );
-			return flags.pack ? symbolic::variable::pack_all( exp ) : exp;
+			symbolic::expression::reference exp = tracer->trace( lookup );
+			if ( flags.cross_block ) exp = tracer->rtrace_exp( exp );
+			if ( flags.pack )        symbolic::variable::pack_all( exp );
+			return exp;
 		};
 
 		// Declare operand->expression helper.
@@ -343,7 +344,7 @@ namespace vtil::optimizer::aux
 					if ( var.is_register() && var.reg() == REG_IMGBASE )
 						*+ex = { 0, ex->size() };
 				}
-			}, true ).simplify( true );
+			}, true, false ).simplify( true );
 
 			// If parsing requested:
 			//

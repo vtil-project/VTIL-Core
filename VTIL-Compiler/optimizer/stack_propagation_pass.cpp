@@ -237,8 +237,12 @@ namespace vtil::optimizer
 		{
 			it->base = ins;
 
-			auto& rev = revive_list[ var ];
-			if ( !rev.is_valid() ) rev = aux::revive_register( var, it );
+			register_desc rev;
+			if ( auto i2 = xblock ? revive_list.find( var ) : revive_list.end(); i2 != revive_list.end() )
+				rev = i2->second;
+			else
+				rev = aux::revive_register( var, it );
+
 			it->operands = { it->operands[ 0 ], rev };
 			it->is_valid( true );
 		}

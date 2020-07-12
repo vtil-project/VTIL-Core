@@ -106,17 +106,17 @@ namespace vtil::optimizer
 		{
 			// Attempts to revive an expression via cache.
 			//
-			const auto revive_via_cache = [ & ] ( const symbolic::expression& exp, cached_tracer* tr ) -> std::future<operand>
+			const auto revive_via_cache = [ & ] ( const symbolic::expression::reference& exp, cached_tracer* tr ) -> std::future<operand>
 			{
 				// If immediate return as is.
 				//
-				if ( exp.is_constant() )
-					return std::async( std::launch::deferred, [ op = operand{ *exp.get<uint64_t>(), exp.size() } ]() { return op; } );
+				if ( exp->is_constant() )
+					return std::async( std::launch::deferred, [ op = operand{ *exp->get<uint64_t>(), exp->size() } ]() { return op; } );
 
 				// If expression is not a register:
 				//
 				symbolic::variable var_reg;
-				if ( !exp.is_variable() || !exp.uid.get<symbolic::variable>().is_register() )
+				if ( !exp->is_variable() || !exp->uid.get<symbolic::variable>().is_register() )
 				{
 					// Iterate cache entries:
 					//
@@ -130,7 +130,7 @@ namespace vtil::optimizer
 
 						// If expressions are not identical skip.
 						//
-						if ( !ex->is_identical( exp ) )
+						if ( !ex->is_identical( *exp ) )
 							continue;
 
 						// Set var_reg and break.
@@ -141,7 +141,7 @@ namespace vtil::optimizer
 				}
 				else
 				{
-					var_reg = exp.uid.get<symbolic::variable>();
+					var_reg = exp->uid.get<symbolic::variable>();
 				}
 
 				// Fail if invalid.
@@ -152,14 +152,14 @@ namespace vtil::optimizer
 				// Check if alive, if not revive, else return as is.
 				//
 				if ( aux::is_alive( var_reg, branch, xblock, &ctracer ) )
-					return std::async( std::launch::deferred, [ op = operand{ var_reg.reg() } ]() { return op; } );
+					return std::async( std::launch::deferred, [ op = operand{ var_reg.reg() } ] () { return op; } );
 				else
-					return std::async( std::launch::deferred, [ = ]() -> operand { return aux::revive_register( var_reg, branch ); } );
+					return std::async( std::launch::deferred, [ = ] () -> operand { return aux::revive_register( var_reg, branch ); } );
 			};
 
 			// Convert [cc] [d1] [d2] in order.
 			//
-			auto op_cc = revive_via_cache( *lbranch_info.cc, &local_tracer );
+			auto op_cc = revive_via_cache( lbranch_info.cc, &local_tracer );
 			if ( op_cc.valid() )
 			{
 				bool fail = false;
@@ -168,9 +168,9 @@ namespace vtil::optimizer
 				{
 					std::future<operand> op;
 					if ( blocal->complexity <= bglobal->complexity )
-						op = revive_via_cache( *blocal, &local_tracer );
+						op = revive_via_cache( blocal, &local_tracer );
 					else
-						op = revive_via_cache( *bglobal, &ctracer );
+						op = revive_via_cache( bglobal, &ctracer );
 
 					if ( !op.valid() )
 					{

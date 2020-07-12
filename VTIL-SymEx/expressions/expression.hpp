@@ -173,8 +173,9 @@ namespace vtil::symbolic
 	//
 	struct expression : math::operable<expression>
 	{
-		using delegate =  expression_delegate;
-		using reference = expression_reference;
+		using delegate =       expression_delegate;
+		using reference =      expression_reference;
+		using weak_reference = weak_reference<expression>;
 
 		// If symbolic variable, the unique identifier that it maps to.
 		//
