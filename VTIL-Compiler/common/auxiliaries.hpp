@@ -49,11 +49,11 @@ namespace vtil::optimizer::aux
 		// If jcc:
 		//
 		bool is_jcc = false;
-		symbolic::expression cc;
+		symbolic::expression::reference cc;
 
 		// Possible destination expressions:
 		//
-		std::vector<symbolic::expression> destinations;
+		std::vector<symbolic::expression::reference> destinations;
 	};
 
 	// Helper to check if the expression given is block-local.

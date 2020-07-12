@@ -808,10 +808,11 @@ namespace vtil::symbolic
 	//
 	bool expression::is_identical( const expression& other ) const
 	{
-		// Propagate invalid.
+		// Propagate invalid and self.
 		//
 		if ( !is_valid() )            return !other.is_valid();
 		else if ( !other.is_valid() ) return false;
+		else if ( this == &other )    return true;
 
 		// If hash mismatch, return false without checking anything.
 		//
@@ -841,15 +842,12 @@ namespace vtil::symbolic
 
 		// If both sides match, return true.
 		//
-		if ( ( lhs == other.lhs || lhs->is_identical( *other.lhs ) ) &&
-			 ( rhs == other.rhs || rhs->is_identical( *other.rhs ) ))
+		if ( lhs->is_identical( *other.lhs ) && rhs->is_identical( *other.rhs ) )
 			return true;
 
 		// If not, check in reverse as well if commutative and return the final result.
 		//
-		return	desc->is_commutative && 
-				( lhs == other.rhs || lhs->is_identical( *other.rhs ) ) &&
-				( rhs == other.lhs || rhs->is_identical( *other.lhs ) );
+		return desc->is_commutative && lhs->is_identical( *other.rhs ) && rhs->is_identical( *other.lhs );
 	}
 
 	// Converts to human-readable format.
@@ -880,15 +878,15 @@ namespace vtil::symbolic
 	{
 		return expression_reference{ *this }.resize( new_size, signed_cast, no_explicit );
 	}
-	expression_reference& expression_reference::simplify( bool prettify )
+	expression_reference& expression_reference::simplify( bool prettify, bool* out )
 	{
 		if ( prettify || !get()->simplify_hint )
-			simplify_expression( *this, prettify );
+			out ? *out = simplify_expression( *this, prettify ) : simplify_expression( *this, prettify );
 		return *this;
 	}
-	expression_reference expression_reference::simplify( bool prettify ) const
+	expression_reference expression_reference::simplify( bool prettify, bool* out ) const
 	{
-		return make_copy( *this ).simplify( prettify );
+		return make_copy( *this ).simplify( prettify, out );
 	}
 	expression_reference& expression_reference::make_lazy()
 	{
@@ -901,10 +899,37 @@ namespace vtil::symbolic
 		return make_copy( *this ).make_lazy();
 	}
 
-	// Implemented for sinkhole-use.
+	// Forward declared redirects for internal use cases.
+	//
+	hash_t expression_reference::hash() const
+	{
+		return get()->hash();
+	}
+	bool expression_reference::is_simple() const
+	{
+		return get()->simplify_hint;
+	}
+	void expression_reference::update( bool auto_simplify ) 
+	{
+		own()->update( auto_simplify );
+	}
+
+	// Equivalence check.
+	//
+	bool expression_reference::equals( const expression& exp ) const { return !is_valid() ? !exp : get()->equals( exp ); }
+	bool expression_reference::is_identical( const expression& exp ) const { return !is_valid() ? !exp : get()->is_identical( exp ); }
+
+	// Implemented for sinkhole use.
 	//
 	bitcnt_t expression_reference::size() const 
 	{ 
 		return get()->size(); 
+	}
+
+	// Implemented for logger use.
+	//
+	std::string expression_reference::to_string() const
+	{
+		return get()->to_string();
 	}
 };

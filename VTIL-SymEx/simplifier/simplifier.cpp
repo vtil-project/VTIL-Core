@@ -70,7 +70,9 @@ namespace vtil::symbolic
 
 	// Simplifier cache and its accessors.
 	//
-	using simplifier_cache_t = std::unordered_map<boxed_expression, std::pair<expression::reference, bool>, hasher<>>;
+	using simplifier_cache_t = std::unordered_map<expression::reference, std::pair<expression::reference, bool>, 
+		                                          expression::reference::hasher, 
+		                                          expression::reference::if_identical                          >;
 	static thread_local simplifier_cache_t simplifier_cache;
 
 	void purge_simplifier_cache()
@@ -78,10 +80,10 @@ namespace vtil::symbolic
 		simplifier_cache.clear();
 	}
 
-	static std::tuple<expression::reference&, bool&, bool> lookup_simplifier_cache( const expression& exp )
+	static std::tuple<expression::reference&, bool&, bool> lookup_simplifier_cache( const expression::reference& exp )
 	{
 		static const std::pair default_value = { expression::reference{}, false };
-		auto [it, inserted] = simplifier_cache.emplace( ( boxed_expression& ) exp, default_value );
+		auto [it, inserted] = simplifier_cache.emplace( exp, default_value );
 		return { it->second.first, it->second.second, !inserted };
 	}
 
@@ -251,7 +253,7 @@ namespace vtil::symbolic
 		//
 		if ( exp->value.is_known() )
 		{
-			*+exp = expression{ exp->value.known_one(), exp->value.size() };
+			exp = expression{ exp->value.known_one(), exp->value.size() };
 #if VTIL_SYMEX_SIMPLIFY_VERBOSE
 			log<CON_CYN>( "= %s [By evaluation]\n", *exp );
 #endif
@@ -269,7 +271,7 @@ namespace vtil::symbolic
 
 		// Lookup the expression in the cache.
 		//
-		auto [cache_entry, success_flag, found] = lookup_simplifier_cache( *exp );
+		auto [cache_entry, success_flag, found] = lookup_simplifier_cache( exp );
 
 		// If we resolved a valid cache entry:
 		//

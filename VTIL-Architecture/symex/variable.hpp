@@ -101,7 +101,7 @@ namespace vtil::symbolic
 			// - Always return constant since this value should not be modified 
 			//   without recomputation of the xpointers.
 			//
-			const expression& decay() const { return base.base ? *base.base : make_default<expression>(); }
+			const expression::reference& decay() const { return base.base; }
 
 			// Declare reduction.
 			//
@@ -183,7 +183,9 @@ namespace vtil::symbolic
 
 		// Packs all the variables in the expression where it'd be optimal.
 		//
-		static expression pack_all( const expression& exp );
+		static expression::reference& pack_all( expression::reference& exp );
+		static expression::reference  pack_all( const expression::reference& exp );
+		static expression pack_all( const expression& exp ) { return *pack_all( make_local_reference( &exp ) ); }
 
 		// Checks if the variable is read by / written by / accessed by the given instruction, 
 		// returns nullopt it could not be known at compile-time, otherwise the

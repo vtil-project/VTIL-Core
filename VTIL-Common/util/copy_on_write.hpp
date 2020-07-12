@@ -32,6 +32,7 @@
 #include <atomic>
 #include "../io/asserts.hpp"
 #include "object_pool.hpp"
+#include "reducable.hpp"
 
 // Define _AddressOfReturnAddress() for compilers that do not have it.
 //
@@ -155,7 +156,8 @@ namespace vtil
 		}
 		shared_reference& operator=( const shared_reference& o ) 
 		{ 
-			return *new ( &reset() ) shared_reference( o );
+			shared_reference copy = o; // This fixes cases where o was referenced by self and it gets deallocated.
+			return *new ( &reset() ) shared_reference( std::move( copy ) );
 		}
 
 		// Construction and assignment operator for rvalue references.
@@ -223,7 +225,7 @@ namespace vtil
 		{
 			const T* prev = get();
 			T* owned = own();
-			return std::make_tuple( owned, impl::reloc_const( std::forward<X>( params ), prev, owned )... );
+			return reference_as_tuple( ( T* ) owned, impl::reloc_const( std::forward<X>( params ), prev, owned )... );
 		}
 
 		// Basic comparison operators are redirected to the pointer type.

@@ -135,32 +135,37 @@ namespace vtil
 			return;
 		}
 
-		std::unordered_map<symbolic::variable, symbolic::expression, hasher<>> cache;
+		std::unordered_map<symbolic::variable, symbolic::expression::reference, hasher<>> cache;
 		cache.reserve( inout.depth );
-		inout.transform( [ &cache, &fn ] ( symbolic::expression& exp )
+		
+		// TODO: fix
+		symbolic::expression::reference ref = make_local_reference( &inout );
+		ref.transform( [ &cache, &fn ] ( symbolic::expression::delegate& exp )
 		{
 			// Skip if not variable.
 			//
-			if ( !exp.is_variable() )
+			if ( !exp->is_variable() )
 				return;
 
 			// Apply transformation.
 			//
-			symbolic::variable& var = exp.uid.get<symbolic::variable>();
+			auto& var = exp->uid.get<symbolic::variable>();
 			if ( auto it = cache.find( var ); it != cache.end() )
 			{
-				if ( it->second ) 
+				if ( it->second && *it->second )
 					exp = it->second;
 			}
 			else
 			{
 				auto res = fn( var );
 				auto [cit, _] = cache.emplace( var, std::move( res ) );
-				
-				if( cit->second )
+
+				if ( cit->second && *cit->second )
 					exp = cit->second;
 			}
 		}, true, false );
+		if ( &*ref != &inout )
+			inout = *ref;
 	}
 
     // Propagates all variables in the reference expression onto the new iterator, if no history pointer given will do trace instead of rtrace.
@@ -382,12 +387,17 @@ namespace vtil
 						//
 						else
 						{
-							result = default_result;
-							result.transform( [ ] ( symbolic::expression& exp )
+							result = std::move( default_result );
+
+							// TODO: fix
+							symbolic::expression::reference ref = make_local_reference( &result );
+							ref.transform( [ ] ( symbolic::expression::delegate& exp )
 							{
-								if ( exp.is_variable() )
-									exp.uid.get<symbolic::variable>().is_branch_dependant = true;
+								if ( exp->is_variable() )
+									( +exp )->uid.get<symbolic::variable>().is_branch_dependant = true;
 							}, true, false );
+							if ( &*ref != &result )
+								result = *ref;
 						}
 						break;
 					}
@@ -517,7 +527,7 @@ namespace vtil
 
 		lvm.hooks.write_memory = [ & ] ( const symbolic::expression::reference& pointer, symbolic::expression::reference value )
 		{
-			if ( pointer->equals( lookup.mem().decay() ) )
+			if ( pointer->equals( *lookup.mem().decay() ) )
 				result = std::move( value );
 		};
 

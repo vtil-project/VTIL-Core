@@ -93,13 +93,13 @@ namespace vtil::symbolic
 					// Transform base pointer:
 					//
 					symbolic::expression::reference base = in->base;
-					( +base )->transform( [ & ] ( symbolic::expression& exp )
+					base.transform( [ & ] ( symbolic::expression::delegate& exp )
 					{
 						// Skip if not variable.
 						//
-						if ( !exp.is_variable() )
+						if ( !exp->is_variable() )
 							return;
-						variable var = exp.uid.get<variable>();
+						variable var = exp->uid.get<variable>();
 
 						// Skip if it has an invalid iterator.
 						//
@@ -610,32 +610,28 @@ namespace vtil::symbolic
 
 	// Packs all the variables in the expression where it'd be optimal.
 	//
-	expression variable::pack_all( const expression& ref )
+	expression::reference& variable::pack_all( expression::reference& exp )
 	{
 		// List of ideal packers.
 		//
 		static constexpr bitcnt_t ideal_packers[] = { 1, 8, 16, 32 };
-
-		// Copy expression and recurse into it.
-		//
-		expression exp = ref;
-		exp.transform( [ ] ( expression& exp )
+		return exp.transform( [ ] ( expression::delegate& exp )
 		{
 			// Skip if expression has any known 1s.
 			//
-			if ( exp.known_one() )
+			if ( exp->known_one() )
 				return;
 
 			// Skip if expression does not have exactly one variable.
 			//
-			if ( exp.count_unique_variables() != 1 )
+			if ( exp->count_unique_variables() != 1 )
 				return;
 
 			// Check if the unknown mask matches that of an ideal packer.
 			//
 			auto it = std::find_if( ideal_packers, std::end( ideal_packers ), [ & ] ( auto& n )
 			{
-				return math::fill( n ) == exp.unknown_mask();
+				return math::fill( n ) == exp->unknown_mask();
 			} );
 			if ( it == std::end( ideal_packers ) )
 				return;
@@ -646,17 +642,17 @@ namespace vtil::symbolic
 
 			// Clone and resize the expression.
 			//
-			auto exp_resized = exp.clone().resize( bitsize );
+			auto exp_resized = expression::reference{ exp.ref }.resize( bitsize );
 
 			// If top node is not __ucast, fail.
 			//
-			if ( exp_resized.op != math::operator_id::ucast )
+			if ( exp_resized->op != math::operator_id::ucast )
 				return;
 
 			// If node is not shift right, use zero offset.
 			//
 			bitcnt_t offset;
-			auto node = exp_resized.lhs;
+			auto node = exp_resized->lhs;
 			if ( node->op != math::operator_id::shift_right )
 			{
 				offset = 0;
@@ -697,14 +693,23 @@ namespace vtil::symbolic
 			if ( ( reg.bit_offset + offset ) % bitsize )
 				return;
 
-			// Rewrite the expression.
+			// Deref top-level node, own current node, rewrite as the variable.
 			//
-			variable var_new = var;
+			exp_resized.reset();
+			auto exp_node = node.own();
+			variable& var_new = exp_node->uid.get<variable>();
 			var_new.reg().bit_count = bitsize;
 			var_new.reg().bit_offset += offset;
-			exp = expression{ var_new, bitsize }.resize( exp.size() );
+			exp_node->value = math::bit_vector( bitsize );
+			exp_node->update( false );
+			exp = node.resize( exp->size() );
 		} );
-		return exp;
+	}
+	expression::reference  variable::pack_all( const expression::reference& exp )
+	{
+		auto copy = make_copy( exp );
+		pack_all( copy );
+		return copy;
 	}
 
 	// Checks if the variable is read by / written by the given instruction, 

@@ -159,7 +159,7 @@ namespace vtil::optimizer
 
 			// Convert [cc] [d1] [d2] in order.
 			//
-			auto op_cc = revive_via_cache( lbranch_info.cc, &local_tracer );
+			auto op_cc = revive_via_cache( *lbranch_info.cc, &local_tracer );
 			if ( op_cc.valid() )
 			{
 				bool fail = false;
@@ -167,10 +167,10 @@ namespace vtil::optimizer
 				for ( auto [out, blocal, bglobal] : zip( dsts, lbranch_info.destinations, branch_info.destinations ) )
 				{
 					std::future<operand> op;
-					if ( blocal.complexity <= bglobal.complexity )
-						op = revive_via_cache( blocal, &local_tracer );
+					if ( blocal->complexity <= bglobal->complexity )
+						op = revive_via_cache( *blocal, &local_tracer );
 					else
-						op = revive_via_cache( bglobal, &ctracer );
+						op = revive_via_cache( *bglobal, &ctracer );
 
 					if ( !op.valid() )
 					{
@@ -201,12 +201,12 @@ namespace vtil::optimizer
 		// If branch is [j/c* reg] where it could be [j/c* reg] imm:
 		//
 		if ( branch_info.destinations.size() == 1 &&
-			 branch_info.destinations[ 0 ].is_constant() &&
+			 branch_info.destinations[ 0 ]->is_constant() &&
 			 ( branch->base == &ins::jmp || branch->base == &ins::vxcall || branch->base == &ins::vexit ) &&
 			 branch->operands[ 0 ].is_register() )
 		{
 
-			branch->operands[ 0 ] = { *branch_info.destinations[ 0 ].get<vtil::vip_t>(), 64 };
+			branch->operands[ 0 ] = { *branch_info.destinations[ 0 ]->get<vip_t>(), 64 };
 			cnt++;
 		}
 

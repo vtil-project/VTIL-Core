@@ -38,11 +38,58 @@ namespace vtil::math { template<> struct resolve_alias<symbolic::expression_refe
 
 namespace vtil::symbolic
 {
+	struct expression;
+
+	// Expression delegates used to implement copyless write detection 
+	// in case the reference is already owning.
+	//
+	struct expression_delegate
+	{
+		shared_reference<expression>& ref;
+		bool dirty;
+
+		expression_delegate( shared_reference<expression>& ref ) : ref( ref ), dirty( false ) {}
+		expression_delegate( expression_delegate&& ) = default;
+		expression_delegate( const expression_delegate& ) = delete;
+		expression_delegate& operator=( expression_delegate&& ) = default;
+		expression_delegate& operator=( const expression_delegate& ) = delete;
+
+		template<typename T, std::enable_if_t<!std::is_same_v<std::decay_t<T>, expression_delegate>, int> = 0>
+		expression_delegate& operator=( T&& value )
+		{
+			ref = std::forward<T>( value );
+			dirty = true;
+			return *this;
+		}
+
+		const expression* operator->() const { return ref.get(); }
+		const expression& operator*() const { return *ref.get(); }
+		expression* operator+() { dirty = 1; return ref.own(); }
+	};
+
 	// Expression references.
 	//
-	struct expression;
 	struct expression_reference : shared_reference<expression>
 	{
+		// Declare hasher and equivalence checker.
+		//
+		struct hasher
+		{
+			size_t operator()( const expression_reference& value ) const { return value.hash(); }
+		};
+		struct if_equal
+		{
+			bool operator()( const expression_reference& v1,
+							 const expression_reference& v2 ) const { return v1.equals( *v2 ); }
+		};
+		struct if_identical
+		{
+			bool operator()( const expression_reference& v1,
+							 const expression_reference& v2 ) const { return v1.is_identical( *v2 ); }
+		};
+
+		// Forward operators and constructor.
+		//
 		template<typename... Tx>
 		expression_reference( Tx&&... args ) 
 			: shared_reference( std::forward<Tx>( args )...) {}
@@ -63,14 +110,63 @@ namespace vtil::symbolic
 		//
 		expression_reference& resize( bitcnt_t new_size, bool signed_cast = false, bool no_explicit = false );
 		expression_reference  resize( bitcnt_t new_size, bool signed_cast = false, bool no_explicit = false ) const;
-		expression_reference& simplify( bool prettify = false );
-		expression_reference  simplify( bool prettify = false ) const;
+		expression_reference& simplify( bool prettify = false, bool* out = nullptr );
+		expression_reference  simplify( bool prettify = false, bool* out = nullptr ) const;
 		expression_reference& make_lazy();
 		expression_reference  make_lazy() const;
 
-		// Implemented for sinkhole-use.
+		// Forward declared redirects for internal use cases.
+		//
+		hash_t hash() const;
+		bool is_simple() const;
+		void update( bool auto_simplify );
+
+		// Equivalence check.
+		//
+		bool equals( const expression& exp ) const;
+		bool is_identical( const expression& exp ) const;
+
+		// Implemented for sinkhole use.
 		//
 		bitcnt_t size() const;
+
+		// Implemented for logger use.
+		//
+		std::string to_string() const;
+
+		// Transforms the whole tree according to the functor, much more optimized compared to expression::transform.
+		//
+		template<typename T>
+		bool transform_single( const T& func, bool auto_simplify, bool do_update );
+		template<typename T>
+		std::pair<bool, expression_reference> transform_single( const T& func, bool auto_simplify, bool do_update ) const
+		{
+			auto copy = make_copy( *this );
+			return { copy.transform_single( func, auto_simplify, do_update ), copy };
+		}
+		template<typename T>
+		bool transform_rec( const T& func, bool bottom, bool auto_simplify );
+		template<typename T>
+		std::pair<bool, expression_reference> transform_rec( const T& func, bool bottom, bool auto_simplify ) const
+		{
+			auto copy = make_copy( *this );
+			return { copy.transform_rec( func, bottom, auto_simplify ), copy };
+		}
+
+		// Implement original transform signature.
+		//
+		template<typename T>
+		expression_reference& transform( const T& func, bool bottom = false, bool auto_simplify = true )
+		{
+			transform_rec( func, bottom, auto_simplify );
+			return *this;
+		}
+		template<typename T>
+		expression_reference transform( const T& func, bool bottom = false, bool auto_simplify = true ) const
+		{
+			auto copy = make_copy( *this );
+			return copy.transform( func, bottom, auto_simplify );
+		}
 	};
 
 	// Expression descriptor.
@@ -78,6 +174,7 @@ namespace vtil::symbolic
 	struct expression : math::operable<expression>
 	{
 		using reference = expression_reference;
+		using delegate = expression_delegate;
 
 		// If symbolic variable, the unique identifier that it maps to.
 		//
@@ -264,30 +361,6 @@ namespace vtil::symbolic
 			return *this;
 		}
 
-		// Transforms the whole tree according to the functor.
-		//
-		template<typename T>
-		expression& transform( const T& fn, bool bottom = true, bool auto_simplify = true )
-		{
-			if ( bottom )
-			{
-				if ( rhs ) ( +rhs )->transform( fn, bottom, auto_simplify );
-				if ( lhs ) ( +lhs )->transform( fn, bottom, auto_simplify );
-				update( auto_simplify );
-				fn( *this );
-				update( auto_simplify );
-			}
-			else
-			{
-				fn( *this );
-				update( auto_simplify );
-				if ( rhs ) ( +rhs )->transform( fn, bottom, auto_simplify );
-				if ( lhs ) ( +lhs )->transform( fn, bottom, auto_simplify );
-				update( auto_simplify );
-			}
-			return *this;
-		}
-
 		// Simple way to invoke copy constructor using a pointer.
 		//
 		expression clone() const { return *this; }
@@ -331,4 +404,125 @@ namespace vtil::symbolic
 		bool operator!=( const boxed_expression& o ) const { return !is_identical( o ); }
 		bool operator<( const boxed_expression& o )  const { return hash() < o.hash(); }
 	};
+
+
+	// Transforms the whole tree according to the functor, much more optimized compared to expression::transform.
+	//
+	template<typename T>
+	bool expression_reference::transform_single( const T& func, bool auto_simplify, bool do_update )
+	{
+		// Save original hash.
+		//
+		hash_t hash_0 = hash();
+
+		// Invoke via delegate.
+		//
+		expression_delegate del = { *this };
+		func( del );
+
+		// If function did not modify the value:
+		//
+		if ( !del.dirty )
+		{
+			// If simple already or no auto simplifiy set, return false.
+			//
+			if ( !auto_simplify || is_simple() )
+				return false;
+
+			// Invoke simplifier and return its state as "did-change".
+			//
+			bool simplified;
+			simplify( false, &simplified );
+			return simplified;
+		}
+
+		// Invoke update if not done already.
+		//
+		if ( hash_0 != hash() && do_update )
+			update( auto_simplify );
+		// If done but we still need to auto-simplify:
+		//
+		else if ( auto_simplify && !is_simple() )
+			simplify();
+
+		// Report changed.
+		//
+		return true;
+	}
+	template<typename T>
+	bool expression_reference::transform_rec( const T& func, bool bottom, bool auto_simplify )
+	{
+		const auto transform_children = [ & ] ()
+		{
+			// If RHS exists:
+			//
+			bool changed = false;
+			if ( auto& rhs = get()->rhs )
+			{
+				// Recursively transform RHS, if changed:
+				//
+				if ( auto [crhs, nrhs] = rhs.transform_rec( func, bottom, auto_simplify ); crhs )
+				{
+					// Set changed, own self and update node, transform LHS if exists.
+					//
+					auto owning = own();
+					changed = true;
+					owning->rhs = nrhs;
+					if ( auto& lhs = owning->lhs )
+						( bool ) lhs.transform_rec( func, bottom, auto_simplify );
+				}
+				// If not, but LHS exists:
+				//
+				else if ( auto& lhs = get()->lhs )
+				{
+					// Recursively transform LHS, if changed:
+					//
+					if ( auto [clhs, nlhs] = lhs.transform_rec( func, bottom, auto_simplify ); clhs )
+					{
+						// Set changed, own self and update node.
+						//
+						changed = true;
+						own()->lhs = nlhs;
+					}
+				}
+			}
+			return changed;
+		};
+
+		if ( bottom )
+		{
+			// Transform all children.
+			//
+			bool changed = transform_children();
+
+			// If changed, update the expression.
+			//
+			if( changed )
+				own()->update( auto_simplify );
+			
+			// Transform self and return.
+			//
+			return changed | transform_single( func, auto_simplify, true );
+		}
+		else
+		{
+			// Transform self without updating if auto_simplify is not set.
+			//
+			bool changed = transform_single( func, auto_simplify, false );
+
+			// Transform all children, if any of them were changed or if
+			// auto simplify was not set causing us to delay the update
+			// together with a change in current node, update self.
+			//
+			if ( transform_children() | ( changed && !auto_simplify ) )
+			{
+				own()->update( auto_simplify );
+				changed = true;
+			}
+
+			// Return final state.
+			//
+			return changed;
+		}
+	}
 };

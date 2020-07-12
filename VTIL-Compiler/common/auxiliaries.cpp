@@ -46,7 +46,7 @@ namespace vtil::optimizer::aux
 			//
 			auto& var = uid.get<symbolic::variable>();
 			if ( var.is_memory() )
-				result |= is_local( var.mem().decay() );
+				result |= is_local( *var.mem().decay() );
 			else
 				result |= var.reg().is_local();
 
@@ -95,7 +95,7 @@ namespace vtil::optimizer::aux
 		{
 			// If it can't be simplified into $sp + C, assume used.
 			//
-			std::optional delta_o = var.mem().decay().evaluate( [ ] ( const symbolic::unique_identifier& uid )
+			std::optional delta_o = var.mem().decay()->evaluate( [ ] ( const symbolic::unique_identifier& uid )
 																-> std::optional<uint64_t>
 			{
 				auto var = uid.get<symbolic::variable>();
@@ -135,9 +135,8 @@ namespace vtil::optimizer::aux
 				{
 					if ( local_var.at.container->sp_index == 0 )
 					{
-						symbolic::expression exp = local_var.mem().decay();
-						exp =
-							exp
+						symbolic::expression exp =
+							local_var.mem().decay()
 							- local_var.at.container->sp_offset
 							+ symbolic::variable{ it.container->begin(), REG_SP }.to_expression()
 							- symbolic::variable{ local_var.at.container->begin(), REG_SP }.to_expression();
@@ -317,10 +316,10 @@ namespace vtil::optimizer::aux
 		//
 		const auto trace = [ & ] ( symbolic::variable&& lookup )
 		{
-			auto exp = tracer->trace( std::move( lookup ) );
-			if ( flags.cross_block ) exp = tracer->rtrace_exp( std::move( exp ) );
-			if ( flags.pack )        exp = symbolic::variable::pack_all( exp );
-			return exp;
+			symbolic::expression::reference exp;
+			if ( flags.cross_block ) exp = tracer->rtrace( std::move( lookup ) );
+			else                     exp = tracer->trace( std::move( lookup ) );
+			return flags.pack ? symbolic::variable::pack_all( exp ) : exp;
 		};
 
 		// Declare operand->expression helper.
@@ -330,21 +329,21 @@ namespace vtil::optimizer::aux
 		{
 			// Determine the symbolic expression describing branch destination.
 			//
-			symbolic::expression destination = op_dst.is_immediate()
+			symbolic::expression::reference destination = op_dst.is_immediate()
 				? symbolic::expression{ op_dst.imm().u64 }
 				: trace( { branch, op_dst.reg() } );
 
 			// Remove any matches of REG_IMGBASE and pack.
 			//
-			destination.transform( [ ] ( symbolic::expression& ex )
+			destination.transform( [ ] ( symbolic::expression::delegate& ex )
 			{
-				if ( ex.is_variable() )
+				if ( ex->is_variable() )
 				{
-					auto& var = ex.uid.get<symbolic::variable>();
+					auto& var = ex->uid.get<symbolic::variable>();
 					if ( var.is_register() && var.reg() == REG_IMGBASE )
-						ex = { 0, ex.size() };
+						*+ex = { 0, ex->size() };
 				}
-			} ).simplify( true );
+			}, true ).simplify( true );
 
 			// If parsing requested:
 			//
@@ -352,65 +351,65 @@ namespace vtil::optimizer::aux
 			{
 				// Match classic Jcc:
 				//
-				const auto extract_and_transform_cnd = [ & ] ( symbolic::expression& dst, symbolic::expression& cnd_out, bool state )
+				const auto extract_and_transform_cnd = [ & ] ( symbolic::expression::reference& dst, symbolic::expression::reference& cnd_out, bool state )
 				{
 					bool confirmed = false;
 
-					std::function<void( const symbolic::expression& )> explore_cc_space = [ & ] ( const symbolic::expression& exp )
+					const std::function<void( const symbolic::expression& )> explore_cc_space = [ & ] ( const symbolic::expression& exp )
 					{
 						if ( exp.op == math::operator_id::value_if )
 						{
-							if ( !cnd_out.is_valid() )
-								cnd_out = *exp.lhs;
+							if ( !cnd_out )
+								cnd_out = exp.lhs;
 						}
 						else if ( ( exp.value.unknown_mask() | exp.value.known_one() ) == 1 )
 						{
-							if ( !cnd_out.is_valid() && !exp.is_constant() )
+							if ( !cnd_out && !exp.is_constant() )
 								cnd_out = exp;
 						}
 						else if ( exp.is_variable() && exp.uid.get<symbolic::variable>().is_memory() )
 						{
-							exp.uid.get<symbolic::variable>().mem().decay().enumerate( explore_cc_space );
+							exp.uid.get<symbolic::variable>().mem().decay()->enumerate( explore_cc_space );
 						}
 					};
 
-					std::function<void( symbolic::expression& )> transform_cc = [ & ] ( symbolic::expression& exp )
+					const std::function<void( symbolic::expression::delegate& )> transform_cc = [ & ] ( symbolic::expression::delegate& exp )
 					{
-						if ( exp.op == math::operator_id::value_if )
+						if ( exp->op == math::operator_id::value_if )
 						{
-							if ( exp.lhs->is_identical( cnd_out ) )
+							if ( exp->lhs->is_identical( *cnd_out ) )
 							{
-								exp = state ? *exp.rhs : 0;
+								exp = state ? exp->rhs : symbolic::expression{ 0 };
 								confirmed |= !state;
 							}
-							else if ( exp.lhs->is_identical( ~cnd_out ) )
+							else if ( exp->lhs->is_identical( ~cnd_out ) )
 							{
-								exp = state ? 0 : *exp.rhs;
+								exp = state ? symbolic::expression{ 0 } : exp->rhs;
 								confirmed |= !state;
 							}
 						}
-						else if ( ( exp.value.unknown_mask() | exp.value.known_one() ) == 1 )
+						else if ( ( exp->value.unknown_mask() | exp->value.known_one() ) == 1 )
 						{
-							if ( exp.is_identical( cnd_out ) )
+							if ( exp->is_identical( *cnd_out ) )
 							{
-								exp = { state, exp.size() };
+								*+exp = symbolic::expression{ state, exp->size() };
 								confirmed |= !state;
 							}
-							else if ( exp.is_identical( ~cnd_out ) )
+							else if ( exp->is_identical( ~cnd_out ) )
 							{
-								exp = { state ^ 1, exp.size() };
+								*+exp = symbolic::expression{ state ^ 1, exp->size() };
 								confirmed |= !state;
 							}
 						}
-						else if ( exp.is_variable() && exp.uid.get<symbolic::variable>().is_memory() )
+						else if ( exp->is_variable() && exp->uid.get<symbolic::variable>().is_memory() )
 						{
-							auto& var = exp.uid.get<symbolic::variable>();
+							auto& var = exp->uid.get<symbolic::variable>();
 						
 							// Disable cross block tracing while we trace the pointer.
 							//
 							branch_analysis_flags orig_flags = flags;
 							flags.cross_block = false;
-							symbolic::pointer exp_ptr = var.mem().decay().clone().transform( transform_cc );
+							symbolic::pointer exp_ptr = var.mem().decay().transform( transform_cc );
 							flags = orig_flags;
 
 							if ( exp_ptr != var.mem().base )
@@ -418,14 +417,14 @@ namespace vtil::optimizer::aux
 						}
 					};
 
-					dst.enumerate( explore_cc_space );
-					if ( cnd_out ) dst.transform( transform_cc );
+					dst->enumerate( explore_cc_space );
+					if ( cnd_out )    dst.transform( transform_cc );
 					if ( !confirmed ) cnd_out = {};
 				};
 
-				symbolic::expression cc = {};
-				symbolic::expression dst1 = destination;
-				symbolic::expression dst2 = destination;
+				symbolic::expression::reference cc = {};
+				symbolic::expression::reference dst1 = destination;
+				symbolic::expression::reference dst2 = destination;
 				extract_and_transform_cnd( dst1, cc, true );
 				extract_and_transform_cnd( dst2, cc, false );
 
@@ -434,8 +433,8 @@ namespace vtil::optimizer::aux
 					return {
 						.is_vm_exit = real,
 						.is_jcc = true,
-						.cc = cc,
-						.destinations = { dst1, dst2 }
+						.cc = std::move( cc ),
+						.destinations = { std::move( dst1 ), std::move( dst2 ) }
 					};
 				}
 
@@ -447,7 +446,7 @@ namespace vtil::optimizer::aux
 			//
 			return {
 				.is_vm_exit = real,
-				.destinations = { destination }
+				.destinations = { std::move( destination ) }
 			};
 		};
 
@@ -463,12 +462,12 @@ namespace vtil::optimizer::aux
 		{
 			// If condition can be resolved in compile time:
 			//
-			symbolic::expression cc = trace( { branch, branch->operands[ 0 ].reg() } );
-			if ( flags.resolve_opaque && cc.is_constant() )
+			auto cc = trace( { branch, branch->operands[ 0 ].reg() } );
+			if ( flags.resolve_opaque && cc->is_constant() )
 			{
 				// Redirect to jmp resolver.
 				//
-				return discover( branch->operands[ *cc.get<bool>() ? 1 : 2 ], false, false );
+				return discover( branch->operands[ *cc->get<bool>() ? 1 : 2 ], false, false );
 			}
 
 			// Resolve each individually and form jcc.
@@ -478,8 +477,8 @@ namespace vtil::optimizer::aux
 			return {
 				.is_vm_exit = false,
 				.is_jcc = true,
-				.cc = cc,
-				.destinations = { b1.destinations[ 0 ], b2.destinations[ 0 ] }
+				.cc = std::move( cc ),
+				.destinations = { std::move( b1.destinations[ 0 ] ), std::move( b2.destinations[ 0 ] ) }
 			};
 		}
 		unreachable();

@@ -191,7 +191,7 @@ namespace vtil::optimizer
 
 				// Pack registers and the expression.
 				//
-				symbolic::expression final_value = symbolic::variable::pack_all( ( +v )->simplify( true ) );
+				auto final_value = symbolic::variable::pack_all( v.simplify( true ) );
 
 				// Buffer a mov instruction.
 				//
@@ -230,7 +230,7 @@ namespace vtil::optimizer
 
 				// Pack registers and the expression.
 				//
-				v = symbolic::variable::pack_all( v->simplify( true ) );
+				v = symbolic::variable::pack_all( v.simplify( true ) );
 
 				// If pointer can be rewritten as $sp + C:
 				//
@@ -242,7 +242,7 @@ namespace vtil::optimizer
 					instruction_buffer.push_back(
 					{
 						&ins::str,
-						{ REG_SP, make_imm<int64_t>( *displacement ), translator << *v }
+						{ REG_SP, make_imm<int64_t>( *displacement ), translator << v }
 					} );
 				}
 				else
@@ -250,20 +250,20 @@ namespace vtil::optimizer
 					// Try to extract the offset from the compound expression.
 					//
 					int64_t offset = 0;
-					symbolic::expression exp = symbolic::variable::pack_all( *k.base ).simplify( true );
-					if ( !exp.is_constant() )
+					auto exp = symbolic::variable::pack_all( k.base ).simplify( true );
+					if ( !exp->is_constant() )
 					{
 						using namespace symbolic::directive;
 
 						std::vector<symbol_table_t> results;
 						if ( fast_match( &results, A + U, exp ) )
 						{
-							exp = *results.front().translate( A );
+							exp = results.front().translate( A );
 							offset = *results.front().translate( U )->get<int64_t>();
 						}
 						else if ( fast_match( &results, A - U, exp ) )
 						{
-							exp = *results.front().translate( A );
+							exp = results.front().translate( A );
 							offset = -*results.front().translate( U )->get<int64_t>();
 						}
 					}
@@ -283,7 +283,7 @@ namespace vtil::optimizer
 					instruction_buffer.push_back(
 					{
 						&ins::str,
-						{ base, make_imm( offset ), translator << *v }
+						{ base, make_imm( offset ), translator << v }
 					} );
 				}
 			}

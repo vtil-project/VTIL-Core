@@ -37,8 +37,8 @@ namespace vtil
     // if provided invokes the proxy for each subtranslation it needs to do.
     //
     operand translate_expression( 
-        const symbolic::expression& exp, 
+        const symbolic::expression::reference& exp, 
         basic_block* block,
-        const std::function<operand( const symbolic::expression&, basic_block* )>& proxy = {} 
+        const std::function<operand( const symbolic::expression::reference&, basic_block* )>& proxy = {}
     );
 };

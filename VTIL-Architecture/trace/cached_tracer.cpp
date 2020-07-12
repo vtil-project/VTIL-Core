@@ -74,7 +74,7 @@ namespace vtil
 				//
 				auto& self = lookup.mem();
 				auto& other = pair.first.mem();
-				return self.decay().equals( other.decay() ) &&
+				return self.decay()->equals( *other.decay() ) &&
 					   self.bit_count >= other.bit_count;
 			};
 		}

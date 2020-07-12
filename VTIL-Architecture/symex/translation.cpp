@@ -52,7 +52,7 @@ namespace vtil
 
 	// Translates the given symbolic expression into instruction equivalents.
 	//
-	operand translate_expression( const symbolic::expression& exp, basic_block* block, const std::function<operand( const symbolic::expression&, basic_block* )>& proxy )
+	operand translate_expression( const symbolic::expression::reference& exp, basic_block* block, const std::function<operand( const symbolic::expression::reference&, basic_block* )>& proxy )
 	{
 		// Declare a helper to force an operand into register form.
 		//
@@ -65,7 +65,7 @@ namespace vtil
 
 		// Converts the given symbolic expression into an operand after translating.
 		//
-		const auto cvt = [ & ] ( const symbolic::expression& exp, bool clobber = false )
+		const auto cvt = [ & ] ( const symbolic::expression::reference& exp, bool clobber = false )
 		{
 			// If no proxy given, translate, ignore clobber since we always return temporaries.
 			//
@@ -82,21 +82,21 @@ namespace vtil
 
 		// Switch operators:
 		//
-		switch ( auto op = exp.op )
+		switch ( auto op = exp->op )
 		{
 			case math::operator_id::invalid:
 			{
 				// If constant, simply convert into operand type.
 				//
-				if ( exp.is_constant() )
+				if ( exp->is_constant() )
 				{
-					return { *exp.get(), exp.size() };
+					return { *exp->get(), exp->size() };
 				}
 
 				// Assert validity and get the variable.
 				//
-				fassert( exp.is_variable() );
-				auto& var = exp.uid.get<symbolic::variable>();
+				fassert( exp->is_variable() );
+				auto& var = exp->uid.get<symbolic::variable>();
 
 				// If memory, emit LDD into temporary.
 				//
@@ -106,7 +106,7 @@ namespace vtil
 					//
 					if( auto displacement = ( var.mem().base - symbolic::make_register_ex( REG_SP ) ) )
 					{
-						operand tmp = block->tmp( exp.size() );
+						operand tmp = block->tmp( exp->size() );
 						block->ldd( tmp, REG_SP, *displacement );
 						return tmp;
 					}
@@ -115,20 +115,20 @@ namespace vtil
 						// Try to extract the offset from the compound expression.
 						//
 						int64_t offset = 0;
-						symbolic::expression mem_base = symbolic::variable::pack_all( var.mem().decay() ).simplify( true );
-						if ( !mem_base.is_constant() )
+						auto mem_base = symbolic::variable::pack_all( var.mem().decay() ).simplify( true );
+						if ( !mem_base->is_constant() )
 						{
 							using namespace symbolic::directive;
 
 							std::vector<symbol_table_t> results;
 							if ( fast_match( &results, A + U, mem_base ) )
 							{
-								mem_base = *results.front().translate( A );
+								mem_base = results.front().translate( A );
 								offset = *results.front().translate( U )->get<int64_t>();
 							}
 							else if ( fast_match( &results, A - U, mem_base ) )
 							{
-								mem_base = *results.front().translate( A );
+								mem_base = results.front().translate( A );
 								offset = -*results.front().translate( U )->get<int64_t>();
 							}
 						}
@@ -143,7 +143,7 @@ namespace vtil
 							base = tmp2;
 						}
 
-						operand tmp = block->tmp( exp.size() );
+						operand tmp = block->tmp( exp->size() );
 						block->ldd( tmp, base, make_imm( offset ) );
 						return tmp;
 					}
@@ -155,8 +155,8 @@ namespace vtil
 					// Resize the register descriptor to the expression size.
 					//
 					register_desc reg = var.reg();
-					fassert( reg.bit_count >= exp.size() );
-					reg.bit_count = exp.size();
+					fassert( reg.bit_count >= exp->size() );
+					reg.bit_count = exp->size();
 
 					// If stack pointer, remove the current offset:
 					//
@@ -178,25 +178,25 @@ namespace vtil
 			{
 				// Emit move into temporary (which is zero-extending by default) and return.
 				//
-				operand tmp = block->tmp( *exp.rhs->get<bitcnt_t>() );
-				block->mov( tmp, cvt( *exp.lhs ) );
+				operand tmp = block->tmp( *exp->rhs->get<bitcnt_t>() );
+				block->mov( tmp, cvt( *exp->lhs ) );
 				return tmp;
 			}
 			case math::operator_id::cast:
 			{
 				// Emit move into temporary by sign-extension.
 				//
-				operand tmp = block->tmp( *exp.rhs->get<bitcnt_t>() );
-				block->movsx( tmp, cvt( *exp.lhs ) );
+				operand tmp = block->tmp( *exp->rhs->get<bitcnt_t>() );
+				block->movsx( tmp, cvt( *exp->lhs ) );
 				return tmp;
 			}
 			case math::operator_id::bit_test:
 			{
-				if ( auto offset = exp.rhs->get() )
+				if ( auto offset = exp->rhs->get() )
 				{
 					// Resolve tested expression into operand and address by-bit.
 					//
-					operand res = cvt( *exp.lhs, true );
+					operand res = cvt( *exp->lhs, true );
 					res.reg().bit_offset += math::narrow_cast<bitcnt_t>( *offset );
 					res.reg().bit_count = 1;
 					return res;
@@ -205,7 +205,7 @@ namespace vtil
 				{
 					// Translate the shifted version and address first bit.
 					//
-					operand res = cvt( exp.lhs >> exp.rhs, true );
+					operand res = cvt( exp->lhs >> exp->rhs, true );
 					res.reg().bit_count = 1;
 					return res;
 				}
@@ -215,7 +215,7 @@ namespace vtil
 			{
 				// Translate the right hand side into a register.
 				//
-				operand tmp = cvt( *exp.rhs, true );
+				operand tmp = cvt( *exp->rhs, true );
 
 				// Push [<INS> Reg1] and return Reg1.
 				//
@@ -228,7 +228,7 @@ namespace vtil
 			{
 				// Translate the right hand side into a register.
 				//
-				operand tmp = cvt( *exp.rhs, true );
+				operand tmp = cvt( *exp->rhs, true );
 
 				// Push [<INS> Reg1] and return Reg1.
 				//
@@ -256,8 +256,8 @@ namespace vtil
 			{
 				// Translate the both sides.
 				//
-				operand lhs = cvt( *exp.lhs );
-				operand rhs = cvt( *exp.rhs );
+				operand lhs = cvt( *exp->lhs );
+				operand rhs = cvt( *exp->rhs );
 
 				// If left hand side is not a register, and operator is commutative, switch sides.
 				// Force left hand side into a register.
@@ -275,7 +275,7 @@ namespace vtil
 			{
 				// If Lhs is a register:
 				//
-				if ( operand lhs = cvt( *exp.lhs ); lhs.is_register() )
+				if ( operand lhs = cvt( *exp->lhs ); lhs.is_register() )
 				{
 					// Resize Lhs to a boolean.
 					//
@@ -283,24 +283,24 @@ namespace vtil
 
 					// Allocate temporary.
 					//
-					operand tmp = block->tmp( exp.rhs->size() );
+					operand tmp = block->tmp( exp->rhs->size() );
 
 					// Push [<INS> Tmp Lhs Rhs] and return Tmp.
 					//
-					block->push_back( { map_operator( op ), { tmp, lhs, cvt( *exp.rhs ) } } );
+					block->push_back( { map_operator( op ), { tmp, lhs, cvt( *exp->rhs ) } } );
 					return tmp;
 				}
 				// If Lhs was [true], return Rhs:
 				//
 				else if( lhs.imm().u64 & 1 )
 				{
-					return cvt( *exp.rhs, true );
+					return cvt( *exp->rhs, true );
 				}
 				// Otherwise return 0.
 				//
 				else
 				{
-					return { 0, exp.rhs->size() };
+					return { 0, exp->rhs->size() };
 				}
 			}
 			case math::operator_id::divide:
@@ -310,8 +310,8 @@ namespace vtil
 			{
 				// Translate the both sides.
 				//
-				operand lhs = cvt( *exp.lhs );
-				operand rhs = cvt( *exp.rhs );
+				operand lhs = cvt( *exp->lhs );
+				operand rhs = cvt( *exp->rhs );
 
 				// Push [<INS> Lhs 0 Rhs] and return Lhs.
 				//
@@ -327,7 +327,7 @@ namespace vtil
 				// Unpack the expression by forcing re-simplification without
 				// prettification requested and recurse.
 				//
-				return cvt( exp.clone().transform( [ ] ( auto& ) {} ), true );
+				return cvt( exp.transform( [ ] ( auto& ) {} ), true );
 			}
 			case math::operator_id::greater:
 			case math::operator_id::greater_eq:
@@ -348,8 +348,8 @@ namespace vtil
 
 				// Translate the both sides.
 				//
-				operand lhs = cvt( *exp.lhs );
-				operand rhs = cvt( *exp.rhs );
+				operand lhs = cvt( *exp->lhs );
+				operand rhs = cvt( *exp->rhs );
 
 				// Push [<INS> Tmp Lhs Rhs] and return Tmp.
 				//
