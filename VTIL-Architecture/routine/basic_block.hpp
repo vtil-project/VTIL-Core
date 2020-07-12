@@ -66,7 +66,7 @@ namespace vtil
 
 			// Path restriction state.
 			//
-			const std::unordered_set<const container_type*>* paths_allowed = nullptr;
+			const path_set* paths_allowed = nullptr;
 			bool is_path_restricted = false;
 
 			// Default constructor and the block-bound constructor.

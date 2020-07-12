@@ -175,6 +175,13 @@ namespace vtil
 				impl::combine_hash( hash, {} );
 				return hash;
 			}
+			// If pointer, use a special hasher.
+			//
+			else if constexpr ( std::is_pointer_v<T> )
+			{
+				uint64_t identifier = ( ( uint64_t ) value ) & ( ( 1ull << 48 ) - 1 );
+				return hash_t{ ( identifier << 16 ) ^ ( identifier ) };
+			}
 			// If trivial type, hash each byte.
 			//
 			else if constexpr ( std::is_trivial_v<T> )

@@ -305,7 +305,7 @@ namespace vtil
 			path_map map_l1 = {};
 			for ( auto& [k1, v] : map )
 			{
-				std::map<const basic_block*, path_set> map_l2;
+				std::unordered_map<const basic_block*, path_set, hasher<>> map_l2;
 				for ( auto& [k2, set] : v )
 				{
 					path_set new_set;
