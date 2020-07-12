@@ -40,7 +40,7 @@ namespace vtil
 
 		// The expression cache.
 		//
-		std::map<symbolic::boxed_expression, operand> translation_cache;
+		std::unordered_map<symbolic::boxed_expression, operand, hasher<>> translation_cache;
 		
 		// Constructed by binding to a block.
 		//
@@ -50,7 +50,7 @@ namespace vtil
 		//
 		operand operator<<( const symbolic::expression& exp )
 		{
-			operand& op = translation_cache[ exp ];
+			operand& op = translation_cache[ ( symbolic::boxed_expression& ) exp ];
 			if ( !op.is_valid() )
 			{
 				op = translate_expression(
