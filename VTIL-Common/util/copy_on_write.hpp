@@ -32,6 +32,14 @@
 #include <atomic>
 #include "../io/asserts.hpp"
 #include "object_pool.hpp"
+
+// Define _AddressOfReturnAddress() for compilers that do not have it. 
+// 
+#if not defined(_MSC_VER) and not defined(__INTELLISENSE__) 
+	#define __forceinline __attribute__((always_inline)) 
+	#define _AddressOfReturnAddress() __builtin_frame_address(0) 
+#endif 
+
 // The copy-on-write interface defined here is used to avoid deep duplications of 
 // containers such as trees when a VTIL routine is working with them.
 //
