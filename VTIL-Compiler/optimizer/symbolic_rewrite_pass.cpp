@@ -191,17 +191,17 @@ namespace vtil::optimizer
 
 				// Pack registers and the expression.
 				//
-				auto final_value = symbolic::variable::pack_all( v.simplify( true ) );
+				symbolic::variable::pack_all( v.simplify( true ) );
 
 				// Buffer a mov instruction.
 				//
-				instruction_buffer.push_back( { &ins::mov, { k, translator << final_value } } );
+				instruction_buffer.push_back( { &ins::mov, { k, translator << v } } );
 			}
 
 			// For each memory state:
 			// -- TODO: Simplify memory state, merge if simplifies, discard if left as is.
 			//
-			for ( const auto& [k, _v] : vm.memory_state )
+			for ( auto& [k, _v] : vm.memory_state )
 			{
 				auto v = _v.simplify();
 				symbolic::expression v0 = symbolic::make_memory_ex( k, v.size() );
@@ -230,7 +230,7 @@ namespace vtil::optimizer
 
 				// Pack registers and the expression.
 				//
-				v = symbolic::variable::pack_all( v.simplify( true ) );
+				symbolic::variable::pack_all( v.simplify( true ) );
 
 				// If pointer can be rewritten as $sp + C:
 				//

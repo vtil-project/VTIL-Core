@@ -32,7 +32,7 @@ namespace vtil
 {
 	// Hooks default tracer and does a cache lookup before invokation.
 	//
-	symbolic::expression cached_tracer::trace( const symbolic::variable& lookup )
+	symbolic::expression::reference cached_tracer::trace( const symbolic::variable& lookup )
 	{
 		using namespace logger;
 
@@ -134,7 +134,7 @@ namespace vtil
 				return result;
 			}*/
 
-			const symbolic::expression& result = *it->second;
+			symbolic::expression::reference& result = it->second;
 #if VTIL_OPT_TRACE_VERBOSE
 			// Log result.
 			//
@@ -145,13 +145,13 @@ namespace vtil
 
 		// Search the map, if we find a matching entry shrink and use as the result.
 		//
-		symbolic::expression result;
+		symbolic::expression::reference result;
 		it = std::find_if( cache.begin(), cache.end(), predicate );
 		if ( it != cache.end() )
 		{
-			result = symbolic::expression{ *it->second };
+			result = it->second;
 			lock = {};
-			result = result.resize( lookup.bit_count() );
+			result.resize( lookup.bit_count() );
 		}
 		else
 		{

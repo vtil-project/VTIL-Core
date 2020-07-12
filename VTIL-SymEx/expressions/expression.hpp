@@ -108,12 +108,12 @@ namespace vtil::symbolic
 
 		// Implement some helpers to conditionally copy.
 		//
-		expression_reference& resize( bitcnt_t new_size, bool signed_cast = false, bool no_explicit = false );
-		expression_reference  resize( bitcnt_t new_size, bool signed_cast = false, bool no_explicit = false ) const;
-		expression_reference& simplify( bool prettify = false, bool* out = nullptr );
-		expression_reference  simplify( bool prettify = false, bool* out = nullptr ) const;
 		expression_reference& make_lazy();
-		expression_reference  make_lazy() const;
+		expression_reference& simplify( bool prettify = false, bool* out = nullptr );
+		expression_reference& resize( bitcnt_t new_size, bool signed_cast = false, bool no_explicit = false );
+		[[nodiscard]] expression_reference make_lazy() const;
+		[[nodiscard]] expression_reference simplify( bool prettify = false, bool* out = nullptr ) const;
+		[[nodiscard]] expression_reference resize( bitcnt_t new_size, bool signed_cast = false, bool no_explicit = false ) const;
 
 		// Forward declared redirects for internal use cases.
 		//
@@ -139,15 +139,16 @@ namespace vtil::symbolic
 		template<typename T>
 		bool transform_single( const T& func, bool auto_simplify, bool do_update );
 		template<typename T>
-		std::pair<bool, expression_reference> transform_single( const T& func, bool auto_simplify, bool do_update ) const
+		[[nodiscard]] std::pair<bool, expression_reference> transform_single( const T& func, bool auto_simplify, bool do_update ) const
 		{
 			auto copy = make_copy( *this );
 			return { copy.transform_single( func, auto_simplify, do_update ), copy };
 		}
+
 		template<typename T>
 		bool transform_rec( const T& func, bool bottom, bool auto_simplify );
 		template<typename T>
-		std::pair<bool, expression_reference> transform_rec( const T& func, bool bottom, bool auto_simplify ) const
+		[[nodiscard]] std::pair<bool, expression_reference> transform_rec( const T& func, bool bottom, bool auto_simplify ) const
 		{
 			auto copy = make_copy( *this );
 			return { copy.transform_rec( func, bottom, auto_simplify ), copy };
@@ -173,8 +174,8 @@ namespace vtil::symbolic
 	//
 	struct expression : math::operable<expression>
 	{
+		using delegate =  expression_delegate;
 		using reference = expression_reference;
-		using delegate = expression_delegate;
 
 		// If symbolic variable, the unique identifier that it maps to.
 		//

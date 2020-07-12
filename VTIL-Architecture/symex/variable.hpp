@@ -184,8 +184,8 @@ namespace vtil::symbolic
 		// Packs all the variables in the expression where it'd be optimal.
 		//
 		static expression::reference& pack_all( expression::reference& exp );
-		static expression::reference  pack_all( const expression::reference& exp );
-		static expression pack_all( const expression& exp ) { return *pack_all( make_local_reference( &exp ) ); }
+		[[nodiscard]] static expression::reference pack_all( const expression::reference& exp );
+		[[nodiscard]] static expression pack_all( const expression& exp ) { return *pack_all( make_local_reference( &exp ) ); }
 
 		// Checks if the variable is read by / written by / accessed by the given instruction, 
 		// returns nullopt it could not be known at compile-time, otherwise the

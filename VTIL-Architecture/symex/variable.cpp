@@ -131,7 +131,7 @@ namespace vtil::symbolic
 							auto exp1 = tracer->rtrace( var );
 							var.at.paths_allowed = &pathset_2;
 							auto exp2 = tracer->rtrace( var );
-							if ( exp1.equals( exp2 ) )
+							if ( exp1.equals( *exp2 ) )
 								exp = exp1;
 						}
 					} );
@@ -705,7 +705,7 @@ namespace vtil::symbolic
 			exp = node.resize( exp->size() );
 		} );
 	}
-	expression::reference  variable::pack_all( const expression::reference& exp )
+	expression::reference variable::pack_all( const expression::reference& exp )
 	{
 		auto copy = make_copy( exp );
 		pack_all( copy );

@@ -95,26 +95,6 @@ namespace vtil::symbolic
 			{
 				signed_cast = false;
 			}
-			/*// If high bit is known one:
-			//
-			else if ( value.at( value.size() - 1 ) == math::bit_state::one )
-			{
-				// Extend the sign bit.
-				//
-				uint64_t sign_mask = math::fill( 64, value.size() );
-
-				// Perform unsigned cast.
-				//
-				resize( new_size, false );
-
-				// Apply the extended sign bit.
-				//
-				*this = *this | sign_mask;
-
-				// Return the resulting expression.
-				//
-				return *this;
-			}*/
 		}
 
 		// If expression is lazy, delay it.
@@ -201,7 +181,7 @@ namespace vtil::symbolic
 				{
 					// Resize shifted expression and break.
 					//
-					( +lhs )->resize( new_size, false );
+					lhs.resize( new_size, false );
 					break;
 				}
 			case math::operator_id::shift_right:
@@ -215,7 +195,7 @@ namespace vtil::symbolic
 
 					// Resize shifted expression and update it.
 					//
-					( +lhs )->resize( new_size, false );
+					lhs.resize( new_size, false );
 					update( true );
 
 					// Mask the result.
@@ -251,7 +231,7 @@ namespace vtil::symbolic
 					{
 						uint64_t rhs_mask = value.known_one() | value.unknown_mask();
 						auto rhs_v = std::move( rhs );
-						*this = ( ~( ( +rhs_v )->resize( new_size, false ) ) ) & expression{ rhs_mask, new_size };
+						*this = ( ~( rhs_v.resize( new_size, false ) ) ) & expression{ rhs_mask, new_size };
 					}
 				}
 				else
@@ -282,8 +262,8 @@ namespace vtil::symbolic
 						break;
 					}
 
-					if ( lhs && lhs->size() != new_size ) ( +lhs )->resize( new_size, false );
-					if ( rhs->size() != new_size ) ( +rhs )->resize( new_size, false );
+					if ( lhs ) lhs.resize( new_size, false );
+					rhs.resize( new_size, false );
 				}
 				else
 				{
@@ -304,8 +284,8 @@ namespace vtil::symbolic
 			case math::operator_id::min_value:
 				if ( signed_cast )
 				{
-					if ( lhs && lhs->size() != new_size ) ( +lhs )->resize( new_size, true );
-					if ( rhs->size() != new_size ) ( +rhs )->resize( new_size, true );
+					if ( lhs ) lhs.resize( new_size, true );
+					rhs.resize( new_size, true );
 				}
 				else
 				{
@@ -313,8 +293,8 @@ namespace vtil::symbolic
 					//
 					if ( new_size < value.size() && op != math::operator_id::divide && op != math::operator_id::remainder )
 					{
-						if ( lhs && lhs->size() != new_size ) ( +lhs )->resize( new_size, false );
-						if ( rhs->size() != new_size ) ( +rhs )->resize( new_size, false );
+						if ( lhs ) lhs.resize( new_size, false );
+						rhs.resize( new_size, false );
 						break;
 					}
 
@@ -548,8 +528,8 @@ namespace vtil::symbolic
 					case math::operator_id::umax_value:
 					case math::operator_id::umin_value:
 					{
-						if ( lhs->size() != value.size() ) ( +lhs )->resize( value.size(), false );
-						if ( rhs->size() != value.size() ) ( +rhs )->resize( value.size(), false );
+						lhs.resize( value.size(), false );
+						rhs.resize( value.size(), false );
 						break;
 					}
 					case math::operator_id::multiply_high:
@@ -561,8 +541,8 @@ namespace vtil::symbolic
 					case math::operator_id::max_value:
 					case math::operator_id::min_value:
 					{
-						if ( lhs->size() != value.size() ) ( +lhs )->resize( value.size(), true );
-						if ( rhs->size() != value.size() ) ( +rhs )->resize( value.size(), true );
+						lhs.resize( value.size(), true );
+						rhs.resize( value.size(), true );
 						break;
 					}
 					case math::operator_id::ugreater:
@@ -571,8 +551,8 @@ namespace vtil::symbolic
 					case math::operator_id::uless:
 					{
 						bitcnt_t op_size = optimistic_size( lhs, rhs );
-						if ( lhs->size() != op_size ) ( +lhs )->resize( op_size, false );
-						if ( rhs->size() != op_size ) ( +rhs )->resize( op_size, false );
+						lhs.resize( op_size, false );
+						rhs.resize( op_size, false );
 						break;
 					}
 					case math::operator_id::greater:
@@ -583,8 +563,8 @@ namespace vtil::symbolic
 					case math::operator_id::not_equal:
 					{
 						bitcnt_t op_size = optimistic_size( lhs, rhs );
-						if ( lhs->size() != op_size ) ( +lhs )->resize( op_size, true );
-						if ( rhs->size() != op_size ) ( +rhs )->resize( op_size, true );
+						lhs.resize( op_size, true );
+						rhs.resize( op_size, true );
 						break;
 					}
 
@@ -592,8 +572,8 @@ namespace vtil::symbolic
 					//
 					case math::operator_id::umultiply:
 					{
-						if ( lhs->size() != value.size() ) ( +lhs )->resize( value.size(), true );
-						if ( rhs->size() != value.size() ) ( +rhs )->resize( value.size(), true );
+						lhs.resize( value.size(), true );
+						rhs.resize( value.size(), true );
 						op = math::operator_id::multiply;
 						break;
 					}
@@ -604,8 +584,8 @@ namespace vtil::symbolic
 					case math::operator_id::unot_equal:
 					{
 						bitcnt_t op_size = optimistic_size( lhs, rhs );
-						if ( lhs->size() != op_size ) ( +lhs )->resize( op_size, false );
-						if ( rhs->size() != op_size ) ( +rhs )->resize( op_size, false );
+						lhs.resize( op_size, false );
+						rhs.resize( op_size, false );
 						op = op == math::operator_id::uequal ? math::operator_id::equal
 							                                 : math::operator_id::not_equal;
 						break;
@@ -880,6 +860,7 @@ namespace vtil::symbolic
 	}
 	expression_reference& expression_reference::simplify( bool prettify, bool* out )
 	{
+		if ( !is_valid() ) return *this;
 		if ( prettify || !get()->simplify_hint )
 			out ? *out = simplify_expression( *this, prettify ) : simplify_expression( *this, prettify );
 		return *this;
@@ -923,13 +904,13 @@ namespace vtil::symbolic
 	//
 	bitcnt_t expression_reference::size() const 
 	{ 
-		return get()->size(); 
+		return is_valid() ? get()->size() : 0; 
 	}
 
 	// Implemented for logger use.
 	//
 	std::string expression_reference::to_string() const
 	{
-		return get()->to_string();
+		return is_valid() ? get()->to_string() : "null";
 	}
 };

@@ -133,8 +133,7 @@ namespace vtil
 		shared_reference( const shared_reference& ref )
 			: combined_value( ref.combined_value )
 		{
-			// If object is temporary (flag implies non-null),
-			// gain ownership of the reference.
+			// If object is temporary (flag implies non-null), gain ownership of the reference.
 			//
 			if ( temporary )
 				own();
@@ -145,6 +144,13 @@ namespace vtil
 		}
 		shared_reference& operator=( const shared_reference& o ) 
 		{ 
+			// If object is temporary (flag implies non-null) and we have a valid unique memory:
+			//
+			if ( o.temporary && !temporary && pointer && get_entry()->second == 1 )
+			{
+				*own() = *o.get();
+				return *this;
+			}
 			shared_reference copy = o; // This fixes cases where o was referenced by self and it gets deallocated.
 			return *new ( &reset() ) shared_reference( std::move( copy ) );
 		}

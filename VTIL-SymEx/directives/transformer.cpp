@@ -91,7 +91,7 @@ namespace vtil::symbolic
 
 					if ( auto sz = rhs->get<bitcnt_t>() )
 					{
-						( +lhs )->resize( sz.value(), dir->op == math::operator_id::cast );
+						lhs.resize( sz.value(), dir->op == math::operator_id::cast );
 						return lhs;
 					}
 					unreachable();
@@ -183,7 +183,7 @@ namespace vtil::symbolic
 				// Translate left hand side, if failed to do so or is not equal to [true], fail.
 				//
 				auto condition_status = translate( sym, dir->lhs, 0, false, max_depth );
-				if ( !condition_status || !( +condition_status )->simplify().get().value_or( false ) )
+				if ( !condition_status || !condition_status.simplify()->get().value_or( false ) )
 				{
 #if VTIL_SYMEX_SIMPLIFY_VERBOSE
 					log<CON_RED>( "Rejected %s, condition (%s) not met.\n", *dir->rhs, *dir->lhs );

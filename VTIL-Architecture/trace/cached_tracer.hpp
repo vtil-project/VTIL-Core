@@ -56,7 +56,7 @@ namespace vtil
 
         // Hooks default tracer and does a cache lookup before invokation.
         //
-        symbolic::expression trace( const symbolic::variable& lookup ) override;
+        symbolic::expression::reference trace( const symbolic::variable& lookup ) override;
 
         // Default construtor.
         //

@@ -37,7 +37,7 @@ namespace vtil::optimizer
 	{
 		bool bypass = false;
 
-		symbolic::expression trace( const symbolic::variable& lookup ) override
+		symbolic::expression::reference trace( const symbolic::variable& lookup ) override
 		{
 			if( bypass || lookup.at.is_end() )
 				return cached_tracer::trace( lookup );
@@ -61,22 +61,22 @@ namespace vtil::optimizer
 			return result;
 		}
 
-		symbolic::expression rtrace( const symbolic::variable& lookup, int64_t limit = -1 ) override
+		symbolic::expression::reference rtrace( const symbolic::variable& lookup, int64_t limit = -1 ) override
 		{
 			// Invoke default tracer and store the result.
 			//
 			bool recursive_flag_prev = recursive_flag;
 			recursive_flag = true;
-			symbolic::expression result = cached_tracer::trace( lookup );
+			symbolic::expression::reference result = cached_tracer::trace( lookup );
 			recursive_flag = recursive_flag_prev;
 			
 			// If result is a variable:
 			//
-			if ( result.is_variable() )
+			if ( result->is_variable() )
 			{
 				// If result is a non-local memory variable, invoke rtrace primitive.
 				//
-				auto& var = result.uid.get<symbolic::variable>();
+				auto& var = result->uid.get<symbolic::variable>();
 				if ( var.is_memory() && !aux::is_local( *var.mem().decay() ) )
 					return cached_tracer::rtrace( var, limit );
 			}
@@ -129,7 +129,7 @@ namespace vtil::optimizer
 				symbolic::variable var = { it, { ptr, it->access_size() } };
 				var.at.paths_allowed = &it.container->owner->get_path( it.container->owner->entry_point, it.container );
 				var.at.is_path_restricted = true;
-				symbolic::expression::reference exp = xblock ? ltracer.rtrace( var ) : ltracer.cached_tracer::trace( var );
+				auto exp = xblock ? ltracer.rtrace( var ) : ltracer.cached_tracer::trace( var );
 
 				// Resize and pack variables.
 				//

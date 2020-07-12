@@ -333,7 +333,7 @@ namespace vtil::symbolic
 			}
 
 			exp->simplify_hint = true;
-			cache_entry = *exp;
+			cache_entry = exp;
 			return success_flag;
 		}
 
@@ -345,7 +345,7 @@ namespace vtil::symbolic
 			//
 			simplify_expression( exp, pretty, max_depth - 1 );
 			exp->simplify_hint = true;
-			cache_entry = *exp;
+			cache_entry = exp;
 			success_flag = true;
 			return true;
 		}
@@ -377,7 +377,7 @@ namespace vtil::symbolic
 				//
 				simplify_expression( exp, pretty, max_depth - 1 );
 				exp->simplify_hint = true;
-				cache_entry = *exp;
+				cache_entry = exp;
 				success_flag = true;
 				return true;
 			}
