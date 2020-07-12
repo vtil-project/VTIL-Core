@@ -725,8 +725,8 @@ namespace vtil::symbolic
 
 		// Simplify both expressions.
 		//
-		expression a = expression{ *this }.simplify();
-		expression b = expression{ other }.simplify();
+		expression a = simplify();
+		expression b = other.simplify();
 
 		// Determine the final bitwise hint.
 		//
@@ -821,7 +821,7 @@ namespace vtil::symbolic
 	}
 	expression_reference expression_reference::resize( bitcnt_t new_size, bool signed_cast, bool no_explicit ) const
 	{
-		return make_copy( *this ).resize( new_size, signed_cast, no_explicit );
+		return std::move( make_copy( *this ).resize( new_size, signed_cast, no_explicit ) );
 	}
 	expression_reference& expression_reference::simplify( bool prettify, bool* out )
 	{
@@ -835,13 +835,7 @@ namespace vtil::symbolic
 	}
 	expression_reference expression_reference::simplify( bool prettify, bool* out ) const
 	{
-		/*bool simplified = false;
-		expression_reference copy = *this;
-		if ( copy && ( prettify || !copy->simplify_hint ) )
-			simplified = simplify_expression( copy, prettify );
-		if ( out ) *out = simplified;
-		return copy;*/
-		return make_copy( *this ).simplify( prettify, out );
+		return std::move( make_copy( *this ).simplify( prettify, out ) );
 	}
 	expression_reference& expression_reference::make_lazy()
 	{
@@ -851,7 +845,7 @@ namespace vtil::symbolic
 	}
 	expression_reference expression_reference::make_lazy() const
 	{
-		return make_copy( *this ).make_lazy();
+		return std::move( make_copy( *this ).make_lazy() );
 	}
 
 	// Forward declared redirects for internal use cases.

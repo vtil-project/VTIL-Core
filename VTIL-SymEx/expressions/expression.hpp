@@ -142,7 +142,7 @@ namespace vtil::symbolic
 		[[nodiscard]] std::pair<bool, expression_reference> transform_single( const T& func, bool auto_simplify, bool do_update ) const
 		{
 			auto copy = make_copy( *this );
-			return { copy.transform_single( func, auto_simplify, do_update ), copy };
+			return { copy.transform_single( func, auto_simplify, do_update ), std::move( copy ) };
 		}
 
 		template<typename T>
@@ -151,7 +151,7 @@ namespace vtil::symbolic
 		[[nodiscard]] std::pair<bool, expression_reference> transform_rec( const T& func, bool bottom, bool auto_simplify ) const
 		{
 			auto copy = make_copy( *this );
-			return { copy.transform_rec( func, bottom, auto_simplify ), copy };
+			return { copy.transform_rec( func, bottom, auto_simplify ), std::move( copy ) };
 		}
 
 		// Implement original transform signature.
@@ -165,8 +165,7 @@ namespace vtil::symbolic
 		template<typename T>
 		expression_reference transform( const T& func, bool bottom = false, bool auto_simplify = true ) const
 		{
-			auto copy = make_copy( *this );
-			return copy.transform( func, bottom, auto_simplify );
+			return std::move( make_copy( *this ).transform( func, bottom, auto_simplify ) );
 		}
 	};
 
@@ -304,7 +303,7 @@ namespace vtil::symbolic
 		expression resize( bitcnt_t new_size, bool signed_cast = false, bool no_explicit = false ) const
 		{ 
 			if ( size() == new_size ) return *this;
-			return clone().resize( new_size, signed_cast, no_explicit );
+			return std::move( clone().resize( new_size, signed_cast, no_explicit ) );
 		}
 
 		// Simplifies and optionally prettifies the expression.
@@ -313,7 +312,7 @@ namespace vtil::symbolic
 		expression simplify( bool prettify = false ) const 
 		{ 
 			if ( simplify_hint && !prettify ) return *this;
-			return clone().simplify( prettify ); 
+			return std::move( clone().simplify( prettify ) );
 		}
 
 		// Returns whether the given expression is identical to the current instance.
@@ -403,7 +402,7 @@ namespace vtil::symbolic
 		expression make_lazy() const
 		{
 			if ( is_lazy ) return *this;
-			return clone().make_lazy();
+			return std::move( clone().make_lazy() );
 		}
 	};
 

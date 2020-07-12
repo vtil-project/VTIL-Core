@@ -92,7 +92,7 @@ namespace vtil::symbolic
 				{
 					// Transform base pointer:
 					//
-					symbolic::expression::reference base = in->base;
+					symbolic::expression::reference base = std::move( in->base );
 					base.transform( [ & ] ( symbolic::expression::delegate& exp )
 					{
 						// Skip if not variable.
@@ -138,7 +138,7 @@ namespace vtil::symbolic
 
 					// Write the new pointer.
 					//
-					*out = pointer{ base };
+					*out = pointer{ std::move( base ) };
 				}
 
 				// Recurse with the new pointers.
@@ -158,15 +158,15 @@ namespace vtil::symbolic
 			//
 			if ( auto disp = p1 - p2 )
 			{
-				details->bit_offset = math::narrow_cast< bitcnt_t >( *disp * 8 );
+				details->bit_offset = math::narrow_cast<bitcnt_t>( *disp * 8 );
 			}
 			// If pointer does not strictly overlap and cross-block and tracer 
 			// is given, try again after cross-tracing.
 			//
 			else if ( xblock && tracer && !p1.can_overlap_s( p2 ) )
 			{
-				pointer p1r = { tracer->rtrace_exp( *p1.base ) };
-				pointer p2r = { tracer->rtrace_exp( *p2.base ) };
+				pointer p1r = { tracer->rtrace_exp( p1.base ) };
+				pointer p2r = { tracer->rtrace_exp( p2.base ) };
 				return fill_displacement( details, p1r, p2r, nullptr, false );
 			}
 			// If all fails, declare unknown.
@@ -426,7 +426,7 @@ namespace vtil::symbolic
 					// Calculate the displacement, if constant below 0, declare trashed.
 					//
 					access_details details;
-					fill_displacement( &details, mem.base, pointer{ limit }, tracer, xblock );
+					fill_displacement( &details, mem.base, pointer{ std::move( limit ) }, tracer, xblock );
 					if ( !details.is_unknown() && ( details.bit_offset + var.bit_count() ) <= 0 )
 					{
 						if ( read ) return {};
@@ -659,7 +659,7 @@ namespace vtil::symbolic
 			}
 			// If rhs is constant, use as is for offset.
 			//
-			else if ( auto n = node->rhs->get() )
+			else if ( auto n = node->rhs->get<bitcnt_t>() )
 			{
 				offset = *n;
 				node = node->lhs;

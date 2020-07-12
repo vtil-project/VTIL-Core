@@ -97,8 +97,7 @@ namespace vtil::symbolic
 
 	// Construct from symbolic expression.
 	//
-	//pointer::pointer( const expression::reference& _base ) : base( _base->simplify_hint ? _base : _base->simplify() )
-	pointer::pointer( const expression::reference& _base ) : base( _base.simplify() )
+	pointer::pointer( const expression::reference& _base ) : base( _base->simplify() )
 	{
 		// Determine pointer strength and the flags.
 		//
