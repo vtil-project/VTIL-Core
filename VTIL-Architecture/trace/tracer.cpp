@@ -50,7 +50,7 @@ namespace vtil
 
 	// Forward defs.
 	//
-	static symbolic::expression::reference rtrace_primitive( const symbolic::variable& lookup, tracer* tracer, path_entry* prev_link, int64_t limit );
+	static symbolic::expression::reference rtrace_primitive( const symbolic::variable& lookup, tracer* tracer, const path_entry& prev_link, int64_t limit );
 
 	// Given a partial tracer, this routine will determine the full value of the variable
 	// at the given position where a partial write was found.
@@ -168,8 +168,10 @@ namespace vtil
 	// meaning the origin expression was a variable and it infinite-looped during propagation by itself.
     // - Note: New iterator should be a connected block's end.
 	//
-    static bool propagate( symbolic::expression::reference& ref, const il_const_iterator& it, tracer* tracer, path_entry* prev_link, int64_t limit )
+    static bool propagate( symbolic::expression::reference& ref, const il_const_iterator& it, tracer* tracer, const path_entry& prev_link, int64_t limit )
     {
+		static const auto& null_link = make_default<path_entry>();
+
         using namespace logger;
 
 #if VTIL_OPT_TRACE_VERBOSE
@@ -229,7 +231,7 @@ namespace vtil
 				// Fail if propagation fails.
 				//
 				symbolic::expression::reference mem_ptr = std::move( mem.base.base );
-				propagate( mem_ptr, it, tracer, nullptr, limit );
+				propagate( mem_ptr, it, tracer, null_link, limit );
 				if ( !mem_ptr )
 				{
 					result = false;
@@ -251,7 +253,7 @@ namespace vtil
             // Trace the variable in the destination block, fail if it fails.
             //
 			symbolic::expression::reference var_traced;
-			if ( prev_link )
+			if ( &prev_link != &null_link )
 				var_traced = rtrace_primitive( var, tracer, prev_link, limit );
 			else
 				var_traced = tracer->trace( var );
@@ -281,7 +283,7 @@ namespace vtil
 
 	// Internal implementation of ::rtrace with a path history.
 	//
-	static symbolic::expression::reference rtrace_primitive( const symbolic::variable& lookup, tracer* tracer, path_entry* prev_link, int64_t limit )
+	static symbolic::expression::reference rtrace_primitive( const symbolic::variable& lookup, tracer* tracer, const path_entry& prev_link, int64_t limit )
 	{
 		using namespace logger;
 
@@ -325,7 +327,7 @@ namespace vtil
 				{
 					// If we've taken this path more than twice, skip it.
 					//
-					if ( !potential_loop || prev_link->count( lookup.at.container, it.container ) >= 2 )
+					if ( !potential_loop || prev_link.count( lookup.at.container, it.container ) >= 2 )
 					{
 #if VTIL_OPT_TRACE_VERBOSE
 						// Log skipping of path.
@@ -342,11 +344,15 @@ namespace vtil
 #endif
 					// Propagate each variable onto to the destination block, if total fail, skip path.
 					//
-					auto link_entry = potential_loop 
-						? path_entry{ .prev = prev_link, .src = lookup.at.container, .dst = it.container }
-						: path_entry{ nullptr, nullptr, nullptr };
 					symbolic::expression::reference exp = default_result;
-					if ( propagate( exp, it, tracer, &link_entry, limit ) )
+					bool total_fail = propagate(
+						exp,
+						it,
+						tracer,
+						potential_loop ? path_entry{ .prev = &prev_link, .src = lookup.at.container, .dst = it.container } : prev_link,
+						limit
+					);
+					if ( total_fail )
 						continue;
 
 #if VTIL_OPT_TRACE_VERBOSE
@@ -392,7 +398,7 @@ namespace vtil
 				// If result is null, use default result if the call was not from propagate(),
 				// determined by history having entries set.
 				//
-				if ( !result && prev_link->prev == nullptr ) 
+				if ( !result && prev_link.prev == nullptr )
 					result = std::move( default_result );
 			}
 		}
@@ -531,7 +537,7 @@ namespace vtil
 		bool recursive_flag_prev = recursive_flag;
 		recursive_flag = true;
 		path_entry list_head = { nullptr, nullptr, nullptr };
-		auto exp = rtrace_primitive( lookup, this, &list_head, limit + 1 );
+		auto exp = rtrace_primitive( lookup, this, list_head, limit + 1 );
 		recursive_flag = recursive_flag_prev;
 		return exp;
 	}
