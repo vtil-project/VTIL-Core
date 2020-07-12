@@ -296,7 +296,7 @@ namespace vtil
 
 		// If result has any variables:
 		//
-		if ( result->count_unique_variables() != 0 )
+		if ( result->value.is_unknown() )
 		{
 			// Determine the paths we can take to iterate further.
 			//
@@ -320,11 +320,12 @@ namespace vtil
 
 				// For each path:
 				//
+				bool potential_loop = it_list.size() > 1 || it_list[ 0 ].container == lookup.at.container;
 				for ( auto& it : it_list )
 				{
 					// If we've taken this path more than twice, skip it.
 					//
-					if ( prev_link->count( lookup.at.container, it.container ) >= 2 )
+					if ( !potential_loop || prev_link->count( lookup.at.container, it.container ) >= 2 )
 					{
 #if VTIL_OPT_TRACE_VERBOSE
 						// Log skipping of path.
@@ -346,8 +347,11 @@ namespace vtil
 						.src = lookup.at.container,
 						.dst = it.container
 					};
+					path_entry null_entry = { nullptr, nullptr, nullptr };
+					path_entry* fwd = potential_loop ? &entry : prev_link;
+
 					symbolic::expression::reference exp = default_result;
-					if ( propagate( exp, it, tracer, &entry, limit ) )
+					if ( propagate( exp, it, tracer, fwd, limit ) )
 						continue;
 
 #if VTIL_OPT_TRACE_VERBOSE
