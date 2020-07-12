@@ -107,10 +107,6 @@ namespace vtil
 		using object_entry = std::pair<T, std::atomic<size_t>>;
 		using allocator =    object_pool<object_entry>;
 
-		// Assert entry beings with object.
-		//
-		static_assert( &( ( std::pair<int, int>* ) nullptr )->first == nullptr, "Misaligned structure." );
-
 		// Store pointer as a 63-bit integer and append an additional bit to control temporary/allocated.
 		//
 		union
