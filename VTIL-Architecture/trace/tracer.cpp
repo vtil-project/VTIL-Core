@@ -342,16 +342,11 @@ namespace vtil
 #endif
 					// Propagate each variable onto to the destination block, if total fail, skip path.
 					//
-					path_entry entry = {
-						.prev = prev_link,
-						.src = lookup.at.container,
-						.dst = it.container
-					};
-					path_entry null_entry = { nullptr, nullptr, nullptr };
-					path_entry* fwd = potential_loop ? &entry : prev_link;
-
+					auto link_entry = potential_loop 
+						? path_entry{ .prev = prev_link, .src = lookup.at.container, .dst = it.container }
+						: path_entry{ nullptr, nullptr, nullptr };
 					symbolic::expression::reference exp = default_result;
-					if ( propagate( exp, it, tracer, fwd, limit ) )
+					if ( propagate( exp, it, tracer, &link_entry, limit ) )
 						continue;
 
 #if VTIL_OPT_TRACE_VERBOSE
