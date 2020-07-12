@@ -56,9 +56,5 @@ namespace vtil
 		// Size of the current register in bytes.
 		//
 		uint8_t size;
-
-		// Cast to tuple for structured binding.
-		//
-		operator std::tuple<T, uint8_t, uint8_t>() { return { base_register, offset, size }; }
 	};
 }

@@ -118,25 +118,32 @@ namespace vtil
 
 		// Default constructor / move / copy.
 		//
-		register_desc() = default;
-		register_desc( register_desc&& ) = default;
-		register_desc( const register_desc& ) = default;
-		register_desc& operator=( register_desc&& ) = default;
-		register_desc& operator=( const register_desc& ) = default;
+		constexpr register_desc() = default;
+		constexpr register_desc( register_desc&& ) = default;
+		constexpr register_desc( const register_desc& ) = default;
+		constexpr register_desc& operator=( register_desc&& ) = default;
+		constexpr register_desc& operator=( const register_desc& ) = default;
 
 		// Construct a fully formed register.
 		//
-		register_desc( uint32_t flags, uint64_t id, bitcnt_t bit_count, bitcnt_t bit_offset = 0, uint64_t architecture = 0 )
+		constexpr register_desc( uint32_t flags, uint64_t id, bitcnt_t bit_count, bitcnt_t bit_offset = 0, uint64_t architecture = 0 )
 			: flags( flags ), local_id( id ), bit_count( bit_count ), bit_offset( bit_offset ), architecture( architecture )
-		{ 
+		{
 			is_valid( true );
 		}
 
 		// Returns whether the descriptor is valid or not.
 		//
-		bool is_valid( bool force = false ) const
+		constexpr bool is_valid( bool force = false ) const
 		{
-#define validate(...) { if( force ) fassert(__VA_ARGS__); else if( !(__VA_ARGS__) ) return false; }
+#define validate(...) { 																		 \
+				if ( !( __VA_ARGS__ ) )															 \
+				{																				 \
+					if ( force ) throw std::logic_error{ "Register validation failed." };		 \
+					else         return false;													 \
+				}																				 \
+			}
+
 			// Validate bit count and offset.
 			//
 			validate( bit_count != 0 && ( bit_count + bit_offset ) <= 64 );
@@ -209,34 +216,31 @@ namespace vtil
 
 		// Simple helpers to determine some properties.
 		// 
-		bool is_flags() const { return flags & register_flags; }
-		bool is_undefined() const { return flags & register_undefined; }
-		bool is_local() const { return flags & register_local; }
-		bool is_global() const { return ( ~flags ) & register_local; }
-		bool is_virtual() const { return ( ~flags ) & register_physical; }
-		bool is_physical() const { return flags & register_physical; }
-		bool is_volatile() const { return flags & register_volatile; }
-		bool is_read_only() const { return flags & register_readonly; }
-		bool is_stack_pointer() const { return flags & register_stack_pointer; }
-		bool is_image_base() const { return flags & register_image_base; }
-		bool is_special() const { return flags & register_special; }
-		bool is_internal() const { return ( flags & register_internal ) == register_internal; }
+		constexpr bool is_flags() const { return flags & register_flags; }
+		constexpr bool is_undefined() const { return flags & register_undefined; }
+		constexpr bool is_local() const { return flags & register_local; }
+		constexpr bool is_global() const { return ( ~flags ) & register_local; }
+		constexpr bool is_virtual() const { return ( ~flags ) & register_physical; }
+		constexpr bool is_physical() const { return flags & register_physical; }
+		constexpr bool is_volatile() const { return flags & register_volatile; }
+		constexpr bool is_read_only() const { return flags & register_readonly; }
+		constexpr bool is_stack_pointer() const { return flags & register_stack_pointer; }
+		constexpr bool is_image_base() const { return flags & register_image_base; }
+		constexpr bool is_special() const { return flags & register_special; }
+		constexpr bool is_internal() const { return ( flags & register_internal ) == register_internal; }
 
 		// Returns the mask for the bits that this register's value would occupy in a 64-bit register.
 		//
-		uint64_t get_mask() const { return math::fill( bit_count, bit_offset ); }
+		constexpr uint64_t get_mask() const { return math::fill( bit_count, bit_offset ); }
 
 		// Checks whether bits from this register and the other register overlap.
 		//
-		bool overlaps( const register_desc& o ) const 
+		constexpr bool overlaps( const register_desc& o ) const
 		{ 
 			if ( combined_id != o.combined_id || flags != o.flags )
 				return false;
 			return get_mask() & o.get_mask();
 		}
-
-		// Returns the architecture this register belongs to.
-		//
 
 		// Conversion to human-readable format.
 		// - Note: Do not move this to a source file since we want the template we're using to be overriden!
@@ -293,7 +297,7 @@ namespace vtil
 	template<typename T>
 	struct register_cast
 	{
-		register_desc operator()( const T& value )
+		constexpr register_desc operator()( const T& value )
 		{
 			static_assert( sizeof( T ) == -1, "Failed to cast given operand into a register type." );
 			return {};
@@ -302,13 +306,12 @@ namespace vtil
 	template<> 
 	struct register_cast<register_desc>
 	{
-		template<typename T>
-		auto operator()( T&& v ) { return std::forward<T>( v ); }
+		constexpr register_desc operator()( register_desc v ) { return v; }
 	};
 	template<>
 	struct register_cast<x86_reg>
 	{
-		register_desc operator()( x86_reg value )
+		constexpr register_desc operator()( x86_reg value )
 		{
 			auto [base, offset, size] = amd64::resolve_mapping( value );
 			if ( base == X86_REG_RSP )
@@ -322,7 +325,7 @@ namespace vtil
 	template<>
 	struct register_cast<arm64_reg>
 	{
-		register_desc operator()( arm64_reg value )
+		constexpr register_desc operator()( arm64_reg value )
 		{
 			auto [base, offset, size] = arm64::resolve_mapping( value );
 			if ( base == ARM64_REG_SP )
@@ -336,14 +339,14 @@ namespace vtil
 
 	// VTIL special registers.
 	//
-	static const register_desc UNDEFINED =   { register_volatile | register_undefined,     0, 64 };
-	static const register_desc REG_IMGBASE = { register_readonly | register_image_base,    0, 64 };
-	static const register_desc REG_FLAGS =   { register_physical | register_flags,         0, 64 };
-	static const register_desc REG_SP =      { register_physical | register_stack_pointer, 0, 64 };
+	static constexpr register_desc UNDEFINED =   { register_volatile | register_undefined,     0, 64 };
+	static constexpr register_desc REG_IMGBASE = { register_readonly | register_image_base,    0, 64 };
+	static constexpr register_desc REG_FLAGS =   { register_physical | register_flags,         0, 64 };
+	static constexpr register_desc REG_SP =      { register_physical | register_stack_pointer, 0, 64 };
 
 	// Helper to make undefined of N bits.
 	//
-	static const register_desc make_undefined( bitcnt_t sz )
+	static constexpr register_desc make_undefined( bitcnt_t sz )
 	{
 		register_desc copy = UNDEFINED;
 		copy.bit_count = sz;

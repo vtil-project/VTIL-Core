@@ -181,10 +181,8 @@
     <ClCompile Include="formats\winpe.cpp" />
     <ClCompile Include="arch\amd64\amd64_assembler.cpp" />
     <ClCompile Include="arch\amd64\amd64_disassembler.cpp" />
-    <ClCompile Include="arch\amd64\amd64_register_details.cpp" />
     <ClCompile Include="arch\arm64\arm64_assembler.cpp" />
     <ClCompile Include="arch\arm64\arm64_disassembler.cpp" />
-    <ClCompile Include="arch\arm64\arm64_register_details.cpp" />
     <ClCompile Include="io\logger.cpp" />
     <ClCompile Include="math\operators.cpp" />
     <ClCompile Include="util\thread_identifier.cpp" />

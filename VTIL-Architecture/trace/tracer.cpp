@@ -163,7 +163,6 @@ namespace vtil
 		}, true, false );
 	}
 
-
     // Propagates all variables in the reference expression onto the new iterator, if no history pointer given will do trace instead of rtrace.
 	// Returns an additional boolean parameter that indicates, if the propagation failed, it was due to a total failure or not; total failure
 	// meaning the origin expression was a variable and it infinite-looped during propagation by itself.

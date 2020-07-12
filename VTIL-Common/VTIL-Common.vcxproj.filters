@@ -225,16 +225,10 @@
     <ClCompile Include="arch\amd64\amd64_disassembler.cpp">
       <Filter>Architecture\amd64</Filter>
     </ClCompile>
-    <ClCompile Include="arch\amd64\amd64_register_details.cpp">
-      <Filter>Architecture\amd64</Filter>
-    </ClCompile>
     <ClCompile Include="arch\arm64\arm64_assembler.cpp">
       <Filter>Architecture\arm64</Filter>
     </ClCompile>
     <ClCompile Include="arch\arm64\arm64_disassembler.cpp">
-      <Filter>Architecture\arm64</Filter>
-    </ClCompile>
-    <ClCompile Include="arch\arm64\arm64_register_details.cpp">
       <Filter>Architecture\arm64</Filter>
     </ClCompile>
     <ClCompile Include="formats\winpe.cpp">
