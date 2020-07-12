@@ -56,6 +56,7 @@ namespace vtil::symbolic
 		//
 		struct make_weak
 		{
+			pointer operator()( pointer&& p ) { return ( p.strength = INT32_MIN, p ); }
 			pointer operator()( pointer p ) { return ( p.strength = INT32_MIN, p ); }
 		};
 
@@ -84,7 +85,7 @@ namespace vtil::symbolic
 		// Construct from symbolic expression.
 		//
 		pointer( const expression::reference& base );
-		pointer( const expression& base ) : pointer( expression::reference{ base } ) {}
+		pointer( const expression& base ) : pointer( ( ( expression::reference& ) make_local_reference( &base ) ) ) {}
 
 		// Default copy/move.
 		//

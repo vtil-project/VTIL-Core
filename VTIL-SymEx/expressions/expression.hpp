@@ -142,7 +142,7 @@ namespace vtil::symbolic
 		[[nodiscard]] std::pair<bool, expression_reference> transform_single( const T& func, bool auto_simplify, bool do_update ) const
 		{
 			auto copy = make_copy( *this );
-			return { copy.transform_single( func, auto_simplify, do_update ), copy };
+			return { copy.transform_single( func, auto_simplify, do_update ), std::move( copy ) };
 		}
 
 		template<typename T>
@@ -151,7 +151,7 @@ namespace vtil::symbolic
 		[[nodiscard]] std::pair<bool, expression_reference> transform_rec( const T& func, bool bottom, bool auto_simplify ) const
 		{
 			auto copy = make_copy( *this );
-			return { copy.transform_rec( func, bottom, auto_simplify ), copy };
+			return { copy.transform_rec( func, bottom, auto_simplify ), std::move( copy ) };
 		}
 
 		// Implement original transform signature.
@@ -165,8 +165,7 @@ namespace vtil::symbolic
 		template<typename T>
 		expression_reference transform( const T& func, bool bottom = false, bool auto_simplify = true ) const
 		{
-			auto copy = make_copy( *this );
-			return copy.transform( func, bottom, auto_simplify );
+			return std::move( make_copy( *this ).transform( func, bottom, auto_simplify ) );
 		}
 	};
 
@@ -304,7 +303,7 @@ namespace vtil::symbolic
 		expression resize( bitcnt_t new_size, bool signed_cast = false, bool no_explicit = false ) const
 		{ 
 			if ( size() == new_size ) return *this;
-			return clone().resize( new_size, signed_cast, no_explicit );
+			return std::move( clone().resize( new_size, signed_cast, no_explicit ) );
 		}
 
 		// Simplifies and optionally prettifies the expression.
@@ -313,7 +312,7 @@ namespace vtil::symbolic
 		expression simplify( bool prettify = false ) const 
 		{ 
 			if ( simplify_hint && !prettify ) return *this;
-			return clone().simplify( prettify ); 
+			return std::move( clone().simplify( prettify ) );
 		}
 
 		// Returns whether the given expression is identical to the current instance.
@@ -332,15 +331,45 @@ namespace vtil::symbolic
 		// this avoids copying of the entire tree and any simplifier calls so is preferred
 		// over *transform(...).get().
 		//
-		using eval_lookup_helper_t = std::function<std::optional<uint64_t>( const unique_identifier& )>;
-		math::bit_vector evaluate( const eval_lookup_helper_t& lookup = {} ) const;
+		template<typename T>
+		math::bit_vector evaluate( T&& lookup ) const
+		{
+			// If value is known, return as is.
+			//
+			if ( value.is_known() ) 
+				return value;
+		
+			// If variable:
+			//
+			if ( is_variable() )
+			{
+				// If lookup helper passed and succesfully finds the value, use as is.
+				//
+				if ( std::optional<uint64_t> res = lookup( uid ) )
+					return { *res, size() };
+			
+				// Otherwise return unknown.
+				//
+				return value;
+			}
+
+			// Try to evaluate the result and return.
+			//
+			math::bit_vector result = {};
+			if ( is_unary() )
+				result = math::evaluate_partial( op, {},                      rhs->evaluate( lookup ) );
+			else if ( is_binary() )
+				result = math::evaluate_partial( op, lhs->evaluate( lookup ), rhs->evaluate( lookup ) );
+			return result;
+		}
 		
 		// Implement math::operable::get with evaluator.
 		//
+		static constexpr auto default_eval = [ ] ( const unique_identifier& v ) { return std::nullopt; };
 		template<typename type>
-		std::optional<type> get( const eval_lookup_helper_t& lookup = {} ) const { return evaluate( lookup ).get<type>(); }
+		std::optional<type> get() const { return evaluate( default_eval ).get<type>(); }
 		template<bool as_signed = false, typename type = std::conditional_t<as_signed, int64_t, uint64_t>>
-		std::optional<type> get( const eval_lookup_helper_t& lookup = {} ) const { return evaluate( lookup ).get<type>(); }
+		std::optional<type> get() const { return evaluate( default_eval ).get<type>(); }
 
 		// Enumerates the whole tree.
 		//
@@ -373,7 +402,7 @@ namespace vtil::symbolic
 		expression make_lazy() const
 		{
 			if ( is_lazy ) return *this;
-			return clone().make_lazy();
+			return std::move( clone().make_lazy() );
 		}
 	};
 

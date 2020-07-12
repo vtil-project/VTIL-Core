@@ -74,7 +74,6 @@ namespace vtil::symbolic
 		                                          expression::reference::hasher, 
 		                                          expression::reference::if_identical                          >;
 	static thread_local simplifier_cache_t simplifier_cache;
-
 	void purge_simplifier_cache()
 	{
 		simplifier_cache.clear();
@@ -82,8 +81,7 @@ namespace vtil::symbolic
 
 	static std::tuple<expression::reference&, bool&, bool> lookup_simplifier_cache( const expression::reference& exp )
 	{
-		static const std::pair default_value = { expression::reference{}, false };
-		auto [it, inserted] = simplifier_cache.emplace( exp, default_value );
+		auto [it, inserted] = simplifier_cache.emplace( exp, make_default<std::pair<expression::reference, bool>>() );
 		return { it->second.first, it->second.second, !inserted };
 	}
 
@@ -234,6 +232,11 @@ namespace vtil::symbolic
 
 		if ( max_depth == 0 )
 			throw join_depth_exception{};
+
+		// Clear lazy if not done.
+		//
+		if ( exp->is_lazy )
+			( +exp )->is_lazy = false;
 
 		// If not an expression, we cannot simplify further.
 		//
@@ -475,8 +478,8 @@ namespace vtil::symbolic
 				simplify_expression( exp_new, pretty, max_depth );
 				exp_new->simplify_hint = true;
 				cache_entry = exp_new;
-				success_flag = !exp->is_identical( *exp_new );
-				exp = exp_new;
+				if( success_flag = !exp->is_identical( *exp_new ) )
+					exp = exp_new;
 				return success_flag;
 			}
 		}
@@ -502,8 +505,8 @@ namespace vtil::symbolic
 					simplify_expression( exp_new, pretty, max_depth );
 					exp_new->simplify_hint = true;
 					cache_entry = exp_new;
-					success_flag = !exp->is_identical( *exp_new );
-					exp = exp_new;
+					if ( success_flag = !exp->is_identical( *exp_new ) )
+						exp = exp_new;
 					return success_flag;
 				}
 			}
@@ -527,8 +530,8 @@ namespace vtil::symbolic
 				simplify_expression( exp_new, pretty, max_depth - 1 );
 				exp_new->simplify_hint = true;
 				cache_entry = exp_new;
-				success_flag = !exp->is_identical( *exp_new );
-				exp = exp_new;
+				if ( success_flag = !exp->is_identical( *exp_new ) )
+					exp = exp_new;
 				return success_flag;
 			}
 		}
@@ -555,8 +558,8 @@ namespace vtil::symbolic
 					simplify_expression( exp_new, pretty, max_depth - 1 );
 					exp_new->simplify_hint = true;
 					cache_entry = exp_new;
-					success_flag = !exp->is_identical( *exp_new );
-					exp = exp_new;
+					if ( success_flag = !exp->is_identical( *exp_new ) )
+						exp = exp_new;
 					return success_flag;
 				}
 			}
@@ -584,8 +587,8 @@ namespace vtil::symbolic
 					//
 					exp_new->simplify_hint = true;
 					cache_entry = exp_new;
-					success_flag = !exp->is_identical( *exp_new );
-					exp = exp_new;
+					if ( success_flag = !exp->is_identical( *exp_new ) )
+						exp = exp_new;
 					return success_flag;
 				}
 			}

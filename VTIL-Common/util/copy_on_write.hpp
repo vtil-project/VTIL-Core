@@ -161,7 +161,8 @@ namespace vtil
 			: combined_value( std::exchange( ref.combined_value, 0 ) ) {}
 		shared_reference& operator=( shared_reference&& o )
 		{
-			reset().combined_value = std::exchange( o.combined_value, 0 );
+			uint64_t value = std::exchange( o.combined_value, 0 );
+			reset().combined_value = value;
 			return *this;
 		}
 
