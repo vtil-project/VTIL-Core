@@ -38,7 +38,7 @@ namespace vtil::symbolic
 	//   or a null reference if it would fail.
 	//
 	expression::reference translate( const symbol_table_t& sym,
-									 const instance::reference& dir,
+									 const instance* dir,
 									 bitcnt_t bit_cnt,
 									 bool speculative_condition,
 									 int64_t max_depth )
@@ -260,7 +260,7 @@ namespace vtil::symbolic
 	// and returns the first instance that matches query.
 	//
 	expression::reference transform( const expression::reference& exp,
-									 const instance::reference& from, const instance::reference& to,
+									 const instance* from, const instance* to,
 									 const expression_filter_t& filter,
 									 int64_t max_depth )
 	{
@@ -283,7 +283,7 @@ namespace vtil::symbolic
 				// Log the translation.
 				//
 				log<CON_BLU>( "Translating [%s] => [%s]:\n", *from, *to );
-				from->enum_variables( [ & ] ( const instance& ins )
+				from->enum_variables( [ & ] ( const instance* ins )
 				{
 					log<CON_BLU>( "            %s: %s\n", ins.id, *match.translate( ins ) );
 				} );
@@ -343,7 +343,7 @@ namespace vtil::symbolic
 				// Log the translation.
 				//
 				log<CON_BLU>( "Translating [%s] => [%s]:\n", *from, *to );
-				from->enum_variables( [ & ] ( const instance& ins )
+				from->enum_variables( [ & ] ( const instance* ins )
 				{
 					log<CON_BLU>( "            %s: %s\n", ins.id, *match.translate( ins ) );
 				} );

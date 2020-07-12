@@ -31,13 +31,13 @@ namespace vtil
 {
 	// Reads from the register.
 	//
-	symbolic::expression symbolic_vm::read_register( const register_desc& desc )
+	symbolic::expression::reference symbolic_vm::read_register( const register_desc& desc )
 	{
 		bitcnt_t size = size_register( desc );
 		register_desc full = { desc.flags, desc.local_id, size, 0, desc.architecture };
 
 		auto it = register_state.find( full );
-		symbolic::expression exp = it == register_state.end()
+		auto exp = it == register_state.end()
 			? symbolic::variable{ full }.to_expression( false )
 			: it->second;
 
@@ -49,7 +49,7 @@ namespace vtil
 
 	// Writes to the register.
 	//
-	void symbolic_vm::write_register( const register_desc& desc, symbolic::expression value )
+	void symbolic_vm::write_register( const register_desc& desc, symbolic::expression::reference value )
 	{
 		bitcnt_t size = size_register( desc );
 		register_desc full = { desc.flags, desc.local_id, size, 0, desc.architecture };
@@ -57,22 +57,22 @@ namespace vtil
 		if ( desc.bit_count == size && desc.bit_offset == 0 )
 		{
 			register_state.erase( desc );
-			register_state.emplace( desc, std::move( value ) );
+			register_state.emplace( desc, value );
 		}
 		else
 		{
 			auto& exp = register_state[ full ];
 			if ( !exp ) exp = symbolic::make_register_ex( full );
-			exp = ( exp & ~desc.get_mask() ) | ( value.resize( desc.bit_count ).resize( size ) << desc.bit_offset );
+			exp = ( std::move( exp ) & ~desc.get_mask() ) | ( value.resize( desc.bit_count ).resize( size ) << desc.bit_offset );
 		}
 	}
 
 	// Reads the given number of bytes from the memory.
 	//
-	symbolic::expression symbolic_vm::read_memory( const symbolic::expression& pointer, size_t byte_count )
+	symbolic::expression::reference symbolic_vm::read_memory( const symbolic::expression::reference& pointer, size_t byte_count )
 	{
 		bitcnt_t bcnt = math::narrow_cast<bitcnt_t>( byte_count * 8 );
-		symbolic::expression exp = memory_state.read_v( 
+		symbolic::expression::reference exp = memory_state.read_v(
 			pointer, 
 			bcnt 
 		);
@@ -81,11 +81,11 @@ namespace vtil
 
 	// Writes the given expression to the memory.
 	//
-	void symbolic_vm::write_memory( const symbolic::expression& pointer, symbolic::expression value )
+	void symbolic_vm::write_memory( const symbolic::expression::reference& pointer, symbolic::expression::reference value )
 	{
 		memory_state.write( 
 			pointer, 
-			value.resize( ( value.size() + 7 ) & ~7 ) 
+			value.resize( ( value->size() + 7 ) & ~7 ) 
 		);
 	}
 

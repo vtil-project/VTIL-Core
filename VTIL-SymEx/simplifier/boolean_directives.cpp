@@ -29,7 +29,7 @@
 
 namespace vtil::symbolic::directive
 {
-    std::vector<std::pair<instance::reference, instance::reference>> boolean_simplifiers
+    std::vector<std::pair<instance, instance>> boolean_simplifiers
     {
         // Manually added:
         //
@@ -57,12 +57,12 @@ namespace vtil::symbolic::directive
         { A!=-A,                                                           1 },
     };
     
-    const std::vector<std::pair<instance::reference, instance::reference>>& build_boolean_simplifiers()
+    const std::vector<std::pair<instance, instance>>& build_boolean_simplifiers()
     {
         if ( !boolean_simplifiers.empty() )
             return boolean_simplifiers;
 #ifndef __INTELLISENSE__
-#define ADD_DIRECTIVE( ... ) ([ ] () { boolean_simplifiers.push_back( { __VA_ARGS__ } ); })()
+#define ADD_DIRECTIVE( ... ) ([ ] () { boolean_simplifiers.emplace_back( __VA_ARGS__ ); })()
         // Boolean Simplifiers
         //
         ADD_DIRECTIVE( ((A>B)&(A>C)),                                                   __iff((B>C), (A>B)) );
@@ -2617,7 +2617,7 @@ namespace vtil::symbolic::directive
 	constexpr auto overflow = [ ] ( auto a, auto b ) { return ((a<0)==(b<0))&((a<0)!=((a+b)<0)); };
 	constexpr auto underflow = [ ] ( auto a, auto b ) { return ((a<0)!=(b<0))&((a<0)!=((a-b)<0)); };
 
-    const std::vector<std::pair<instance::reference, instance::reference>> boolean_joiners =
+    const std::vector<std::pair<instance, instance>> boolean_joiners =
     {
         // Manually added:
         //

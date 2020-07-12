@@ -41,19 +41,19 @@ namespace vtil
 
 		// Reads from the register.
 		//
-		virtual symbolic::expression read_register( const register_desc& desc ) { unreachable(); return {}; }
+		virtual symbolic::expression::reference read_register( const register_desc& desc ) { unreachable(); return {}; }
 		
 		// Reads the given number of bytes from the memory.
 		//
-		virtual symbolic::expression read_memory( const symbolic::expression& pointer, size_t byte_count ) { unreachable(); return {}; }
+		virtual symbolic::expression::reference read_memory( const symbolic::expression::reference& pointer, size_t byte_count ) { unreachable(); return {}; }
 
 		// Writes to the register.
 		//
-		virtual void write_register( const register_desc& desc, symbolic::expression value ) { unreachable(); }
+		virtual void write_register( const register_desc& desc,symbolic::expression::reference value ) { unreachable(); }
 		
 		// Writes the given expression to the memory.
 		//
-		virtual void write_memory( const symbolic::expression& pointer, symbolic::expression value ) { unreachable(); }
+		virtual void write_memory( const symbolic::expression::reference& pointer, symbolic::expression::reference value ) { unreachable(); }
 
 		// Runs the given instruction, returns whether it was successful.
 		//

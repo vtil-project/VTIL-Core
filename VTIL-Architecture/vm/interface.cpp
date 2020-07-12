@@ -36,7 +36,7 @@ namespace vtil
 	{
 		// Declare a helper to convert operands of current instruction into expressions.
 		//
-		auto cvt_operand = [ & ] ( int i ) -> symbolic::expression
+		auto cvt_operand = [ & ] ( int i ) -> symbolic::expression::reference
 		{
 			const operand& op = ins.operands[ i ];
 
@@ -46,7 +46,7 @@ namespace vtil
 			{
 				// Trace the source register.
 				//
-				symbolic::expression result = read_register( op.reg() );
+				symbolic::expression::reference result = read_register( op.reg() );
 
 				// If stack pointer, add the current virtual offset.
 				//
@@ -76,7 +76,7 @@ namespace vtil
 			//
 			write_register(
 				ins.operands[ 0 ].reg(),
-				cvt_operand( 1 ).resize( ins.operands[ 0 ].bit_count(), cast_signed )
+				cvt_operand( 1 )->resize( ins.operands[ 0 ].bit_count(), cast_signed )
 			);
 			return true;
 		}
@@ -108,13 +108,14 @@ namespace vtil
 			// Read the source operand and byte-align.
 			//
 			auto src = cvt_operand( 2 );
-			src.resize( ( src.size() + 7 ) & ~7 );
+			bitcnt_t bsize = ( src->size() + 7 ) & ~7;
+			if ( src->size() != bsize ) ( +src )->resize( bsize );
 
 			// Query base pointer without using the wrapper to skip SP adjustment and 
 			// add offset. Write the source to the pointer.
 			//
 			auto [base, offset] = ins.memory_location();
-			write_memory( read_register( base ) + offset, src );
+			write_memory( read_register( base ) + offset, *src );
 			return true;
 		}
 		// If any symbolic operator:
@@ -161,7 +162,7 @@ namespace vtil
 				else if ( ( ins.operands[ 0 ].size() + ins.operands[ 1 ].size() ) <= 8 )
 				{
 					auto op1_low = cvt_operand( 0 );
-					auto op1 = op1_low | ( op1_high.resize( op1_high.size() + op1_low.size() ) << op1_low.size() );
+					auto op1 = op1_low | ( op1_high->resize( op1_high->size() + op1_low->size() ) << op1_low->size() );
 					result = { op1, op_id, cvt_operand( 2 ) };
 				}
 				// If operation is 65 bits or bigger:

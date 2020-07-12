@@ -70,25 +70,25 @@ namespace vtil
 				? hooks.size_register( desc )
 				: vm_base::size_register( desc );
 		}
-		symbolic::expression read_register( const register_desc& desc ) override 
+		symbolic::expression::reference read_register( const register_desc& desc ) override
 		{
 			return hooks.read_register 
 				? hooks.read_register( desc ) 
 				: vm_base::read_register( desc );
 		}
-		symbolic::expression read_memory( const symbolic::expression& pointer, size_t byte_count ) override 
+		symbolic::expression::reference read_memory( const symbolic::expression::reference& pointer, size_t byte_count ) override
 		{ 
 			return hooks.read_memory 
 				? hooks.read_memory( pointer, byte_count ) 
 				: vm_base::read_memory( pointer, byte_count );
 		}
-		void write_register( const register_desc& desc, symbolic::expression value ) override 
+		void write_register( const register_desc& desc, symbolic::expression::reference value ) override
 		{ 
 			return hooks.write_register 
 				? hooks.write_register( desc, std::move( value ) ) 
 				: vm_base::write_register( desc, std::move( value ) );
 		}
-		void write_memory( const symbolic::expression& pointer, symbolic::expression value ) override
+		void write_memory( const symbolic::expression::reference& pointer, symbolic::expression::reference value ) override
 		{
 			return hooks.write_memory
 				? hooks.write_memory( pointer, std::move( value ) )

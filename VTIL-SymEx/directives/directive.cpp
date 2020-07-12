@@ -31,11 +31,13 @@ namespace vtil::symbolic::directive
 {
 	// Constructor for directive representing the result of an unary operator.
 	//
-	instance::instance( math::operator_id op, const instance& e1 ) : rhs( e1 ), op( op ) {}
+	instance::instance( math::operator_id op, const instance& e1 ) 
+		: rhs( e1 ), op( op ) {}
 
 	// Constructor for directive representing the result of a binary operator.
 	//
-	instance::instance( const instance& e1, math::operator_id op, const instance& e2 ) : lhs( e1 ), rhs( e2 ), op( op ) {}
+	instance::instance( const instance& e1, math::operator_id op, const instance& e2 ) 
+		: lhs( e1 ), rhs( e2 ), op( op ) {}
 
 	// Enumerates each unique variable.
 	//
@@ -93,5 +95,26 @@ namespace vtil::symbolic::directive
 		if ( !lhs ) return !o.lhs;
 		else if ( !o.lhs || !lhs->equals( *o.lhs ) ) return false;
 		return true;
+	}
+
+	// Simple copyable unique pointer implementation.
+	//
+	instance::reference::reference( const instance& o )  : ptr( new instance( o ) ) {}
+	instance::reference::reference( instance&& o )       : ptr( new instance( std::move( o ) ) ) {}
+	instance::reference::reference( const reference& o ) : ptr( o ? new instance( *o ) : nullptr ) {}
+	instance::reference::reference( reference&& o )      : ptr( std::exchange( o.ptr, nullptr ) ) {}
+	instance::reference::~reference()
+	{
+		if ( ptr ) delete ptr;
+	}
+	instance::reference& instance::reference::operator=( instance::reference&& o )
+	{
+		ptr = std::exchange( o.ptr, nullptr );
+		return *this;
+	}
+	instance::reference& instance::reference::operator=( const instance::reference& o )
+	{
+		ptr = o ? new instance( *o ) : nullptr;
+		return *this;
 	}
 };

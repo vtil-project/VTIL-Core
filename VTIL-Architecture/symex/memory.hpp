@@ -55,7 +55,7 @@ namespace vtil::symbolic
 
 	// Declaration of symbolic memory type using sinkhole.
 	//
-	using memory = sinkhole<pointer, expression, pointer::make_weak>;
+	using memory = sinkhole<pointer, expression::reference, pointer::make_weak>;
 	
 	// Creates a symbolic memory of the given type.
 	//
@@ -64,11 +64,11 @@ namespace vtil::symbolic
 		switch ( type )
 		{
 			case memory_type::free:
-				return { [ ] ( auto& ptr, bitcnt_t size ) -> expression { return make_memory_ex( ptr, size ); } };
+				return { [ ] ( auto& ptr, bitcnt_t size ) -> expression::reference { return make_memory_ex( ptr, size ); } };
 			case memory_type::relaxed:
-				return { [ ] ( auto& ptr, bitcnt_t size ) -> expression { return make_undefined_ex( size ); } };
+				return { [ ] ( auto& ptr, bitcnt_t size ) -> expression::reference { return make_undefined_ex( size ); } };
 			default:
-				return { [ ] ( auto& ptr, bitcnt_t size ) -> expression { unreachable(); return expression{}; } };
+				return { [ ] ( auto& ptr, bitcnt_t size ) -> expression::reference { unreachable(); return nullptr; } };
 		}
 	}
 };

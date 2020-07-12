@@ -691,7 +691,7 @@ namespace vtil::symbolic
 		// this way and additionally we avoid copying where an operand is being simplified
 		// as that can be replaced by a simple swap of shared references.
 		//
-		auto ref = make_local_reference( this );
+		reference ref = make_local_reference( this );
 		simplify_expression( ref, prettify );
 
 		// Only thing that we should be careful about is the case expression->simplify(),
@@ -868,5 +868,45 @@ namespace vtil::symbolic
 		if ( is_constant() )      return format::hex( value.get<true>().value() );
 		if ( is_variable() )      return uid.to_string();
 		return "null";
+	}
+
+	// Implement some helpers to conditionally copy.
+	//
+	expression_reference& expression_reference::resize( bitcnt_t new_size, bool signed_cast, bool no_explicit )
+	{
+		if ( new_size != get()->size() )
+			own()->resize( new_size, signed_cast, no_explicit );
+		return *this;
+	}
+	expression_reference expression_reference::resize( bitcnt_t new_size, bool signed_cast, bool no_explicit ) const
+	{
+		return expression_reference{ *this }.resize( new_size, signed_cast, no_explicit );
+	}
+	expression_reference& expression_reference::simplify( bool prettify )
+	{
+		if ( prettify || !get()->simplify_hint )
+			own()->simplify( prettify );
+		return *this;
+	}
+	expression_reference expression_reference::simplify( bool prettify ) const
+	{
+		return expression_reference{ *this }.simplify( prettify );
+	}
+	expression_reference& expression_reference::make_lazy()
+	{
+		if ( !get()->is_lazy )
+			own()->is_lazy = true;
+		return *this;
+	}
+	expression_reference expression_reference::make_lazy() const
+	{
+		return expression_reference{ *this }.make_lazy();
+	}
+
+	// Implemented for sinkhole-use.
+	//
+	bitcnt_t expression_reference::size() const 
+	{ 
+		return get()->size(); 
 	}
 };

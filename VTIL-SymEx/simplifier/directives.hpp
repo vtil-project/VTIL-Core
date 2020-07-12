@@ -34,7 +34,7 @@ namespace vtil::symbolic::directive
     // List of universal simplifiers, they have to reduce complexity or keep it equal
     // at the very least to not cause an infinity loop.
     //
-    static const std::pair<instance::reference, instance::reference> universal_simplifiers[] =
+    static const std::pair<instance, instance> universal_simplifiers[] =
     {
         // TODO: Arithmetic operators, */% etc.
         //
@@ -235,7 +235,7 @@ namespace vtil::symbolic::directive
     // Describes the way operands of two operators join each other.
     // - Has no obligation to produce simple output, should be checked.
     //
-    static const std::pair<instance::reference, instance::reference> join_descriptors[] =
+    static const std::pair<instance, instance> join_descriptors[] =
     {
         // TODO: Arithmetic operators, */% etc.
         // TODO: Should we add ADD and SUB to bitwise despite the partial evaluator?
@@ -391,7 +391,7 @@ namespace vtil::symbolic::directive
 
     // Grouping of simple representations into more complex directives.
     //
-    static const std::pair<instance::reference, instance::reference> pack_descriptors[] =
+    static const std::pair<instance, instance> pack_descriptors[] =
     {
         { __ucast(A>>B, 0x1),                                 __bt(A, B) },
         { (A>>B)&1,                                           __ucast(__bt(A,B),__bcnt(A)) },
@@ -413,7 +413,7 @@ namespace vtil::symbolic::directive
 
     // Conversion from more complex directives into simple representations.
     //
-    static const std::pair<instance::reference, instance::reference> unpack_descriptors[] =
+    static const std::pair<instance, instance> unpack_descriptors[] =
     {
         { __bt(A,B),                                          __ucast((A&(1<<B))>>B,1) },
         { __min(A,B),                                         __if(A<=B,A)|__if(A>B,B) },

@@ -147,7 +147,42 @@ namespace vtil::symbolic::directive
     //
     struct instance : math::operable<instance>
     {
-        using reference = shared_reference<instance>;
+        // Simple copyable unique pointer implementation.
+        //
+        struct reference
+        {
+            instance* ptr = nullptr;
+            
+            // Construct by implicit null or instance value.
+            //
+            reference() {}
+            reference( const instance& i );
+            reference( instance&& i );
+
+            // Copy / Move from another reference.
+            //
+            reference( const reference& o );
+            reference( reference&& o );
+            reference& operator=( reference&& o );
+            reference& operator=( const reference& o );
+
+            // Destructor deletes the value.
+            //
+            ~reference();
+
+            // Null check.
+            //
+            explicit operator bool() const { return ptr; }
+            
+            // Pointer interface.
+            //
+            operator instance*() { return ptr; }
+            operator const instance*() const { return ptr; }
+            instance& operator*() { return *ptr; }
+            const instance& operator*() const { return *ptr; }
+            instance* operator->() { return ptr; }
+            const instance* operator->() const { return ptr; }
+        };
 
         // If symbolic variable, the identifier of the variable
         // and type of expressions it can match.

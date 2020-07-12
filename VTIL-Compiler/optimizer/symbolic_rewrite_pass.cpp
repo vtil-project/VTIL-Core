@@ -131,7 +131,7 @@ namespace vtil::optimizer
 				//
 				auto k = pair.first; auto v = pair.second.simplify();
 				symbolic::expression v0 = symbolic::make_register_ex( k );
-				if ( v0.equals( v ) )
+				if ( v->equals( v0 ) )
 					continue;
 
 				// If register value is not used after this instruction, skip from emitted state.
@@ -191,11 +191,11 @@ namespace vtil::optimizer
 
 				// Pack registers and the expression.
 				//
-				v = symbolic::variable::pack_all( v.simplify( true ) );
+				symbolic::expression final_value = symbolic::variable::pack_all( ( +v )->simplify( true ) );
 
 				// Buffer a mov instruction.
 				//
-				instruction_buffer.push_back( { &ins::mov, { k, translator << v } } );
+				instruction_buffer.push_back( { &ins::mov, { k, translator << final_value } } );
 			}
 
 			// For each memory state:
@@ -208,7 +208,7 @@ namespace vtil::optimizer
 
 				// If value is unchanged, skip.
 				//
-				if ( v.equals( v0 ) )
+				if ( v->equals( v0 ) )
 					continue;
 
 				// Try minimizing expression size.
@@ -230,7 +230,7 @@ namespace vtil::optimizer
 
 				// Pack registers and the expression.
 				//
-				v = symbolic::variable::pack_all( v.simplify( true ) );
+				v = symbolic::variable::pack_all( v->simplify( true ) );
 
 				// If pointer can be rewritten as $sp + C:
 				//
@@ -242,7 +242,7 @@ namespace vtil::optimizer
 					instruction_buffer.push_back(
 					{
 						&ins::str,
-						{ REG_SP, make_imm<int64_t>( *displacement ), translator << v }
+						{ REG_SP, make_imm<int64_t>( *displacement ), translator << *v }
 					} );
 				}
 				else
@@ -283,7 +283,7 @@ namespace vtil::optimizer
 					instruction_buffer.push_back(
 					{
 						&ins::str,
-						{ base, make_imm( offset ), translator << v }
+						{ base, make_imm( offset ), translator << *v }
 					} );
 				}
 			}

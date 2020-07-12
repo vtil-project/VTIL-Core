@@ -42,7 +42,7 @@ namespace vtil
 		// State of the virtual machine.
 		//
 		symbolic::memory memory_state;
-		std::map<register_desc, symbolic::expression> register_state;
+		std::map<register_desc, symbolic::expression::reference> register_state;
 
 		// Construct from memory type, defaults to free.
 		//
@@ -52,19 +52,19 @@ namespace vtil
 		// Reads from the register.
 		// - Value will be unpacked.
 		//
-		symbolic::expression read_register( const register_desc& desc ) override;
+		symbolic::expression::reference read_register( const register_desc& desc ) override;
 
 		// Writes to the register.
 		//
-		void write_register( const register_desc& desc, symbolic::expression value ) override;
+		void write_register( const register_desc& desc, symbolic::expression::reference value ) override;
 
 		// Reads the given number of bytes from the memory.
 		//
-		symbolic::expression read_memory( const symbolic::expression& pointer, size_t byte_count ) override;
+		symbolic::expression::reference read_memory( const symbolic::expression::reference& pointer, size_t byte_count ) override;
 		
 		// Writes the given expression to the memory.
 		//
-		void write_memory( const symbolic::expression& pointer, symbolic::expression value ) override;
+		void write_memory( const symbolic::expression::reference& pointer, symbolic::expression::reference value ) override;
 
 		// Override execute to enforce lazyness.
 		//

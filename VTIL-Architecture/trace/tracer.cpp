@@ -498,33 +498,33 @@ namespace vtil
 		// Create a lambda virtual machine and allocate a temporary result.
 		//
 		lambda_vm lvm;
-		symbolic::expression result = {};
+		symbolic::expression::reference result = {};
 
 		lvm.hooks.read_register = [ & ] ( const register_desc& desc )
 		{
 			return trace( { it, desc } );
 		};
-		lvm.hooks.read_memory = [ & ] ( const symbolic::expression& pointer, size_t byte_count )
+		lvm.hooks.read_memory = [ & ] ( const symbolic::expression::reference& pointer, size_t byte_count )
 		{
 			auto exp = trace( symbolic::variable{ it, { pointer, math::narrow_cast<bitcnt_t>( byte_count * 8 ) } } );
 			return exp.is_valid() ? exp.resize( result_bcnt ) : exp;
 		};
-		lvm.hooks.write_register = [ & ] ( const register_desc& desc, symbolic::expression value )
+		lvm.hooks.write_register = [ & ] ( const register_desc& desc, symbolic::expression::reference value )
 		{
 			if ( desc == lookup.reg() )
 				result = std::move( value );
 		};
 
-		lvm.hooks.write_memory = [ & ] ( const symbolic::expression& pointer, symbolic::expression value )
+		lvm.hooks.write_memory = [ & ] ( const symbolic::expression::reference& pointer, symbolic::expression::reference value )
 		{
-			if ( pointer.equals( lookup.mem().decay() ) )
+			if ( pointer->equals( lookup.mem().decay() ) )
 				result = std::move( value );
 		};
 
 		// Step one instruction, if result was successfuly captured, return.
 		//
 		if ( lvm.execute( *it ), result )
-			return result;
+			return *result;
 
 		// If we could not describe the behaviour, increment iterator and return.
 		//

@@ -123,12 +123,12 @@ namespace vtil::optimizer::validation
 
 					// Validate target.
 					//
-					symbolic::expression target_call = ins.operands[ 0 ].is_immediate()
-						? ins.operands[ 0 ].imm().u64
+					auto target_call = ins.operands[ 0 ].is_immediate()
+						? symbolic::expression::reference{ ins.operands[ 0 ].imm().u64 }
 						: vm.read_register( ins.operands[ 0 ].reg() );
-					if ( target_call.value.get() != call.address )
+					if ( target_call->value.get() != call.address )
 					{
-						logger::warning( "Unexpected callee, expected 0x%llx, got [%s].", call.address, target_call );
+						logger::warning( "Unexpected callee, expected 0x%llx, got [%s].", call.address, *target_call );
 						success = false;
 						return false;
 					}
@@ -139,7 +139,7 @@ namespace vtil::optimizer::validation
 					auto it = call_conv.param_registers.begin();
 					for ( auto [value, id] : zip( call.parameters, iindices() ) )
 					{
-						symbolic::expression exp;
+						symbolic::expression::reference exp;
 
 						// If we did not reach the end of registers yet:
 						//
@@ -163,7 +163,7 @@ namespace vtil::optimizer::validation
 
 						// Fail if value does not match.
 						//
-						if ( exp.value.get() != value )
+						if ( exp->value.get() != value )
 						{
 							logger::warning( "Parameter %d does not match, expected 0x%llx, got [%s].", id, value, exp );
 							success = false;
@@ -196,12 +196,12 @@ namespace vtil::optimizer::validation
 
 					// Validate return address.
 					//
-					symbolic::expression sreturn_address = ins.operands[ 0 ].is_immediate()
-						? ins.operands[ 0 ].imm().u64
+					auto sreturn_address = ins.operands[ 0 ].is_immediate()
+						? symbolic::expression::reference{ ins.operands[ 0 ].imm().u64 }
 						: vm.read_register( ins.operands[ 0 ].reg() );
-					if ( sreturn_address.value.get() != return_address )
+					if ( sreturn_address->value.get() != return_address )
 					{
-						logger::warning( "Unexpected return address, expected 0x%llx, got [%s].", return_address, sreturn_address );
+						logger::warning( "Unexpected return address, expected 0x%llx, got [%s].", return_address, *sreturn_address );
 						success = false;
 						return false;
 					}
@@ -210,8 +210,8 @@ namespace vtil::optimizer::validation
 					//
 					for ( auto& [reg, value] : exit.register_state )
 					{
-						symbolic::expression exp = vm.read_register( reg );
-						if ( exp.value.get() != value )
+						auto exp = vm.read_register( reg );
+						if ( exp->value.get() != value )
 						{
 							logger::warning( "Return state %s does not match, expected 0x%llx, got [%s].", reg, value, exp );
 							success = false;
@@ -227,42 +227,40 @@ namespace vtil::optimizer::validation
 			return vm.symbolic_vm::execute( ins );
 		};
 
-		vm.hooks.read_memory = [ & ] ( const symbolic::expression& pointer, size_t sz )
+		vm.hooks.read_memory = [ & ] ( const symbolic::expression::reference& pointer, size_t sz )
 		{
-			symbolic::expression ptr = pointer.simplify();
-
 			// If action log has a matching read memory on top of the stack:
 			//
 			if ( action_it != action_end && std::get_if<memory_read>( &*action_it ) )
 			{
 				auto& mem = std::get<memory_read>( *action_it );
-				if ( ptr.value.get() == mem.address )
+				if ( pointer->value.get() == mem.address )
 				{
 					// Write fake value to the state and pop the stack.
 					//
 					symbolic::expression value = { mem.fake_value, mem.size };
-					vm.symbolic_vm::write_memory( ptr, value );
+					vm.symbolic_vm::write_memory( pointer, value );
 					++action_it;
 				}
 			}
 
-			return vm.symbolic_vm::read_memory( ptr, sz );
+			return vm.symbolic_vm::read_memory( pointer, sz );
 		};
 
-		vm.hooks.write_memory = [ & ] ( const symbolic::expression& pointer, symbolic::expression exp )
+		vm.hooks.write_memory = [ & ] ( const symbolic::expression::reference& pointer, symbolic::expression::reference exp )
 		{
 			// If action log has a matching write memory on top of the stack:
 			//
 			if ( action_it != action_end && std::get_if<memory_write>( &*action_it ) )
 			{
 				auto& mem = std::get<memory_write>( *action_it );
-				if ( pointer.value.get() == mem.address )
+				if ( pointer->value.get() == mem.address )
 				{
 					// Pop the stack and validate the value.
 					//
-					if ( exp.value.get() != mem.value )
+					if ( exp->value.get() != mem.value )
 					{
-						logger::warning( "Unexpected memory write into 0x%llx, expected 0x%llx, got [%s].", mem.address, mem.value, exp );
+						logger::warning( "Unexpected memory write into 0x%llx, expected 0x%llx, got [%s].", mem.address, mem.value, *exp );
 						success = false;
 					}
 					++action_it;
@@ -315,7 +313,7 @@ namespace vtil::optimizer::validation
 				//
 				operand dst = {};
 				if ( lim->base == &ins::js )
-					dst = *vm.read_register( lim->operands[ 0 ].reg() ).get<bool>() ? lim->operands[ 1 ] : lim->operands[ 2 ];
+					dst = *vm.read_register( lim->operands[ 0 ].reg() )->get<bool>() ? lim->operands[ 1 ] : lim->operands[ 2 ];
 				else if ( lim->base == &ins::jmp )
 					dst = lim->operands[ 0 ];
 
@@ -326,7 +324,7 @@ namespace vtil::optimizer::validation
 					eit = rtn->explored_blocks.find( dst.imm().u64 );
 				// Otherwise read VM context.
 				//
-				else if ( auto jmp_dst = vm.read_register( dst.reg() ).get() )
+				else if ( auto jmp_dst = vm.read_register( dst.reg() )->get() )
 					eit = rtn->explored_blocks.find( *jmp_dst );
 
 				// If no valid destination, fail.

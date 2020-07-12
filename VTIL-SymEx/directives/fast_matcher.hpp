@@ -40,7 +40,7 @@ namespace vtil::symbolic::directive
  
 		// Adds the mapping of a variable to an expression. 
 		// 
-		bool add( const instance::reference& dir, const expression::reference& exp ) 
+		bool add( const instance* dir, const expression::reference& exp ) 
 		{ 
 			// If it's the first time this variable is being used: 
 			// 
@@ -74,7 +74,7 @@ namespace vtil::symbolic::directive
  
 		// Translates a variable to the matching expression. 
 		// 
-		expression::reference translate( const instance::reference& dir ) const 
+		expression::reference translate( const instance* dir ) const 
 		{ 
 			// Assert the looked up type is variable. 
 			// 
@@ -83,7 +83,8 @@ namespace vtil::symbolic::directive
 			// Translate using the lookup table. 
 			// 
 			return lookup_table[ dir->lookup_index ]; 
-		} 
+		}
+		expression::reference translate( const instance& dir ) const { return translate( &dir ); }
 	}; 
  
 	// Tries to match the the given expression with the directive and fills the  
@@ -91,7 +92,7 @@ namespace vtil::symbolic::directive
 	// 
 	template<typename T, std::enable_if_t<std::is_same_v<typename T::value_type, symbol_table_t>, int> = 0> 
 	static size_t fast_match( T* results, 
-							  const instance::reference& dir, 
+							  const instance* dir, 
 							  const expression::reference& exp, 
 							  size_t index = 0 ) 
 	{ 
@@ -196,4 +197,6 @@ namespace vtil::symbolic::directive
 		// 
 		return ( results->size() + 1 ) - size_0; 
 	} 
+	template<typename T, std::enable_if_t<std::is_same_v<typename T::value_type, symbol_table_t>, int> = 0>
+	static size_t fast_match( T* results, const instance& dir, const expression::reference& exp, size_t index = 0 ) { return fast_match( results, &dir, exp, index ); }
 };
