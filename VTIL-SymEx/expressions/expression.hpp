@@ -54,10 +54,10 @@ namespace vtil::symbolic
 
 		// Basic comparison operators are redirected to the pointer type.
 		//
-		bool operator<( const shared_reference& o ) const { return reference < o.reference; }
-		bool operator==( const shared_reference& o ) const { return reference == o.reference; }
-		bool operator<( const expression_reference& o ) const { return reference < o.reference; }
-		bool operator==( const expression_reference& o ) const { return reference == o.reference; }
+		bool operator<( const shared_reference& o ) const { return combined_value < o.combined_value; }
+		bool operator==( const shared_reference& o ) const { return combined_value == o.combined_value; }
+		bool operator<( const expression_reference& o ) const { return combined_value < o.combined_value; }
+		bool operator==( const expression_reference& o ) const { return combined_value == o.combined_value; }
 
 		// Implement some helpers to conditionally copy.
 		//
