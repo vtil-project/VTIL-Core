@@ -81,15 +81,24 @@ namespace vtil::optimizer
 
 	// Cross optimization pass.
 	//
+	using core_local_propagation_pass = combine_pass<
+		local_pass<stack_propagation_pass>,
+		local_pass<dead_code_elimination_pass>,
+		local_pass<mov_propagation_pass>,
+		local_pass<register_renaming_pass>,
+		local_pass<dead_code_elimination_pass>
+	>;
 	using collective_cross_pass = combine_pass<
 		stack_pinning_pass,
 		istack_ref_substitution_pass,
 		bblock_extension_pass,
+		core_local_propagation_pass,
 		symbolic_rewrite_pass<true>,
 		branch_correction_pass,
 		collective_propagation_pass,
 		symbolic_rewrite_pass<true>,
-		apply_each<local_pass, collective_propagation_pass>,
+		core_local_propagation_pass,
+		collective_propagation_pass,
 		//fast_dead_code_elimination_pass,
 		exhaust_pass<
 			conditional_pass<

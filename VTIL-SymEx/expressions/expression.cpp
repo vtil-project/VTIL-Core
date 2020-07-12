@@ -104,6 +104,7 @@ namespace vtil::symbolic
 			if ( is_constant() )
 			{
 				value = value.resize( new_size, signed_cast );
+				update( false );
 			}
 			else
 			{
@@ -113,7 +114,6 @@ namespace vtil::symbolic
 				else
 					*this = __ucast( *this, new_size );
 			}
-			update( false );
 			return *this;
 		}
 
@@ -125,6 +125,7 @@ namespace vtil::symbolic
 				if ( is_constant() )
 				{
 					value = value.resize( new_size, signed_cast );
+					update( false );
 				}
 				else
 				{
@@ -182,6 +183,7 @@ namespace vtil::symbolic
 					// Resize shifted expression and break.
 					//
 					lhs.resize( new_size, false );
+					update( false );
 					break;
 				}
 			case math::operator_id::shift_right:
@@ -193,14 +195,9 @@ namespace vtil::symbolic
 					//
 					expression mask = { value.value_mask(), new_size };
 
-					// Resize shifted expression and update it.
-					//
-					lhs.resize( new_size, false );
-					update( true );
-
 					// Mask the result.
 					//
-					*this = expression::make( *this, math::operator_id::bitwise_and, mask );
+					*this = lhs.resize( new_size, false ) & mask;
 				}
 				// Otherwise nothing else to do.
 				//
@@ -223,7 +220,8 @@ namespace vtil::symbolic
 					//
 					if ( new_size < value.size() )
 					{
-						if ( rhs->size() != new_size ) ( +rhs )->resize( new_size, false );
+						( +rhs )->resize( new_size, false );
+						update( false );
 					}
 					// If extending:
 					//
@@ -259,11 +257,13 @@ namespace vtil::symbolic
 					{
 						if ( no_explicit ) return *this;
 						*this = __ucast( *this, new_size );
-						break;
 					}
-
-					if ( lhs ) lhs.resize( new_size, false );
-					rhs.resize( new_size, false );
+					else
+					{
+						if ( lhs ) lhs.resize( new_size, false );
+						rhs.resize( new_size, false );
+						update( false );
+					}
 				}
 				else
 				{
@@ -286,6 +286,7 @@ namespace vtil::symbolic
 				{
 					if ( lhs ) lhs.resize( new_size, true );
 					rhs.resize( new_size, true );
+					update( false );
 				}
 				else
 				{
@@ -295,11 +296,13 @@ namespace vtil::symbolic
 					{
 						if ( lhs ) lhs.resize( new_size, false );
 						rhs.resize( new_size, false );
-						break;
+						update( false );
 					}
-
-					if ( no_explicit ) return *this;
-					*this = __ucast( *this, new_size );
+					else
+					{
+						if ( no_explicit ) return *this;
+						*this = __ucast( *this, new_size );
+					}
 				}
 				break;
 
@@ -335,8 +338,7 @@ namespace vtil::symbolic
 				//
 				else
 				{
-					auto ex = lhs->clone().resize( new_size, false );
-					return *this = ex;
+					return *this = lhs->resize( new_size, false );
 				}
 				break;
 
@@ -358,8 +360,7 @@ namespace vtil::symbolic
 				//
 				else if ( signed_cast )
 				{
-					auto ex = lhs->clone().resize( new_size, true );
-					return *this = ex;
+					return *this = lhs->resize( new_size, true );
 				}
 				// Else, convert to unsigned cast since top bits will be zero.
 				//
@@ -373,7 +374,11 @@ namespace vtil::symbolic
 			// Redirect to conditional output since zx 0 == sx 0.
 			//
 			case math::operator_id::value_if:
-				( +rhs )->resize( new_size, false );
+				if ( rhs.size() != new_size )
+				{
+					rhs.resize( new_size, false );
+					update( false );
+				}
 				break;
 
 			// If no handler found:
@@ -387,7 +392,7 @@ namespace vtil::symbolic
 				break;
 		}
 
-		update( true );
+		simplify();
 		return *this;
 	}
 
@@ -665,6 +670,11 @@ namespace vtil::symbolic
 		//
 		is_lazy = false;
 
+		// Skip if no point in simplifying.
+		//
+		if ( !prettify && simplify_hint )
+			return *this;
+
 		// By changing the prototype of simplify_expression from f(expression&) to
 		// f(expression::reference&), we gain an important performance benefit that is
 		// a significantly less amount of copies made. Cache will also store references 
@@ -673,15 +683,7 @@ namespace vtil::symbolic
 		//
 		reference ref = make_local_reference( this );
 		simplify_expression( ref, prettify );
-
-		// Only thing that we should be careful about is the case expression->simplify(),
-		// which is problematic since it is not actually a shared reference, which we can
-		// carefully solve with the local reference system (which will assert that, no 
-		// references to it was stored on destructor for us) and making sure to copy data
-		// if the pointer was replaced.
-		//
-		if ( &*ref != this ) 
-			operator=( *ref );
+		if ( &*ref != this ) operator=( *ref );
 
 		// Set the simplifier hint to indicate skipping further calls to simplify_expression.
 		//
@@ -852,11 +854,11 @@ namespace vtil::symbolic
 	//
 	hash_t expression_reference::hash() const
 	{
-		return get()->hash();
+		return is_valid() ? get()->hash() : hash_t{ 0 };
 	}
 	bool expression_reference::is_simple() const
 	{
-		return get()->simplify_hint;
+		return !is_valid() || get()->simplify_hint;
 	}
 	void expression_reference::update( bool auto_simplify ) 
 	{
