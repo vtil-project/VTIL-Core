@@ -75,17 +75,17 @@ namespace vtil::symbolic
 		//
 		struct hasher
 		{
-			size_t operator()( const expression_reference& value ) const { return value.hash(); }
+			size_t operator()( const expression_reference& value ) const noexcept { return value.hash(); }
 		};
 		struct if_equal
 		{
 			bool operator()( const expression_reference& v1,
-							 const expression_reference& v2 ) const { return v1.equals( *v2 ); }
+							 const expression_reference& v2 ) const noexcept { return v1.equals( *v2 ); }
 		};
 		struct if_identical
 		{
 			bool operator()( const expression_reference& v1,
-							 const expression_reference& v2 ) const { return v1.is_identical( *v2 ); }
+							 const expression_reference& v2 ) const noexcept { return v1.is_identical( *v2 ); }
 		};
 
 		// Forward operators and constructor.
