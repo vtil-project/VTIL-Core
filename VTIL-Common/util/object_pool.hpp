@@ -127,7 +127,7 @@ namespace vtil
 		};
 		inline static thread_local reallocation_buffer buffer = {};
 
-		inline T* allocate( size_t count = 1 )
+		inline T* allocate( size_t count = 1 ) const
 		{
 			// Must not be used to allocate an array.
 			//
@@ -183,8 +183,7 @@ namespace vtil
 			it->iterator = ( generic_iterator& ) it;
 			return ( T* ) it->raw_data;
 		}
-
-		inline void deallocate( T* pointer, size_t count = 1 ) noexcept
+		inline void deallocate( T* pointer, size_t count = 1 ) const
 		{
 			// Must not be used to deallocate an array.
 			//
@@ -209,7 +208,7 @@ namespace vtil
 
 		// Default construction, conversion is no-op.
 		//
-		object_pool() = default;
+		constexpr object_pool() = default;
 		template <typename T2>
 		constexpr object_pool( const object_pool<T2>& ) noexcept {}
 

@@ -29,6 +29,7 @@
 #include <memory>
 #include <functional>
 #include <type_traits>
+#include <atomic>
 #include "../io/asserts.hpp"
 #include "object_pool.hpp"
 
@@ -56,8 +57,11 @@ namespace vtil
 {
 	namespace impl
 	{
-		template<typename... params> struct param_pack_first { using type = std::tuple_element_t<0, std::tuple<params...>>; };
-		template<> struct param_pack_first<> { using type = void; };
+		template<typename... params> struct first_of { using type = std::tuple_element_t<0, std::tuple<params...>>; };
+		template<> struct first_of<> { using type = void; };
+
+		template<typename... params>
+		using first_of_t = typename first_of<params...>::type;
 
 		template<typename T, typename... params>
 		static constexpr bool should_invoke_constructor()
@@ -71,34 +75,14 @@ namespace vtil
 			}
 			else
 			{
-				// Extract first parameter.
-				//
-				using first_param_t = typename param_pack_first<params...>::type;
-
 				// Invoke if not equal to the reference type.
 				//
-				return !std::is_base_of_v<T, std::remove_cvref_t<first_param_t>>;
+				return !std::is_base_of_v<T, std::remove_cvref_t<first_of_t<params...>>>;
 			}
 		}
 
 		template<typename T, typename... params>
-		using enable_if_constructor = typename std::enable_if_t<should_invoke_constructor<T, params...>()>;
-
-		template <typename T, typename... params>
-		inline static std::shared_ptr<T> make_shared( params&&... args )
-		{
-			std::shared_ptr<T> out = std::allocate_shared<T>( object_pool<T>{}, std::forward<params>( args )... );
-
-			// Billion dollar company yes?
-			//
-#ifdef __INTEL_COMPILER
-			{
-				std::weak_ptr<T> __tmp = out;
-				new ( &__tmp ) std::weak_ptr<T>{};
-			}
-#endif
-			return out;
-		}
+		using enable_if_constructor = typename std::enable_if_t<should_invoke_constructor<T, params...>(), int>;
 
 		template<typename T>
 		inline static T* reloc_const( const T* ptr, const void* src, void* dst )
@@ -115,70 +99,124 @@ namespace vtil
 		}
 	};
 
-	// This structure is used to describe copy-on-write references.
-	//
 	template<typename T>
 	struct shared_reference
 	{
-		// The original reference and current state.
+		// Declare the allocator.
 		//
-		std::shared_ptr<T> reference;
-		bool is_locked = false;
+		using object_entry = std::pair<T, std::atomic<size_t>>;
+		using allocator =    object_pool<object_entry>;
+
+		// Assert entry beings with object.
+		//
+		static_assert( &( ( std::pair<int, int>* ) nullptr )->first == nullptr, "Misaligned structure." );
+
+		// Store pointer as a 63-bit integer and append an additional bit to control temporary/allocated.
+		//
+		union
+		{
+			struct
+			{
+				uint64_t pointer   : 63;
+				uint64_t temporary : 1;
+			};
+			uint64_t combined_value;
+		};
 
 		// Null reference construction.
 		//
-		shared_reference() : reference( nullptr ) {}
-		shared_reference( std::nullptr_t ) : reference( nullptr ) {}
+		constexpr shared_reference() : combined_value( 0 ) {}
+		constexpr shared_reference( std::nullptr_t ) : shared_reference() {}
+		constexpr shared_reference( std::nullopt_t ) : shared_reference() {}
 
 		// Owning reference constructor.
 		//
-		template<typename... params, typename = impl::enable_if_constructor<shared_reference<T>, params...>>
-		shared_reference( params&&... p ) : reference( impl::make_shared<T>( std::forward<params>( p )... ) ) {}
+		template<typename... params, impl::enable_if_constructor<shared_reference<T>, params...> = 0>
+		shared_reference( params&&... p ) 
+		{
+			object_entry* entry = allocator{}.allocate();
+			new ( &entry->first ) T( std::forward<params>( p )... );
+			entry->second = { 1 };
 
-		// Copy-on-write reference construction and assignment.
+			pointer = ( uint64_t ) entry;
+			temporary = false;
+		}
+
+		// Shared reference constructor.
 		//
-		shared_reference( const shared_reference& ref ) : reference( ref.reference ), is_locked( ref.is_locked ) {}
-		shared_reference& operator=( const shared_reference& o ) { reference = o.reference; is_locked = o.is_locked; return *this; }
+		shared_reference( const shared_reference& ref )
+			: combined_value( ref.combined_value )
+		{
+			// If object is temporary (flag implies non-null),
+			// gain ownership of the reference.
+			//
+			if ( temporary )
+				own();
+			// If object is (non-null) and shared, increment reference.
+			//
+			else if ( auto entry = get_entry() ) 
+				entry->second++;
+		}
+		shared_reference& operator=( const shared_reference& o ) 
+		{ 
+			return *new ( &reset() ) shared_reference( o );
+		}
 
 		// Construction and assignment operator for rvalue references.
 		//
-		shared_reference( shared_reference&& ref ) noexcept : reference( std::exchange( ref.reference, {} ) ), is_locked( ref.is_locked ) {}
-		shared_reference& operator=( shared_reference&& o ) noexcept { reference = std::exchange( o.reference, {} ); is_locked = o.is_locked; return *this; }
+		shared_reference( shared_reference&& ref )
+			: combined_value( std::exchange( ref.combined_value, 0 ) ) {}
+		shared_reference& operator=( shared_reference&& o )
+		{
+			reset().combined_value = std::exchange( o.combined_value, 0 );
+			return *this;
+		}
 
-		// Simple validity checks.
+		// Gets object entry.
 		//
-		bool is_valid() const { return ( bool ) reference; }
-		operator bool() const { return is_valid(); }
+		object_entry* get_entry() const { dassert( !temporary ); return ( object_entry* ) pointer; }
 
-		// Locks the current reference, a locked reference cannot be upgraded
-		// to a copy-on-write reference as is.
+		// Gets object itself.
 		//
-		shared_reference& lock() { is_locked = true; return *this; }
+		const T* get() const { return ( const T* ) pointer; }
 
-		// Converts this reference to an owning one if it is not one already and 
-		// returns the pointer to the base type with no const-qualifiers.
+		// Converts to owning reference.
 		//
 		T* own()
 		{
-			fassert( is_valid() );
-
-			// If use counter is above 1 or reference is locked, we need 
-			// to make a copy before modifying the reference.
+			// If temporary, copy first.
 			//
-			if ( reference.use_count() > 1 || is_locked )
+			if ( temporary )
 			{
-				std::shared_ptr<T> new_ref = impl::make_shared<T>( *reference );
-				reference = std::move( new_ref );
+				object_entry* new_entry = allocator{}.allocate();
+				new ( &new_entry->first ) T{ *get() };
+				new_entry->second = { 1 };
+
+				pointer = ( uint64_t ) new_entry;
+				temporary = false;
+			}
+			// If shared, copy if reference count is above 1.
+			//
+			else if ( auto entry = get_entry(); entry && entry->second != 1 )
+			{
+				object_entry* new_entry = allocator{}.allocate();
+				new ( &new_entry->first ) T{ *get() };
+				new_entry->second = { 1 };
+				entry->second--;
+
+				pointer = ( uint64_t ) new_entry;
+				temporary = false;
 			}
 
-			// Mark as unlocked.
+			// Return the current pointer without const-qualifiers.
 			//
-			is_locked = false;
-
-			// Redirect the operator to the reference.
-			//
-			return ( T* ) get();
+			return ( T* ) pointer;
 		}
+
+		// Simple validity checks.
+		//
+		bool is_valid() const { return get(); }
+		explicit operator bool() const { return is_valid(); }
 
 		// Wrapper around ::own that can be called with arguments that are const-qualified 
 		// pointers or references which we will relocate to the new object as non-const qualified 
@@ -194,84 +232,57 @@ namespace vtil
 
 		// Basic comparison operators are redirected to the pointer type.
 		//
-		bool operator==( const shared_reference& o ) const { return reference == o.reference; }
-		bool operator<( const shared_reference& o ) const { return reference < o.reference; }
+		bool operator==( const shared_reference& o ) const { return combined_value == o.combined_value; }
+		bool operator<( const shared_reference& o ) const { return combined_value < o.combined_value; }
 
 		// Redirect pointer and dereferencing operator to the reference and cast to const-qualified equivalent.
 		//
-		const T* get() const { return reference.operator->(); }
 		const T* operator->() const { return get(); }
-		const T& operator*() const { return *reference; }
+		const T& operator*() const { return *get(); }
 
-		// Syntax sugar for ::own() using add operator.
+		// Syntax sugar for ::own() using the + operator.
+		// -- If temporary, return as is.
 		//
-		T* operator+() { return own(); }
-	};
+		T* operator+() { return temporary ? ( T* ) pointer : own(); }
 
-	// Declare control block allocator.
-	//
-	template<typename T>
-	struct stack_cblock_allocator : std::allocator<T>
-	{
-		template <typename T2>
-		struct rebind { using other = stack_cblock_allocator<T2>; };
-
-		// Region on stack assigned for this allocator.
+		// Resets the reference to nullptr.
 		//
-		void* ptr = nullptr;
-
-		// Default, rebinding and initial constructors.
-		//
-		constexpr stack_cblock_allocator() {}
-		constexpr stack_cblock_allocator( void* ptr ) : ptr( ptr ) {};
-		template <typename T2>
-		constexpr stack_cblock_allocator( const stack_cblock_allocator<T2>& o ) : ptr( o.ptr ) {}
-
-		// Only equivalent if the pointer is shared.
-		//
-		template<typename T2>
-		constexpr bool operator==( stack_cblock_allocator& o ) const { return ptr == o.ptr; }
-
-		// Declare the allocator and the deallocator.
-		//
-		inline T* allocate( size_t n, const void* = 0 )
+		shared_reference& reset()
 		{
-			// Check for unexpected behaviour.
+			// If non-temporary and non-null, decrement reference count, if 
+			// it reaches 0, destroy the object and deallocate.
 			//
-			static_assert( sizeof( T ) < TOOLCHAIN_SPTR_CBLOCK_SIZE, "Adjust toolchain shared pointer size, resource exhaustion." );
-			if ( n != 1 )   logger::error( "Unexpected shared_ptr behaviour, allocating array of %d.\n", n );
-			if ( !ptr )     logger::error( "Unexpected shared_ptr behaviour, resource exhausted. (1)\n" );
+			if ( !temporary )
+			{
+				if ( auto entry = get_entry() )
+				{
+					if ( --entry->second == 0 )
+					{
+						( ( T* ) &entry->first )->~T();
+						allocator{}.deallocate( ( object_entry* ) entry );
+					}
+				}
+			}
 			
-			// Return the pointer stored, swap it with nulltpr.
+			// Clear combined value and return.
 			//
-			return ( T* ) std::exchange( ptr, nullptr );
+			combined_value = 0;
+			return *this;
 		}
-		inline void deallocate( T* p, size_t n ) {}
+
+		// Constructor invokes reset.
+		//
+		~shared_reference() { reset(); }
 	};
 
-	// Local references are used to create copy-on-write references to values on stack, 
-	// note that they should not be stored under any condition.
+	// Explicit temporary reference creation.
 	//
 	template<typename T>
-	__forceinline static shared_reference<T> make_local_reference( T* variable_pointer, void* cblock_space = alloca( TOOLCHAIN_SPTR_CBLOCK_SIZE ) )
+	__forceinline static shared_reference<T> make_local_reference( const T* ptr )
 	{
-		// Save current frame address.
-		//
-		void* creation_frame = _AddressOfReturnAddress();
-
-		// Create a shared_reference from a custom std::shared_ptr.
-		//
-		shared_reference<T> output;
-		output.reference = std::shared_ptr<T>{ variable_pointer, [ creation_frame ] ( T* ptr )
-		{
-			// Should not be destructed above current frame.
-			//
-			fassert( creation_frame >= _AddressOfReturnAddress() );
-		}, stack_cblock_allocator<uint8_t>{ cblock_space } };
-
-		// Mark as locked and return.
-		//
-		output.is_locked = true;
-		return output;
+		shared_reference<T> ret;
+		ret.pointer = ( uint64_t ) ptr;
+		ret.temporary = true;
+		return ret;
 	}
 };

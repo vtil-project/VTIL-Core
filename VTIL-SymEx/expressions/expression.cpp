@@ -644,14 +644,14 @@ namespace vtil::symbolic
 			//
 			for ( auto& operand : { &lhs, &rhs } )
 			{
-				if ( *operand && operand->reference->is_expression() )
+				if ( *operand && operand->get()->is_expression() )
 				{
 					// Bitwise hint of the descriptor contains +1 or -1 if the operator
 					// is strictly bitwise or arithmetic respectively and 0 otherwise.
 					// This works since mulitplication between them will only be negative
 					// if the hints mismatch.
 					//
-					complexity *= 1 + math::sgn( operand->reference->get_op_desc()->hint_bitwise * desc->hint_bitwise );
+					complexity *= 1 + math::sgn( operand->get()->get_op_desc()->hint_bitwise * desc->hint_bitwise );
 				}
 			}
 			
@@ -702,8 +702,6 @@ namespace vtil::symbolic
 		//
 		if ( &*ref != this ) 
 			operator=( *ref );
-		else
-			fassert( ref.reference.use_count() == 1 );
 
 		// Set the simplifier hint to indicate skipping further calls to simplify_expression.
 		//
