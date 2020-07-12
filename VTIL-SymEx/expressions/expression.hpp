@@ -332,15 +332,45 @@ namespace vtil::symbolic
 		// this avoids copying of the entire tree and any simplifier calls so is preferred
 		// over *transform(...).get().
 		//
-		using eval_lookup_helper_t = std::function<std::optional<uint64_t>( const unique_identifier& )>;
-		math::bit_vector evaluate( const eval_lookup_helper_t& lookup = {} ) const;
+		template<typename T>
+		math::bit_vector evaluate( T&& lookup ) const
+		{
+			// If value is known, return as is.
+			//
+			if ( value.is_known() ) 
+				return value;
+		
+			// If variable:
+			//
+			if ( is_variable() )
+			{
+				// If lookup helper passed and succesfully finds the value, use as is.
+				//
+				if ( std::optional<uint64_t> res = lookup( uid ) )
+					return { *res, size() };
+			
+				// Otherwise return unknown.
+				//
+				return value;
+			}
+
+			// Try to evaluate the result and return.
+			//
+			math::bit_vector result = {};
+			if ( is_unary() )
+				result = math::evaluate_partial( op, {},                      rhs->evaluate( lookup ) );
+			else if ( is_binary() )
+				result = math::evaluate_partial( op, lhs->evaluate( lookup ), rhs->evaluate( lookup ) );
+			return result;
+		}
 		
 		// Implement math::operable::get with evaluator.
 		//
+		static constexpr auto default_eval = [ ] ( const unique_identifier& v ) { return std::nullopt; };
 		template<typename type>
-		std::optional<type> get( const eval_lookup_helper_t& lookup = {} ) const { return evaluate( lookup ).get<type>(); }
+		std::optional<type> get() const { return evaluate( default_eval ).get<type>(); }
 		template<bool as_signed = false, typename type = std::conditional_t<as_signed, int64_t, uint64_t>>
-		std::optional<type> get( const eval_lookup_helper_t& lookup = {} ) const { return evaluate( lookup ).get<type>(); }
+		std::optional<type> get() const { return evaluate( default_eval ).get<type>(); }
 
 		// Enumerates the whole tree.
 		//

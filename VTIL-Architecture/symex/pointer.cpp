@@ -97,7 +97,8 @@ namespace vtil::symbolic
 
 	// Construct from symbolic expression.
 	//
-	pointer::pointer( const expression::reference& _base ) : base( _base->simplify_hint ? _base : _base->simplify() )
+	//pointer::pointer( const expression::reference& _base ) : base( _base->simplify_hint ? _base : _base->simplify() )
+	pointer::pointer( const expression::reference& _base ) : base( _base.simplify() )
 	{
 		// Determine pointer strength and the flags.
 		//
@@ -128,7 +129,7 @@ namespace vtil::symbolic
 		//
 		for ( auto [xptr, key] : zip( xpointer, xpointer_keys ) )
 		{
-			xptr = base->get( [ k = uint64_t( key >> 1 ) ]( const unique_identifier& uid )
+			xptr = base->evaluate( [ k = uint64_t( key >> 1 ) ]( const unique_identifier& uid )
 			{
 				// Hash the identifier of the value with the current key and mask it.
 				//
@@ -145,7 +146,7 @@ namespace vtil::symbolic
 					uint64_t pseudo_pointer = combine_hash( var.hash(), hash_t{ k } ).as64();
 					return pseudo_pointer & math::fill( mem.bit_count );
 				}
-			} ).value_or( invalid_xpointer );
+			} ).get().value_or( invalid_xpointer );
 		}
 	}
 

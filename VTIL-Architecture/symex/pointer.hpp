@@ -84,7 +84,7 @@ namespace vtil::symbolic
 		// Construct from symbolic expression.
 		//
 		pointer( const expression::reference& base );
-		pointer( const expression& base ) : pointer( expression::reference{ base } ) {}
+		pointer( const expression& base ) : pointer( expression::reference{ base }.simplify() ) {}
 
 		// Default copy/move.
 		//
