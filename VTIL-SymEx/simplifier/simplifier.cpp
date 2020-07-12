@@ -31,6 +31,7 @@
 #include "../expressions/expression.hpp"
 #include "../directives/transformer.hpp"
 #include <vtil/io>
+#include <vtil/utility>
 
 namespace vtil::symbolic
 {
@@ -70,23 +71,84 @@ namespace vtil::symbolic
 
 	// Simplifier cache and its accessors.
 	//
-	using simplifier_cache_t = std::unordered_map<expression::reference, std::pair<expression::reference, bool>, 
-		                                          expression::reference::hasher, 
-		                                          expression::reference::if_identical                          >;
+	using cache_bucket_t = std::unordered_map<expression::reference, std::pair<expression::reference, bool>, 
+		                                      expression::reference::hasher, 
+		                                      expression::reference::if_identical                          >;
 
-	static constexpr size_t simplifier_bucket_count = 4;
-	static thread_local simplifier_cache_t simplifier_cache[ simplifier_bucket_count ];
-	void purge_simplifier_cache()
-	{
-		for( auto& bucket : simplifier_cache )
-			bucket.clear();
-	}
+	static constexpr size_t simplifier_bucket_count = 16;
 
-	static std::tuple<expression::reference&, bool&, bool> lookup_simplifier_cache( const expression::reference& exp )
+	struct local_cache_t
 	{
-		auto [it, inserted] = simplifier_cache[ ( size_t ) exp->op % simplifier_bucket_count ].emplace( exp, make_default<std::pair<expression::reference, bool>>() );
-		return { it->second.first, it->second.second, !inserted };
-	}
+		cache_bucket_t main_cache[ simplifier_bucket_count ];
+		cache_bucket_t spec_cache[ simplifier_bucket_count ];
+		bool spec_cache_enabled = false;
+		bitmap<simplifier_bucket_count> spec_cache_dirty;
+
+		void begin_speculative()
+		{
+			spec_cache_enabled = true;
+			spec_cache_dirty = {};
+		}
+		void join_speculative()
+		{
+			while ( true )
+			{
+				size_t n = spec_cache_dirty.find( true );
+				if ( n == math::bit_npos ) break;
+				spec_cache_dirty.set( n, false );
+
+				auto& main = main_cache[ n ];
+				auto& spec = spec_cache[ n ];
+				main.insert( std::make_move_iterator( spec.begin() ), std::make_move_iterator( spec.end() ) );
+				spec.clear();
+			}
+			spec_cache_enabled = false;
+		}
+		void trash_speculative()
+		{
+			while ( true )
+			{
+				size_t n = spec_cache_dirty.find( true );
+				if ( n == math::bit_npos ) break;
+				spec_cache_dirty.set( n, false );
+
+				auto& spec = spec_cache[ n ];
+				spec.clear();
+			}
+			spec_cache_enabled = false;
+		}
+		std::tuple<expression::reference&, bool&, bool> lookup( const expression::reference& exp )
+		{
+			size_t bucket_id = ( size_t ) exp->op % simplifier_bucket_count;
+
+			if ( spec_cache_enabled )
+			{
+				if ( auto it = main_cache[ bucket_id ].find( exp ); it != main_cache[ bucket_id ].end() )
+					return { it->second.first, it->second.second, true };
+
+				if ( spec_cache_dirty.blocks[ 0 ] == 0 )
+				{
+					auto [it, inserted] = main_cache[ bucket_id ].emplace( exp, make_default<std::pair<expression::reference, bool>>() );
+					return { it->second.first, it->second.second, !inserted };
+				}
+
+				auto [it, inserted] = spec_cache[ bucket_id ].emplace( exp, make_default<std::pair<expression::reference, bool>>() );
+				spec_cache_dirty.set( bucket_id, true );
+				return { it->second.first, it->second.second, !inserted };
+			}
+
+			auto [it, inserted] = main_cache[ bucket_id ].emplace( exp, make_default<std::pair<expression::reference, bool>>() );
+			return { it->second.first, it->second.second, !inserted };
+		}
+
+		void purge()
+		{
+			for ( auto& bucket : main_cache )
+				bucket.clear();
+		}
+	};
+	static thread_local local_cache_t local_cache;
+	void purge_simplifier_cache() { local_cache = {}; }
 
 	// Attempts to prettify the expression given.
 	//
@@ -277,7 +339,8 @@ namespace vtil::symbolic
 
 		// Lookup the expression in the cache.
 		//
-		auto [cache_entry, success_flag, found] = lookup_simplifier_cache( exp );
+		auto& lcache = local_cache;
+		auto [cache_entry, success_flag, found] = lcache.lookup( exp );
 
 		// If we resolved a valid cache entry:
 		//
@@ -474,18 +537,14 @@ namespace vtil::symbolic
 				if ( exp_new->complexity < exp->complexity )
 					return true;
 
-				// Save current cache iterator.
-				//
-				simplifier_cache_t::iterator it_snapshot[ simplifier_bucket_count ];
-				for ( size_t n = 0; n < simplifier_bucket_count; n++ )
-					it_snapshot[ n ] = simplifier_cache[ n ].end();
-
 				// Try simplifying with maximum depth set as expression's
 				// depth times two and pass if complexity was reduced.
 				//
 				try
 				{
+					lcache.begin_speculative();
 					simplify_expression( exp_new, false, exp_new->depth * 2 );
+					lcache.join_speculative();
 					return exp_new->complexity < exp->complexity;
 				}
 				// If maximum depth was reached, revert any changes to the cache
@@ -493,8 +552,7 @@ namespace vtil::symbolic
 				//
 				catch ( join_depth_exception& )
 				{
-					for( size_t n = 0; n < simplifier_bucket_count; n++ )
-						simplifier_cache[ n ].erase( it_snapshot[ n ], simplifier_cache[ n ].end() );
+					lcache.trash_speculative();
 					return false;
 				}
 			};
