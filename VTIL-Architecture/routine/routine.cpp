@@ -265,8 +265,6 @@ namespace vtil
 
 		// Copy internally tracked stats.
 		//
-		copy->path_cache[ 0 ] = this->path_cache[ 0 ];
-		copy->path_cache[ 1 ] = this->path_cache[ 1 ];
 		copy->local_opt_count = this->local_opt_count.load();
 		copy->last_internal_id = this->last_internal_id.load();
 
@@ -297,6 +295,30 @@ namespace vtil
 		//
 		for ( auto& [vip, block] : this->explored_blocks )
 			fassert( copy->explored_blocks[ vip ] == reference_block( block ) );
+
+		// Copy path cache.
+		//
+		copy->path_cache[ 0 ] = this->path_cache[ 0 ];
+		copy->path_cache[ 1 ] = this->path_cache[ 1 ];
+		for ( path_map& map : copy->path_cache )
+		{
+			path_map map_l1 = {};
+			for ( auto& [k1, v] : map )
+			{
+				std::map<const basic_block*, path_set> map_l2;
+				for ( auto& [k2, set] : v )
+				{
+					path_set new_set;
+					std::transform(
+						set.begin(), set.end(),
+						std::inserter( new_set, new_set.begin() ), reference_block
+					);
+					map_l2.emplace( reference_block( k2 ), std::move( new_set ) );
+				}
+				map_l1.emplace( reference_block( k1 ), std::move( map_l2 ) );
+			}
+			map = map_l1;
+		}
 
 		// Return the copy.
 		//
