@@ -77,7 +77,7 @@ namespace vtil
 
 				// Invoke if not equal to the reference type.
 				//
-				return !std::is_same_v<std::remove_cvref_t<first_param_t>, T>;
+				return !std::is_base_of_v<T, std::remove_cvref_t<first_param_t>>;
 			}
 		}
 
