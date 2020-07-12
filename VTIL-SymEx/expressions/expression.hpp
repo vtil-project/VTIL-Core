@@ -33,16 +33,51 @@
 
 // Allow expression::reference to be used with expression type directly as operable.
 //
-namespace vtil::symbolic { struct expression; };
-namespace vtil::math { template<> struct resolve_alias<shared_reference<symbolic::expression>> { using type = symbolic::expression; }; };
+namespace vtil::symbolic { struct expression; struct expression_reference; };
+namespace vtil::math { template<> struct resolve_alias<symbolic::expression_reference> { using type = symbolic::expression; }; };
 
 namespace vtil::symbolic
 {
+	// Expression references.
+	//
+	struct expression;
+	struct expression_reference : shared_reference<expression>
+	{
+		template<typename... Tx>
+		expression_reference( Tx&&... args ) 
+			: shared_reference( std::forward<Tx>( args )...) {}
+
+		using shared_reference::operator bool;
+		using shared_reference::operator*;
+		using shared_reference::operator+;
+		using shared_reference::operator->;
+
+		// Basic comparison operators are redirected to the pointer type.
+		//
+		bool operator<( const shared_reference& o ) const { return reference < o.reference; }
+		bool operator==( const shared_reference& o ) const { return reference == o.reference; }
+		bool operator<( const expression_reference& o ) const { return reference < o.reference; }
+		bool operator==( const expression_reference& o ) const { return reference == o.reference; }
+
+		// Implement some helpers to conditionally copy.
+		//
+		expression_reference& resize( bitcnt_t new_size, bool signed_cast = false, bool no_explicit = false );
+		expression_reference  resize( bitcnt_t new_size, bool signed_cast = false, bool no_explicit = false ) const;
+		expression_reference& simplify( bool prettify = false );
+		expression_reference  simplify( bool prettify = false ) const;
+		expression_reference& make_lazy();
+		expression_reference  make_lazy() const;
+
+		// Implemented for sinkhole-use.
+		//
+		bitcnt_t size() const;
+	};
+
 	// Expression descriptor.
 	//
 	struct expression : math::operable<expression>
 	{
-		using reference = shared_reference<expression>;
+		using reference = expression_reference;
 
 		// If symbolic variable, the unique identifier that it maps to.
 		//
@@ -261,6 +296,11 @@ namespace vtil::symbolic
 		// when set, can be reset by ::simplify().
 		//
 		expression& make_lazy() { is_lazy = true; return *this; }
+		expression make_lazy() const
+		{
+			if ( is_lazy ) return *this;
+			return clone().make_lazy();
+		}
 	};
 
 	// Boxed expression solves the aforementioned problem by creating a type that can be 
@@ -289,6 +329,6 @@ namespace vtil::symbolic
 		//
 		bool operator==( const boxed_expression& o ) const { return is_identical( o ); }
 		bool operator!=( const boxed_expression& o ) const { return !is_identical( o ); }
-		bool operator<( const boxed_expression& o ) const { return hash() < o.hash(); }
+		bool operator<( const boxed_expression& o )  const { return hash() < o.hash(); }
 	};
 };
