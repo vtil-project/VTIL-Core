@@ -172,22 +172,23 @@ namespace vtil::optimizer::aux
 
 			// Check if variable is accessed by this instruction.
 			//
-			auto details = local_var.accessed_by( it, tracer, !is_restricted );
-
-			// If possible read, declare used.
-			//
-			if ( details.read )
+			if ( auto details = local_var.accessed_by( it, tracer, !is_restricted ) )
 			{
-				if ( details.is_unknown() || ( mask & math::fill( details.bit_count, details.bit_offset ) ) )
-					return declare_used();
-			}
-			// If known overwrite:
-			//
-			else if ( details.write && !details.is_unknown() )
-			{
-				// Clear the mask.
+				// If possible read, declare used.
 				//
-				mask &= ~math::fill( details.bit_count, details.bit_offset );
+				if ( details.read )
+				{
+					if ( details.is_unknown() || ( mask & math::fill( details.bit_count, details.bit_offset ) ) )
+						return declare_used();
+				}
+				// If known overwrite:
+				//
+				else if ( details.write && !details.is_unknown() )
+				{
+					// Clear the mask.
+					//
+					mask &= ~math::fill( details.bit_count, details.bit_offset );
+				}
 			}
 
 			// Break if value is dead.

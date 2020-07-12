@@ -719,20 +719,14 @@ namespace vtil::symbolic
 	//
 	access_details variable::read_by( const il_const_iterator& it, tracer* tr, bool xblock ) const
 	{
-		tracer default_tracer;
-		if ( !tr ) tr = &default_tracer;
-		return test_access( *this, it, tr ? tr : &default_tracer, false, true, xblock );
+		return test_access( *this, it, tr, false, true, xblock );
 	}
 	access_details variable::written_by( const il_const_iterator& it, tracer* tr, bool xblock ) const
 	{
-		tracer default_tracer;
-		if ( !tr ) tr = &default_tracer;
-		return test_access( *this, it, tr ? tr : &default_tracer, true, false, xblock );
+		return test_access( *this, it, tr, true, false, xblock );
 	}
 	access_details variable::accessed_by( const il_const_iterator& it, tracer* tr, bool xblock ) const
 	{
-		tracer default_tracer;
-		if ( !tr ) tr = &default_tracer;
-		return test_access( *this, it, tr ? tr : &default_tracer, false, false, xblock );
+		return test_access( *this, it, tr, false, false, xblock );
 	}
 };
