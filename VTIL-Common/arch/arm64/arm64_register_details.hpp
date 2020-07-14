@@ -390,7 +390,7 @@ namespace vtil::arm64
 
 	// Converts the enum into human-readable format.
 	//
-	static std::string name( uint8_t _reg )
+	static std::string name( uint32_t _reg )
 	{
 		// Else lookup the name from capstone.
 		//
@@ -399,7 +399,7 @@ namespace vtil::arm64
 	
 	// Gets the offset<0> and size<1> of the mapping for the given register.
 	//
-	static constexpr register_mapping resolve_mapping( uint8_t _reg )
+	static constexpr register_mapping resolve_mapping( uint32_t _reg )
 	{
 		// Try to find the register mapping, if successful return.
 		//
@@ -416,14 +416,14 @@ namespace vtil::arm64
 
 	// Gets the base register for the given register.
 	//
-	static constexpr arm64_reg extend( uint8_t _reg )
+	static constexpr arm64_reg extend( uint32_t _reg )
 	{
 		return resolve_mapping( _reg ).base_register;
 	}
 
 	// Remaps the given register at given specifications.
 	//
-	static constexpr arm64_reg remap( uint8_t _reg, uint8_t offset, uint8_t size )
+	static constexpr arm64_reg remap( uint32_t _reg, uint32_t offset, uint32_t size )
 	{
         // Extend passed register
         //
@@ -450,7 +450,7 @@ namespace vtil::arm64
 
 	// Checks whether the register is a generic register that is handled.
 	//
-	static constexpr bool is_generic( uint8_t _reg )
+	static constexpr bool is_generic( uint32_t _reg )
 	{
 		return std::find_if( std::begin( register_mappings ), std::end( register_mappings ), [ & ] ( auto& pair ) { return pair.first == _reg; } );
 	}
