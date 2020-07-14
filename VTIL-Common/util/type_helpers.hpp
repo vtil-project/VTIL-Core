@@ -30,22 +30,6 @@
 
 namespace vtil
 {
-	// A simple helper that creates a copy of the given type, forced to as a reference.
-	//
-	template<typename T>
-	inline static T make_copy( const T& x ) 
-	{ 
-		return x; 
-	}
-	
-	// A simple helper that converts from a non-const qualified reference to a const-qualified reference.
-	//
-	template<typename T>
-	inline static const T& make_const( T& x )
-	{
-		return x;
-	}
-
 	// A simple helper that creates a constant reference to the default constructed value of the type.
 	//
 	template<typename T, auto... params>
@@ -54,4 +38,18 @@ namespace vtil
 		static const T v = { params... };
 		return v;
 	}
+
+	// A simple helper that creates a copy of the given type, forced to as a reference.
+	//
+	template<typename T> inline static T make_copy( const T& x ) { return x; }
+
+	// A simple helper that converts from a non-const qualified ref/ptr to a const-qualified ref/ptr.
+	//
+	template<typename T> inline static const T& make_const( T& x ) { return x; }
+	template<typename T> inline static const T* make_const( T* x ) { return x; }
+
+	// A simple helper that converts from a const qualified ref/ptr to a non-const-qualified ref/ptr.
+	//
+	template<typename T> inline static T& make_mutable( const T& x ) { return ( T& ) x; }
+	template<typename T> inline static T* make_mutable( const T* x ) { return ( T* ) x; }
 };

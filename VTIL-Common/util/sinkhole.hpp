@@ -33,6 +33,7 @@
 #include "../math/operable.hpp"
 #include "../io/asserts.hpp"
 #include "optional_reference.hpp"
+#include "deferred_value.hpp"
 
 namespace vtil
 {
@@ -161,7 +162,7 @@ namespace vtil
 
 			// Declare temporary result.
 			//
-			value_unit result = default_constructor( ptr, size );
+			deferred_value result( default_constructor, ptr, size );
 
 			// Declare the list of iterators we will erase off the map upon
 			// reorganizing and a hint to see if the key already exists.
@@ -247,8 +248,8 @@ namespace vtil
 					it = acquire( it, rl - wl, wh - rl );
 					if constexpr ( !discard_value )
 					{
-						result = result & ~math::fill( wh - rl );
-						result = result | it->second;
+						result = *result & ~math::fill( wh - rl );
+						result = *result | it->second;
 					}
 
 					// If displacement is zero, reference it as key hint, otherwise 
@@ -283,8 +284,8 @@ namespace vtil
 					{
 						value_unit mid_val = it->second;
 						mid_val.resize( size );
-						result = result & ~math::fill( overlap_cnt, wl );
-						result = result | ( std::move( mid_val ) << wl );
+						result = *result & ~math::fill( overlap_cnt, wl );
+						result = *result | ( std::move( mid_val ) << wl );
 					}
 					merge_list.emplace_back( std::move( it ) );
 				}
@@ -292,7 +293,7 @@ namespace vtil
 
 			// Resize result.
 			//
-			result.resize( size );
+			result->resize( size );
 
 			// Create the value entry if not re-used:
 			//
@@ -306,7 +307,7 @@ namespace vtil
 
 			// Write the value and erase all iterators in the merge list.
 			//
-			( *key_entry )->second = std::move( result );
+			( *key_entry )->second = std::move( *result );
 			for ( auto it : merge_list )
 				if( it != key_entry )
 					value_map.erase( it );

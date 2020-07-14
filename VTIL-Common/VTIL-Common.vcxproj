@@ -152,6 +152,7 @@
     <ClInclude Include="util\concept.hpp" />
     <ClInclude Include="util\constexpr_random.hpp" />
     <ClInclude Include="util\copy_on_write.hpp" />
+    <ClInclude Include="util\deferred_value.hpp" />
     <ClInclude Include="util\enumerator.hpp" />
     <ClInclude Include="util\type_helpers.hpp" />
     <ClInclude Include="util\profiler.hpp" />

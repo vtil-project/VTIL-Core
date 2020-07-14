@@ -205,6 +205,9 @@
     <ClInclude Include="util\type_helpers.hpp">
       <Filter>Utility</Filter>
     </ClInclude>
+    <ClInclude Include="util\deferred_value.hpp">
+      <Filter>Utility</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="io\logger.cpp">

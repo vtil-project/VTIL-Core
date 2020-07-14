@@ -93,9 +93,9 @@ namespace vtil
 	//
 	bool symbolic_vm::execute( const instruction& ins )
 	{
-		lazy_io = true;
+		bool old = std::exchange( lazy_io, true );
 		bool state = vm_interface::execute( ins );
-		lazy_io = false;
+		lazy_io = old;
 		return state;
 	}
 };
