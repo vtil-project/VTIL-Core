@@ -35,32 +35,33 @@ namespace vtil::optimizer
 	//
 	struct lazy_tracer : cached_tracer
 	{
+		cached_tracer* link;
 		il_const_iterator bypass = {};
+
+		lazy_tracer( cached_tracer* p ) : link( p ) {}
+
+		tracer* purify() override { return link; }
 
 		symbolic::expression::reference trace( const symbolic::variable& lookup ) override
 		{
+			// If tracing stack pointer, use normal tracing.
+			//
+			if( lookup.is_register() && lookup.reg().is_stack_pointer() )
+				return link->trace( lookup );
+
+			// If instruction accesses memory:
+			//
+			if ( !lookup.at.is_end() && lookup.at->base->accesses_memory() )
+			{
+				// If query overlaps base, trace normally.
+				//
+				if ( lookup.is_register() && lookup.reg().overlaps( lookup.at->memory_location().first ) )
+					return link->trace( lookup );
+			}
+
 			// Bypass if at the beginning of block//query.
 			//
-			if ( !bypass.is_valid() || lookup.at == bypass || lookup.at.is_end() || lookup.at->base->is_branching() || lookup.is_memory() )
-				return cached_tracer::trace( lookup );
-
-			// If instruction does not access memory, return as is.
-			//
-			if ( !lookup.at->base->accesses_memory() )
-				return lookup.to_expression();
-
-			// If query overlaps base, return.
-			//
-			if ( lookup.is_register() && lookup.reg().overlaps( lookup.at->memory_location().first ) )
-			{
-				il_const_iterator prev = std::exchange( bypass, {} );
-				auto res = cached_tracer::trace( lookup );
-				bypass = std::move( prev );
-				return res;
-			}
-			// If register, continue tracing.
-			//
-			if( lookup.is_register() )
+			if ( !bypass.is_valid() || lookup.at == bypass || lookup.at.is_end() )
 				return cached_tracer::trace( lookup );
 
 			// Return without tracing.
@@ -79,7 +80,8 @@ namespace vtil::optimizer
 
 		// Create tracers.
 		//
-		lazy_tracer ltracer = {};
+		cached_tracer ctracer = {};
+		lazy_tracer ltracer = { &ctracer };
 
 		// Allocate the swap buffers.
 		//
@@ -109,10 +111,10 @@ namespace vtil::optimizer
 
 				// Lazy-trace the value.
 				//
-				symbolic::pointer ptr = { ltracer.cached_tracer::trace_p( { it, REG_SP } ) + it->memory_location().second };
-				symbolic::variable var = { it, { ptr, it->access_size() } };
+				symbolic::pointer ptr = { ctracer.trace( { it, REG_SP } ) + it->memory_location().second };
+				symbolic::variable var = { it, { std::move( ptr ), it->access_size() } };
 				ltracer.bypass = it;
-				auto exp = xblock ? ltracer.rtrace( var ) : ltracer.cached_tracer::trace( var );
+				auto exp = xblock ? ltracer.rtrace( var ) : ltracer.trace( var );
 				ltracer.bypass = {};
 
 				// Resize and pack variables.

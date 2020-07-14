@@ -68,6 +68,10 @@ namespace vtil
 		symbolic::expression::reference trace_pexp( const symbolic::expression::reference& exp ) { return symbolic::variable::pack_all( trace_exp( exp ) ); }
 		symbolic::expression::reference rtrace_pexp( const symbolic::expression::reference& exp, int64_t limit = -1 ) { return symbolic::variable::pack_all( rtrace_exp( exp, limit ) ); }
 
+		// Purifies the tracer.
+		//
+		virtual tracer* purify() { return this; }
+
 		// Operator() wraps basic tracing with packing.
 		//
 		auto operator()( const symbolic::variable& lookup ) { return trace_p( lookup ); }

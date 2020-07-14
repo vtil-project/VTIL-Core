@@ -130,7 +130,8 @@ namespace vtil
 		//
 		if ( inout->is_variable() )
 		{
-			inout = fn( inout->uid.get<symbolic::variable>() );
+			if ( symbolic::expression::reference res = fn( inout->uid.get<symbolic::variable>() ) )
+				inout = res;
 			return;
 		}
 
@@ -231,7 +232,7 @@ namespace vtil
 				// Fail if propagation fails.
 				//
 				symbolic::expression::reference mem_ptr = std::move( mem.base.base );
-				propagate( mem_ptr, it, tracer, null_link, limit );
+				propagate( mem_ptr, it, tracer->purify(), null_link, limit );
 				if ( !mem_ptr )
 				{
 					result = false;
@@ -534,8 +535,7 @@ namespace vtil
 	//
 	symbolic::expression::reference tracer::rtrace( const symbolic::variable& lookup, int64_t limit )
 	{
-		bool recursive_flag_prev = recursive_flag;
-		recursive_flag = true;
+		bool recursive_flag_prev = std::exchange( recursive_flag, true );
 		path_entry list_head = { nullptr, nullptr, nullptr };
 		auto exp = rtrace_primitive( lookup, this, list_head, limit + 1 );
 		recursive_flag = recursive_flag_prev;

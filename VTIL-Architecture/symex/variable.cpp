@@ -70,88 +70,12 @@ namespace vtil::symbolic
 	//
 	static void fill_displacement( access_details* details, const pointer& p1, const pointer& p2, tracer* tracer, bool xblock )
 	{
-		// If valid tracer provided:
-		//
-		if ( tracer )
-		{
-			// If two pointers' origins mismatch, propagate first.
-			//
-			auto o1 = get_pointer_origin( *p1.base );
-			auto o2 = get_pointer_origin( *p2.base );
-			if ( o1 != o2 && o1 && o2 )
-			{
-				// Allocate temporary storage for new pointers.
-				//
-				pointer pn1, pn2;
-				std::array in = { &p1, &p2 };
-				std::array out = { &pn1, &pn2 };
-
-				// For each pointer:
-				//
-				for ( auto [in, out] : zip( in, out ) )
-				{
-					// Transform base pointer:
-					//
-					symbolic::expression::reference base = std::move( in->base );
-					base.transform( [ & ] ( symbolic::expression::delegate& exp )
-					{
-						// Skip if not variable.
-						//
-						if ( !exp->is_variable() )
-							return;
-						variable var = exp->uid.get<variable>();
-
-						// Skip if it has an invalid iterator.
-						//
-						if ( !var.at.is_valid() )
-							return;
-
-						// Determine all paths and path restrict the iterator.
-						//
-						auto& pathset_1 = o1->owner->get_path_bwd( var.at.container, o1 );
-						auto& pathset_2 = o1->owner->get_path_bwd( var.at.container, o2 );
-						var.at.is_path_restricted = true;
-
-						// If only one of the paths are valid for backwards iteration:
-						//
-						if ( pathset_1.empty() ^ pathset_2.empty() )
-						{
-							// Set the restriction.
-							//
-							var.at.paths_allowed = pathset_1.empty() ? &pathset_2 : &pathset_1;
-							exp = tracer->rtrace( std::move( var ) );
-						}
-						// If both paths are valid for backwards iteration:
-						//
-						else if( pathset_1.size() && pathset_2.size() )
-						{
-							// Calculate for both and set if equivalent.
-							//
-							var.at.paths_allowed = &pathset_1;
-							auto exp1 = tracer->rtrace( var );
-							var.at.paths_allowed = &pathset_2;
-							auto exp2 = tracer->rtrace( var );
-							if ( exp1.equals( *exp2 ) )
-								exp = exp1;
-						}
-					} );
-
-					// Write the new pointer.
-					//
-					*out = pointer{ std::move( base ) };
-				}
-
-				// Recurse with the new pointers.
-				//
-				return fill_displacement( details, pn1, pn2, nullptr, xblock );
-			}
-		}
-
-		// If the two pointers can overlap (not restrict qualified against each other),
-		// write dummy bit count and the offset if we can calculate it.
+		// If the two pointers can overlap:
 		//
 		if ( p1.can_overlap( p2 ) )
 		{
+			// Write dummy bit count and try to calculate the offset:
+			//
 			details->bit_count = -1;
 
 			// If offset is constant:
@@ -159,11 +83,90 @@ namespace vtil::symbolic
 			if ( auto disp = p1 - p2 )
 			{
 				details->bit_offset = math::narrow_cast<bitcnt_t>( *disp * 8 );
+				return;
 			}
+			
+			// If valid tracer provided:
+			//
+			if ( tracer )
+			{
+				// If two pointers' origins mismatch, propagate first.
+				//
+				auto o1 = get_pointer_origin( *p1.base );
+				auto o2 = get_pointer_origin( *p2.base );
+				if ( o1 != o2 && o1 && o2 )
+				{
+					// Allocate temporary storage for new pointers.
+					//
+					pointer pn1, pn2;
+					std::array in = { &p1, &p2 };
+					std::array out = { &pn1, &pn2 };
+
+					// For each pointer:
+					//
+					for ( auto [in, out] : zip( in, out ) )
+					{
+						// Transform base pointer:
+						//
+						symbolic::expression::reference base = std::move( in->base );
+						base.transform( [ & ] ( symbolic::expression::delegate& exp )
+						{
+							// Skip if not variable.
+							//
+							if ( !exp->is_variable() )
+								return;
+							variable var = exp->uid.get<variable>();
+
+							// Skip if it has an invalid iterator.
+							//
+							if ( !var.at.is_valid() )
+								return;
+
+							// Determine all paths and path restrict the iterator.
+							//
+							auto& pathset_1 = o1->owner->get_path_bwd( var.at.container, o1 );
+							auto& pathset_2 = o1->owner->get_path_bwd( var.at.container, o2 );
+							var.at.is_path_restricted = true;
+
+							// If only one of the paths are valid for backwards iteration:
+							//
+							if ( pathset_1.empty() ^ pathset_2.empty() )
+							{
+								// Set the restriction.
+								//
+								var.at.paths_allowed = pathset_1.empty() ? &pathset_2 : &pathset_1;
+								exp = tracer->rtrace( std::move( var ) );
+							}
+							// If both paths are valid for backwards iteration:
+							//
+							else if ( pathset_1.size() && pathset_2.size() )
+							{
+								// Calculate for both and set if equivalent.
+								//
+								var.at.paths_allowed = &pathset_1;
+								auto exp1 = tracer->rtrace( var );
+								var.at.paths_allowed = &pathset_2;
+								auto exp2 = tracer->rtrace( var );
+								if ( exp1.equals( *exp2 ) )
+									exp = exp1;
+							}
+						} );
+
+						// Write the new pointer.
+						//
+						*out = pointer{ std::move( base ) };
+					}
+
+					// Recurse with the new pointers.
+					//
+					return fill_displacement( details, pn1, pn2, nullptr, xblock );
+				}
+			}
+
 			// If pointer does not strictly overlap and cross-block and tracer 
 			// is given, try again after cross-tracing.
 			//
-			else if ( xblock && tracer && !p1.can_overlap_s( p2 ) )
+			if ( xblock && tracer && !p1.can_overlap_s( p2 ) )
 			{
 				pointer p1r = { tracer->rtrace_exp( p1.base ) };
 				pointer p2r = { tracer->rtrace_exp( p2.base ) };
@@ -719,14 +722,14 @@ namespace vtil::symbolic
 	//
 	access_details variable::read_by( const il_const_iterator& it, tracer* tr, bool xblock ) const
 	{
-		return test_access( *this, it, tr, false, true, xblock );
+		return test_access( *this, it, tr ? tr->purify() : nullptr, false, true, xblock );
 	}
 	access_details variable::written_by( const il_const_iterator& it, tracer* tr, bool xblock ) const
 	{
-		return test_access( *this, it, tr, true, false, xblock );
+		return test_access( *this, it, tr ? tr->purify() : nullptr, true, false, xblock );
 	}
 	access_details variable::accessed_by( const il_const_iterator& it, tracer* tr, bool xblock ) const
 	{
-		return test_access( *this, it, tr, false, false, xblock );
+		return test_access( *this, it, tr ? tr->purify() : nullptr, false, false, xblock );
 	}
 };
