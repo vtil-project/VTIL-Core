@@ -28,6 +28,7 @@
 #pragma once
 #include <tuple>
 #include <variant>
+#include <optional>
 #include <functional>
 #include "type_helpers.hpp"
 
@@ -47,7 +48,12 @@ namespace vtil
 			std::reference_wrapper<std::remove_reference_t<T>>,
 			std::remove_const_t<T>
 		>;
-		using future_value = decltype( std::bind( std::declval<Fn>(), std::declval<wrap_t<Tx>>()... ) );
+
+		struct future_value
+		{
+			wrap_t<Fn> functor;
+			std::tuple<wrap_t<Tx>...> arguments;
+		};
 		
 		// Has the final value.
 		//
@@ -59,34 +65,37 @@ namespace vtil
 
 		// Current value.
 		//
-		std::variant<future_value, known_value, null_value> value;
+		std::optional<future_value> future;
+		std::optional<known_value> current;
 
 		// Null constructor.
 		//
-		deferred_value() : value( null_value{} ) {}
-		deferred_value( std::nullopt_t ) : value( null_value{} ) {}
+		deferred_value() {}
+		deferred_value( std::nullopt_t ) {}
 
 		// Construct by functor and its arguments.
 		//
 		deferred_value( Fn&& functor, Tx&&... arguments )
-			: value( future_value{ std::bind( std::forward<Fn>( functor ), std::forward<wrap_t<Tx>>( arguments )... ) } ) {}
+			: future( future_value{ .functor = std::forward<Fn>( functor ), .arguments = { std::forward<Tx>( arguments )... } } ) {}
 
 		// Constructor by known result.
 		//
-		deferred_value( known_value v ) : value( std::move( v ) ) {}
+		deferred_value( known_value v ) : current( std::move( v ) ) {}
 
 		// Returns a reference to the final value stored.
 		//
 		known_value& get()
 		{
-			// Convert pending value to known value.
-			//
-			if ( auto pending = std::get_if<future_value>( &value ) )
-				return value.emplace<1>( ( *pending )( ) );
+			if ( current.has_value() )
+			{
+				// Convert pending value to known value.
+				//
+				current = std::apply( future->functor, future->arguments );
+			}
+
 			// Return a reference to known value.
 			//
-			else
-				return std::get<1>( value );
+			return *current;
 		}
 		const known_value& get() const 
 		{ 
@@ -95,15 +104,16 @@ namespace vtil
 
 		// Simple wrappers to check state.
 		//
-		bool is_valid() const { return !std::holds_alternative<null_value>( value ); }
-		bool is_known() const { return std::holds_alternative<known_value>( value ); }
-		bool is_pending() const { return std::holds_alternative<future_value>( value ); }
+		bool is_valid() const { return future || current; }
+		bool is_known() const { return current; }
+		bool is_pending() const { return future; }
 
 		// Assigns a value, discarding the pending invocation if relevant.
 		//
 		known_value& operator=( known_value new_value ) 
 		{ 
-			return value.emplace<1>( std::move( new_value ) ); 
+			current = new_value;
+			return *current;
 		}
 
 		// Syntax sugars.
