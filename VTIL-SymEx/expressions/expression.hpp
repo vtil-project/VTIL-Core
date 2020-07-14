@@ -49,9 +49,7 @@ namespace vtil::symbolic
 		bool dirty;
 
 		expression_delegate( shared_reference<expression>& ref ) : ref( ref ), dirty( false ) {}
-		expression_delegate( expression_delegate&& ) = default;
 		expression_delegate( const expression_delegate& ) = delete;
-		expression_delegate& operator=( expression_delegate&& ) = default;
 		expression_delegate& operator=( const expression_delegate& ) = delete;
 
 		template<typename T, std::enable_if_t<!std::is_same_v<std::decay_t<T>, expression_delegate>, int> = 0>

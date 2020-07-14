@@ -41,10 +41,17 @@ namespace vtil
 	{
 		// Has the functor and its arguments.
 		//
+		template<typename T>
+		using wrap_t = std::conditional_t<
+			std::is_reference_v<T>,
+			std::reference_wrapper<std::remove_reference_t<T>>,
+			std::remove_const_t<T>
+		>;
+
 		struct future_value
 		{
 			Fn functor;
-			std::tuple<Tx...> arguments;
+			std::tuple<wrap_t<Tx>...> arguments;
 		};
 		
 		// Has the final value.
@@ -67,7 +74,7 @@ namespace vtil
 		// Construct by functor and its arguments.
 		//
 		deferred_value( Fn&& functor, Tx&&... arguments )
-			: value( future_value{ .functor = std::forward<Fn>( functor ), .arguments = std::tuple<Tx...>{ std::forward<Tx>( arguments )... } } ) {}
+			: value( future_value{ .functor = std::forward<Fn>( functor ), .arguments = { std::forward<Tx>( arguments )... } } ) {}
 
 		// Constructor by known result.
 		//
@@ -75,7 +82,7 @@ namespace vtil
 
 		// Returns a reference to the final value stored.
 		//
-		auto& get()
+		known_value& get()
 		{
 			// Convert pending value to known value.
 			//
@@ -86,7 +93,10 @@ namespace vtil
 			else
 				return std::get<1>( value );
 		}
-		auto& get() const { return make_mutable( this )->get(); }
+		const known_value& get() const 
+		{ 
+			return make_mutable( *this ).get(); 
+		}
 
 		// Simple wrappers to check state.
 		//

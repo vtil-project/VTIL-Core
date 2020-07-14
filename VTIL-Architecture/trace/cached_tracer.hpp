@@ -74,9 +74,20 @@ namespace vtil
             std::unique_lock _gu{ mtx };
             std::shared_lock _gs{ o.mtx };
             cache = o.cache;
+            return *this;
         }
-        cached_tracer( cached_tracer&& ) = default;
-        cached_tracer& operator=( cached_tracer&& ) = default;
+        cached_tracer( cached_tracer&& o )
+        {
+            std::unique_lock _g( o.mtx );
+            cache = std::move( o.cache );
+        }
+        cached_tracer& operator=( cached_tracer&& o )
+        {
+            std::unique_lock _gu{ mtx };
+            std::unique_lock _gs( o.mtx );
+            cache = std::move( o.cache );
+            return *this;
+        }
 
         // Flushes the cache.
         //
