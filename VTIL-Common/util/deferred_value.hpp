@@ -47,12 +47,7 @@ namespace vtil
 			std::reference_wrapper<std::remove_reference_t<T>>,
 			std::remove_const_t<T>
 		>;
-
-		struct future_value
-		{
-			wrap_t<Fn> functor;
-			std::tuple<wrap_t<Tx>...> arguments;
-		};
+		using future_value = decltype( std::bind( std::declval<Fn>(), std::declval<wrap_t<Tx>>()... ) );
 		
 		// Has the final value.
 		//
@@ -74,7 +69,7 @@ namespace vtil
 		// Construct by functor and its arguments.
 		//
 		deferred_value( Fn&& functor, Tx&&... arguments )
-			: value( future_value{ .functor = std::forward<Fn>( functor ), .arguments = { std::forward<Tx>( arguments )... } } ) {}
+			: value( future_value{ std::bind( std::forward<Fn>( functor ), std::forward<wrap_t<Tx>>( arguments )... ) } ) {}
 
 		// Constructor by known result.
 		//
@@ -87,7 +82,7 @@ namespace vtil
 			// Convert pending value to known value.
 			//
 			if ( auto pending = std::get_if<future_value>( &value ) )
-				return value.emplace<1>( std::apply( pending->functor, pending->arguments ) );
+				return value.emplace<1>( ( *pending )( ) );
 			// Return a reference to known value.
 			//
 			else
