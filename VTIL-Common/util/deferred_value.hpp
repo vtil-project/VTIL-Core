@@ -27,8 +27,8 @@
 //
 #pragma once
 #include <tuple>
-#include <optional>
 #include <variant>
+#include <functional>
 #include "type_helpers.hpp"
 
 namespace vtil
@@ -50,7 +50,7 @@ namespace vtil
 
 		struct future_value
 		{
-			Fn functor;
+			wrap_t<Fn> functor;
 			std::tuple<wrap_t<Tx>...> arguments;
 		};
 		
