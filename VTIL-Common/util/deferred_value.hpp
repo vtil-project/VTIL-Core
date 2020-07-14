@@ -86,7 +86,7 @@ namespace vtil
 		//
 		known_value& get()
 		{
-			if ( current.has_value() )
+			if ( !current.has_value() )
 			{
 				// Convert pending value to known value.
 				//
@@ -112,7 +112,7 @@ namespace vtil
 		//
 		known_value& operator=( known_value new_value ) 
 		{ 
-			current = new_value;
+			current = std::move( new_value );
 			return *current;
 		}
 
