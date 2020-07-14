@@ -51,10 +51,10 @@ namespace vtil
 
 		// Offset of the current register from the base register.
 		//
-		uint8_t offset;
+		int32_t offset;
 
 		// Size of the current register in bytes.
 		//
-		uint8_t size;
+		int32_t size;
 	};
 }

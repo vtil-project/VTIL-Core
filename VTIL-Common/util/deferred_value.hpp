@@ -65,17 +65,12 @@ namespace vtil
 		// Construct by functor and its arguments.
 		//
 		deferred_value( Fn&& functor, Tx&&... arguments )
-			: value( pending_value{ .functor = std::forward<Fn>( functor ), .arguments = { std::forward<Tx>( arguments )... } } ) {}
+			: value( pending_value{ .functor = std::forward<Fn>( functor ), .arguments = std::tuple<Tx...>{ std::forward<Tx>( arguments )... } } ) {}
 
 		// Constructor by known result.
 		//
 		deferred_value( Ret&& v ) : value( v ) {}
 		deferred_value( const Ret& v ) : value( v ) {}
-		
-		// No move/copy.
-		//
-		deferred_value( deferred_value&& ) = delete;
-		deferred_value( const deferred_value& ) = delete;
 
 		// Returns a reference to the final value stored.
 		//
@@ -95,20 +90,22 @@ namespace vtil
 		// Simple wrappers to check state.
 		//
 		bool is_valid() const { return value.index() != 2; }
-		bool is_pending() const { return value.index() == 0; }
 		bool is_known() const { return value.index() == 1; }
+		bool is_pending() const { return value.index() == 0; }
 
 		// Assigns a value, discarding the pending invocation if relevant.
 		//
 		template<typename T>
 		Ret& operator=( T&& new_value ) { return value.emplace<1>( std::forward<T>( new_value ) ); }
+		Ret& operator=( Ret&& new_value ) { return value.emplace<1>( std::move( new_value ) ); }
+		Ret& operator=( const Ret& new_value ) { return value.emplace<1>( new_value ); }
 
 		// Syntax sugars.
 		//
 		Ret& operator*() { return get(); }
 		Ret* operator->() { return &get(); }
-		const Ret& operator*() const { return get(); }
-		const Ret* operator->() const { return &get(); }
+		const Ret& operator*() const { return make_mutable( this )->get(); }
+		const Ret* operator->() const { return &make_mutable( this )->get(); }
 
 		// Implicit cast to value reference.
 		//
