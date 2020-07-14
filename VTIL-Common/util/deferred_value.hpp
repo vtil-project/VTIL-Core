@@ -76,8 +76,6 @@ namespace vtil
 		//
 		deferred_value( deferred_value&& ) = delete;
 		deferred_value( const deferred_value& ) = delete;
-		deferred_value& operator=( deferred_value&& ) = delete;
-		deferred_value& operator=( const deferred_value& ) = delete;
 
 		// Returns a reference to the final value stored.
 		//
