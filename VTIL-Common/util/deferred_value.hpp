@@ -75,18 +75,18 @@ namespace vtil
 
 		// Returns a reference to the final value stored.
 		//
-		known_value& get()
+		auto& get()
 		{
 			// Convert pending value to known value.
 			//
 			if ( auto pending = std::get_if<future_value>( &value ) )
-				return value.emplace<1>( std::apply( std::move( pending->functor ), std::move( pending->arguments ) ) );
-
+				return value.emplace<1>( std::apply( pending->functor, pending->arguments ) );
 			// Return a reference to known value.
 			//
-			return std::get<1>( value );
+			else
+				return std::get<1>( value );
 		}
-		const known_value& get() const { return make_mutable( this )->get(); }
+		auto& get() const { return make_mutable( this )->get(); }
 
 		// Simple wrappers to check state.
 		//
@@ -103,15 +103,10 @@ namespace vtil
 
 		// Syntax sugars.
 		//
-		known_value& operator*() { return get(); }
-		known_value* operator->() { return &get(); }
-		const known_value& operator*() const { return get(); }
-		const known_value* operator->() const { return &get(); }
-
-		// Implicit cast to value reference.
-		//
-		operator known_value&() { return get(); }
-		operator const known_value&() const { return get(); }
+		auto& operator*() { return get(); }
+		auto* operator->() { return &get(); }
+		auto& operator*() const { return get(); }
+		auto* operator->() const { return &get(); }
 	};
 
 	// Declare deduction guide.
