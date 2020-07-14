@@ -274,7 +274,15 @@ namespace vtil
 	template<typename T>
 	struct weak_reference
 	{
-		uint64_t combined_value;
+		union
+		{
+			struct
+			{
+				uint64_t pointer : 63;
+				uint64_t temporary : 1;
+			};
+			uint64_t combined_value;
+		};
 
 		// Default null constructor.
 		//
@@ -283,13 +291,8 @@ namespace vtil
 		// Reference borrowing constructor/assignment.
 		//
 		weak_reference( const shared_reference<T>& ref ) 
-			: combined_value( ref.combined_value ) { dassert( !ref.temporary ); }
-		weak_reference& operator=( const shared_reference<T>& ref ) 
-		{
-			dassert( !ref.temporary ); 
-			combined_value = ref.combined_value; 
-			return *this;
-		}
+			: combined_value( ref.combined_value ) {}
+		weak_reference& operator=( const shared_reference<T>& ref ) { return *new ( this ) weak_reference( ref ); }
 		
 		// Copy constructor/assignment.
 		//
@@ -312,7 +315,7 @@ namespace vtil
 
 		// Redirect pointer and dereferencing operator to the reference and cast to const-qualified equivalent.
 		//
-		const T* get() const { return ( const T* ) combined_value; }
+		const T* get() const { return ( const T* ) pointer; }
 		const T* operator->() const { return get(); }
 		const T& operator*() const { return *get(); }
 

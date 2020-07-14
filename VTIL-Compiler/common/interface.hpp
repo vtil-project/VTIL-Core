@@ -314,10 +314,10 @@ namespace vtil::optimizer
 	namespace impl
 	{
 		template<template<typename...> typename modifier, typename compound>
-		struct apply_each_opt_t { using type = modifier<compound>; };
+		struct apply_each_opt_t                                       { using type =     modifier<compound>; };
 
 		template<template<typename...> typename modifier, typename compound>
-		struct apply_each_opt_t<modifier, modifier<compound>> { using type = modifier<compound>; };
+		struct apply_each_opt_t<modifier, modifier<compound>>         { using type =     modifier<compound>; };
 
 		template<template<typename...> typename modifier, typename... parts>
 		struct apply_each_opt_t<modifier, spawn_state<parts...>>      { using type =     spawn_state<typename apply_each_opt_t<modifier, parts>::type...>;  };

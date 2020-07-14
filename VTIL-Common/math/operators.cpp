@@ -150,8 +150,8 @@ namespace vtil::math
             // - Special operators.                                                          
             //                                                                                  
             case operator_id::popcnt:           result = popcnt( rhs );                                             break;
-            case operator_id::bitscan_fwd:      result = lsb( rhs );                                             break;
-            case operator_id::bitscan_rev:      result = msb( rhs );                                             break;
+            case operator_id::bitscan_fwd:      result = lsb( rhs );                                                break;
+            case operator_id::bitscan_rev:      result = msb( rhs );                                                break;
             case operator_id::bit_test:         result = ( lhs >> rhs ) & 1;                                        break;
             case operator_id::mask:             result = fill( bcnt_rhs );                                          break;
             case operator_id::bit_count:        result = bcnt_rhs;                                                  break;

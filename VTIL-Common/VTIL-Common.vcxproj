@@ -153,8 +153,7 @@
     <ClInclude Include="util\constexpr_random.hpp" />
     <ClInclude Include="util\copy_on_write.hpp" />
     <ClInclude Include="util\enumerator.hpp" />
-    <ClInclude Include="util\make_copy.hpp" />
-    <ClInclude Include="util\make_default.hpp" />
+    <ClInclude Include="util\type_helpers.hpp" />
     <ClInclude Include="util\profiler.hpp" />
     <ClInclude Include="util\random.hpp" />
     <ClInclude Include="util\static_warning.hpp" />

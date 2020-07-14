@@ -186,9 +186,9 @@ namespace vtil::symbolic::directive
 
         // Merge ucast combinations.
         //
-        { __ucast(A,U)|__ucast(B,U),                          __iff(__bcnt(A)>=__bcnt(B), __ucast(!(A|B),U)) },
-        { __ucast(A,U)&__ucast(B,U),                          __iff(__bcnt(A)>=__bcnt(B), __ucast(!(A&B),U)) },
-        { __ucast(A,U)^__ucast(B,U),                          __iff(__bcnt(A)>=__bcnt(B), __ucast(!(A^B),U)) },
+        { __ucast(A,U)|__ucast(B,U),                          __iff(__bcnt(A)>=__bcnt(B), __ucast(A|B,U)) },
+        { __ucast(A,U)&__ucast(B,U),                          __iff(__bcnt(A)>=__bcnt(B), __ucast(A&B,U)) },
+        { __ucast(A,U)^__ucast(B,U),                          __iff(__bcnt(A)>=__bcnt(B), __ucast(A^B,U)) },
 
         // Simplify manual sign extension.
         //

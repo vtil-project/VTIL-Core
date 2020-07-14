@@ -191,13 +191,8 @@ namespace vtil::symbolic
 				//
 				if( !signed_cast && new_size > value.size() )
 				{
-					// Calculate the original result's mask.
-					//
-					expression mask = { value.value_mask(), new_size };
-
-					// Mask the result.
-					//
-					*this = lhs.resize( new_size, false ) & mask;
+					lhs = std::move( lhs ).resize( new_size, false ); 
+					update( false ); 
 				}
 				// Otherwise nothing else to do.
 				//

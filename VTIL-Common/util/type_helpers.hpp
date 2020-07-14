@@ -37,4 +37,21 @@ namespace vtil
 	{ 
 		return x; 
 	}
+	
+	// A simple helper that converts from a non-const qualified reference to a const-qualified reference.
+	//
+	template<typename T>
+	inline static const T& make_const( T& x )
+	{
+		return x;
+	}
+
+	// A simple helper that creates a constant reference to the default constructed value of the type.
+	//
+	template<typename T, auto... params>
+	inline static const T& make_default()
+	{
+		static const T v = { params... };
+		return v;
+	}
 };

@@ -187,7 +187,7 @@ namespace vtil::symbolic
 		{
 			// If we can transform the expression by the directive set:
 			//
-			if ( auto exp_new = transform( exp, dir_src, dir_dst, {}, -1 ) )
+			if ( auto exp_new = transform( exp, dir_src, dir_dst, -1 ) )
 			{
 #if VTIL_SYMEX_SIMPLIFY_VERBOSE
 				log<CON_PRP>( "[Pack] %s => %s\n", *dir_src, *dir_dst );
@@ -477,7 +477,7 @@ namespace vtil::symbolic
 		{
 			// If we can transform the expression by the directive set:
 			//
-			if ( auto exp_new = transform( exp, dir_src, dir_dst, {}, max_depth ) )
+			if ( auto exp_new = transform( exp, dir_src, dir_dst, max_depth ) )
 			{
 #if VTIL_SYMEX_SIMPLIFY_VERBOSE
 				log<CON_GRN>( "[Simplify] %s => %s\n", *dir_src, *dir_dst );
@@ -504,7 +504,7 @@ namespace vtil::symbolic
 			{
 				// If we can transform the expression by the directive set:
 				//
-				if ( auto exp_new = transform( exp, dir_src, dir_dst, {}, max_depth ) )
+				if ( auto exp_new = transform( exp, dir_src, dir_dst, max_depth ) )
 				{
 #if VTIL_SYMEX_SIMPLIFY_VERBOSE
 					log<CON_GRN>( "[Simplify] %s => %s\n", *dir_src, *dir_dst );
@@ -524,13 +524,9 @@ namespace vtil::symbolic
 
 		// Declare the filter.
 		//
-		expression_filter_t filter;
-
-		// If no maximum depth was set:
-		//
-		if ( max_depth < 0 )
+		auto filter = [ &, max_depth ] ( auto& exp_new )
 		{
-			filter = [ & ] ( auto& exp_new )
+			if ( max_depth < 0 )
 			{
 				// If complexity was reduced already, pass.
 				//
@@ -555,13 +551,8 @@ namespace vtil::symbolic
 					lcache.trash_speculative();
 					return false;
 				}
-			};
-		}
-		// Else:
-		//
-		else
-		{
-			filter = [ & ] ( auto& exp_new )
+			}
+			else
 			{
 				// If complexity was reduced already, pass.
 				//
@@ -573,8 +564,8 @@ namespace vtil::symbolic
 				//
 				simplify_expression( exp_new, false, max_depth - 1 );
 				return exp_new->complexity < exp->complexity;
-			};
-		}
+			}
+		};
 
 		// Enumerate each join descriptor:
 		//
@@ -582,7 +573,7 @@ namespace vtil::symbolic
 		{
 			// If we can transform the expression by the directive set:
 			//
-			if ( auto exp_new = transform( exp, dir_src, dir_dst, filter, max_depth ) )
+			if ( auto exp_new = transform( exp, dir_src, dir_dst, max_depth, filter ) )
 			{
 #if VTIL_SYMEX_SIMPLIFY_VERBOSE
 				log<CON_GRN>( "[Join] %s => %s\n", *dir_src, *dir_dst );
@@ -610,7 +601,7 @@ namespace vtil::symbolic
 			{
 				// If we can transform the expression by the directive set:
 				//
-				if ( auto exp_new = transform( exp, dir_src, dir_dst, filter, max_depth ) )
+				if ( auto exp_new = transform( exp, dir_src, dir_dst, max_depth, filter ) )
 				{
 #if VTIL_SYMEX_SIMPLIFY_VERBOSE
 					log<CON_GRN>( "[Join] %s => %s\n", *dir_src, *dir_dst );
@@ -639,8 +630,8 @@ namespace vtil::symbolic
 			{
 				// If we can transform the expression by the directive set:
 				//
-				if ( auto exp_new = transform( exp, dir_src, dir_dst, 
-					 [ & ] ( auto& exp_new ) { simplify_expression( exp_new, true, max_depth - 1 ); return exp_new->complexity < exp->complexity; }, max_depth ) )
+				if ( auto exp_new = transform( exp, dir_src, dir_dst, max_depth,
+					 [ & ] ( auto& exp_new ) { simplify_expression( exp_new, true, max_depth - 1 ); return exp_new->complexity < exp->complexity; } ) )
 				{
 #if VTIL_SYMEX_SIMPLIFY_VERBOSE
 					log<CON_YLW>( "[Unpack] %s => %s\n", *dir_src, *dir_dst );

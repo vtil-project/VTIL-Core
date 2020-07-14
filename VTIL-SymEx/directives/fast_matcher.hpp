@@ -36,11 +36,11 @@ namespace vtil::symbolic::directive
 	// 
 	struct symbol_table_t
 	{ 
-		weak_reference<expression> lookup_table[ number_of_lookup_indices ];
+		expression::weak_reference lookup_table[ number_of_lookup_indices ];
  
 		// Adds the mapping of a variable to an expression. 
 		// 
-		bool add( const instance* dir, const expression::reference& exp ) 
+		bool add( const instance* dir, expression::weak_reference exp ) 
 		{ 
 			// If it's the first time this variable is being used: 
 			// 
@@ -93,7 +93,7 @@ namespace vtil::symbolic::directive
 	template<typename T, std::enable_if_t<std::is_same_v<typename T::value_type, symbol_table_t>, int> = 0> 
 	static size_t fast_match( T* results, 
 							  const instance* dir, 
-							  const expression::reference& exp, 
+							  expression::weak_reference exp, 
 							  size_t index = 0 ) 
 	{ 
 		// Initialize the result list if not done already. 
@@ -198,5 +198,5 @@ namespace vtil::symbolic::directive
 		return ( results->size() + 1 ) - size_0; 
 	} 
 	template<typename T, std::enable_if_t<std::is_same_v<typename T::value_type, symbol_table_t>, int> = 0>
-	static size_t fast_match( T* results, const instance& dir, const expression::reference& exp, size_t index = 0 ) { return fast_match( results, &dir, exp, index ); }
+	static size_t fast_match( T* results, const instance& dir, expression::weak_reference exp, size_t index = 0 ) { return fast_match( results, &dir, exp, index ); }
 };
