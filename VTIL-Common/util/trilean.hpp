@@ -27,6 +27,9 @@
 //
 #pragma once
 #include <stdint.h>
+#include <optional>
+#include "../io/asserts.hpp"
+#include "../io/formatting.hpp"
 
 namespace vtil
 {
@@ -34,25 +37,30 @@ namespace vtil
 	//
 	union trilean
 	{
-		struct by_value {};
+		// Implement the trilean literal unknown and null.
+		//
+		struct null_t {};
+		struct unknown_t {};
+		static constexpr null_t null =       {};
+		static constexpr unknown_t unknown = {};
 
 		// +1 - true
 		// 0  - ? 
 		// -1 - false
 		//
 		int8_t value = 0;
-
-		// Constructor for "maybe".
-		//
-		constexpr trilean()                          : value( 0 ) {}
 											       
-		// Constructor for strong boolean.	       
+		// Constructor for known boolean.	       
 		//									       
-		constexpr trilean( bool boolean )            : value( boolean - !boolean ) {}
+		constexpr trilean( bool boolean )          : value( boolean - !boolean ) {}
 
-		// Explicit construction from integer.
+		// Constructor for unknown.
 		//
-		constexpr trilean( int8_t value, by_value )  : value( value ) {}
+		constexpr trilean( unknown_t )             : value( 0 ) {}
+
+		// Constructor for null (alias for false).
+		//
+		constexpr trilean( null_t )                : trilean( false ) {}
 
 		// Default copy move.
 		//
@@ -74,9 +82,10 @@ namespace vtil
 		//
 		constexpr bool operator-() const { return value <= 0; }
 
-		// Negation.
+		// operator! checks for false, whereas operator bool checks for true.
 		//
-		constexpr trilean operator!() const { return { -value, by_value{} }; }
+		constexpr bool operator!() const { return value == -1; }
+		constexpr explicit operator bool() const { return value == 1; }
 
 		// Comparison with boolean.
 		//
@@ -87,18 +96,112 @@ namespace vtil
 		//
 		constexpr bool operator==( trilean other ) const { return value == other.value; }
 		constexpr bool operator!=( trilean other ) const { return value != other.value; }
+
+		// Cast to string.
+		//
+		std::string to_string() const
+		{
+			switch ( value )
+			{
+				case -1: return "False";
+				case 0:  return "Unknown";
+				case +1: return "True";
+			}
+			unreachable();
+		}
 	};
 
-	// Namespace for trilean literals.
+	// Base class uncertain inherits from.
 	//
-	namespace trilean_literals
+	struct uncertain_t
 	{
-		static constexpr trilean Maybe = {};
-		static constexpr trilean True  = { true };
-		static constexpr trilean False = { false };
+		// Inherit the trilean literal unknown and null.
+		//
+		using null_t =    trilean::null_t;
+		using unknown_t = trilean::unknown_t;
+		static constexpr null_t null = {};
+		static constexpr unknown_t unknown = {};
 	};
 
-	// By default, included in VTIL namespace.
+	// std::optional like type with trilean state.
 	//
-	using namespace trilean_literals;
+	template<typename T = std::nullptr_t>
+	struct uncertain : uncertain_t
+	{
+		// The actual optional value stored and if nullopt, whether it is in a certain state.
+		//
+		std::optional<T> value;
+		bool is_certain;
+
+		// Constructs null.
+		//
+		constexpr uncertain()                         : is_certain( true ),  value( std::nullopt ) {}
+		constexpr uncertain( std::nullopt_t )         : is_certain( true ),  value( std::nullopt ) {}
+		constexpr uncertain( null_t )                 : is_certain( true ),  value( std::nullopt ) {}
+
+		// Constructs unknown.
+		//
+		constexpr uncertain( unknown_t )              : is_certain( false ), value( std::nullopt ) {}
+
+		// Construct definite value.
+		//
+		constexpr uncertain( T value )                : is_certain( true ),  value( std::move( value ) ) {}
+		constexpr uncertain( std::optional<T> value ) : is_certain( true ),  value( std::move( value ) ) {}
+
+		// Default copy/move.
+		//
+		constexpr uncertain( uncertain&& ) = default;
+		constexpr uncertain( const uncertain& ) = default;
+		constexpr uncertain& operator=( uncertain&& ) = default;
+		constexpr uncertain& operator=( const uncertain& ) = default;
+		
+		// Cast to trilean.
+		//
+		constexpr trilean state() const
+		{
+			if ( has_value() )       return true;
+			if ( is_certain )        return false;
+			else                     return unknown;
+		}
+		constexpr operator trilean() const           { return state(); }
+		constexpr bool operator==( null_t ) const    { return is_null(); }
+		constexpr bool operator==( unknown_t ) const { return is_unknown(); }
+		constexpr bool operator==( trilean o ) const { return o == state(); }
+
+		// Boolean negation operator checks for certain inexistance, whereas explicit bool cast checks for 
+		// certain existance, they both will return false if it's in an unknown state.
+		//
+		constexpr bool operator!() const         { return is_null(); }
+		constexpr explicit operator bool() const { return has_value(); }
+
+		// std::optional like state checking.
+		//
+		constexpr bool is_null() const    { return is_certain && !value.has_value(); }
+		constexpr bool has_value() const  { return value.has_value(); }
+		constexpr bool is_unknown() const { return !is_certain; }
+
+		// Access to value via deref / use as pointer.
+		//
+		constexpr auto& get()              { return value.value(); }
+		constexpr auto& get() const        { return value.value(); }
+		constexpr auto& operator*()        { return value.value(); }
+		constexpr auto& operator*() const  { return value.value(); }
+		constexpr auto* operator->()       { return &value.value(); }
+		constexpr auto* operator->() const { return &value.value(); }
+
+		// Cast to string.
+		//
+		std::string to_string() const
+		{
+			if ( has_value() )       return format::as_string( get() );
+			else if ( is_certain )   return "[Null]";
+			else                     return "[Unknown]";
+		}
+	};
+
+	// Mimic std::make_optional, unline uncertain(...) constructor will default to unknown 
+	// when no arguments are passed instead of defaulting to certain null.
+	//
+	template<typename T> static constexpr uncertain<T> make_uncertain()          { return uncertain<T>::unknown; }
+	template<typename T> static constexpr uncertain<T> make_uncertain( T value ) { return uncertain<T>{ std::move( value ) }; }
 };
