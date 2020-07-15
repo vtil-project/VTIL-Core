@@ -106,12 +106,18 @@ namespace vtil::optimizer
 		{
 			// Attempts to revive an expression via cache.
 			//
-			const auto revive_via_cache = [ & ] ( const symbolic::expression::reference& exp, cached_tracer* tr ) -> std::future<operand>
+			using deferred_operand = deferred_value<
+				operand,
+				decltype( &aux::revive_register ),
+				symbolic::variable, const il_iterator&
+			>;
+
+			const auto revive_via_cache = [ & ] ( const symbolic::expression::reference& exp, cached_tracer* tr ) -> deferred_operand
 			{
 				// If immediate return as is.
 				//
 				if ( exp->is_constant() )
-					return std::async( std::launch::deferred, [ op = operand{ *exp->get<uint64_t>(), exp->size() } ]() { return op; } );
+					return operand{ *exp->get<uint64_t>(), exp->size() };
 
 				// If expression is not a register:
 				//
@@ -152,27 +158,27 @@ namespace vtil::optimizer
 				// Check if alive, if not revive, else return as is.
 				//
 				if ( aux::is_alive( var_reg, branch, xblock, &ctracer ) )
-					return std::async( std::launch::deferred, [ op = operand{ var_reg.reg() } ] () { return op; } );
+					return operand{ var_reg.reg() };
 				else
-					return std::async( std::launch::deferred, [ = ] () -> operand { return aux::revive_register( var_reg, branch ); } );
+					return deferred_operand{ &aux::revive_register, var_reg, branch };
 			};
 
 			// Convert [cc] [d1] [d2] in order.
 			//
-			auto op_cc = revive_via_cache( lbranch_info.cc, &local_tracer );
-			if ( op_cc.valid() )
+			deferred_operand op_cc = revive_via_cache( lbranch_info.cc, &local_tracer );
+			if ( op_cc.is_valid() )
 			{
 				bool fail = false;
-				std::future<operand> dsts[ 2 ];
+				deferred_operand dsts[ 2 ];
 				for ( auto [out, blocal, bglobal] : zip( dsts, lbranch_info.destinations, branch_info.destinations ) )
 				{
-					std::future<operand> op;
+					deferred_operand op;
 					if ( blocal->complexity <= bglobal->complexity )
 						op = revive_via_cache( blocal, &local_tracer );
 					else
 						op = revive_via_cache( bglobal, &ctracer );
 
-					if ( !op.valid() )
+					if ( !op.is_valid() )
 					{
 						fail = true;
 						break;

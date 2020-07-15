@@ -75,8 +75,8 @@ namespace vtil
 
 		// Construct by functor and its arguments.
 		//
-		deferred_value( Fn&& functor, Tx&&... arguments )
-			: future( future_value{ .functor = std::forward<Fn>( functor ), .arguments = { std::forward<Tx>( arguments )... } } ) {}
+		deferred_value( Fn functor, wrap_t<Tx>... arguments )
+			: future( future_value{ .functor = std::move( functor ), .arguments = { std::move( arguments )... } } ) {}
 
 		// Constructor by known result.
 		//
@@ -127,5 +127,5 @@ namespace vtil
 	// Declare deduction guide.
 	//
 	template<typename Fn, typename... Tx>
-	deferred_value( Fn&&, Tx&&... ) -> deferred_value<decltype(std::declval<Fn&&>()(std::declval<Tx&&>()...)), Fn, Tx...>;
+	deferred_value( Fn, Tx... ) -> deferred_value<decltype(std::declval<Fn>()(std::declval<Tx>()...)), Fn, Tx...>;
 };

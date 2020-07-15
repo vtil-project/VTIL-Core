@@ -162,7 +162,7 @@ namespace vtil
 
 			// Declare temporary result.
 			//
-			deferred_value result( default_constructor, ptr, size );
+			deferred_value result( default_constructor, std::ref( ptr ), size );
 
 			// Declare the list of iterators we will erase off the map upon
 			// reorganizing and a hint to see if the key already exists.
