@@ -27,6 +27,7 @@
 #include "../../util/type_helpers.hpp"
 #include "../../util/enumerator.hpp"
 #include "../../util/deferred_value.hpp"
+#include "../../util/trilean.hpp"
 
 // VTIL namespace should be able to use literals by default without having to include it.
 //
