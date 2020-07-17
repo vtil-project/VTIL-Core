@@ -36,7 +36,6 @@
 #include <memory>
 #include <stdlib.h>
 #include <optional>
-#include "concept.hpp"
 #include "../io/asserts.hpp"
 
 namespace vtil
@@ -53,7 +52,6 @@ namespace vtil
 		template<typename T, typename A>
 		using swap_allocator_t = typename swap_allocator<T, A>::type;
 	};
-
 
 	// Stack buffer state with iterators enforcing equivalent alignment for any type.
 	//

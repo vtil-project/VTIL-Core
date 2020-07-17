@@ -37,14 +37,14 @@ namespace vtil
 		if ( auto it = path_cache[ 0 ].find( src ); it != path_cache[ 0 ].end() )
 			if ( auto it2 = it->second.find( dst ); it2 != it->second.end() )
 				return it2->second;
-		return make_default<path_set>();
+		return static_default;
 	}
 	const path_set& routine::get_path_bwd( const basic_block* src, const basic_block* dst ) const
 	{
 		if ( auto it = path_cache[ 1 ].find( dst ); it != path_cache[ 1 ].end() )
 			if ( auto it2 = it->second.find( src ); it2 != it->second.end() )
 				return it2->second;
-		return make_default<path_set>();
+		return static_default;
 	}
 
 	// Simple helpers to check if (forward/backward) path from src to dst exists.

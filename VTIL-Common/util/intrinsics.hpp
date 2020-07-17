@@ -26,40 +26,67 @@
 // POSSIBILITY OF SUCH DAMAGE.        
 //
 #pragma once
-#include <algorithm>
-#include <concepts>
+#include <stdint.h>
 
-namespace vtil
-{
-	// Determines whether the object is random-accessable by definition or not.
-	//
-	template<typename T> 
-	concept DefaultRandomAccessible = requires( T v ) { v[ 0 ]; std::size( v ); };
 
-	// Determines whether the object implements a custom random-access interface.
-	//
-	template<typename T> 
-	concept CustomRandomAccessible = requires( T v ) { v[ 0 ]; v.size(); };
+#ifdef _MSC_VER
+    #include <intrin.h>
 
-	// Disjunction of both constraints.
-	//
-	template<typename T>
-	concept RandomAccessible = DefaultRandomAccessible<T> || CustomRandomAccessible<T>;
+    // Declare unreachable.
+    //
+    #define unreachable() __assume(0)
+#else
+    // Declare unreachable.
+    //
+    #define unreachable() __builtin_unreachable()
 
-	// Gets the size of the given container, 0 if N/A.
-	//
-	template<typename T>
-	static constexpr size_t dynamic_size( T& o )
-	{
-		if constexpr ( DefaultRandomAccessible<T&> )
-			return std::size( o );
-		else if constexpr ( CustomRandomAccessible<T&> )
-			return o.size();
-		return 0;
-	}
+    // Declare __forceinline.
+    //
+    #if not defined(__INTELLISENSE__) 
+	    #define __forceinline __attribute__((always_inline))
+    #endif
 
-	// Gets the Nth element from the object.
-	//
-	template<typename T> requires RandomAccessible<T&>
-		static decltype( auto ) deref_n( T& o, size_t N ) { return o[ N ]; }
-};
+    // Declare _?mul128
+    //
+    inline static uint64_t _umul128( uint64_t _Multiplier, uint64_t _Multiplicand, uint64_t* _HighProduct )
+    {
+        uint64_t LowProduct;
+        uint64_t HighProduct;
+
+        __asm__( "mulq  %[b]\n"
+                 :"=d"( HighProduct ), "=a"( LowProduct )
+                 : "1"( _Multiplier ), [ b ]"rm"( _Multiplicand ) );
+
+        *_HighProduct = HighProduct;
+        return LowProduct;
+    }
+
+    inline static int64_t _mul128( int64_t _Multiplier, int64_t _Multiplicand, int64_t* _HighProduct )
+    {
+        int64_t LowProduct;
+        int64_t HighProduct;
+
+        __asm__( "imulq  %[b]\n"
+                 :"=d"( HighProduct ), "=a"( LowProduct )
+                 : "1"( _Multiplier ), [ b ]"rm"( _Multiplicand ) );
+
+        *_HighProduct = HighProduct;
+        return LowProduct;
+    }
+
+    // Declare _?mulh
+    //
+    inline static int64_t __mulh( int64_t _Multiplier, int64_t _Multiplicand )
+    {
+        int64_t HighProduct;
+        _mul128( _Multiplier, _Multiplicand, &HighProduct );
+        return HighProduct;
+    }
+
+    inline static uint64_t __umulh( uint64_t _Multiplier, uint64_t _Multiplicand )
+    {
+        uint64_t HighProduct;
+        _umul128( _Multiplier, _Multiplicand, &HighProduct );
+        return HighProduct;
+    }
+#endif

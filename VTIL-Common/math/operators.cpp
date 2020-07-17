@@ -27,7 +27,7 @@
 //
 #include "../io/logger.hpp"
 #include "operators.hpp"
-#include "../util/mul128.hpp"
+#include "../util/intrinsics.hpp"
 
 namespace vtil::math
 {

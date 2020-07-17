@@ -1,12 +1,11 @@
 #pragma once
-#include "../../util/concept.hpp"
 #include "../../util/copy_on_write.hpp"
 #include "../../util/thread_identifier.hpp"
 #include "../../util/lt_typeid.hpp"
 #include "../../util/fnv64.hpp"
 #include "../../util/fnv128.hpp"
 #include "../../util/hashable.hpp"
-#include "../../util/mul128.hpp"
+#include "../../util/intrinsics.hpp"
 #include "../../util/optional_reference.hpp"
 #include "../../util/reducable.hpp"
 #include "../../util/stack_container.hpp"

@@ -125,7 +125,7 @@ namespace vtil
 
 	// std::optional like type with trilean state.
 	//
-	template<typename T = std::nullptr_t>
+	template<typename T = std::nullopt_t>
 	struct uncertain : uncertain_t
 	{
 		// The actual optional value stored and if nullopt, whether it is in a certain state.

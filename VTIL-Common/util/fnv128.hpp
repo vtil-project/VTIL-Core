@@ -30,7 +30,7 @@
 #include <array>
 #include <functional>
 #include <cstring>
-#include "mul128.hpp"
+#include "intrinsics.hpp"
 #include "../io/formatting.hpp"
 
 namespace vtil

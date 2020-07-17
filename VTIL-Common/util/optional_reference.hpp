@@ -96,39 +96,10 @@ namespace vtil
 		//
 		operator optional_reference<const T>() const { return { pointer }; }
 
-		// Implement comparison operators mimicking the rules of std::optional<T>. 
-		// - See: https://en.cppreference.com/w/cpp/utility/optional/operator_cmp.
+		// Decay to reference, if no value held UB.
 		//
-		template<typename R = decltype( std::declval<const T&>() > std::declval<const T&>() )>
-		R operator>( const optional_reference& other ) const
-		{
-			return has_value() ? !other.has_value() || value() > other.value()  : false;
-		}
-		template<typename R = decltype( std::declval<const T&>() >= std::declval<const T&>() )>
-		R operator>=( const optional_reference& other ) const
-		{
-			return has_value() ? !other.has_value() || value() >= other.value() : !other.has_value();
-		}
-		template<typename R = decltype( std::declval<const T&>() == std::declval<const T&>() )>
-		R operator==( const optional_reference& other ) const
-		{
-			return has_value() ? other.has_value() && value() == other.value() : !other.has_value();
-		}
-		template<typename R = decltype( std::declval<const T&>() != std::declval<const T&>() )>
-		R operator!=( const optional_reference& other ) const
-		{
-			return has_value() ? !other.has_value() || value() != other.value() : other.has_value();
-		}
-		template<typename R = decltype( std::declval<const T&>() <= std::declval<const T&>() )>
-		R operator<=( const optional_reference& other ) const
-		{
-			return has_value() ? other.has_value() && value() <= other.value() : true;
-		}
-		template<typename R = decltype( std::declval<const T&>() < std::declval<const T&>() )>
-		R operator<( const optional_reference& other ) const
-		{
-			return has_value() ? other.has_value() && value() < other.value() : other.has_value();
-		}
+		operator T& () { dassert( has_value() ); return *( T* ) pointer; }
+		operator const T& () const { dassert( has_value() ); return *( T* ) pointer; }
 	};
 
 	// Creates an optional reference to the given pointer if the condition is met.

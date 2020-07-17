@@ -91,9 +91,6 @@
     <ClInclude Include="util\copy_on_write.hpp">
       <Filter>Utility</Filter>
     </ClInclude>
-    <ClInclude Include="util\concept.hpp">
-      <Filter>Utility</Filter>
-    </ClInclude>
     <ClInclude Include="util\variant.hpp">
       <Filter>Utility</Filter>
     </ClInclude>
@@ -110,9 +107,6 @@
       <Filter>Utility</Filter>
     </ClInclude>
     <ClInclude Include="util\reducable.hpp">
-      <Filter>Utility</Filter>
-    </ClInclude>
-    <ClInclude Include="util\mul128.hpp">
       <Filter>Utility</Filter>
     </ClInclude>
     <ClInclude Include="util\optional_reference.hpp">
@@ -209,6 +203,9 @@
       <Filter>Utility</Filter>
     </ClInclude>
     <ClInclude Include="util\trilean.hpp">
+      <Filter>Utility</Filter>
+    </ClInclude>
+    <ClInclude Include="util\intrinsics.hpp">
       <Filter>Utility</Filter>
     </ClInclude>
   </ItemGroup>

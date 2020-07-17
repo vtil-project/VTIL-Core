@@ -34,14 +34,7 @@
 #include <mutex>
 #include <functional>
 #include "formatting.hpp"
-
-// If inline assembly is supported use it, otherwise rely on intrinsics to emit INT3.
-//
-#ifdef _MSC_VER
-	#include <intrin.h>
-#else
-	#define __debugbreak() __asm__ volatile( "int $3" )
-#endif
+#include "../util/intrinsics.hpp"
 
 // [Configuration]
 // Determine which file stream we should use for logging.
@@ -69,13 +62,6 @@ namespace vtil::logger
 		CON_GRN = 10,
 		CON_BLU = 9,
 		CON_DEF = 7,
-	};
-
-	namespace impl
-	{
-		// Used to mark functions noreturn.
-		//
-		static void noreturn_helper [[noreturn]] () { __debugbreak(); abort(); }
 	};
 
 	// Describes the state of the logging engine.
@@ -292,6 +278,6 @@ namespace vtil::logger
 
 		// Break the program. 
 		//
-		impl::noreturn_helper();
+		unreachable();
 	}
 };

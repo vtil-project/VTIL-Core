@@ -102,7 +102,7 @@ namespace vtil::symbolic
 			}
 			// Else, try to convert to string via ::to_string or std::to_string.
 			//
-			else if constexpr ( format::has_string_conversion_v<T> )
+			else if constexpr ( StringConvertible<T> )
 			{
 				name_getter = [ ] ( const variant& v ) { return format::as_string( v.get<T>() ); };
 			}

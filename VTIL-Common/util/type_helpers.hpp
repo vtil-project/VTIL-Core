@@ -27,29 +27,87 @@
 //
 #pragma once
 #include <type_traits>
+#include <concepts>
+#include "intrinsics.hpp"
 
 namespace vtil
 {
-	// A simple helper that creates a constant reference to the default constructed value of the type.
+	// Type tag.
 	//
-	template<typename T, auto... params>
-	inline static const T& make_default()
+	template<typename T>
+	struct type_tag { using type = T; };
+	
+	// Check for specialization.
+	//
+	namespace impl
 	{
-		static const T v = { params... };
-		return v;
+		template <template<typename...> typename Tmp, typename>
+		static constexpr bool is_specialization_v = false;
+		template <template<typename...> typename Tmp, typename... Tx>
+		static constexpr bool is_specialization_v<Tmp, Tmp<Tx...>> = true;
+	};
+	template <template<typename...> typename Tmp, typename T>
+	static constexpr bool is_specialization_v = impl::is_specialization_v<Tmp, std::remove_cvref_t<T>>;
+
+	// Checks if the given lambda can be evaluated in compile time.
+	//
+	template<typename F, std::enable_if_t<F{}(), int> = 0>
+	static constexpr bool is_constexpr( F )   { return true; }
+	static constexpr bool is_constexpr( ... ) { return false; }
+
+	// Common generic concepts.
+	//
+	template<typename T>
+	concept Iterable = requires( T v ) { std::begin( v ); std::end( v ); };
+
+	// Constructs a static constant given the type and parameters, returns a reference to it.
+	//
+	namespace impl
+	{
+		template<typename T, auto... params>
+		struct static_allocator { inline static const T value = { params... }; };
+	};
+	template<typename T, auto... params>
+	static constexpr const T& make_static() noexcept { return impl::static_allocator<T, params...>::value; }
+
+	// Default constructs the type and returns a reference to the static allocator. 
+	// This useful for many cases, like:
+	//  1) Function with return value of (const T&) that returns an external reference or if not applicable, a default value.
+	//  2) Using non-constexpr types in constexpr structures by deferring the construction.
+	//
+	template<typename T> static constexpr const T& make_default() noexcept { return make_static<T>(); }
+
+	// Special type that collapses to a constant reference to the default constructed value of the type.
+	//
+	static constexpr struct
+	{
+		template<typename T, std::enable_if_t<!std::is_reference_v<T>, int> = 0>
+		constexpr operator const T&() const noexcept { return make_default<T>(); }
+
+		template<typename T, std::enable_if_t<!std::is_reference_v<T>, int> = 0>
+		constexpr operator T() const noexcept { static_assert( sizeof( T ) == -1, "Static default immediately decays, unnecessary use." ); unreachable(); }
+	} static_default;
+
+	// Converts from a const qualified ref/ptr to a non-const-qualified ref/ptr.
+	// - Make sure the use is documented, this is very hacky behaviour!
+	//
+	template<typename T> static constexpr T& make_mutable( const T& x ) noexcept { return ( T& ) x; }
+	template<typename T> static constexpr T* make_mutable( const T* x ) noexcept { return ( T* ) x; }
+
+	// Converts from a non-const qualified ref/ptr to a const-qualified ref/ptr.
+	//
+	template<typename T> static constexpr std::add_const_t<T>& make_const( T& x ) noexcept { return x; }
+	template<typename T> static constexpr std::add_const_t<T>* make_const( T* x ) noexcept { return x; }
+
+	// Creates a copy of the given value.
+	//
+	template<typename T> __forceinline static constexpr T make_copy( const T& x ) { return x; }
+
+	// Creates an uninitialized T.
+	//
+	template<typename T> __forceinline static T make_uninit()
+	{
+		char raw[ sizeof( T ) ];
+		return std::move( *( T* ) &raw );
 	}
-
-	// A simple helper that creates a copy of the given type, forced to as a reference.
-	//
-	template<typename T> inline static T make_copy( const T& x ) { return x; }
-
-	// A simple helper that converts from a non-const qualified ref/ptr to a const-qualified ref/ptr.
-	//
-	template<typename T> inline static const T& make_const( T& x ) { return x; }
-	template<typename T> inline static const T* make_const( T* x ) { return x; }
-
-	// A simple helper that converts from a const qualified ref/ptr to a non-const-qualified ref/ptr.
-	//
-	template<typename T> inline static T& make_mutable( const T& x ) { return ( T& ) x; }
-	template<typename T> inline static T* make_mutable( const T* x ) { return ( T* ) x; }
 };
