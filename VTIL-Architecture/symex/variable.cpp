@@ -31,26 +31,15 @@
 
 namespace vtil::symbolic
 {
-	// Dummy iterator to be used when variable is not being tracked within a block.
-	//
-	static const il_const_iterator free_form_iterator = [ ] ()
-	{
-		// Create a dummy invalid block with an invalid instruction and reference it.
-		//
-		static basic_block dummy_block;
-		dummy_block.stream.push_back( {} );
-		return dummy_block.begin();
-	}();
-	
 	// Returns the origin block of the pointer.
 	//
-	static const basic_block* get_pointer_origin( const symbolic::expression& exp )
+	static const basic_block* get_pointer_origin( const expression& exp )
 	{
 		// If variable with valid iterator, return the block.
 		//
 		if ( exp.is_variable() )
 		{
-			auto& var = exp.uid.get<symbolic::variable>();
+			auto& var = exp.uid.get<variable>();
 			if ( var.at.is_valid() )
 				return var.at.container;
 		}
@@ -108,8 +97,8 @@ namespace vtil::symbolic
 					{
 						// Transform base pointer:
 						//
-						symbolic::expression::reference base = std::move( in->base );
-						base.transform( [ & ] ( symbolic::expression::delegate& exp )
+						expression::reference base = std::move( in->base );
+						base.transform( [ & ] ( expression::delegate& exp )
 						{
 							// Skip if not variable.
 							//
@@ -421,7 +410,7 @@ namespace vtil::symbolic
 				{
 					// Determine the limit of the stack memory owned by this routine.
 					//
-					symbolic::expression limit = 
+					expression limit = 
 						tracer->trace( { it, REG_SP } ) + 
 						it.container->sp_offset + 
 						cc.shadow_space;
@@ -467,7 +456,7 @@ namespace vtil::symbolic
 	// Construct free-form with only the descriptor itself.
 	//
 	variable::variable( descriptor_t desc ) 
-		: variable( free_form_iterator, std::move( desc ) ) {}
+		: variable( impl::free_form_iterator, std::move( desc ) ) {}
 
 	// Returns whether the variable is valid or not.
 	//
@@ -511,7 +500,7 @@ namespace vtil::symbolic
 	//
 	bool variable::is_free_form() const 
 	{ 
-		return at == free_form_iterator; 
+		return at == impl::free_form_iterator; 
 	}
 
 	// Conversion to symbolic expression.
@@ -595,7 +584,7 @@ namespace vtil::symbolic
 
 		// If dummy iterator, return with free-indicator appended.
 		//
-		if ( at == free_form_iterator )
+		if ( at == impl::free_form_iterator )
 			return "%" + base;
 
 		// Append the block identifier.

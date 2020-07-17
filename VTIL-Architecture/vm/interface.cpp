@@ -223,7 +223,7 @@ namespace vtil
 					{
 						write_register(
 							it->operands[ i ].reg(),
-							symbolic::make_undefined_ex( it->operands[ i ].reg().bit_count )
+							symbolic::CTX[ make_undefined( it->operands[ i ].reg().bit_count ) ]
 						);
 					}
 				}
@@ -235,7 +235,7 @@ namespace vtil
 					auto [base, offset] = it->memory_location();
 					write_memory(
 						read_register( base ) + offset,
-						symbolic::make_undefined_ex( it->access_size() ? it->access_size() : 64 )
+						symbolic::CTX[ make_undefined( it->access_size() ? it->access_size() : 64 ) ]
 					);
 				}
 			}

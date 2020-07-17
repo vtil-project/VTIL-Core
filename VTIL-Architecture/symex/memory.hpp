@@ -64,9 +64,9 @@ namespace vtil::symbolic
 		switch ( type )
 		{
 			case memory_type::free:
-				return { [ ] ( const pointer& ptr, bitcnt_t size ) -> expression::reference { return make_memory_ex( ptr, size ); } };
+				return { [ ] ( const pointer& ptr, bitcnt_t size ) -> expression::reference { return MEMORY( ptr, size ); } };
 			case memory_type::relaxed:
-				return { [ ] ( const pointer& ptr, bitcnt_t size ) -> expression::reference { return make_undefined_ex( size ); } };
+				return { [ ] ( const pointer& ptr, bitcnt_t size ) -> expression::reference { return CTX[ make_undefined( size ) ]; } };
 			default:
 				return { [ ] ( const pointer& ptr, bitcnt_t size ) -> expression::reference { unreachable(); return nullptr; } };
 		}

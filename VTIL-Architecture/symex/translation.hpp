@@ -104,7 +104,7 @@ namespace vtil
 				{
 					// If simple stack access:
 					//
-					if( auto displacement = ( var.mem().base - symbolic::make_register_ex( REG_SP ) ) )
+					if( auto displacement = ( var.mem().base - symbolic::CTX[ REG_SP ] ) )
 					{
 						operand tmp = block->tmp( exp->size() );
 						block->ldd( tmp, REG_SP, *displacement );

@@ -38,7 +38,7 @@ namespace vtil
 
 		auto it = register_state.find( full );
 		auto exp = it == register_state.end()
-			? symbolic::variable{ full }.to_expression( false )
+			? symbolic::CTX[ full ]
 			: it->second;
 
 		if ( lazy_io ) exp.make_lazy();
@@ -62,7 +62,7 @@ namespace vtil
 		else
 		{
 			auto& exp = register_state[ full ];
-			if ( !exp ) exp = symbolic::make_register_ex( full );
+			if ( !exp ) exp = symbolic::CTX[ full ];
 			exp = ( std::move( exp ) & ~desc.get_mask() ) | ( value.resize( desc.bit_count ).resize( size ) << desc.bit_offset );
 		}
 	}

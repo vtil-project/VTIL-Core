@@ -130,7 +130,7 @@ namespace vtil::optimizer
 				// If value is unchanged, skip.
 				//
 				auto k = pair.first; auto v = pair.second.simplify();
-				symbolic::expression v0 = symbolic::make_register_ex( k );
+				symbolic::expression v0 = symbolic::CTX[ k ];
 				if ( v->equals( v0 ) )
 					continue;
 
@@ -204,7 +204,7 @@ namespace vtil::optimizer
 			for ( auto& [k, _v] : vm.memory_state )
 			{
 				auto v = _v.simplify();
-				symbolic::expression v0 = symbolic::make_memory_ex( k, v.size() );
+				symbolic::expression v0 = symbolic::MEMORY( k, v.size() );
 
 				// If value is unchanged, skip.
 				//
@@ -235,7 +235,7 @@ namespace vtil::optimizer
 				// If pointer can be rewritten as $sp + C:
 				//
 				operand base, offset, value;
-				if ( auto displacement = ( k - symbolic::make_register_ex( REG_SP ) ) )
+				if ( auto displacement = ( k - symbolic::CTX[ REG_SP ] ) )
 				{
 					// Buffer a str $sp, c, value.
 					//
