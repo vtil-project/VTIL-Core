@@ -82,33 +82,20 @@ namespace vtil
 			int64_t reloc_delta = ( int64_t ) dst - ( int64_t ) src;
 			return *( T* ) ( ( uint64_t ) &ref + reloc_delta );
 		}
-
-		template<typename T> concept CustomAllocated = requires{ T::allocator_type; };
-		template<typename T> concept PoolAllocated =   !CustomAllocated<T>;
 	};
 
-	//
+	// Used to implement shared and extremely fast Copy-on-Write memory.
 	//
 	template<typename T>
 	struct shared_reference
 	{
-		
-		// Declare the allocator.
+		// Declare the object entry.
 		//
 		using object_entry =   std::pair<T, std::atomic<size_t>>;
+
+		// Declare object allocator.
+		//
 		using allocator_type = object_pool<object_entry>;
-
-		/*using rebinding_interface = std::conditional_t<
-			impl::CustomAllocated<T>,
-			typename T::allocator_type::rebind<object_entry>::other,
-			
-		using allocator_type = std::conditional_t<
-			impl::CustomAllocated<T>,
-			( T::allocator_type )::rebind<object_entry>
-			object_pool<object_entry>
-		>;
-
-		std::allocator_traits<object_pool<object_entry>>::allocate( {}, 1 );*/
 
 		// Store pointer as a 63-bit integer and append an additional bit to control temporary/allocated.
 		//

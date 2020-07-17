@@ -33,6 +33,7 @@
 #include <numeric>
 #include "../util/reducable.hpp"
 #include "../io/asserts.hpp"
+#include "../util/type_helpers.hpp"
 
 // Declare the type we will used for bit lenghts of data.
 // - We are using int instead of char since most operations will end up casting
@@ -45,9 +46,11 @@ namespace vtil::math
 {
     // Narrows the given type in a safe manner.
     //
-    template<typename T, typename T2>
+    template<Integral T, Integral T2>
     static T narrow_cast( T2 o )
     {
+        static_assert( sizeof( T ) <= sizeof( T2 ), "Narrow cast is extending." );
+
         if constexpr ( std::is_signed_v<T2> ^ std::is_signed_v<T> )
             dassert( 0 <= o && o <= std::numeric_limits<T>::max() );
         else
@@ -57,28 +60,37 @@ namespace vtil::math
 
     // Extracts the sign bit from the given value.
     //
-    template<typename T, std::enable_if_t<std::is_integral_v<T>, int> = 0>
+    template<Integral T>
     static constexpr bool sgn( T type ) { return bool( type >> ( ( sizeof( T ) * 8 ) - 1 ) ); }
 
     // Implement platform-indepdenent popcnt/msb/lsb.
     //
-    static bitcnt_t popcnt( uint64_t x )
+    static constexpr bitcnt_t popcnt( uint64_t x )
     {
+        // Optimized using intrinsic on MSVC, Clang should be smart enough to do this on its own.
+        //
 #ifdef _MSC_VER
-        return ( bitcnt_t ) __popcnt64( x );
-#else
+        if ( !std::is_constant_evaluated() )
+        {
+            return ( bitcnt_t ) __popcnt64( x );
+        }
+#endif
         bitcnt_t count = 0;
         for ( bitcnt_t i = 0; i < 64; i++, x >>= 1 )
             count += ( bitcnt_t ) ( x & 1 );
         return count;
-#endif
     }
-    static bitcnt_t msb( uint64_t x )
+    static constexpr bitcnt_t msb( uint64_t x )
     {
+        // Optimized using intrinsic on MSVC, Clang should be smart enough to do this on its own.
+        //
 #ifdef _MSC_VER
-        unsigned long idx;
-        return _BitScanReverse64( &idx, x ) ? ( bitcnt_t ) idx + 1 : 0;
-#else
+        if ( !std::is_constant_evaluated() )
+        {
+            unsigned long idx = 0;
+            return _BitScanReverse64( &idx, x ) ? ( bitcnt_t ) idx + 1 : 0;
+        }
+#endif
         // Return index + 1 on success:
         //
         for ( bitcnt_t i = 63; i >= 0; i-- )
@@ -87,14 +99,18 @@ namespace vtil::math
         // Zero otherwise.
         //
         return 0;
-#endif
     }
-    static bitcnt_t lsb( uint64_t x )
+    static constexpr bitcnt_t lsb( uint64_t x )
     {
+        // Optimized using intrinsic on MSVC, Clang should be smart enough to do this on its own.
+        //
 #ifdef _MSC_VER
-        unsigned long idx;
-        return _BitScanForward64( &idx, x ) ? ( bitcnt_t ) idx + 1 : 0;
-#else
+        if ( !std::is_constant_evaluated() )
+        {
+            unsigned long idx = 0;
+            return _BitScanForward64( &idx, x ) ? ( bitcnt_t ) idx + 1 : 0;
+        }
+#endif
         // Return index + 1 on success:
         //
         for ( bitcnt_t i = 0; i <= 63; i++ )
@@ -103,7 +119,6 @@ namespace vtil::math
         // Zero otherwise.
         //
         return 0;
-#endif
     }
 
     // Used to find a bit with a specific value in a linear memory region.
@@ -187,72 +202,77 @@ namespace vtil::math
 
     // Extends the given integral type into uint64_t or int64_t.
     //
-    template<typename T, std::enable_if_t<std::is_integral_v<T>, int> = 0>
-    static auto imm_extend( T imm )
+    template<Integral T>
+    static constexpr auto imm_extend( T imm )
     {
-        if constexpr ( std::is_signed_v<T> )
-            return ( int64_t ) imm;
-        else
-            return ( uint64_t ) imm;
+        if constexpr ( std::is_signed_v<T> ) return ( int64_t ) imm;
+        else                                 return ( uint64_t ) imm;
     }
+
+
+
+    // Implement the jump-table based, compiler optimized sign/zero extension.
+    //
+    namespace impl
+    {
+        // For all N except 0 and 1:
+        //
+        template<auto N>
+        struct integer_resizer
+        {
+            static_assert( N <= 63, "Invalid table generation." );
+
+            union zx_t { uint64_t input; struct { unsigned long long result : N; }; };
+            union sx_t { uint64_t input; struct { signed   long long result : N; }; };
+            
+            constexpr static uint64_t zx( uint64_t value ) { return zx_t{ value }.result; }
+            constexpr static int64_t  sx( uint64_t value ) { return sx_t{ value }.result; }
+        };
+        // N = 64 should return as is.
+        //
+        template<>
+        struct integer_resizer<64>
+        {
+            constexpr static uint64_t zx( uint64_t value ) { return value; }
+            constexpr static int64_t  sx( uint64_t value ) { return value; }
+        };
+        // N = 1 should not perform sign extension as it's intended for boolean use.
+        //
+        template<>
+        struct integer_resizer<1>
+        {
+            constexpr static uint64_t zx( uint64_t value ) { return value & 1; }
+            constexpr static int64_t  sx( uint64_t value ) { return value & 1; }
+        };
+        // N = 0 should throw upon invokation.
+        //
+        template<>
+        struct integer_resizer<0>
+        {
+            static uint64_t zx( uint64_t value )           { unreachable(); }
+            static int64_t  sx( uint64_t value )           { unreachable(); }
+        };
+
+        // Generate entire table.
+        //
+        static constexpr std::array zx_table = make_visitor_series<65, integer_resizer>( [ ] ( auto tag ) { return &decltype( tag )::type::zx; } );
+        static constexpr std::array sx_table = make_visitor_series<65, integer_resizer>( [ ] ( auto tag ) { return &decltype( tag )::type::sx; } );
+    };
 
     // Zero extends the given integer.
     //
-    static uint64_t zero_extend( uint64_t value, bitcnt_t bcnt_src )
+    static constexpr uint64_t zero_extend( uint64_t value, bitcnt_t bcnt_src )
     {
-        // Use simple casts where possible.
-        //
-        switch ( bcnt_src )
-        {
-            case 1: return value & 1;
-            case 8: return  *( uint8_t* ) &value;
-            case 16: return *( uint16_t* ) &value;
-            case 32: return *( uint32_t* ) &value;
-            case 64: return *( uint64_t* ) &value;
-        }
-
-        // Make sure source size is non-zero.
-        //
-        fassert( bcnt_src != 0 );
-
-        // Mask the value.
-        //
-        value &= fill( bcnt_src );
-        return value;
+        dassert( 0 < bcnt_src && bcnt_src <= 64 );
+        return impl::zx_table[ bcnt_src ]( value );
     }
 
     // Sign extends the given integer.
     //
-    static int64_t sign_extend( uint64_t value, bitcnt_t bcnt_src )
+    static constexpr int64_t sign_extend( uint64_t value, bitcnt_t bcnt_src )
     {
-        // Use simple casts where possible.
-        //
-        switch ( bcnt_src )
-        {
-            case 1: return value & 1;             // Booleans cannot have sign bits by definition.
-            case 8: return  *( int8_t* ) &value;
-            case 16: return *( int16_t* ) &value;
-            case 32: return *( int32_t* ) &value;
-            case 64: return *( int64_t* ) &value;
-        }
-
-        // Make sure source size is non-zero.
-        //
-        fassert( bcnt_src != 0 );
-
-        // Extract sign bit.
-        //
-        uint64_t sign = ( value >> ( bcnt_src - 1 ) ) & 1;
-
-        // Mask the value.
-        //
-        value &= fill( bcnt_src );
-
-        // Extend the sign bit.
-        // - Small trick is used here to avoid branches.
-        //
-        sign = ( ( sign ^ 1 ) - 1 ) << bcnt_src;
-        return value | sign;
+        dassert( 0 < bcnt_src && bcnt_src <= 64 );
+        return impl::sx_table[ bcnt_src ]( value );
     }
 
     // Return value from bit-vector lookup where the result can be either unknown or constant 0/1.
@@ -336,7 +356,7 @@ namespace vtil::math
 
         // Extends or shrinks the the vector.
         //
-        bit_vector& resize( bitcnt_t new_size, bool signed_cast = false )
+        constexpr bit_vector& resize( bitcnt_t new_size, bool signed_cast = false )
         {
             fassert( 0 < new_size && new_size <= 64 );
 
