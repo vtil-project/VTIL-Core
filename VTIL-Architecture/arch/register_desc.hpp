@@ -266,9 +266,9 @@ namespace vtil
 				switch ( architecture )
 				{
 					case architecture_amd64:
-						return prefix + amd64::name( amd64::extend( math::narrow_cast<uint8_t>( local_id ) ) ) + suffix;
+						return prefix + amd64::name( amd64::registers.extend( math::narrow_cast<uint8_t>( local_id ) ) ) + suffix;
 					case architecture_arm64:
-						return prefix + arm64::name( arm64::extend( math::narrow_cast<uint8_t>( local_id ) ) ) + suffix;
+						return prefix + arm64::name( arm64::registers.extend( math::narrow_cast<uint8_t>( local_id ) ) ) + suffix;
 					default:
 						unreachable();
 				}
@@ -304,7 +304,7 @@ namespace vtil
 	{
 		constexpr register_desc operator()( x86_reg value )
 		{
-			auto [base, offset, size] = amd64::resolve_mapping( value );
+			auto [base, offset, size] = amd64::registers.resolve_mapping( value );
 			if ( base == X86_REG_RSP )
 				return { register_physical | register_stack_pointer, 0, size * 8, offset * 8            };
 			else if ( base == X86_REG_EFLAGS )													       
@@ -318,7 +318,7 @@ namespace vtil
 	{
 		constexpr register_desc operator()( arm64_reg value )
 		{
-			auto [base, offset, size] = arm64::resolve_mapping( value );
+			auto [base, offset, size] = arm64::registers.resolve_mapping( value );
 			if ( base == ARM64_REG_SP )
 				return { register_physical | register_stack_pointer, 0, size * 8, offset * 8            };
 			else if ( base == ARM64_REG_NZCV )

@@ -341,9 +341,9 @@ namespace vtil
 
 		// Implement fences.
 		//
-		basic_block* sfence() { return vpinrm( UNDEFINED, 0ull ); }
-		basic_block* lfence() { return vpinwm( UNDEFINED, 0ull ); }
-		basic_block* mfence() { return sfence()->lfence(); } 
+		basic_block* vsfence() { return vpinrm( UNDEFINED, 0ull ); }
+		basic_block* vlfence() { return vpinwm( UNDEFINED, 0ull ); }
+		basic_block* vmfence() { return vsfence()->vlfence(); } 
 
 		// Queues a stack shift.
 		//
