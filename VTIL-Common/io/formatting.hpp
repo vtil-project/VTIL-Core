@@ -32,7 +32,6 @@
 #include <type_traits>
 #include <chrono>
 #include <optional>
-#include <concepts>
 #include "../util/lt_typeid.hpp"
 #include "../util/dynamic_size.hpp"
 #include "../util/type_helpers.hpp"

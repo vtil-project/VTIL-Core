@@ -27,7 +27,6 @@
 //
 #pragma once
 #include <algorithm>
-#include <concepts>
 
 namespace vtil
 {
