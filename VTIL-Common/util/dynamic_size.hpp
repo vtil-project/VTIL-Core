@@ -49,17 +49,20 @@ namespace vtil
 	// Gets the size of the given container, 0 if N/A.
 	//
 	template<typename T>
-	static constexpr size_t dynamic_size( T& o )
+	static constexpr size_t dynamic_size( T&& o )
 	{
-		if constexpr ( DefaultRandomAccessible<T&> )
+		if constexpr ( DefaultRandomAccessible<T> )
 			return std::size( o );
-		else if constexpr ( CustomRandomAccessible<T&> )
+		else if constexpr ( CustomRandomAccessible<T> )
 			return o.size();
 		return 0;
 	}
 
 	// Gets the Nth element from the object.
 	//
-	template<typename T> requires RandomAccessible<T&>
-		static decltype( auto ) deref_n( T& o, size_t N ) { return o[ N ]; }
+	template<RandomAccessible T>
+	static constexpr decltype( auto ) deref_n( T&& o, size_t N ) 
+	{ 
+		return o[ N ]; 
+	}
 };

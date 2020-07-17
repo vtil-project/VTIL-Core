@@ -27,28 +27,54 @@
 //
 #pragma once
 #include <stdint.h>
+#include <stdexcept>
 #include "logger.hpp"
+#include "../util/intrinsics.hpp"
 
-namespace vtil::assert
+namespace vtil
 {
-	static void or_die( bool condition, const char* file_name, uint32_t line_number, const char* condition_str )
+	// Aborts if the given condition is met.
+	//
+	__forceinline static constexpr void abort_if( bool condition, const char* string )
 	{
-		if ( condition ) return;
-		logger::error
-		(
-			"Assertion failure at %s:%d (%s)",
-			file_name,
-			line_number,
-			condition_str
-		);
+		// If condition met:
+		//
+		if ( condition )
+		{
+			// Throw exception if consteval, else invoke logger error.
+			//
+			if ( std::is_constant_evaluated() ) throw std::logic_error{ string };
+			else                                logger::error( "Assertion failure, %s", string );
+		}
 	}
 };
 
+// Declare assert macro.
+//
 #define fassert__stringify(x) #x
-#define fassert(...) vtil::assert::or_die( bool(__VA_ARGS__), __FILE__, __LINE__, fassert__stringify(__VA_ARGS__) )
+#define fassert__istringify(x) fassert__stringify(x)
+#define fassert(...) vtil::abort_if(!bool(__VA_ARGS__), fassert__stringify(__VA_ARGS__) " at " __FILE__ ":" fassert__istringify(__LINE__) )
 
 #ifdef _DEBUG
-	#define dassert(...) fassert(__VA_ARGS__)
+	// If in debug mode, same as assert.
+	//
+	#define dassert(...) fassert( __VA_ARGS__ )
 #else
-	#define dassert(...)
+	// If in release mode, just evaluated.
+	//
+	#define dassert(...) ( __VA_ARGS__ )
 #endif
+
+// Declare validation macro, used for generic is_valid() declaration where you want 
+// to abort execution at the specific point of failure if caller aborts upon finding
+// and invalid instance, and returns false from it otherwise. Macro is needed since
+// it is essentially "return if".
+//
+#define vvalidate(enforce_valid, ...) {       \
+                if ( enforce_valid ) {        \
+                    fassert( __VA_ARGS__ );   \
+                } else if( !(__VA_ARGS__) ) { \
+                    return false;             \
+                }                             \
+            }
+#define cvalidate(...) vvalidate(force, __VA_ARGS__)

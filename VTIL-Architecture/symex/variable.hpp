@@ -202,4 +202,53 @@ namespace vtil::symbolic
 	static expression make_memory_ex( const pointer& p, bitcnt_t n ) { return variable{ { p ,n } }.to_expression(); }
 	static expression make_register_ex( const register_desc& r, bool unpack = false ) { return variable{ r }.to_expression( unpack ); }
 	static expression make_undefined_ex( bitcnt_t n ) { return variable{ make_undefined( n ) }.to_expression(); }
+
+
+	namespace impl
+	{
+		template<typename iterator_type>
+		struct bound_memory
+		{
+			struct size_proxy
+			{
+				const iterator_type& it;
+				bitcnt_t n;
+				auto operator[]( const pointer& p ) const { return variable( it, { p, n } ); }
+			};
+
+			iterator_type it;
+			size_proxy qword = { it, 64 };
+			size_proxy dword = { it, 32 };
+			size_proxy word =  { it, 16 };
+			size_proxy byte =  { it, 8 };
+
+			constexpr bound_memory( iterator_type _it ) : it{ _it } {}
+
+			auto operator()( const pointer& p, bitcnt_t n ) const { return size_proxy{ it, n }[ p ]; }
+		};
+
+		struct memory_wrapper : bound_memory<const il_const_iterator&>
+		{
+			constexpr memory_wrapper() : bound_memory{ make_default<il_const_iterator>() } {}
+
+			template<typename T = il_const_iterator>
+			auto operator()( T&& it ) const { return bound_memory<T>{ std::forward<T>( it ) }; }
+		};
+	};
+
+	static constexpr impl::memory_wrapper MEMORY;
+	
+	static void test_LOL()
+	{
+		// T&& => T&&
+		// T& => T&
+		// T => T&&
+		symbolic::expression a;
+		MEMORY.qword[ a + 0x512 ];
+		MEMORY( il_iterator{} )( a + 0x23, 48 );
+		MEMORY.qword[ a + 0x23 ];
+		MEMORY( il_iterator{} ).qword[ a + 0x23 ];
+
+	}
+
 };

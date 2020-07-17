@@ -33,6 +33,7 @@
 #include "../io/asserts.hpp"
 #include "object_pool.hpp"
 #include "../util/intrinsics.hpp"
+#include "../util/type_helpers.hpp"
 
 // The copy-on-write interface defined here is used to avoid deep duplications of 
 // containers such as trees when a VTIL routine is working with them.
@@ -81,15 +82,33 @@ namespace vtil
 			int64_t reloc_delta = ( int64_t ) dst - ( int64_t ) src;
 			return *( T* ) ( ( uint64_t ) &ref + reloc_delta );
 		}
+
+		template<typename T> concept CustomAllocated = requires{ T::allocator_type; };
+		template<typename T> concept PoolAllocated =   !CustomAllocated<T>;
 	};
 
+	//
+	//
 	template<typename T>
 	struct shared_reference
 	{
+		
 		// Declare the allocator.
 		//
-		using object_entry = std::pair<T, std::atomic<size_t>>;
-		using allocator =    object_pool<object_entry>;
+		using object_entry =   std::pair<T, std::atomic<size_t>>;
+		using allocator_type = object_pool<object_entry>;
+
+		/*using rebinding_interface = std::conditional_t<
+			impl::CustomAllocated<T>,
+			typename T::allocator_type::rebind<object_entry>::other,
+			
+		using allocator_type = std::conditional_t<
+			impl::CustomAllocated<T>,
+			( T::allocator_type )::rebind<object_entry>
+			object_pool<object_entry>
+		>;
+
+		std::allocator_traits<object_pool<object_entry>>::allocate( {}, 1 );*/
 
 		// Store pointer as a 63-bit integer and append an additional bit to control temporary/allocated.
 		//
@@ -114,7 +133,7 @@ namespace vtil
 		template<typename... params, impl::enable_if_constructor<shared_reference<T>, params...> = 0>
 		shared_reference( params&&... p ) 
 		{
-			object_entry* entry = allocator{}.allocate();
+			object_entry* entry = allocator_type{}.allocate();
 			new ( &entry->first ) T( std::forward<params>( p )... );
 			entry->second = { 1 };
 
@@ -162,11 +181,17 @@ namespace vtil
 
 		// Gets object entry.
 		//
-		object_entry* get_entry() const { dassert( !temporary ); return ( object_entry* ) pointer; }
+		object_entry* get_entry() const { dassert( !is_temporary() ); return ( object_entry* ) pointer; }
 
 		// Gets object itself.
 		//
-		const T* get() const { return ( const T* ) pointer; }
+		constexpr const T* get() const { return ( const T* ) pointer; }
+
+		// Check if temporary pointer.
+		// - Micro optimized to generate cmp branch instead of bitmasked 
+		//   test since MSVC is too stupid apparently.
+		//
+		constexpr bool is_temporary() const { return as_signed( combined_value ) < 0; /*return temporary;*/ }
 
 		// Converts to owning reference.
 		//
@@ -174,9 +199,9 @@ namespace vtil
 		{
 			// If temporary, copy first.
 			//
-			if ( temporary )
+			if ( is_temporary() )
 			{
-				object_entry* new_entry = allocator{}.allocate();
+				object_entry* new_entry = allocator_type{}.allocate();
 				new ( &new_entry->first ) T{ *get() };
 				new_entry->second = { 1 };
 
@@ -187,7 +212,7 @@ namespace vtil
 			//
 			else if ( auto entry = get_entry(); entry && entry->second != 1 )
 			{
-				object_entry* new_entry = allocator{}.allocate();
+				object_entry* new_entry = allocator_type{}.allocate();
 				new ( &new_entry->first ) T{ *get() };
 				new_entry->second = { 1 };
 				entry->second--;
@@ -203,8 +228,8 @@ namespace vtil
 
 		// Simple validity checks.
 		//
-		bool is_valid() const { return get(); }
-		explicit operator bool() const { return is_valid(); }
+		constexpr bool is_valid() const { return get(); }
+		constexpr explicit operator bool() const { return is_valid(); }
 
 		// Wrapper around ::own that can be called with arguments that are const-qualified 
 		// pointers or references which we will relocate to the new object as non-const qualified 
@@ -220,13 +245,13 @@ namespace vtil
 
 		// Basic comparison operators are redirected to the pointer type.
 		//
-		bool operator==( const shared_reference& o ) const { return combined_value == o.combined_value; }
-		bool operator<( const shared_reference& o ) const { return combined_value < o.combined_value; }
+		constexpr bool operator==( const shared_reference& o ) const { return combined_value == o.combined_value; }
+		constexpr bool operator<( const shared_reference& o ) const { return combined_value < o.combined_value; }
 
 		// Redirect pointer and dereferencing operator to the reference and cast to const-qualified equivalent.
 		//
-		const T* operator->() const { return get(); }
-		const T& operator*() const { return *get(); }
+		constexpr const T* operator->() const { return get(); }
+		constexpr const T& operator*() const { return *get(); }
 
 		// Syntax sugar for ::own() using the + operator.
 		// -- If temporary, return as is.
@@ -247,7 +272,7 @@ namespace vtil
 					if ( --entry->second == 0 )
 					{
 						( ( T* ) &entry->first )->~T();
-						allocator{}.deallocate( ( object_entry* ) entry );
+						allocator_type{}.deallocate( ( object_entry* ) entry );
 					}
 				}
 			}
@@ -281,43 +306,38 @@ namespace vtil
 
 		// Default null constructor.
 		//
-		weak_reference() : combined_value( 0 ) {}
+		constexpr weak_reference() : combined_value( 0 ) {}
 		
 		// Reference borrowing constructor/assignment.
 		//
-		weak_reference( const shared_reference<T>& ref ) 
+		constexpr weak_reference( const shared_reference<T>& ref )
 			: combined_value( ref.combined_value ) {}
-		weak_reference& operator=( const shared_reference<T>& ref ) { return *new ( this ) weak_reference( ref ); }
+		constexpr weak_reference& operator=( const shared_reference<T>& ref ) { return *new ( this ) weak_reference( ref ); }
 		
-		// Copy constructor/assignment.
+		// Default copy/move behaviour.
 		//
-		weak_reference( const weak_reference& o ) 
-			: combined_value( o.combined_value ) {}
-		weak_reference( weak_reference&& o ) 
-			: combined_value( o.combined_value ) {}
-		weak_reference& operator=( weak_reference o )
-		{
-			combined_value = o.combined_value;
-			return *this;
-		}
+		constexpr weak_reference( weak_reference&& ) = default;
+		constexpr weak_reference( const weak_reference& ) = default;
+		constexpr weak_reference& operator=( weak_reference&& ) = default;
+		constexpr weak_reference& operator=( const weak_reference& ) = default;
 
 		// Basic comparison operators are redirected to the pointer type.
 		//
-		bool operator<( const weak_reference& o ) const { return combined_value < o.combined_value; }
-		bool operator==( const weak_reference& o ) const { return combined_value == o.combined_value; }
-		bool operator<( const shared_reference<T>& o ) const { return combined_value < o.combined_value; }
-		bool operator==( const shared_reference<T>& o ) const { return combined_value == o.combined_value; }
+		constexpr bool operator<( const weak_reference& o ) const { return combined_value < o.combined_value; }
+		constexpr bool operator==( const weak_reference& o ) const { return combined_value == o.combined_value; }
+		constexpr bool operator<( const shared_reference<T>& o ) const { return combined_value < o.combined_value; }
+		constexpr bool operator==( const shared_reference<T>& o ) const { return combined_value == o.combined_value; }
 
 		// Redirect pointer and dereferencing operator to the reference and cast to const-qualified equivalent.
 		//
-		const T* get() const { return ( const T* ) pointer; }
-		const T* operator->() const { return get(); }
-		const T& operator*() const { return *get(); }
+		constexpr const T* get() const { return ( const T* ) pointer; }
+		constexpr const T* operator->() const { return get(); }
+		constexpr const T& operator*() const { return *get(); }
 
 		// Simple validity checks.
 		//
-		bool is_valid() const { return get(); }
-		explicit operator bool() const { return is_valid(); }
+		constexpr bool is_valid() const { return get(); }
+		constexpr explicit operator bool() const { return is_valid(); }
 		
 		// Convert to shared reference, will cause it to actually reference if decays, huge hack but will work
 		// and be really efficient because of the way shared references work.
@@ -328,7 +348,7 @@ namespace vtil
 	// Explicit temporary reference creation.
 	//
 	template<typename T>
-	__forceinline static shared_reference<T> make_local_reference( const T* ptr )
+	__forceinline constexpr static shared_reference<T> make_local_reference( const T* ptr )
 	{
 		shared_reference<T> ret;
 		ret.pointer = ( uint64_t ) ptr;

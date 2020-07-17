@@ -473,14 +473,13 @@ namespace vtil::symbolic
 	//
 	bool variable::is_valid( bool force ) const
 	{
-#define validate(...) { if( force ) fassert(__VA_ARGS__); else if( !(__VA_ARGS__) ) return false; }
 		// If register:
 		//
 		if ( auto* reg = std::get_if<register_t>( &descriptor ) )
 		{
 			// Iterator must be valid if not read-only.
 			//
-			validate( at.is_valid() || reg->is_read_only() );
+			cvalidate( at.is_valid() || reg->is_read_only() );
 
 			// Redirect to register descriptor validation.
 			//
@@ -494,19 +493,18 @@ namespace vtil::symbolic
 
 			// Iterator must be valid.
 			//
-			validate( at.is_valid() );
+			cvalidate( at.is_valid() );
 
 			// Must have a valid pointer of 64 bits.
 			//
-			validate( mem.decay() && mem.decay().size() == 64 );
+			cvalidate( mem.decay() && mem.decay().size() == 64 );
 
 			// Bit count should be within (0, 64] and byte-addressable.
 			//
-			validate( 0 < mem.bit_count && mem.bit_count <= 64 && ( mem.bit_count & 7 ) == 0 );
+			cvalidate( 0 < mem.bit_count && mem.bit_count <= 64 && ( mem.bit_count & 7 ) == 0 );
 
 			return true;
 		}
-#undef validate
 	}
 
 	// Returns whether it is bound to a free-form iterator or not.

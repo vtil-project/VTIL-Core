@@ -40,7 +40,7 @@
 #include <map>
 #include <tuple>
 #include <string>
-#include <stdexcept>
+#include "../../io/asserts.hpp"
 #include "amd64_disassembler.hpp"
 #include "../register_mapping.hpp"
 
@@ -163,8 +163,7 @@ namespace vtil::amd64
 
 		// Otherwise return default mapping after making sure it's valid.
 		//
-		if ( _reg == X86_REG_INVALID || _reg >= X86_REG_ENDING )
-			throw std::logic_error( "Invalid register queried." );
+        fassert( _reg != X86_REG_INVALID && _reg < X86_REG_ENDING );
 		return { x86_reg( _reg ), 0, 8 };
 	}
 
@@ -197,8 +196,7 @@ namespace vtil::amd64
 
 		// If we fail to find, and we're strictly remapping to a full register, return as is.
 		//
-		if ( offset != 0 )
-			throw std::logic_error( "Invalid register remapping." );
+        fassert( offset == 0 );
 		return base_register;
 	}
 

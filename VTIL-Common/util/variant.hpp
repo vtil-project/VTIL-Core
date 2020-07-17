@@ -111,16 +111,14 @@ namespace vtil
 		// Null constructors.
 		//
 		variant() : copy_fn( nullptr ) {};
-		variant( std::nullptr_t ) : copy_fn( nullptr ) {};
 		variant( std::nullopt_t ) : copy_fn( nullptr ) {};
 
 		// Constructs variant from any type that is not variant, nullptr_t or nullopt_t.
 		//
 		template<typename arg_type, 
 			std::enable_if_t<
-			 !std::is_same_v<std::remove_cvref_t<arg_type>, variant> &&
-			 !std::is_same_v<std::remove_cvref_t<arg_type>, std::nullptr_t> &&
-			 !std::is_same_v<std::remove_cvref_t<arg_type>, std::nullopt_t>, int> = 0>
+			 !std::is_same_v<std::decay_t<arg_type>, variant> &&
+			 !std::is_same_v<std::decay_t<arg_type>, std::nullopt_t>, int> = 0>
 		variant( arg_type&& value )
 		{
 			using T = std::remove_cvref_t<arg_type>;

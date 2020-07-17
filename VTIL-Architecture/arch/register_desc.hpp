@@ -136,17 +136,9 @@ namespace vtil
 		//
 		constexpr bool is_valid( bool force = false ) const
 		{
-#define validate(...) { 																		 \
-				if ( !( __VA_ARGS__ ) )															 \
-				{																				 \
-					if ( force ) throw std::logic_error{ "Register validation failed." };		 \
-					else         return false;													 \
-				}																				 \
-			}
-
 			// Validate bit count and offset.
 			//
-			validate( bit_count != 0 && ( bit_count + bit_offset ) <= 64 );
+			cvalidate( bit_count != 0 && ( bit_count + bit_offset ) <= 64 );
 
 			// Handle special registers:
 			//
@@ -158,11 +150,11 @@ namespace vtil
 			{
 				// Should be physical, non-volatile and writable.
 				//
-				validate( !is_volatile() && is_physical() && !is_read_only() );
+				cvalidate( !is_volatile() && is_physical() && !is_read_only() );
 
 				// Must have no local identifier.
 				//
-				validate( local_id == 0 );
+				cvalidate( local_id == 0 );
 			}
 			// If register holds the flags:
 			//
@@ -170,11 +162,11 @@ namespace vtil
 			{
 				// Should be physical, non-volatile and writable.
 				//
-				validate( !is_volatile() && is_physical() && !is_read_only() );
+				cvalidate( !is_volatile() && is_physical() && !is_read_only() );
 
 				// Must have no local identifier.
 				//
-				validate( local_id == 0 );
+				cvalidate( local_id == 0 );
 			}
 			// If register holds the image base:
 			//
@@ -182,11 +174,11 @@ namespace vtil
 			{
 				// Should be virtual, non-volatile and read-only.
 				//
-				validate( !is_volatile() && is_virtual() && is_read_only() );
+				cvalidate( !is_volatile() && is_virtual() && is_read_only() );
 
 				// Must have no local identifier.
 				//
-				validate( local_id == 0 );
+				cvalidate( local_id == 0 );
 			}
 			// If register holds the [undefined] special:
 			//
@@ -194,24 +186,23 @@ namespace vtil
 			{
 				// Should be virtual, volatile and non-read-only.
 				//
-				validate( is_volatile() && is_virtual() && !is_read_only() );
+				cvalidate( is_volatile() && is_virtual() && !is_read_only() );
 
 				// Must have no local identifier.
 				//
-				validate( local_id == 0 );
+				cvalidate( local_id == 0 );
 			}
 			// Otherwise must have no special flags.
 			//
 			else
 			{
-				validate( special_flags == 0 );
+				cvalidate( special_flags == 0 );
 			}
 
 			// If register is physical, it can't be local.
 			//
-			validate( !is_physical() || !is_local() );
+			cvalidate( !is_physical() || !is_local() );
 			return true;
-#undef validate
 		}
 
 		// Simple helpers to determine some properties.

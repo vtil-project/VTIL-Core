@@ -219,7 +219,7 @@ namespace vtil::symbolic
 
 		// Construct from constants.
 		//
-		template<typename T = uint64_t, std::enable_if_t<std::is_integral_v<T>, int> = 0>
+		template<Integral T = uint64_t>
 		expression( T value, bitcnt_t bit_count = sizeof( T ) * 8 ) : operable( value, bit_count ), simplify_hint( true ) { update( false ); }
 
 		// Constructor for symbolic variables.
@@ -229,11 +229,11 @@ namespace vtil::symbolic
 		// Constructor for expressions.
 		//
 		expression( math::operator_id op, const reference& rhs ) : operable(), op( op ), rhs( rhs ) { update( true ); }
-		expression( math::operator_id op, reference&& rhs ) : operable(), op( op ), rhs( std::move( rhs ) ) { update( true ); }
+		expression( math::operator_id op, reference&& rhs      ) : operable(), op( op ), rhs( std::move( rhs ) ) { update( true ); }
 		expression( const reference& lhs, math::operator_id op, const reference& rhs ) : operable(), op( op ), lhs( lhs ), rhs( rhs ) { update( true ); }
-		expression( reference&& lhs, math::operator_id op, const reference& rhs) : operable(), op( op ), lhs( std::move( lhs ) ), rhs( rhs ) { update( true ); }
-		expression( const reference& lhs, math::operator_id op, reference&& rhs ) : operable(), op( op ), lhs( lhs ), rhs( std::move( rhs ) ) { update( true ); }
-		expression( reference&& lhs, math::operator_id op, reference&& rhs ) : operable(), op( op ), lhs( std::move( lhs ) ), rhs( std::move( rhs ) ) { update( true ); }
+		expression( reference&& lhs,      math::operator_id op, const reference& rhs ) : operable(), op( op ), lhs( std::move( lhs ) ), rhs( rhs ) { update( true ); }
+		expression( const reference& lhs, math::operator_id op, reference&& rhs      ) : operable(), op( op ), lhs( lhs ), rhs( std::move( rhs ) ) { update( true ); }
+		expression( reference&& lhs,      math::operator_id op, reference&& rhs      ) : operable(), op( op ), lhs( std::move( lhs ) ), rhs( std::move( rhs ) ) { update( true ); }
 
 		// Alternate "constructors" for internal use for the sake of having control over auto-simplification of user-reaching expressions.
 		//

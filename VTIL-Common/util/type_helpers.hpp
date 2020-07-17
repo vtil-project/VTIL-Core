@@ -28,6 +28,7 @@
 #pragma once
 #include <type_traits>
 #include <concepts>
+#include <array>
 #include "intrinsics.hpp"
 
 namespace vtil
@@ -55,10 +56,12 @@ namespace vtil
 	static constexpr bool is_constexpr( F )   { return true; }
 	static constexpr bool is_constexpr( ... ) { return false; }
 
-	// Common generic concepts.
+	// Commonly used concepts.
 	//
 	template<typename T>
 	concept Iterable = requires( T v ) { std::begin( v ); std::end( v ); };
+	template<typename T>
+	concept Integral = std::is_integral_v<T>;
 
 	// Constructs a static constant given the type and parameters, returns a reference to it.
 	//
@@ -109,5 +112,41 @@ namespace vtil
 	{
 		char raw[ sizeof( T ) ];
 		return std::move( *( T* ) &raw );
+	}
+
+	// Changes the way given integer is interpreted.
+	//
+	template<Integral T> static auto& as_signed( T& value )           { return ( std::make_signed_t<T>& ) value; }
+	template<Integral T> static auto& as_signed( const T& value )     { return ( const std::make_signed_t<T>& ) value; }
+	template<Integral T> static constexpr auto as_signed( T value )   { return ( std::make_signed_t<T> ) value; }
+	template<Integral T> static auto& as_unsigned( T& value )         { return ( std::make_unsigned_t<T>& ) value; }
+	template<Integral T> static auto& as_unsigned( const T& value )   { return ( const std::make_unsigned_t<T>& ) value; }
+	template<Integral T> static constexpr auto as_unsigned( T value ) { return ( std::make_unsigned_t<T> ) value; }
+
+	// Basic helpers for series creation.
+	//
+	namespace impl
+	{
+		template<typename Ti, typename T, Ti... I>
+		static constexpr auto make_expanded_series( T&& f, std::integer_sequence<Ti, I...> )
+		{
+			return std::array{ f( I )... };
+		}
+
+		template<typename Ti, template<auto> typename Tr, typename T, Ti... I>
+		static constexpr auto make_visitor_series( T&& f, std::integer_sequence<Ti, I...> )
+		{
+			return std::array{ f( type_tag<Tr<I>>{} )... };
+		}
+	};
+	template<auto N, typename T>
+	static constexpr auto make_expanded_series( T&& f )
+	{
+		return impl::make_expanded_series<decltype( N )>( std::forward<T>( f ), std::make_integer_sequence<decltype( N ), N>{} );
+	}
+	template<auto N, template<auto> typename Tr, typename T>
+	static constexpr auto make_visitor_series( T&& f )
+	{
+		return impl::make_visitor_series<decltype( N ), Tr, T>( std::forward<T>( f ), std::make_integer_sequence<decltype( N ), N>{} );
 	}
 };

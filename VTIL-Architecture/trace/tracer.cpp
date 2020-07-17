@@ -28,6 +28,7 @@
 #include "tracer.hpp"
 #include <vtil/io>
 #include "../vm/lambda.hpp"
+#include <vtil/utility>
 
 namespace vtil
 {
@@ -169,10 +170,8 @@ namespace vtil
 	// meaning the origin expression was a variable and it infinite-looped during propagation by itself.
     // - Note: New iterator should be a connected block's end.
 	//
-    static bool propagate( symbolic::expression::reference& ref, const il_const_iterator& it, tracer* tracer, const path_entry& prev_link, int64_t limit )
+    static bool propagate( symbolic::expression::reference& ref, const il_const_iterator& it, tracer* tracer, optional_creference<path_entry> prev_link, int64_t limit )
     {
-		static const auto& null_link = make_default<path_entry>();
-
         using namespace logger;
 
 #if VTIL_OPT_TRACE_VERBOSE
@@ -232,7 +231,7 @@ namespace vtil
 				// Fail if propagation fails.
 				//
 				symbolic::expression::reference mem_ptr = std::move( mem.base.base );
-				propagate( mem_ptr, it, tracer->purify(), null_link, limit );
+				propagate( mem_ptr, it, tracer->purify(), std::nullopt, limit );
 				if ( !mem_ptr )
 				{
 					result = false;
@@ -254,7 +253,7 @@ namespace vtil
             // Trace the variable in the destination block, fail if it fails.
             //
 			symbolic::expression::reference var_traced;
-			if ( &prev_link != &null_link )
+			if ( prev_link )
 				var_traced = rtrace_primitive( var, tracer, prev_link, limit );
 			else
 				var_traced = tracer->trace( var );

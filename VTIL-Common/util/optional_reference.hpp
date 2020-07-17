@@ -39,6 +39,17 @@ namespace vtil
 	struct optional_reference
 	{
 		T* pointer = nullptr;
+
+		// Null reference constructors.
+		//
+		optional_reference( std::nullopt_t ) : pointer( nullptr ) {}
+		
+		// Constructs by reference to type.
+		//
+		template<typename = std::enable_if_t<std::is_const_v<T>>>
+		optional_reference( std::remove_const_t<T>&& ref ) : pointer( &ref ) {}
+		optional_reference( T& ref )                       : pointer( &ref ) {}
+		optional_reference( std::optional<T>& ref )        : pointer( ref.has_value() ? &ref.value() : nullptr ) {}
 		
 		// Default constructor / move / copy.
 		//
@@ -48,21 +59,10 @@ namespace vtil
 		optional_reference& operator=( optional_reference&& ) = default;
 		optional_reference& operator=( const optional_reference& ) = default;
 
-		// Null reference constructors.
-		//
-		optional_reference( std::nullopt_t ) : pointer( nullptr ) {}
-		
-		// Constructs by reference to type.
-		//
-		optional_reference( T& ref )
-			: pointer( &ref ) {}
-		optional_reference( std::optional<T>& ref )
-			: pointer( ref.has_value() ? &ref.value() : nullptr ) {}
-
 		// Optional assignment to reference stored.
 		//
-		void assign_if( T&& value ) const { if ( pointer ) *pointer = value; }
-		void assign_if( const T& value ) const { if ( pointer ) *pointer = value; }
+		void assign_if( T&& value ) { if ( pointer ) *pointer = value; }
+		void assign_if( const T& value ) { if ( pointer ) *pointer = value; }
 
 		// Implement observers, mimicking std::optional<T>.
 		// -------------------------------------------------
@@ -101,6 +101,8 @@ namespace vtil
 		operator T& () { dassert( has_value() ); return *( T* ) pointer; }
 		operator const T& () const { dassert( has_value() ); return *( T* ) pointer; }
 	};
+	template<typename T>
+	using optional_creference = optional_reference<const T>;
 
 	// Creates an optional reference to the given pointer if the condition is met.
 	//
