@@ -48,7 +48,7 @@ namespace vtil
 	{
 		// Base register of full size, e.g. X86_REG_RAX.
 		//
-		T base_register = T{ 0 };
+		T base_register = T( 0 );
 
 		// Offset of the current register from the base register.
 		//
