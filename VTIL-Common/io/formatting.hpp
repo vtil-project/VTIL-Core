@@ -199,7 +199,7 @@ namespace vtil::format
 		//
 		else if constexpr ( is_specialization_v<std::optional, base_type> )
 		{
-			if ( StringConvertible<decltype( x.value() )> )
+			if constexpr ( !std::is_void_v<decltype( as_string( x.value() ) )> )
 			{
 				if ( x.has_value() )
 					return as_string( x.value() );
@@ -211,7 +211,7 @@ namespace vtil::format
 		//
 		else if constexpr ( Iterable<T> )
 		{
-			if constexpr ( StringConvertible<decltype( *std::begin( x ) )> )
+			if constexpr ( !std::is_void_v<decltype( as_string( *std::begin( x ) ) )> )
 			{
 				std::string items = {};
 				for ( auto& entry : x )
