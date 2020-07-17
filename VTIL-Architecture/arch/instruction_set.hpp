@@ -164,10 +164,10 @@ namespace vtil
         //
         //    NOP                                                           | Placeholder
         //    VEMIT      Imm                                                | Emits the opcode as is to the final instruction stream.
-        //    VPINR      Reg                                                | Pins the register for read                 // UD? can be used as a wildcard for all physical registers.
-        //    VPINW      Reg                                                | Pins the register for write                // UD? can be used as a wildcard for all physical registers.
-        //    VPINRM     Reg,    Imm                                        | Pins the qword @ memory location for read  // UD? can be used as a wildcard for all public memory effectively rendering it an SFENCE.
-        //    VPINWM     Reg,    Imm                                        | Pins the qword @ memory location for write // UD? can be used as a wildcard for all public memory effectively rendering it an LFENCE.
+        //    VPINR      Reg                                                | Pins the register for read
+        //    VPINW      Reg                                                | Pins the register for write
+        //    VPINRM     Reg,    Imm                                        | Pins the qword @ memory location for read   [ UD? can be used as a wildcard for all public memory effectively rendering it an SFENCE. ]
+        //    VPINWM     Reg,    Imm                                        | Pins the qword @ memory location for write  [ UD? can be used as a wildcard for all public memory effectively rendering it an LFENCE. ]
         //
         /*------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
         /*                                          [Name]        [Operands...]                                     [ASizeOp]   [Volatile]  [Operator]               [BranchOps] [MemOps]     */

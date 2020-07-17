@@ -113,16 +113,7 @@ namespace vtil
 		return std::move( *( T* ) &raw );
 	}
 
-	// Changes the way given integer is interpreted.
-	//
-	template<Integral T> static auto& as_signed( T& value )           { return ( std::make_signed_t<T>& ) value; }
-	template<Integral T> static auto& as_signed( const T& value )     { return ( const std::make_signed_t<T>& ) value; }
-	template<Integral T> static constexpr auto as_signed( T value )   { return ( std::make_signed_t<T> ) value; }
-	template<Integral T> static auto& as_unsigned( T& value )         { return ( std::make_unsigned_t<T>& ) value; }
-	template<Integral T> static auto& as_unsigned( const T& value )   { return ( const std::make_unsigned_t<T>& ) value; }
-	template<Integral T> static constexpr auto as_unsigned( T value ) { return ( std::make_unsigned_t<T> ) value; }
-
-	// Basic helpers for series creation.
+	// Implement helpers for basic series creation.
 	//
 	namespace impl
 	{

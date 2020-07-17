@@ -178,7 +178,7 @@ namespace vtil
 		// - Micro optimized to generate cmp branch instead of bitmasked 
 		//   test since MSVC is too stupid apparently.
 		//
-		constexpr bool is_temporary() const { return as_signed( combined_value ) < 0; /*return temporary;*/ }
+		constexpr bool is_temporary() const { return ( ( int64_t ) combined_value ) < 0; /*return temporary;*/ }
 
 		// Converts to owning reference.
 		//

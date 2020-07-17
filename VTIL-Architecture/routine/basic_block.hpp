@@ -339,6 +339,12 @@ namespace vtil
 		WRAP_LAZY( vpinwm );
 #undef WRAP_LAZY
 
+		// Implement fences.
+		//
+		basic_block* sfence() { return vpinrm( UNDEFINED, 0ull ); }
+		basic_block* lfence() { return vpinwm( UNDEFINED, 0ull ); }
+		basic_block* mfence() { return sfence()->lfence(); } 
+
 		// Queues a stack shift.
 		//
 		basic_block* shift_sp( int64_t offset, bool merge_instance = false, const const_iterator& it = {} );
