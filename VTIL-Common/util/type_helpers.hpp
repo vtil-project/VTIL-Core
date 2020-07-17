@@ -27,7 +27,6 @@
 //
 #pragma once
 #include <type_traits>
-#include <concepts>
 #include <array>
 #include "intrinsics.hpp"
 

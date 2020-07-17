@@ -209,8 +209,6 @@ namespace vtil::math
         else                                 return ( uint64_t ) imm;
     }
 
-
-
     // Implement the jump-table based, compiler optimized sign/zero extension.
     //
     namespace impl
