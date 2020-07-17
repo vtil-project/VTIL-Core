@@ -46,9 +46,9 @@ namespace vtil
 		
 		// Constructs by reference to type.
 		//
-		template<typename = std::enable_if_t<std::is_const_v<T>>>
-		optional_reference( std::remove_const_t<T>&& ref ) : pointer( &ref ) {}
+		optional_reference( T&& ref )                      : pointer( &ref ) {}
 		optional_reference( T& ref )                       : pointer( &ref ) {}
+		optional_reference( std::optional<T>&& ref )       : pointer( ref.has_value() ? &ref.value() : nullptr ) {}
 		optional_reference( std::optional<T>& ref )        : pointer( ref.has_value() ? &ref.value() : nullptr ) {}
 		
 		// Default constructor / move / copy.

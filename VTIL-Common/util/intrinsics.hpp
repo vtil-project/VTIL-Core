@@ -28,27 +28,16 @@
 #pragma once
 #include <stdint.h>
 
-
 #ifdef _MSC_VER
     #include <intrin.h>
-
-    // Declare unreachable.
-    //
     #define unreachable() __assume(0)
 #else
-    // Declare unreachable.
-    //
     #define unreachable() __builtin_unreachable()
-
-    // Declare __forceinline.
-    //
-    #if not defined(__INTELLISENSE__) 
-	    #define __forceinline __attribute__((always_inline))
-    #endif
+    #define __forceinline __attribute__((always_inline))
 
     // Declare _?mul128
     //
-    inline static uint64_t _umul128( uint64_t _Multiplier, uint64_t _Multiplicand, uint64_t* _HighProduct )
+    __forceinline static uint64_t _umul128( uint64_t _Multiplier, uint64_t _Multiplicand, uint64_t* _HighProduct )
     {
         uint64_t LowProduct;
         uint64_t HighProduct;
@@ -61,7 +50,7 @@
         return LowProduct;
     }
 
-    inline static int64_t _mul128( int64_t _Multiplier, int64_t _Multiplicand, int64_t* _HighProduct )
+    __forceinline static int64_t _mul128( int64_t _Multiplier, int64_t _Multiplicand, int64_t* _HighProduct )
     {
         int64_t LowProduct;
         int64_t HighProduct;
@@ -76,14 +65,14 @@
 
     // Declare _?mulh
     //
-    inline static int64_t __mulh( int64_t _Multiplier, int64_t _Multiplicand )
+    __forceinline static int64_t __mulh( int64_t _Multiplier, int64_t _Multiplicand )
     {
         int64_t HighProduct;
         _mul128( _Multiplier, _Multiplicand, &HighProduct );
         return HighProduct;
     }
 
-    inline static uint64_t __umulh( uint64_t _Multiplier, uint64_t _Multiplicand )
+    __forceinline static uint64_t __umulh( uint64_t _Multiplier, uint64_t _Multiplicand )
     {
         uint64_t HighProduct;
         _umul128( _Multiplier, _Multiplicand, &HighProduct );
