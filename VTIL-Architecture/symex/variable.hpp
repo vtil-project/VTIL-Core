@@ -199,11 +199,12 @@ namespace vtil::symbolic
 
 	// Wrappers for quick variable->expression creaton.
 	//
-	static expression make_memory_ex( const pointer& p, bitcnt_t n ) { return variable{ { p ,n } }.to_expression(); }
-	static expression make_register_ex( const register_desc& r, bool unpack = false ) { return variable{ r }.to_expression( unpack ); }
-	static expression make_undefined_ex( bitcnt_t n ) { return variable{ make_undefined( n ) }.to_expression(); }
+	[[deprecated]] static expression make_memory_ex( const pointer& p, bitcnt_t n ) { return variable{ { p ,n } }.to_expression(); }
+	[[deprecated]] static expression make_register_ex( const register_desc& r, bool unpack = false ) { return variable{ r }.to_expression( unpack ); }
+	[[deprecated]] static expression make_undefined_ex( bitcnt_t n ) { return variable{ make_undefined( n ) }.to_expression(); }
 
-
+	// Implement lazy wrappers for variable conversion.
+	//
 	namespace impl
 	{
 		template<typename iterator_type>
@@ -213,7 +214,7 @@ namespace vtil::symbolic
 			{
 				const iterator_type& it;
 				bitcnt_t n;
-				auto operator[]( const pointer& p ) const { return variable( it, { p, n } ); }
+				auto operator[]( const pointer& p ) const { return variable( it, { p, n } ).to_expression(); }
 			};
 
 			iterator_type it;
@@ -234,21 +235,26 @@ namespace vtil::symbolic
 			template<typename T = il_const_iterator>
 			auto operator()( T&& it ) const { return bound_memory<T>{ std::forward<T>( it ) }; }
 		};
+
+		template<typename iterator_type>
+		struct bound_context
+		{
+			iterator_type it;
+			constexpr bound_context( iterator_type _it ) : it{ _it } {}
+
+			template<typename T>
+			auto operator[]( T&& id ) const { return variable( it, register_cast<std::decay_t<T>>{}( std::forward<T>( id ) ) ).to_expression(); }
+		};
+
+		struct context_wrapper : bound_context<const il_const_iterator&>
+		{
+			constexpr context_wrapper() : bound_context{ make_default<il_const_iterator>() } {}
+
+			template<typename T = il_const_iterator>
+			auto operator()( T&& it ) const { return bound_context<T>{ std::forward<T>( it ) }; }
+		};
 	};
 
-	static constexpr impl::memory_wrapper MEMORY;
-	
-	static void test_LOL()
-	{
-		// T&& => T&&
-		// T& => T&
-		// T => T&&
-		symbolic::expression a;
-		MEMORY.qword[ a + 0x512 ];
-		MEMORY( il_iterator{} )( a + 0x23, 48 );
-		MEMORY.qword[ a + 0x23 ];
-		MEMORY( il_iterator{} ).qword[ a + 0x23 ];
-
-	}
-
+	static constexpr impl::memory_wrapper MEMORY = {};
+	static constexpr impl::context_wrapper CTX = {};
 };
