@@ -37,12 +37,12 @@ namespace vtil
 		iterator_type ibegin;
 		iterator_type iend;
 
-		iterator_type begin() const { return ibegin; }
-		iterator_type end() const { return iend; }
+		constexpr iterator_type begin() const { return ibegin; }
+		constexpr iterator_type end() const { return iend; }
 	};
 
 	template<typename iterator_type>
-	auto make_range( iterator_type begin, iterator_type end )
+	static constexpr auto make_range( iterator_type begin, iterator_type end )
 	{
 		return range_t<iterator_type>{ std::move( begin ), std::move( end ) };
 	}

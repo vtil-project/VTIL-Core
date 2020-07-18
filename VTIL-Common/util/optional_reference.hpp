@@ -42,64 +42,64 @@ namespace vtil
 
 		// Null reference constructors.
 		//
-		optional_reference( std::nullopt_t ) : pointer( nullptr ) {}
+		constexpr optional_reference( std::nullopt_t ) : pointer( nullptr ) {}
 		
 		// Constructs by reference to type.
 		//
-		optional_reference( T&& ref )                      : pointer( &ref ) {}
-		optional_reference( T& ref )                       : pointer( &ref ) {}
-		optional_reference( std::optional<T>&& ref )       : pointer( ref.has_value() ? &ref.value() : nullptr ) {}
-		optional_reference( std::optional<T>& ref )        : pointer( ref.has_value() ? &ref.value() : nullptr ) {}
+		constexpr optional_reference( T&& ref )                      : pointer( &ref ) {}
+		constexpr optional_reference( T& ref )                       : pointer( &ref ) {}
+		constexpr optional_reference( std::optional<T>&& ref )       : pointer( ref.has_value() ? &ref.value() : nullptr ) {}
+		constexpr optional_reference( std::optional<T>& ref )        : pointer( ref.has_value() ? &ref.value() : nullptr ) {}
 		
 		// Default constructor / move / copy.
 		//
-		optional_reference() = default;
-		optional_reference( optional_reference&& ) = default;
-		optional_reference( const optional_reference& ) = default;
-		optional_reference& operator=( optional_reference&& ) = default;
-		optional_reference& operator=( const optional_reference& ) = default;
+		constexpr optional_reference() = default;
+		constexpr optional_reference( optional_reference&& ) = default;
+		constexpr optional_reference( const optional_reference& ) = default;
+		constexpr optional_reference& operator=( optional_reference&& ) = default;
+		constexpr optional_reference& operator=( const optional_reference& ) = default;
 
 		// Optional assignment to reference stored.
 		//
-		void assign_if( T&& value ) { if ( pointer ) *pointer = value; }
-		void assign_if( const T& value ) { if ( pointer ) *pointer = value; }
+		constexpr void assign_if( T&& value ) { if ( pointer ) *pointer = value; }
+		constexpr void assign_if( const T& value ) { if ( pointer ) *pointer = value; }
 
 		// Implement observers, mimicking std::optional<T>.
 		// -------------------------------------------------
 		// Accesses the contained value.
 		//
-		T& value() { return *pointer; }
-		T& value() const { return *pointer; }
-		T value_or( const T& def ) const { return has_value() ? value() : def; }
-		T& value_or( std::remove_const_t<T>& def ) const { return has_value() ? value() : def; }
-		T& operator*() { return value(); }
-		T& operator*() const { return value(); }
-		T* operator->() { return pointer; }
-		T* operator->() const { return pointer; }
+		constexpr T& value() { return *pointer; }
+		constexpr T& value() const { return *pointer; }
+		constexpr T value_or( const T& def ) const { return has_value() ? value() : def; }
+		constexpr T& value_or( std::remove_const_t<T>& def ) const { return has_value() ? value() : def; }
+		constexpr T& operator*() { return value(); }
+		constexpr T& operator*() const { return value(); }
+		constexpr T* operator->() { return pointer; }
+		constexpr T* operator->() const { return pointer; }
 
 		// Checks whether the object contains a value.
 		//
-		bool has_value() const { return pointer != nullptr; }
-		explicit operator bool() const { return has_value(); }
+		constexpr bool has_value() const { return pointer != nullptr; }
+		constexpr explicit operator bool() const { return has_value(); }
 
 		// Implement modifiers, mimicking std::optional<T>.
 		// -------------------------------------------------
 		// Destroys currently held reference.
 		//
-		void reset() { pointer = nullptr; }
+		constexpr void reset() { pointer = nullptr; }
 
 		// Constructs the contained value in-place.
 		//
-		void emplace( T& ref ) { pointer = &ref; }
+		constexpr void emplace( T& ref ) { pointer = &ref; }
 
 		// Decays the reference to a constant qualified instance.
 		//
-		operator optional_reference<const T>() const { return { pointer }; }
+		constexpr operator optional_reference<const T>() const { return { pointer }; }
 
 		// Decay to reference, if no value held UB.
 		//
-		operator T& () { dassert( has_value() ); return *( T* ) pointer; }
-		operator const T& () const { dassert( has_value() ); return *( T* ) pointer; }
+		constexpr operator T& () { dassert( has_value() ); return *( T* ) pointer; }
+		constexpr operator const T& () const { dassert( has_value() ); return *( T* ) pointer; }
 	};
 	template<typename T>
 	using optional_creference = optional_reference<const T>;
@@ -107,13 +107,13 @@ namespace vtil
 	// Creates an optional reference to the given pointer if the condition is met.
 	//
 	template<typename T>
-	static auto dereference_if( bool condition, T ptr )
+	static constexpr auto dereference_if( bool condition, T ptr )
 	{
 		return condition ? optional_reference( *ptr ) : std::nullopt;
 	}
 
 	template<typename T>
-	static auto dereference_if_n( bool condition, T ptr, size_t idx )
+	static constexpr auto dereference_if_n( bool condition, T ptr, size_t idx )
 	{
 		return condition ? optional_reference{ *( ptr + idx ) } : std::nullopt;
 	}

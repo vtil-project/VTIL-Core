@@ -105,14 +105,6 @@ namespace vtil
 	//
 	template<typename T> __forceinline static constexpr T make_copy( const T& x ) { return x; }
 
-	// Creates an uninitialized T.
-	//
-	template<typename T> __forceinline static T make_uninit()
-	{
-		char raw[ sizeof( T ) ];
-		return std::move( *( T* ) &raw );
-	}
-
 	// Implement helpers for basic series creation.
 	//
 	namespace impl

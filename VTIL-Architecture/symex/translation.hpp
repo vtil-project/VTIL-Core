@@ -262,7 +262,7 @@ namespace vtil
 				// If left hand side is not a register, and operator is commutative, switch sides.
 				// Force left hand side into a register.
 				//
-				if ( !lhs.is_register() && math::descriptor_of( op )->is_commutative )
+				if ( !lhs.is_register() && math::descriptor_of( op ).is_commutative )
 					std::swap( lhs, rhs );
 
 				// Push [<INS> Lhs Rhs] and return Lhs.

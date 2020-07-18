@@ -134,13 +134,13 @@ namespace vtil::symbolic::directive
 		{ 
 			// Resolve operator descriptor, if unary, redirect to the matching of RHS. 
 			// 
-			const math::operator_desc* desc = exp->get_op_desc(); 
-			if ( desc->operand_count == 1 ) 
+			const math::operator_desc& desc = exp->get_op_desc(); 
+			if ( desc.operand_count == 1 ) 
 				return fast_match( results, dir->rhs, exp->rhs, index ); 
  
 			// If operator is commutative: 
 			// 
-			if ( desc->is_commutative ) 
+			if ( desc.is_commutative ) 
 			{ 
 				// Save the current table on stack. 
 				// 

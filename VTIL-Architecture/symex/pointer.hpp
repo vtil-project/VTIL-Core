@@ -50,7 +50,7 @@ namespace vtil::symbolic
 		// List of pointer bases we consider to be restricted, can be expanded by user
 		// but defaults to image base and stack pointer.
 		//
-		static std::set<register_desc> restricted_bases;
+		inline static std::set<register_desc> restricted_bases = { REG_SP, REG_IMGBASE };
 
 		// Declares the symbolic pointer weak.
 		//

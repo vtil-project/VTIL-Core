@@ -452,8 +452,8 @@ namespace vtil::symbolic
 
 			// If unary operator:
 			//
-			const math::operator_desc* desc = get_op_desc();
-			if ( desc->operand_count == 1 )
+			const math::operator_desc& desc = get_op_desc();
+			if ( desc.operand_count == 1 )
 			{
 				// Partially evaluate the expression.
 				//
@@ -473,7 +473,7 @@ namespace vtil::symbolic
 			//
 			else
 			{
-				fassert( desc->operand_count == 2 );
+				fassert( desc.operand_count == 2 );
 
 				// If operation is __cast or __ucast, right hand side must always be a constant, propagate 
 				// left hand side value and resize as requested.
@@ -602,13 +602,13 @@ namespace vtil::symbolic
 
 				// Multiply with operator complexity coefficient.
 				//
-				complexity *= desc->complexity_coeff;
+				complexity *= desc.complexity_coeff;
 
 				// If operator is commutative, sort the array so that the
 				// positioning does not matter.
 				//
 				hash_t operand_hashes[] = { lhs->hash(), rhs->hash() };
-				if ( desc->is_commutative )
+				if ( desc.is_commutative )
 					std::sort( operand_hashes, std::end( operand_hashes ) );
 				
 				// Begin hash as combine(op#1, op#2).
@@ -631,7 +631,7 @@ namespace vtil::symbolic
 					// This works since mulitplication between them will only be negative
 					// if the hints mismatch.
 					//
-					complexity *= 1 + math::sgn( operand->get()->get_op_desc()->hint_bitwise * desc->hint_bitwise );
+					complexity *= 1 + math::sgn( operand->get()->get_op_desc().hint_bitwise * desc.hint_bitwise );
 				}
 			}
 			
@@ -727,8 +727,8 @@ namespace vtil::symbolic
 
 		// Determine the final bitwise hint.
 		//
-		int8_t a_hint = a.is_expression() ? a.get_op_desc()->hint_bitwise : 0;
-		int8_t b_hint = b.is_expression() ? b.get_op_desc()->hint_bitwise : 0;
+		int8_t a_hint = a.is_expression() ? a.get_op_desc().hint_bitwise : 0;
+		int8_t b_hint = b.is_expression() ? b.get_op_desc().hint_bitwise : 0;
 		int8_t m_hint = a_hint != 0 && b_hint != 0 
 			? ( a_hint == 1 && b_hint == 1 ) 
 			: ( a_hint != 0 ? a_hint : b_hint );
@@ -778,8 +778,8 @@ namespace vtil::symbolic
 
 		// Resolve operator descriptor, if unary, just compare right hand side.
 		//
-		const math::operator_desc* desc = get_op_desc();
-		if ( desc->operand_count == 1 )
+		const math::operator_desc& desc = get_op_desc();
+		if ( desc.operand_count == 1 )
 			return rhs == other.rhs || rhs->is_identical( *other.rhs );
 
 		// If both sides match, return true.
@@ -789,7 +789,7 @@ namespace vtil::symbolic
 
 		// If not, check in reverse as well if commutative and return the final result.
 		//
-		return desc->is_commutative && lhs->is_identical( *other.rhs ) && rhs->is_identical( *other.lhs );
+		return desc.is_commutative && lhs->is_identical( *other.rhs ) && rhs->is_identical( *other.lhs );
 	}
 
 	// Converts to human-readable format.
@@ -799,7 +799,7 @@ namespace vtil::symbolic
 		// Redirect to operator descriptor.
 		//
 		if ( is_expression() )
-			return get_op_desc()->to_string( lhs ? lhs->to_string() : "", rhs->to_string() );
+			return get_op_desc().to_string( lhs ? lhs->to_string() : "", rhs->to_string() );
 
 		// Handle constants, invalids and variables.
 		//

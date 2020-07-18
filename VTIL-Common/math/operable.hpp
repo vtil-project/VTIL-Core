@@ -82,7 +82,7 @@ namespace vtil::math
 
         // Resizes the constant, must be overriden by the base type to handle unknowns.
         //
-        void resize( bitcnt_t new_size, bool sign_extend = false )
+        constexpr void resize( bitcnt_t new_size, bool sign_extend = false )
         {
             fassert( value.is_known() );
             value.resize( new_size, sign_extend );

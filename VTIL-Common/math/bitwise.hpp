@@ -47,7 +47,7 @@ namespace vtil::math
     // Narrows the given type in a safe manner.
     //
     template<Integral T, Integral T2>
-    static T narrow_cast( T2 o )
+    static constexpr T narrow_cast( T2 o )
     {
         static_assert( sizeof( T ) <= sizeof( T2 ), "Narrow cast is extending." );
 
@@ -63,7 +63,7 @@ namespace vtil::math
     template<Integral T>
     static constexpr bool sgn( T type ) { return bool( type >> ( ( sizeof( T ) * 8 ) - 1 ) ); }
 
-    // Implement platform-indepdenent popcnt/msb/lsb.
+    // Implement platform-indepdenent bitwise operations.
     //
     static constexpr bitcnt_t popcnt( uint64_t x )
     {
@@ -120,13 +120,49 @@ namespace vtil::math
         //
         return 0;
     }
+    static constexpr bool bit_test( uint64_t value, bitcnt_t n )
+    {
+        // Optimized using intrinsic on MSVC, Clang should be smart enough to do this on its own.
+        //
+#ifdef _MSC_VER
+        if ( !std::is_constant_evaluated() )
+            return _bittest64( ( long long* ) &value, n );
+#endif
+        return value & ( 1ull << n );
+    }
+    static constexpr bool bit_set( uint64_t& value, bitcnt_t n )
+    {
+        // Optimized using intrinsic on MSVC, Clang should be smart enough to do this on its own.
+        //
+#ifdef _MSC_VER
+        if ( !std::is_constant_evaluated() )
+            return _bittestandset64( ( long long* ) &value, n );
+#endif
+        uint64_t mask = ( 1ull << ( n & 63 ) );
+        bool is_set = value & mask;
+        value |= mask;
+        return is_set;
+    }
+    static constexpr bool bit_reset( uint64_t& value, bitcnt_t n )
+    {
+        // Optimized using intrinsic on MSVC, Clang should be smart enough to do this on its own.
+        //
+#ifdef _MSC_VER
+        if ( !std::is_constant_evaluated() )
+            return _bittestandreset64( ( long long* ) &value, n );
+#endif
+        uint64_t mask = ( 1ull << ( n & 63 ) );
+        bool is_set = value & mask;
+        value &= ~mask;
+        return is_set;
+    }
 
     // Used to find a bit with a specific value in a linear memory region.
     //
     static constexpr size_t bit_npos = ( size_t ) -1;
     
     template<typename T>
-    static size_t find_bit( const T* begin, const T* end, bool value )
+    static constexpr size_t find_bit( const T* begin, const T* end, bool value )
     {
         static constexpr size_t bit_size = sizeof( T ) * 8;
         using uint_t = std::make_unsigned_t<T>;
@@ -223,24 +259,24 @@ namespace vtil::math
             union zx_t { uint64_t input; struct { unsigned long long result : N; }; };
             union sx_t { uint64_t input; struct { signed   long long result : N; }; };
             
-            constexpr static uint64_t zx( uint64_t value ) { return zx_t{ value }.result; }
-            constexpr static int64_t  sx( uint64_t value ) { return sx_t{ value }.result; }
+            static constexpr uint64_t zx( uint64_t value ) { return zx_t{ value }.result; }
+            static constexpr int64_t  sx( uint64_t value ) { return sx_t{ value }.result; }
         };
         // N = 64 should return as is.
         //
         template<>
         struct integer_resizer<64>
         {
-            constexpr static uint64_t zx( uint64_t value ) { return value; }
-            constexpr static int64_t  sx( uint64_t value ) { return value; }
+            static constexpr uint64_t zx( uint64_t value ) { return value; }
+            static constexpr int64_t  sx( uint64_t value ) { return value; }
         };
         // N = 1 should not perform sign extension as it's intended for boolean use.
         //
         template<>
         struct integer_resizer<1>
         {
-            constexpr static uint64_t zx( uint64_t value ) { return value & 1; }
-            constexpr static int64_t  sx( uint64_t value ) { return value & 1; }
+            static constexpr uint64_t zx( uint64_t value ) { return value & 1; }
+            static constexpr int64_t  sx( uint64_t value ) { return value & 1; }
         };
         // N = 0 should throw upon invokation.
         //
@@ -277,9 +313,9 @@ namespace vtil::math
     //
     enum class bit_state : int8_t
     {
-        zero = -1,
+        zero =    -1,
         unknown = 0,
-        one = +1,
+        one =     +1,
     };
 
     // Bit-vector holding 0 to 64 bits of value with optional unknowns.

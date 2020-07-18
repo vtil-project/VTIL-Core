@@ -260,14 +260,14 @@ namespace vtil::symbolic
 
 		// Wrapper around math::descriptor_of()
 		//
-		const math::operator_desc* get_op_desc() const { return math::descriptor_of( op ); };
+		const math::operator_desc& get_op_desc() const { return math::descriptor_of( op ); };
 
 		// Helpers to determine the type of the expression.
 		//
 		bool is_variable() const { return uid; }
 		bool is_expression() const { return op != math::operator_id::invalid; }
-		bool is_unary() const { return is_expression() && get_op_desc()->operand_count == 1; }
-		bool is_binary() const { return is_expression() && get_op_desc()->operand_count == 2; }
+		bool is_unary() const { return is_expression() && get_op_desc().operand_count == 1; }
+		bool is_binary() const { return is_expression() && get_op_desc().operand_count == 2; }
 		bool is_valid() const { return is_expression() || is_variable() || is_constant(); }
 		explicit operator bool() const { return is_valid(); }
 

@@ -33,11 +33,6 @@
 
 namespace vtil::symbolic
 {
-	// List of pointer bases we consider to be restricted, can be expanded by user
-	// but defaults to image base and stack pointer.
-	//
-	std::set<register_desc> pointer::restricted_bases = { REG_SP, REG_IMGBASE };
-
 	// Given a variable or an expression, checks if it is basing from a 
 	// known restricted pointer, if so returns the register it's based off of.
 	//

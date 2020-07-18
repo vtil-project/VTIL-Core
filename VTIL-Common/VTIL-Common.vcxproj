@@ -185,7 +185,6 @@
     <ClCompile Include="arch\arm64\arm64_assembler.cpp" />
     <ClCompile Include="arch\arm64\arm64_disassembler.cpp" />
     <ClCompile Include="io\logger.cpp" />
-    <ClCompile Include="math\operators.cpp" />
     <ClCompile Include="util\thread_identifier.cpp" />
     <ClCompile Include="util\variant.cpp" />
   </ItemGroup>

@@ -335,7 +335,7 @@ namespace vtil
 	// Explicit temporary reference creation.
 	//
 	template<typename T>
-	__forceinline constexpr static shared_reference<T> make_local_reference( const T* ptr )
+	__forceinline static constexpr shared_reference<T> make_local_reference( const T* ptr )
 	{
 		shared_reference<T> ret;
 		ret.pointer = ( uint64_t ) ptr;

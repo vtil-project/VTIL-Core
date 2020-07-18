@@ -66,12 +66,12 @@ namespace vtil::symbolic::directive
 
 		// Handle expression operators.
 		//
-		if ( auto desc = math::descriptor_of( op ) )
-			return desc->to_string( lhs ? lhs->to_string() : "", rhs->to_string() );
-
+		if ( uint8_t( op ) < directive_op_desc::begin_id )
+			return math::descriptor_of( op ).to_string( lhs ? lhs->to_string() : "", rhs->to_string() );
 		// Handle directive operators.
 		//
-		return directive_op_desc{ op }.to_string( lhs ? lhs->to_string() : "", rhs->to_string() );
+		else
+			return directive_op_desc{ op }.to_string( lhs ? lhs->to_string() : "", rhs->to_string() );
 	}
 
 	// Simple equivalence check.

@@ -73,7 +73,7 @@ namespace vtil
 
 	// Used to combine two hashes of arbitrary size.
 	//
-	static hash_t combine_hash( const hash_t& a, const hash_t& b )
+	static hash_t combine_hash( hash_t a, const hash_t& b )
 	{
 		static constexpr auto rotl64 = [ ] ( uint64_t x, int r )
 		{
@@ -102,7 +102,6 @@ namespace vtil
 
 		static constexpr int N = VTIL_HASH_SIZE / 64;
 
-		hash_t r = make_uninit<hash_t>();
 		for ( int i = 0; i < N; i++ )
 		{
 			// Key rotating A is decided by the element of B on 
@@ -113,9 +112,9 @@ namespace vtil
 
 			// Rotate both hashes, add together and combine with the combination key.
 			//
-			r.value[ i ] = ( rotl64( a.value[ i ], ka ) + rotl64( b.value[ i ], kb ) ) ^ hash_combination_keys[ ka ];
+			a.value[ i ] = ( rotl64( a.value[ i ], ka ) + rotl64( b.value[ i ], kb ) ) ^ hash_combination_keys[ ka ];
 		}
-		return r;
+		return a;
 	}
 
 	// Define basic hasher.

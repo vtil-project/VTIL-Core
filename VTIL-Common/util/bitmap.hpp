@@ -50,15 +50,15 @@ namespace vtil
 
 		// Default construction / copy / move.
 		//
-		bitmap() = default;
-		bitmap( bitmap&& ) = default;
-		bitmap( const bitmap& ) = default;
-		bitmap& operator=( bitmap&& ) = default;
-		bitmap& operator=( const bitmap& ) = default;
+		constexpr bitmap() = default;
+		constexpr bitmap( bitmap&& ) = default;
+		constexpr bitmap( const bitmap& ) = default;
+		constexpr bitmap& operator=( bitmap&& ) = default;
+		constexpr bitmap& operator=( const bitmap& ) = default;
 
 		// Find any bit with the given value in the array.
 		//
-		size_t find( bool value ) const
+		constexpr size_t find( bool value ) const
 		{
 			// Invoke find bit.
 			//
@@ -79,34 +79,19 @@ namespace vtil
 
 		// Gets the value of the Nth bit.
 		//
-		bool get( size_t n ) const
+		constexpr bool get( size_t n ) const
 		{
 			dassert( n < N );
-#ifdef _MSC_VER
-			return _bittest64( ( long long* ) blocks + ( n / 64 ), n & 63 );
-#else
-			return blocks[ n / 64 ] & ( 1ull << ( n & 63 ) );
-#endif
+			return math::bit_test( blocks[ n / 64 ], n & 63 );
 		}
 
 		// Sets the value of the Nth bit.
 		//
-		bool set( size_t n, bool v )
+		constexpr bool set( size_t n, bool v )
 		{
 			dassert( n < N );
-#ifdef _MSC_VER
-			if ( v ) return _bittestandset64( ( long long* ) blocks + ( n / 64 ), n & 63 );
-			else     return _bittestandreset64( ( long long* ) blocks + ( n / 64 ), n & 63 );
-#else
-			uint64_t& block = blocks[ n / 64 ];
-			size_t mask = ( 1ull << ( n & 63 ) );
-			
-			bool retval = block & mask;
-			if ( v ) block |= mask;
-			else     block &= ~mask;
-			
-			return retval;
-#endif
+			if ( v ) return math::bit_set( blocks[ n / 64 ], n & 63 );
+			else     return math::bit_reset( blocks[ n / 64 ], n & 63 );
 		}
 	};
 };

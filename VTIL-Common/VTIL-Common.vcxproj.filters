@@ -213,9 +213,6 @@
     <ClCompile Include="io\logger.cpp">
       <Filter>I/O</Filter>
     </ClCompile>
-    <ClCompile Include="math\operators.cpp">
-      <Filter>Math</Filter>
-    </ClCompile>
     <ClCompile Include="util\variant.cpp">
       <Filter>Utility</Filter>
     </ClCompile>
