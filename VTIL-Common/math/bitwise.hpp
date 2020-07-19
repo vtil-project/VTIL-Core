@@ -164,7 +164,7 @@ namespace vtil::math
     template<typename T>
     static constexpr size_t find_bit( const T* begin, const T* end, bool value )
     {
-        static constexpr size_t bit_size = sizeof( T ) * 8;
+        constexpr size_t bit_size = sizeof( T ) * 8;
         using uint_t = std::make_unsigned_t<T>;
         using int_t =  std::make_signed_t<T>;
 
