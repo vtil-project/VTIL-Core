@@ -71,6 +71,17 @@ namespace vtil
 	         typename distance_fn = impl::def_substract<pointer_unit>>
 	struct sinkhole
 	{
+		struct access_options
+		{
+			// Discards the value of any pointers that may(!) overlap with our dereferencing.
+			//
+			bool discard_value = false;
+
+			// Fails upon alias analysis failure, even if discard is set.
+			//
+			bool strict_aliasing = false;
+		};
+
 		// Common typedefs.
 		//
 		using cache_type =               std::map<pointer_unit, value_unit, strong_predicate>;
@@ -151,10 +162,9 @@ namespace vtil
 			return it;
 		}
 
-		// Dereferences the pointer as reference.
+		// Dereferences the pointer as reference, second bool indicates alias failure.
 		//
-		template<bool discard_value = false>
-		optional_reference<value_unit> dereference( const pointer_unit& ptr, bitcnt_t size )
+		std::pair<optional_reference<value_unit>, bool> dereference( const pointer_unit& ptr, bitcnt_t size, access_options opt )
 		{
 			// Validate the addressing.
 			//
@@ -174,11 +184,11 @@ namespace vtil
 			//
 			pointer_unit min_ptr = offset_fn{}( weaken_pointer{}( ptr ), -64 / 8 );
 			auto it_min = value_map.lower_bound( min_ptr );
-			if ( it_min == value_map.end() ) return std::nullopt;
+			if ( it_min == value_map.end() ) return { std::nullopt, false };
 
 			pointer_unit max_ptr = offset_fn{}( ptr, size / 8 );
 			auto it_max = value_map.upper_bound( max_ptr );
-			if ( it_min == it_max ) return std::nullopt;
+			if ( it_min == it_max ) return { std::nullopt, false };
 
 			for ( auto it = it_min; it != it_max; it++ )
 			{
@@ -198,14 +208,13 @@ namespace vtil
 				std::optional wl_b = distance_fn{}( it->first, ptr );
 				if ( !wl_b )
 				{
-					if ( discard_value )
-					{
-						it = value_map.erase( it );
-						if ( it == value_map.end() )
-							break;
-						goto retry;
-					}
-					return std::nullopt;
+					if ( opt.strict_aliasing || !opt.discard_value )
+						return { std::nullopt, true };
+
+					it = value_map.erase( it );
+					if ( it == value_map.end() )
+						break;
+					goto retry;
 				}
 
 				// Calculate all pointers.
@@ -246,10 +255,10 @@ namespace vtil
 					// WL  WH	| WL  WH
 					//
 					it = acquire( it, rl - wl, wh - rl );
-					if constexpr ( !discard_value )
+					if ( !opt.discard_value )
 					{
-						result = *result & ~math::fill( wh - rl );
-						result = *result | it->second;
+						result = std::move( *result ) & ~math::fill( wh - rl );
+						result = std::move( *result ) | it->second;
 					}
 
 					// If displacement is zero, reference it as key hint, otherwise 
@@ -280,12 +289,12 @@ namespace vtil
 					//  RL      RH | RL      RH	| RL  RH  
 					//    WL  WH   |   WL  WH	|   WL  WH
 					it = acquire( it, 0, overlap_cnt );
-					if constexpr ( !discard_value )
+					if ( !opt.discard_value )
 					{
 						value_unit mid_val = it->second;
 						mid_val.resize( size );
-						result = *result & ~math::fill( overlap_cnt, wl );
-						result = *result | ( std::move( mid_val ) << wl );
+						result = std::move( *result ) & ~math::fill( overlap_cnt, wl );
+						result = std::move( *result ) | ( std::move( mid_val ) << wl );
 					}
 					merge_list.emplace_back( std::move( it ) );
 				}
@@ -314,7 +323,7 @@ namespace vtil
 
 			// Return the result as is.
 			//
-			return ( *key_entry )->second;
+			return { ( *key_entry )->second, false };
 		}
 
 		// Reads N bits from the given pointer.
@@ -323,7 +332,7 @@ namespace vtil
 		{
 			// Dereference and return as is.
 			//
-			return dereference<>( ptr, size );
+			return dereference( ptr, size, {} ).first;
 		}
 		value_unit read_v( const pointer_unit& ptr, bitcnt_t size )
 		{
@@ -337,7 +346,7 @@ namespace vtil
 			// Dereference making sure value is discarded, if successful
 			// overwrite it, otherwise create a new entry and reference it.
 			//
-			if ( optional_reference ref = dereference<true>( ptr, ( value.size() + 7 ) & ~7 ) )
+			if ( optional_reference ref = dereference( ptr, ( value.size() + 7 ) & ~7, { .discard_value = true } ).first )
 				return *ref = value;
 			else
 				return value_map.emplace( ptr, value ).first->second;

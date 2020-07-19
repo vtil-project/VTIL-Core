@@ -106,13 +106,28 @@ namespace vtil
 
 	// Returns a tuple that behaves equivalent to .rbegin and .rend.
 	//
-	template<typename container>
-	static auto reverse_iterators( container& cont )
+	template<typename T>
+	static auto reverse_iterators( T& cont )
 	{
 		using iterator_type = decltype( cont.begin() );
 		return std::make_tuple(
 			reversed_iterator<iterator_type>{ std::prev( cont.end() ), cont.begin() },
 			reversed_iterator_end_tag{}
 		);
+	}
+
+	// Reverses entire container iteration.
+	//
+	template<typename T>
+	struct reversed_container_proxy
+	{
+		T& proxy;
+		decltype( auto ) begin() { return proxy.rbegin(); }
+		decltype( auto ) end()   { return proxy.rend(); }
+	};
+	template<typename T>
+	static constexpr auto backwards( T& cont )
+	{
+		return reversed_container_proxy<T>{ cont };
 	}
 };

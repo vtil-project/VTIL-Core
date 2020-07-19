@@ -90,6 +90,12 @@ namespace vtil
 	//
 	struct register_desc : reducable<register_desc>
 	{
+		// Identifier in a form that ignores the offset / region size of the mapping.
+		//
+		struct weak_id { uint32_t flags; uint64_t id; };
+		constexpr weak_id weaken() const { return { flags, combined_id }; }
+		constexpr operator weak_id() const { return weaken(); }
+
 		// Flags of the current register, as described in "enum register_flag".
 		//
 		uint32_t flags = 0;
@@ -126,6 +132,11 @@ namespace vtil
 
 		// Construct a fully formed register.
 		//
+		explicit constexpr register_desc( weak_id id, bitcnt_t bit_count, bitcnt_t bit_offset = 0 )
+			: flags( id.flags ), combined_id( id.id ), bit_count( bit_count ), bit_offset( bit_offset )
+		{
+			is_valid( true );
+		}
 		constexpr register_desc( uint32_t flags, uint64_t id, bitcnt_t bit_count, bitcnt_t bit_offset = 0, uint64_t architecture = 0 )
 			: flags( flags ), local_id( id ), bit_count( bit_count ), bit_offset( bit_offset ), architecture( architecture )
 		{
