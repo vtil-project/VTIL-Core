@@ -277,11 +277,11 @@ namespace vtil::math
             //
             case operator_id::cast:
             case operator_id::ucast:          unreachable();
-        }
 
-        // - Rest default to maximum operand size.
-        //
-        return std::max( bcnt_lhs, bcnt_rhs );
+            // - Rest default to maximum operand size.
+            //
+            default:                          return std::max( bcnt_lhs, bcnt_rhs );
+        }
     }
 
     // Applies the specified operator [id] on left hand side [lhs] and right hand side [rhs]
@@ -908,6 +908,11 @@ namespace vtil::math
                 // Simply compare all bits and adjust to the operator result.
                 //
                 return bit_vector( ( op == operator_id::unot_equal ) ^ ( lhs.known_one() == rhs.known_one() ), 1 );
+
+            // If unknown, fall through:
+            //
+            default:
+                break;
         }
         unreachable();
     }
