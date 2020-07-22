@@ -155,7 +155,7 @@ namespace vtil
 
 		// Construct a fully formed register.
 		//
-		explicit constexpr register_desc( weak_id id, bitcnt_t bit_count, bitcnt_t bit_offset = 0 )
+		constexpr register_desc( weak_id id, bitcnt_t bit_count, bitcnt_t bit_offset = 0 )
 			: flags( id.flags ), combined_id( id.cid ), bit_count( bit_count ), bit_offset( bit_offset )
 		{
 			is_valid( true );
@@ -265,6 +265,21 @@ namespace vtil
 			if ( combined_id != o.combined_id || flags != o.flags )
 				return false;
 			return get_mask() & o.get_mask();
+		}
+
+		// Simple wrappers to resize/rebase a register.
+		//
+		constexpr register_desc select( bitcnt_t new_bit_count, bitcnt_t new_bit_offset ) const
+		{
+			return { weaken(), new_bit_count, new_bit_offset };
+		}
+		constexpr register_desc rebase( bitcnt_t new_bit_offset ) const
+		{
+			return select( bit_count, new_bit_offset );
+		}
+		constexpr register_desc resize( bitcnt_t new_bit_count ) const  
+		{ 
+			return select( new_bit_count, bit_offset );
 		}
 
 		// Conversion to human-readable format.
