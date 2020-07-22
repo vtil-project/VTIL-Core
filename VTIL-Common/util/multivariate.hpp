@@ -95,7 +95,7 @@ namespace vtil
 
 		// Getter of the types.
 		//
-		template<typename T, typename M = const multivariate>
+		template<typename T, typename M = const multivariate<owner>>
 		T& get() const
 		{
 			// Acquire the database lock and check for existance.
@@ -123,7 +123,7 @@ namespace vtil
 			return var.get<T>();
 		}
 		template<typename T>
-		T& get() { return make_const( this )->get<T, multivariate>(); }
+		T& get() { return make_const( this )->get<T, multivariate<owner>>(); }
 
 		// Allows for convinient use of the type in the format of:
 		// - block_cache& cache = multivariate;
