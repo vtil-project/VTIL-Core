@@ -92,7 +92,30 @@ namespace vtil
 	{
 		// Identifier in a form that ignores the offset / region size of the mapping.
 		//
-		struct weak_id { uint32_t flags; uint64_t id; };
+		struct weak_id : reducable<weak_id> 
+		{ 
+			uint32_t flags; 
+			uint64_t cid; 
+			
+			// Construct from the weak identifier.
+			//
+			constexpr weak_id( uint32_t flags, uint64_t id ) 
+				: flags( flags ), cid( id ) {}
+
+			// Default copy / move.
+			//
+			weak_id( weak_id&& ) = default;
+			weak_id( const weak_id& ) = default;
+			weak_id& operator=( weak_id&& ) = default;
+			weak_id& operator=( const weak_id& ) = default;
+
+			// Declare reduction.
+			//
+			REDUCE_TO( flags, cid );
+		};
+
+		// Decay to weak identifier.
+		//
 		constexpr weak_id weaken() const { return { flags, combined_id }; }
 		constexpr operator weak_id() const { return weaken(); }
 
@@ -133,7 +156,7 @@ namespace vtil
 		// Construct a fully formed register.
 		//
 		explicit constexpr register_desc( weak_id id, bitcnt_t bit_count, bitcnt_t bit_offset = 0 )
-			: flags( id.flags ), combined_id( id.id ), bit_count( bit_count ), bit_offset( bit_offset )
+			: flags( id.flags ), combined_id( id.cid ), bit_count( bit_count ), bit_offset( bit_offset )
 		{
 			is_valid( true );
 		}

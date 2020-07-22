@@ -55,14 +55,15 @@ namespace vtil
 #define fassert__istringify(x) fassert__stringify(x)
 #define fassert(...) vtil::abort_if(!bool(__VA_ARGS__), fassert__stringify(__VA_ARGS__) " at " __FILE__ ":" fassert__istringify(__LINE__) )
 
+// Declare debug assertions, dassert is only asserted in debug mode, dassert_s
+// has the same functionality but is still evaluated in release mode.
+//
 #ifdef _DEBUG
-	// If in debug mode, same as assert.
-	//
-	#define dassert(...) fassert( __VA_ARGS__ )
+	#define dassert(...)     fassert( __VA_ARGS__ )
+	#define dassert_s( ... ) fassert( __VA_ARGS__ )
 #else
-	// If in release mode, just evaluated.
-	//
-	#define dassert(...) ( __VA_ARGS__ )
+	#define dassert(...)     
+	#define dassert_s( ... ) ( __VA_ARGS__ )
 #endif
 
 // Declare validation macro, used for generic is_valid() declaration where you want 
