@@ -61,6 +61,8 @@ namespace vtil
 	concept Iterable = requires( T v ) { std::begin( v ); std::end( v ); };
 	template<typename T>
 	concept Integral = std::is_integral_v<T>;
+	template<typename T, typename... Args>
+	concept ConstructableWith = requires { T( std::declval<Args>()... ); };
 
 	// Constructs a static constant given the type and parameters, returns a reference to it.
 	//
@@ -123,7 +125,7 @@ namespace vtil
 
 	// Gets the type at the given offset.
 	//
-	template<typename T, typename B>
+	template<typename T = void, typename B = void>
 	static auto* ptr_at( B* base, int32_t off ) { return carry_const( base, ( T* ) ( ( ( uint64_t ) base ) + off ) ); }
 	template<typename T, typename B>
 	static auto& ref_at( B* base, int32_t off ) { return *ptr_at<T>(base, off); }
