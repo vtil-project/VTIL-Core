@@ -75,7 +75,7 @@ namespace vtil
 
 		// Multivariate runtime context.
 		//
-		mutable multivariate context = {};
+		multivariate<instruction> context = {};
 
 		// Basic constructor, non-default constructor asserts the constructed
 		// instruction is valid according to the instruction descriptor.

@@ -30,6 +30,7 @@
 #include <mutex>
 #include "variant.hpp"
 #include "lt_typeid.hpp"
+#include "type_helpers.hpp"
 
 namespace vtil
 {
@@ -37,10 +38,14 @@ namespace vtil
 	// optimizers to store arbitrary per-block / per-instruction data at the respective 
 	// structures directly.
 	//
+	// - Should pass self as template type and be named "::context" if we are expected to pass 
+	//   owner in the constructor to the type.
+	//
+	template<typename owner = void>
 	struct multivariate
 	{
 		mutable std::mutex mtx;
-		mutable std::map<size_t, variant> database;
+		mutable std::unordered_map<size_t, variant> database;
 
 		// Default constructor.
 		//
@@ -73,7 +78,7 @@ namespace vtil
 		// Purges the object of the given type from the store.
 		//
 		template<typename T>
-		const void purge() const
+		void purge() const
 		{
 			std::lock_guard _g{ mtx };
 			database.erase( lt_typeid_v<T> );
@@ -82,31 +87,43 @@ namespace vtil
 		// Checks if we have the type in the store.
 		//
 		template<typename T>
-		const bool has() const
+		bool has() const
 		{
 			std::lock_guard _g{ mtx };
 			return database.contains( lt_typeid_v<T> );
 		}
 
-		// Functional getter, if variant is already in the database will return
-		// a reference to the stored data as is, otherwise will construct an empty 
-		// T{} and place it in the database before referencing, eventhough the const use
-		// is mutable, structure wraps each access to the database with a mutex so the
-		// indexing is still thread-safe.
+		// Getter of the types.
 		//
-		template<typename T>
-		const T& get() const
+		template<typename T, typename M = const multivariate>
+		T& get() const
 		{
-			// If variant is already in the database, return as is, else
-			// default construct it and reference that instead.
+			// Acquire the database lock and check for existance.
 			//
 			std::lock_guard _g{ mtx };
 			variant& var = database[ lt_typeid_v<T> ];
-			if( !var ) var = T{};
+
+			// If not constructed yet:
+			//
+			if ( !var )
+			{
+				// If we have been given an owner type and type accepts a pointer to the owner in
+				// the constructor, construct using the pointer to owner, otherwise, fallback to 
+				// the default constructor of the type.
+				//
+				if constexpr ( !std::is_same_v<owner, void> && 
+							   ( std::is_const_v<M> ? ConstructableWith<T, const owner*> : ConstructableWith<T, owner*> ) )
+					var = T( ptr_at<owner>( ( M* ) this, -make_offset( &owner::context ) ) );
+				else
+					var = T();
+			}
+
+			// Return the reference to the type.
+			//
 			return var.get<T>();
 		}
 		template<typename T>
-		T& get() { return const_cast<T&>( ( ( const multivariate* ) this )->get<T>() ); }
+		T& get() { return make_const( this )->get<T, multivariate>(); }
 
 		// Allows for convinient use of the type in the format of:
 		// - block_cache& cache = multivariate;

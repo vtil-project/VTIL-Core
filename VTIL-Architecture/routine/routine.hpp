@@ -102,7 +102,7 @@ namespace vtil
 
 		// Multivariate runtime context.
 		//
-		mutable multivariate context = {};
+		multivariate<routine> context = {};
 
 		// Helpers for the allocation of unique internal registers.
 		//

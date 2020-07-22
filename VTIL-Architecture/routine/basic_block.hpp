@@ -215,7 +215,7 @@ namespace vtil
 
 		// Multivariate runtime context.
 		//
-		mutable multivariate context = {};
+		multivariate<basic_block> context = {};
 
 		// Wrap the std::list fundamentals.
 		//
