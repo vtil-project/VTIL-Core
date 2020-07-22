@@ -101,9 +101,37 @@ namespace vtil
 	template<typename T> static constexpr std::add_const_t<T>& make_const( T& x ) noexcept { return x; }
 	template<typename T> static constexpr std::add_const_t<T>* make_const( T* x ) noexcept { return x; }
 
+	// Carries constant qualifiers of first type into second.
+	//
+	template<typename B, typename T, std::enable_if_t<!std::is_const_v<T>, int> = 0>
+	static constexpr std::conditional_t<std::is_const_v<B>, const T*, T*> carry_const( B* base, T* value ) { return value; }
+	template<typename B, typename T, std::enable_if_t<!std::is_const_v<T>, int> = 0>
+	static constexpr std::conditional_t<std::is_const_v<B>, const T&, T&> carry_const( B& base, T& value ) { return value; }
+
 	// Creates a copy of the given value.
 	//
 	template<typename T> __forceinline static constexpr T make_copy( const T& x ) { return x; }
+
+	// Makes a null pointer to type.
+	//
+	template<typename T> static constexpr T* make_null() { return ( T* ) nullptr; }
+
+	// Returns the offset of given member reference.
+	//
+	template<typename V, typename C> 
+	static constexpr int32_t make_offset( V C::* ref ) { return ( uint64_t ) &( make_null<C>()->*ref ); }
+
+	// Gets the type at the given offset.
+	//
+	template<typename T, typename B>
+	static auto* ptr_at( B* base, int32_t off ) { return carry_const( base, ( T* ) ( ( ( uint64_t ) base ) + off ) ); }
+	template<typename T, typename B>
+	static auto& ref_at( B* base, int32_t off ) { return *ptr_at<T>(base, off); }
+
+	// Member reference helper.
+	//
+	template<typename C, typename M>
+	using member_reference_t = M C::*;
 
 	// Implement helpers for basic series creation.
 	//
