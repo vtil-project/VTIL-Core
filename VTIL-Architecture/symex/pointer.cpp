@@ -33,6 +33,14 @@
 
 namespace vtil::symbolic
 {
+	// Magic value substituting for invalid xpointers.
+	//
+	static constexpr uint64_t invalid_xpointer = make_crandom();
+
+	// List of keys used for xpointer generation.
+	//
+	static constexpr std::array xpointer_keys = make_crandom_n<VTIL_SYM_PTR_XPTR_KEYS>( 1 );
+
 	// Given a variable or an expression, checks if it is basing from a 
 	// known restricted pointer, if so returns the register it's based off of.
 	//
@@ -82,21 +90,12 @@ namespace vtil::symbolic
 		}
 	}
 
-	// Magic value substituting for invalid xpointers.
-	//
-	static constexpr uint64_t invalid_xpointer = make_crandom();
-
-	// List of keys used for xpointer generation.
-	//
-	static constexpr std::array xpointer_keys = make_crandom_n<VTIL_SYM_PTR_XPTR_KEYS>( 1 );
-
 	// Construct from symbolic expression.
 	//
 	pointer::pointer( const expression::reference& _base ) : base( _base.simplify() )
 	{
-		// Determine pointer strength and the flags.
+		// Determine pointer flags.
 		//
-		strength = +1;
 		base->evaluate( [ & ] ( const unique_identifier& uid )
 		{
 			// If variable is a register that is a restricted base pointer:
@@ -106,12 +105,6 @@ namespace vtil::symbolic
 				// Set flags.
 				//
 				flags |= base->flags;
-			}
-			// Contains an unknown variable so make weak pointer.
-			//
-			else
-			{
-				strength = -1;
 			}
 
 			// Return dummy result.

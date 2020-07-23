@@ -41,18 +41,15 @@ namespace vtil { struct tracer; };
 
 namespace vtil::symbolic
 {
-	namespace impl
+	// Dummy iterator to be used when variable is not being tracked within a block.
+	//
+	inline const il_const_iterator free_form_iterator = [ ] ()
 	{
-		// Dummy iterator to be used when variable is not being tracked within a block.
+		// Create a dummy invalid block with an invalid instruction and reference it.
 		//
-		inline const il_const_iterator free_form_iterator = [ ] ()
-		{
-			// Create a dummy invalid block with an invalid instruction and reference it.
-			//
-			static basic_block dummy_block{ .stream = { instruction{} } };
-			return dummy_block.begin();
-		}();
-	};
+		static basic_block dummy_block{ .stream = { instruction{} } };
+		return dummy_block.begin();
+	}();
 
 	// Structure describing how an instruction accesses a variable.
 	//
@@ -259,7 +256,7 @@ namespace vtil::symbolic
 
 			// Default construction. 
 			//
-			constexpr memory_wrapper() : bound_memory{ impl::free_form_iterator } {}
+			constexpr memory_wrapper() : bound_memory{ free_form_iterator } {}
 
 			// operator()( T iterator ) binds the memory state to the given iterator.
 			//
@@ -292,7 +289,7 @@ namespace vtil::symbolic
 
 			// Default construction. 
 			//
-			constexpr context_wrapper() : bound_context{ impl::free_form_iterator } {}
+			constexpr context_wrapper() : bound_context{ free_form_iterator } {}
 
 			// operator()( T iterator ) binds the context state to the given iterator.
 			//

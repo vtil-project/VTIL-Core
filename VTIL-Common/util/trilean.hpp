@@ -35,7 +35,7 @@ namespace vtil
 {
 	// A generic 3 value logic wrapper since it is a common pattern.
 	//
-	union trilean
+	struct trilean
 	{
 		// Implement the trilean literal unknown and null.
 		//

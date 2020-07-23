@@ -69,23 +69,23 @@ namespace vtil::optimizer
 			// Halt if branching instruction.
 			//
 			if ( ins.base->is_branching() )
-				return false;
+				return vm_exit_reason::unknown_instruction;
 
 			// Halt if instruction is volatile.
 			//
 			if ( ins.is_volatile() )
-				return false;
+				return vm_exit_reason::unknown_instruction;
 
 			// Halt if stack pointer is reset.
 			//
 			if ( ins.sp_reset )
-				return false;
+				return vm_exit_reason::unknown_instruction;
 
 			// Halt if instruction accesses volatile registers excluding ?UD.
 			//
 			for ( auto& op : ins.operands )
 				if ( op.is_register() && op.reg().is_volatile() && !op.reg().is_undefined() )
-					return false;
+					return vm_exit_reason::unknown_instruction;
 
 			// Halt if instruction is accessing to non-restricted memory.
 			//
@@ -97,7 +97,7 @@ namespace vtil::optimizer
 					auto ptr = vm.read_register( base ) + offset;
 					for ( auto& [k, v] : vm.memory_state )
 						if ( k.can_overlap( ptr ) && !( k - ptr ).has_value() )
-							return false;
+							return vm_exit_reason::alias_failure;
 				}
 			}
 
@@ -116,7 +116,7 @@ namespace vtil::optimizer
 		{
 			// Execute starting from the instruction.
 			//
-			auto limit = vm.run( it, true );
+			auto [limit, rsn] = vm.run( it );
 
 			// Create a batch translator and an instruction buffer.
 			//

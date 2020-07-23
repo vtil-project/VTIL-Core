@@ -36,13 +36,13 @@ namespace vtil
 		// Strips the object that this function belongs to.
 		//
 		template<typename T>
-		struct strip_object { using type = std::function<T>; };
+		struct virtual_to_func_hook { using type = std::function<T>; };
 		template<typename R, typename O, typename... A>
-		struct strip_object<R( O::* )( A... ) const> { using type = std::function<R( A... )>; };
+		struct virtual_to_func_hook<R( O::* )( A... ) const> { using type = std::function<R( A... )>; };
 		template<typename R, typename O, typename... A>
-		struct strip_object<R( O::* )( A... )> { using type = std::function<R( A... )>; };
+		struct virtual_to_func_hook<R( O::* )( A... )> { using type = std::function<R( A... )>; };
 		template<typename T>
-		using strip_object_t = typename strip_object<T>::type;
+		using virtual_to_func_hook_t = typename virtual_to_func_hook<T>::type;
 	};
 	
 	// Declare a virtual machine where all calls are redirected to lambda callbacks.
@@ -54,12 +54,12 @@ namespace vtil
 		//
 		struct
 		{
-			impl::strip_object_t<decltype( &vm_interface::size_register )> size_register = {};
-			impl::strip_object_t<decltype( &vm_interface::read_register )> read_register = {};
-			impl::strip_object_t<decltype( &vm_interface::read_memory )> read_memory = {};
-			impl::strip_object_t<decltype( &vm_interface::write_register )> write_register = {};
-			impl::strip_object_t<decltype( &vm_interface::write_memory )> write_memory = {};
-			impl::strip_object_t<decltype( &vm_interface::execute )> execute = {};
+			impl::virtual_to_func_hook_t<decltype( &vm_interface::size_register )> size_register = {};
+			impl::virtual_to_func_hook_t<decltype( &vm_interface::read_register )> read_register = {};
+			impl::virtual_to_func_hook_t<decltype( &vm_interface::read_memory )> read_memory = {};
+			impl::virtual_to_func_hook_t<decltype( &vm_interface::write_register )> write_register = {};
+			impl::virtual_to_func_hook_t<decltype( &vm_interface::write_memory )> write_memory = {};
+			impl::virtual_to_func_hook_t<decltype( &vm_interface::execute )> execute = {};
 		} hooks;
 
 		// Declare the overrides redirecting to the callbacks.
@@ -88,13 +88,13 @@ namespace vtil
 				? hooks.write_register( desc, std::move( value ) ) 
 				: vm_base::write_register( desc, std::move( value ) );
 		}
-		void write_memory( const symbolic::expression::reference& pointer, symbolic::expression::reference value ) override
+		bool write_memory( const symbolic::expression::reference& pointer, deferred_view<symbolic::expression::reference> value, bitcnt_t size ) override
 		{
 			return hooks.write_memory
-				? hooks.write_memory( pointer, std::move( value ) )
-				: vm_base::write_memory( pointer, std::move( value ) );
+				? hooks.write_memory( pointer, std::move( value ), size )
+				: vm_base::write_memory( pointer, std::move( value ), size );
 		}
-		bool execute( const instruction& ins ) override
+		vm_exit_reason execute( const instruction& ins ) override
 		{
 			return hooks.execute
 				? hooks.execute( ins )

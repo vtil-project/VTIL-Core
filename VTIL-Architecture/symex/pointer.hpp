@@ -52,14 +52,6 @@ namespace vtil::symbolic
 		//
 		inline static std::set<register_desc> restricted_bases = { REG_SP, REG_IMGBASE };
 
-		// Declares the symbolic pointer weak.
-		//
-		struct make_weak
-		{
-			pointer operator()( pointer&& p ) { return ( p.strength = INT32_MIN, p ); }
-			pointer operator()( pointer p ) { return ( p.strength = INT32_MIN, p ); }
-		};
-
 		// The symbolic expression that will represent the virtual address 
 		// if resolved to an immediate value.
 		// 
@@ -69,10 +61,6 @@ namespace vtil::symbolic
 		//
 		uint64_t flags = 0;
 		
-		// Strength of the pointer. -1 when it has unknowns, +1 on fully known value.
-		//
-		int32_t strength = 0;
-
 		// X-Pointers are N-64-bit estimations of the actual virtual adresss.
 		//
 		std::array<uint64_t, VTIL_SYM_PTR_XPTR_KEYS> xpointer;
@@ -120,6 +108,6 @@ namespace vtil::symbolic
 
 		// Define reduction.
 		//
-		REDUCE_TO( flags, strength, xpointer, base ? ( boxed_expression& ) *base : make_static<boxed_expression>() );
+		REDUCE_TO( flags, xpointer, base ? ( boxed_expression& ) *base : make_static<boxed_expression>() );
 	};
 };

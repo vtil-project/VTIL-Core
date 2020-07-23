@@ -44,11 +44,6 @@ namespace vtil
 		symbolic::memory memory_state;
 		std::map<register_desc, symbolic::expression::reference> register_state;
 
-		// Construct from memory type, defaults to free.
-		//
-		symbolic_vm( symbolic::memory_type mem = symbolic::memory_type::free )
-			: memory_state( symbolic::create_memory( mem ) ) {}
-
 		// Reads from the register.
 		// - Value will be unpacked.
 		//
@@ -64,11 +59,11 @@ namespace vtil
 		
 		// Writes the given expression to the memory.
 		//
-		void write_memory( const symbolic::expression::reference& pointer, symbolic::expression::reference value ) override;
+		bool write_memory( const symbolic::expression::reference& pointer, deferred_view<symbolic::expression::reference> value, bitcnt_t size ) override;
 
 		// Override execute to enforce lazyness.
 		//
-		bool execute( const instruction& ins ) override;
+		vm_exit_reason execute( const instruction& ins ) override;
 
 		// Resets the virtual machine state.
 		//

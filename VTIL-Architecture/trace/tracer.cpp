@@ -512,10 +512,11 @@ namespace vtil
 				result = std::move( value );
 		};
 
-		lvm.hooks.write_memory = [ & ] ( const symbolic::expression::reference& pointer, symbolic::expression::reference value )
+		lvm.hooks.write_memory = [ & ] ( const symbolic::expression::reference& pointer, deferred_view<symbolic::expression::reference> value, bitcnt_t size )
 		{
 			if ( pointer->equals( *lookup.mem().decay() ) )
-				result = std::move( value );
+				result = std::move( value.get() );
+			return true;
 		};
 
 		// Step one instruction, if result was successfuly captured, return.

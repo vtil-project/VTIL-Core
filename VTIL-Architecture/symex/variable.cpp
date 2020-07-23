@@ -456,7 +456,7 @@ namespace vtil::symbolic
 	// Construct free-form with only the descriptor itself.
 	//
 	variable::variable( descriptor_t desc ) 
-		: variable( impl::free_form_iterator, std::move( desc ) ) {}
+		: variable( free_form_iterator, std::move( desc ) ) {}
 
 	// Returns whether the variable is valid or not.
 	//
@@ -500,7 +500,7 @@ namespace vtil::symbolic
 	//
 	bool variable::is_free_form() const 
 	{ 
-		return at == impl::free_form_iterator; 
+		return at == free_form_iterator; 
 	}
 
 	// Conversion to symbolic expression.
@@ -584,7 +584,7 @@ namespace vtil::symbolic
 
 		// If dummy iterator, return with free-indicator appended.
 		//
-		if ( at == impl::free_form_iterator )
+		if ( at == free_form_iterator )
 			return "%" + base;
 
 		// Append the block identifier.

@@ -40,6 +40,10 @@ namespace vtil::optimizer::validation
 		//
 		lambda_vm<symbolic_vm> vm = {};
 
+		// Use relaxed aliasing.
+		//
+		vm.memory_state.relaxed_aliasing = true;
+
 		// Write default register state.
 		//
 		for ( auto& [k, v] : default_register_state )
@@ -67,10 +71,7 @@ namespace vtil::optimizer::validation
 
 				// Calculate the address on stack and write into it.
 				//
-				vm.write_memory(
-					vm.read_register( REG_SP ) + ( idx * 8 ) + call_conv.shadow_space + 8,
-					value
-				);
+				vm.write_memory_v( vm.read_register( REG_SP ) + ( idx * 8 ) + call_conv.shadow_space + 8, value );
 			}
 		}
 
@@ -78,7 +79,7 @@ namespace vtil::optimizer::validation
 		// use a pointer off of our own stack.
 		//
 		const uint64_t return_address = ( uint64_t ) &vm;
-		vm.write_memory( vm.read_register( REG_SP ), return_address );
+		vm.write_memory_v( vm.read_register( REG_SP ), return_address );
 
 		// Instrument the virtual execution to verify actions:
 		//
@@ -87,17 +88,17 @@ namespace vtil::optimizer::validation
 		{
 			// If failed already, exit.
 			//
-			if ( !success ) return false;
+			if ( !success ) return vm_exit_reason::unknown_instruction;
 
 			// If hint is hit, skip.
 			//
-			if ( *ins.base == ins::vpinr ) return true;
-			if ( *ins.base == ins::vpinw ) return true;
+			if ( *ins.base == ins::vpinr ) return vm_exit_reason::none;
+			if ( *ins.base == ins::vpinw ) return vm_exit_reason::none;
 
 			// If a virtual branch is hit, exit the virtual machine so we can handle it. 
 			//
 			if ( ins.base->is_branching_virt() )
-				return false;
+				return vm_exit_reason::unknown_instruction;
 
 			// If branching to real location:
 			//
@@ -113,7 +114,7 @@ namespace vtil::optimizer::validation
 					{
 						logger::warning( "Unexpected call." );
 						success = false;
-						return false;
+						return vm_exit_reason::unknown_instruction;
 					}
 
 					// Pop it off the stack.
@@ -130,7 +131,7 @@ namespace vtil::optimizer::validation
 					{
 						logger::warning( "Unexpected callee, expected 0x%llx, got [%s].", call.address, *target_call );
 						success = false;
-						return false;
+						return vm_exit_reason::unknown_instruction;
 					}
 
 					// Validate parameters.
@@ -167,7 +168,7 @@ namespace vtil::optimizer::validation
 						{
 							logger::warning( "Parameter %d does not match, expected 0x%llx, got [%s].", id, value, exp );
 							success = false;
-							return false;
+							return vm_exit_reason::unknown_instruction;
 						}
 					}
 
@@ -186,7 +187,7 @@ namespace vtil::optimizer::validation
 					{
 						logger::warning( "Unexpected exit." );
 						success = false;
-						return false;
+						return vm_exit_reason::unknown_instruction;
 					}
 
 					// Pop it off the stack.
@@ -203,7 +204,7 @@ namespace vtil::optimizer::validation
 					{
 						logger::warning( "Unexpected return address, expected 0x%llx, got [%s].", return_address, *sreturn_address );
 						success = false;
-						return false;
+						return vm_exit_reason::unknown_instruction;
 					}
 
 					// Validate the register state / return value.
@@ -215,11 +216,11 @@ namespace vtil::optimizer::validation
 						{
 							logger::warning( "Return state %s does not match, expected 0x%llx, got [%s].", reg, value, exp );
 							success = false;
-							return false;
+							return vm_exit_reason::unknown_instruction;
 						}
 					}
 				}
-				return true;
+				return vm_exit_reason::none;
 			}
 
 			// If none matches, redirect to original handler.
@@ -239,7 +240,7 @@ namespace vtil::optimizer::validation
 					// Write fake value to the state and pop the stack.
 					//
 					symbolic::expression value = { mem.fake_value, mem.size };
-					vm.symbolic_vm::write_memory( pointer, value );
+					vm.symbolic_vm::write_memory_v( pointer, value );
 					++action_it;
 				}
 			}
@@ -247,7 +248,7 @@ namespace vtil::optimizer::validation
 			return vm.symbolic_vm::read_memory( pointer, sz );
 		};
 
-		vm.hooks.write_memory = [ & ] ( const symbolic::expression::reference& pointer, symbolic::expression::reference exp )
+		vm.hooks.write_memory = [ & ] ( const symbolic::expression::reference& pointer, deferred_view<symbolic::expression::reference> value, bitcnt_t size )
 		{
 			// If action log has a matching write memory on top of the stack:
 			//
@@ -258,15 +259,15 @@ namespace vtil::optimizer::validation
 				{
 					// Pop the stack and validate the value.
 					//
-					if ( exp->value.get() != mem.value )
+					if ( value.get()->value.get() != mem.value )
 					{
-						logger::warning( "Unexpected memory write into 0x%llx, expected 0x%llx, got [%s].", mem.address, mem.value, *exp );
+						logger::warning( "Unexpected memory write into 0x%llx, expected 0x%llx, got [%s].", mem.address, mem.value, value.get() );
 						success = false;
 					}
 					++action_it;
 				}
 			}
-			return vm.symbolic_vm::write_memory( pointer, exp );
+			return vm.symbolic_vm::write_memory( pointer, value, size );
 		};
 
 
@@ -277,7 +278,7 @@ namespace vtil::optimizer::validation
 		{
 			// Run until it VM exits.
 			//
-			auto lim = vm.run( it, true );
+			auto [lim, rsn] = vm.run( it );
 
 			// If failed, return.
 			//

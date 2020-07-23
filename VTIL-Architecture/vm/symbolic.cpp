@@ -72,30 +72,28 @@ namespace vtil
 	symbolic::expression::reference symbolic_vm::read_memory( const symbolic::expression::reference& pointer, size_t byte_count )
 	{
 		bitcnt_t bcnt = math::narrow_cast<bitcnt_t>( byte_count * 8 );
-		symbolic::expression::reference exp = memory_state.read_v(
+		symbolic::expression::reference exp = memory_state.read(
 			pointer, 
 			bcnt 
 		);
+		if ( !exp ) return exp;
 		return lazy_io ? exp.make_lazy() : exp.simplify();
 	}
 
 	// Writes the given expression to the memory.
 	//
-	void symbolic_vm::write_memory( const symbolic::expression::reference& pointer, symbolic::expression::reference value )
+	bool symbolic_vm::write_memory( const symbolic::expression::reference& pointer, deferred_view<symbolic::expression::reference> value, bitcnt_t size )
 	{
-		memory_state.write( 
-			pointer, 
-			value.resize( ( value->size() + 7 ) & ~7 ) 
-		);
+		return memory_state.write( pointer, value, size ).has_value();
 	}
 
 	// Override execute to enforce lazyness.
 	//
-	bool symbolic_vm::execute( const instruction& ins )
+	vm_exit_reason symbolic_vm::execute( const instruction& ins )
 	{
 		bool old = std::exchange( lazy_io, true );
-		bool state = vm_interface::execute( ins );
+		vm_exit_reason reason = vm_interface::execute( ins );
 		lazy_io = old;
-		return state;
+		return reason;
 	}
 };

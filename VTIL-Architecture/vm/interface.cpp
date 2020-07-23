@@ -32,7 +32,7 @@ namespace vtil
 {
 	// Runs the given instruction, returns whether it was successful.
 	//
-	bool vm_interface::execute( const instruction& ins )
+	vm_exit_reason vm_interface::execute( const instruction& ins )
 	{
 		// Declare a helper to convert operands of current instruction into expressions.
 		//
@@ -78,7 +78,7 @@ namespace vtil
 				ins.operands[ 0 ].reg(),
 				cvt_operand( 1 )->resize( ins.operands[ 0 ].bit_count(), cast_signed )
 			);
-			return true;
+			return vm_exit_reason::none;
 		}
 		// If LDD:
 		//
@@ -92,6 +92,7 @@ namespace vtil
 				read_register( base ) + offset,
 				ins.operands[ 0 ].size()
 			);
+			if ( !exp ) return vm_exit_reason::alias_failure;
 
 			// Write the read value to the register.
 			//
@@ -99,7 +100,7 @@ namespace vtil
 				ins.operands[ 0 ].reg(),
 				std::move( exp )
 			);
-			return true;
+			return vm_exit_reason::none;
 		}
 		// If STR:
 		//
@@ -107,15 +108,21 @@ namespace vtil
 		{
 			// Read the source operand and byte-align.
 			//
-			auto src = cvt_operand( 2 );
-			src.resize( ( src->size() + 7 ) & ~7 );
-
+			bitcnt_t aligned_size = ( ins.operands[ 2 ].bit_count() + 7 ) & ~7;
+			deferred_value value = [ & ] ()
+			{
+				auto src = cvt_operand( 2 );
+				src.resize( aligned_size );
+				return src;
+			};
+			
 			// Query base pointer without using the wrapper to skip SP adjustment and 
-			// add offset. Write the source to the pointer.
+			// add offset. Write the source to the pointer, return status as is.
 			//
 			auto [base, offset] = ins.memory_location();
-			write_memory( read_register( base ) + offset, std::move( src ) );
-			return true;
+			return write_memory( read_register( base ) + offset, value.view(), aligned_size )
+				? vm_exit_reason::none
+				: vm_exit_reason::alias_failure;
 		}
 		// If any symbolic operator:
 		//
@@ -169,7 +176,7 @@ namespace vtil
 				//
 				else
 				{
-					return false;
+					return vm_exit_reason::high_arithmetic;
 				}
 			}
 
@@ -180,7 +187,7 @@ namespace vtil
 			// Operand 0 should always be the result for this class.
 			//
 			fassert( ins.base->operand_types[ 0 ] >= operand_type::write );
-			return true;
+			return vm_exit_reason::none;
 		}
 		// If NOP:
 		//
@@ -188,58 +195,29 @@ namespace vtil
 		{
 			// No operation.
 			//
-			return true;
+			return vm_exit_reason::none;
 		}
 
 		// Unknown behaviour, fail.
 		//
-		return false;
+		return vm_exit_reason::unknown_instruction;
 	}
 
 	// Given an iterator from a basic block, executes every instruction until the end of the block 
 	// is reached. If an unknown instruction is hit, breaks out of the loop if specified so, otherwise
 	// ignores it setting the affected registers and memory to undefined values.
 	//
-	il_const_iterator vm_interface::run( il_const_iterator it, bool exit_on_ud )
+	std::pair<il_const_iterator, vm_exit_reason> vm_interface::run( il_const_iterator it )
 	{
 		// Until the iterator points at the end of the block:
 		//
 		for ( ; !it.is_end(); it++ )
 		{
-			// If we could not virtualize the instruction:
+			// If we could not virtualize the instruction, break.
 			//
-			if ( !execute( *it ) )
-			{
-				// Break out of the loop if specified so.
-				//
-				if ( exit_on_ud )
-					break;
-
-				// Make each register operand we write to undefined.
-				//
-				for ( int i = 0; i < it->base->operand_count(); i++ )
-				{
-					if ( it->base->operand_types[ i ] >= operand_type::write )
-					{
-						write_register(
-							it->operands[ i ].reg(),
-							symbolic::CTX[ make_undefined( it->operands[ i ].reg().bit_count ) ]
-						);
-					}
-				}
-
-				// If instruction writes to memory, mark the region pointed at undefined.
-				//
-				if ( it->base->writes_memory() )
-				{
-					auto [base, offset] = it->memory_location();
-					write_memory(
-						read_register( base ) + offset,
-						symbolic::CTX[ make_undefined( it->access_size() ? it->access_size() : 64 ) ]
-					);
-				}
-			}
+			if ( auto reason = execute( *it ); reason != vm_exit_reason::none )
+				return { it, reason };
 		}
-		return it;
+		return { it, vm_exit_reason::none };
 	}
 };
