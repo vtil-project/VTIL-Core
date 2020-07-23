@@ -29,6 +29,7 @@
 #include <algorithm>
 #include <variant>
 #include <optional>
+#include "intrinsics.hpp"
 #include "type_helpers.hpp"
 #include "lt_typeid.hpp"
 #include "../io/formatting.hpp"
@@ -73,7 +74,7 @@ namespace vtil
 
 	// Used to combine two hashes of arbitrary size.
 	//
-	static hash_t combine_hash( hash_t a, const hash_t& b )
+	__forceinline static hash_t combine_hash( hash_t a, const hash_t& b )
 	{
 		static constexpr auto rotl64 = [ ] ( uint64_t x, int r )
 		{
@@ -180,9 +181,9 @@ namespace vtil
 	// Vararg hasher wrapper that should be used to create hashes from N values.
 	//
 	template<typename T>
-	static hash_t make_hash( const T& value ) { return hasher<T>{}( value ); }
+	__forceinline static hash_t make_hash( const T& value ) { return hasher<T>{}( value ); }
 	template<typename C, typename... T>
-	static hash_t make_hash( const C& current, T&&... rest )
+	__forceinline static hash_t make_hash( const C& current, T&&... rest )
 	{
 		return combine_hash( 
 			make_hash( std::forward<T>( rest )... ), 
@@ -195,7 +196,7 @@ namespace vtil
 	template<typename T>
 	struct hasher<std::optional<T>>
 	{
-		hash_t operator()( const std::optional<T>& value ) const noexcept
+		__forceinline hash_t operator()( const std::optional<T>& value ) const noexcept
 		{
 			if ( value ) return make_hash( *value );
 			else         return lt_typeid_v<T>;
@@ -207,7 +208,7 @@ namespace vtil
 	template<typename... T>
 	struct hasher<std::variant<T...>>
 	{
-		hash_t operator()( const std::variant<T...>& value ) const noexcept
+		__forceinline hash_t operator()( const std::variant<T...>& value ) const noexcept
 		{
 			hash_t res = std::visit( [ ] ( auto&& arg ) { return make_hash( arg ); }, value );
 			res.add_bytes( value.index() );
@@ -220,7 +221,7 @@ namespace vtil
 	template<typename A, typename B>
 	struct hasher<std::pair<A, B>>
 	{
-		hash_t operator()( const std::pair<A, B>& obj ) const noexcept
+		__forceinline hash_t operator()( const std::pair<A, B>& obj ) const noexcept
 		{
 			return make_hash( obj.first, obj.second );
 		}
@@ -232,12 +233,12 @@ namespace vtil
 	struct hasher<std::tuple<Tx...>>
 	{
 		template<typename T, size_t... I>
-		auto hash_all( const T& obj, std::index_sequence<I...> ) const noexcept
+		__forceinline auto hash_all( const T& obj, std::index_sequence<I...> ) const noexcept
 		{
 			return make_hash( std::get<I>( obj )... );
 		}
 
-		hash_t operator()( const std::tuple<Tx...>& obj ) const noexcept
+		__forceinline hash_t operator()( const std::tuple<Tx...>& obj ) const noexcept
 		{
 			return hash_all( obj, std::index_sequence_for<Tx...>{} );
 		}
@@ -249,7 +250,7 @@ namespace vtil
 	struct hasher<hasher_proxy_t>
 	{
 		template<typename T>
-		size_t operator()( const T& obj ) const noexcept
+		__forceinline size_t operator()( const T& obj ) const noexcept
 		{
 			return ( size_t ) make_hash( obj ).as64();
 		}
