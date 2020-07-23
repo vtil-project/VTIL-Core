@@ -34,41 +34,273 @@
 
 namespace vtil::symbolic
 {
-	// Strictness of pointers describing what happens when the pointer could 
-	// not be resolved based on the previous write operations.
-	//
-	enum class memory_type
+	struct memory
 	{
-		// Will generate a variable of the result of dereferencing 
-		// upon default construction.
+		// Common typedefs.
 		//
-		free,
-
-		// Will generate an undefined variable upon default construction.
+		using store_entry =              std::pair<pointer, expression::reference>;
+		using store_type =               std::list<store_entry>;
+		
+		// The iterator to bind every variable onto.
 		//
-		relaxed,
+		il_const_iterator reference_iterator;
 
-		// Will throw an exception upon default construction.
+		// The memory state.
 		//
-		strict
-	};
+		bool relaxed_aliasing;
+		store_type value_map;
 
-	// Declaration of symbolic memory type using sinkhole.
-	//
-	using memory = sinkhole<pointer, expression::reference, pointer::make_weak>;
-	
-	// Creates a symbolic memory of the given type.
-	//
-	static memory create_memory( memory_type type )
-	{
-		switch ( type )
+		// Default constructor, optionally takes a boolean to indicate relaxed aliasing
+		// and a reference iterator to be used when creating variables.
+		//
+		memory( bool relaxed_aliasing = false, il_const_iterator reference_iterator = free_form_iterator )
+			: relaxed_aliasing( relaxed_aliasing ), reference_iterator( std::move( reference_iterator ) ) {}
+
+		// Default copy/move.
+		//
+		memory( memory&& ) = default;
+		memory( const memory& ) = default;
+		memory& operator=( memory&& ) = default;
+		memory& operator=( const memory& ) = default;
+
+		// Wrap around the store type.
+		//
+		auto begin() { return value_map.begin(); }
+		auto end() { return value_map.end(); }
+		auto begin() const { return value_map.cbegin(); }
+		auto end() const { return value_map.cend(); }
+		size_t size() const { return value_map.size(); }
+		void reset() { value_map.clear(); }
+
+		// Checks if the symbolic memory contains any writes to the given memory region.
+		//
+		trilean contains( const pointer& ptr, bitcnt_t size ) const
 		{
-			case memory_type::free:
-				return { [ ] ( const pointer& ptr, bitcnt_t size ) -> expression::reference { return MEMORY( ptr, size ); } };
-			case memory_type::relaxed:
-				return { [ ] ( const pointer& ptr, bitcnt_t size ) -> expression::reference { return CTX[ make_undefined( size ) ]; } };
-			default:
-				return { [ ] ( const pointer& ptr, bitcnt_t size ) -> expression::reference { unreachable(); return nullptr; } };
+			uint64_t mask_value = math::fill( size );
+
+			// For each entry, iterating backwards:
+			//
+			for ( auto it = value_map.rbegin(); it != value_map.rend(); it++ )
+			{
+				// If pointer cannot overlap lookup, skip.
+				//
+				if ( !it->first.can_overlap( ptr ) )
+					continue;
+
+				// Calculate displacement, if unknown return unknown.
+				//
+				std::optional byte_distance = it->first - ptr;
+				if ( !byte_distance )
+					return trilean::unknown;
+
+				// Calculate relative mask, return true if overlapping.
+				//
+				bitcnt_t bit_distance = math::narrow_cast<bitcnt_t>( *byte_distance * 8 );
+				uint64_t relative_mask = math::fill( it->second.size(), bit_distance );
+				if ( relative_mask & mask_value )
+					return true;
+			}
+
+			// None found, return false.
+			//
+			return false;
 		}
-	}
+
+		// Reads N bits from the given pointer, returns null reference if alias failure occurs.
+		//
+		expression::reference read( const pointer& ptr, bitcnt_t size ) const
+		{
+			uint64_t mask_pending = math::fill( size );
+			stack_vector<std::pair<bitcnt_t, expression::reference>, 8> merge_list;
+
+			// For each entry, iterating backwards:
+			//
+			for ( auto it = value_map.rbegin(); it != value_map.rend() && mask_pending; it++ )
+			{
+				// If pointer cannot overlap lookup, skip.
+				//
+				if ( !it->first.can_overlap( ptr ) )
+					continue;
+
+				// Calculate displacement, if unknown:
+				//
+				std::optional byte_distance = it->first - ptr;
+				if ( !byte_distance )
+				{
+					// If not relaxed aliasing, indicate alias failure by returning null.
+					//
+					if ( !relaxed_aliasing ) 
+						return nullptr;
+
+					// Otherwise, return default value, cannot be determined.
+					//
+					merge_list.clear();
+					break;
+				}
+			
+				// Calculate relative mask, skip if not overlapping.
+				//
+				bitcnt_t bit_distance = math::narrow_cast<bitcnt_t>( *byte_distance * 8 );
+				uint64_t relative_mask = math::fill( it->second.size(), bit_distance );
+				if ( !( relative_mask & mask_pending ) )
+					continue;
+
+				// Add into merge list, clear the mask.
+				//
+				merge_list.emplace_back( bit_distance, it->second );
+				mask_pending &= ~relative_mask;
+			}
+
+			// If no overlapping keys found, return default.
+			//
+			if ( merge_list.empty() )
+				return MEMORY( reference_iterator )( ptr, size );
+
+			// Declare common bit selector.
+			//
+			constexpr auto select = [ ] ( symbolic::expression::reference& value, bitcnt_t size, bitcnt_t offset )
+			{
+				if ( offset < 0 )      value >>= -offset, value.resize( size );
+				else if ( offset > 0 ) value.resize( size ) <<= offset;
+				else                   value.resize( size );
+			};
+
+			// If single overlapping key with no pending bits, return as is.
+			//
+			if ( !mask_pending && merge_list.size() == 1 )
+			{
+				auto&& [dst, value] = std::move( merge_list[ 0 ] );
+				select( value, size, dst );
+				return value;
+			}
+
+			// Merge all in a single expression and return.
+			//
+			expression::reference result = mask_pending
+				? MEMORY( reference_iterator )( ptr, size )
+				: expression{ 0, size };
+
+			for ( auto& [ dst, value ] : merge_list )
+			{
+				select( value, size, dst );
+				result |= std::move( value );
+			}
+			return result;
+		}
+
+		// Writes the given value to the pointer, returns null reference if alias failure occurs.
+		//
+		optional_reference<expression::reference> write( const pointer& ptr, deferred_view<expression::reference> value, bitcnt_t size )
+		{
+			uint64_t mask_pending = math::fill( size );
+			stack_vector<std::pair<bitcnt_t, store_type::iterator>, 8> acquisition_list;
+
+			// For each entry, iterating backwards:
+			//
+			for ( auto it = value_map.rbegin(); it != value_map.rend() && mask_pending; it++ )
+			{
+				// If pointer cannot overlap lookup, skip.
+				//
+				if ( !it->first.can_overlap( ptr ) )
+					continue;
+
+				// Calculate displacement, if unknown:
+				//
+				std::optional byte_distance = it->first - ptr;
+				if ( !byte_distance )
+				{
+					// If not relaxed aliasing, indicate alias failure by returning null.
+					//
+					if ( !relaxed_aliasing )
+						return std::nullopt;
+
+					// Otherwise, insert at the end, overlaps can't be determined.
+					//
+					acquisition_list.clear();
+					break;
+				}
+
+				// Calculate relative mask, skip if not overlapping.
+				//
+				bitcnt_t bit_distance = math::narrow_cast<bitcnt_t>( *byte_distance * 8 );
+				uint64_t relative_mask = math::fill( it->second.size(), bit_distance );
+				if ( !( relative_mask & mask_pending ) )
+					continue;
+
+				// Add into acquisition list, clear the mask.
+				//
+				acquisition_list.emplace_back( bit_distance, std::prev( it.base() ) );
+				mask_pending &= ~relative_mask;
+			}
+
+			// For each iterator we should acquire bits from:
+			//
+			for ( auto& [ dst, it ] : acquisition_list )
+			{
+				// If low bits start at or above our pointer:
+				// | v v v v         |  v v v v		|
+				// |     a b c d ... |  a b c d ... |
+				//
+				if ( dst >= 0 )
+				{
+					bitcnt_t strip_low_cnt = size - dst;
+					bitcnt_t new_size = it->second->size() - strip_low_cnt;
+
+					// If value is completely overwritten, erase and continue.
+					//
+					if ( new_size <= 0 )
+					{
+						value_map.erase( it );
+						continue;
+					}
+
+					// Shift and resize the entry.
+					//
+					it->first = std::move( it->first ) + ( strip_low_cnt / 8 );
+					it->second >>= strip_low_cnt;
+					it->second.resize( new_size );
+				}
+				// If high bits end before or at our region limits:
+				// |         v v v v |      v v v v	 |
+				// | ... a b c d     |  ... a b c d	 |
+				//
+				else if ( ( size - dst ) >= it->second.size() )
+				{
+					// Shift and resize the entry.
+					//
+					it->second.resize( -dst );
+				}
+				// Split the region:
+				// |       v v       |
+				// | ... a b c d ... |
+				//
+				else
+				{
+					bitcnt_t low_size = -dst;
+					bitcnt_t high_offset = low_size + size;
+					bitcnt_t high_size = it->second.size() - high_offset;
+					
+					// Split high value.
+					//
+					value_map.emplace(
+						it,
+						it->first + ( high_offset / 8 ),
+						( it->second >> high_offset ).resize( high_size )
+					);
+
+					// Resize low value.
+					//
+					it->second.resize( low_size );
+				}
+			}
+
+			// Insert new value.
+			//
+			return value_map.emplace_back( ptr, value.get() ).second;
+		}
+		optional_reference<expression::reference> write( const pointer& ptr, expression::reference value )
+		{
+			return write( ptr, value, value.size() );
+		}
+	};
 };
