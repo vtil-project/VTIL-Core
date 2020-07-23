@@ -201,8 +201,8 @@ namespace vtil::math
         // - Could have used calculated [sgn] instead of second comparison but
         //   this makes it easier for the compiler to optimize into cmovcc.
         //
-        bool is_shr = sgn( bit_offset );
-        bitcnt_t abs_shift = ( bit_offset >= 0 ) ? bit_offset : -bit_offset;
+        bool is_shl = bit_offset >= 0;
+        bitcnt_t abs_shift = is_shl ? bit_offset : -bit_offset;
 
         // Shifting beyond the variable size cause unexpected (mod) behaviour
         // on x64, check the shift count first.
@@ -215,8 +215,8 @@ namespace vtil::math
         
         // Shift accordingly.
         //
-        if( is_shr ) return abs_value >> abs_shift;
-        else         return abs_value << abs_shift;
+        if( is_shl ) return abs_value << abs_shift;
+        else         return abs_value >> abs_shift;
     }
 
     // Fills the bits of the uint64_t type after the given offset with the sign bit.

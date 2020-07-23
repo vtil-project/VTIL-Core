@@ -99,7 +99,7 @@ namespace vtil
 		}
 		const known_value& get() const 
 		{ 
-			return make_mutable( *this ).get(); 
+			return make_mutable( this )->get(); 
 		}
 
 		// Simple wrappers to check state.
@@ -118,10 +118,12 @@ namespace vtil
 
 		// Syntax sugars.
 		//
-		auto& operator*() { return get(); }
-		auto* operator->() { return &get(); }
-		auto& operator*() const { return get(); }
-		auto* operator->() const { return &get(); }
+		operator known_value&() { return get(); }
+		known_value& operator*() { return get(); }
+		known_value* operator->() { return &get(); }
+		operator const known_value&() const { return get(); }
+		const known_value& operator*() const { return get(); }
+		const known_value* operator->() const { return &get(); }
 	};
 
 	// Declare deduction guide.

@@ -59,4 +59,13 @@ namespace vtil
 	{
 		return make_random_n<T>( min, max, std::make_index_sequence<N>{} );
 	}
+
+	// Picks a random item from the initializer list.
+	//
+	template<typename T>
+	static T pick_random( std::initializer_list<T> list )
+	{
+		fassert( list.size() != 0 );
+		return *( list.begin() + make_random<size_t>( 0, list.size() - 1 ) );
+	}
 };
