@@ -34,6 +34,37 @@
 
 namespace vtil
 {
+	// Type erased view of deferred value.
+	//
+	template<typename T>
+	struct deferred_view
+	{
+		// View only holds a pointer to the deferred_value, erasing the type.
+		//
+		using getter_type = T&(*)(void*);
+		void* ctx;
+		getter_type getter;
+
+		// Construction by type + functor, type erase context and store as is.
+		//
+		deferred_view( void* ctx, getter_type getter )
+			: ctx( ctx ), getter( getter ) {}
+
+		// Construction by value, store pointer in context and use type-casting lambda as getter.
+		//
+		deferred_view( T& value )
+		{
+			ctx = &value;
+			getter = [ ] ( void* p ) -> T& { return *( T* ) p; };
+		}
+		deferred_view( T&& value ) : deferred_view( ( T& ) value ) {}
+
+		// Simple wrapping ::get() and cast to reference.
+		//
+		T& get() const { return getter( ctx ); }
+		operator T&() const { return get(); }
+	};
+
 	// Lightweight version of std::async::deferred that does not store any 
 	// type-erased functions nor does any heap allocation.
 	//
@@ -97,9 +128,20 @@ namespace vtil
 			//
 			return *current;
 		}
-		const known_value& get() const 
+		const known_value& get() const
 		{ 
 			return make_mutable( this )->get(); 
+		}
+
+		// Creates a view.
+		//
+		deferred_view<known_value> view()
+		{
+			return { this, [ ] ( void* self ) -> known_value& { return ( ( deferred_value* ) self )->get(); } };
+		}
+		deferred_view<const known_value> view() const
+		{
+			return { ( void* ) this, [ ] ( void* self ) -> const known_value& { return ( ( const deferred_value* ) self )->get(); } };
 		}
 
 		// Simple wrappers to check state.
@@ -110,7 +152,7 @@ namespace vtil
 
 		// Assigns a value, discarding the pending invocation if relevant.
 		//
-		known_value& operator=( known_value new_value ) 
+		known_value& operator=( known_value new_value )
 		{ 
 			current = std::move( new_value );
 			return *current;
