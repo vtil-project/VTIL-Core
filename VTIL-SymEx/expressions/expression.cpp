@@ -301,7 +301,7 @@ namespace vtil::symbolic
 				}
 				break;
 
-			// If casting the result of an unsigned cast, just change the parameter.
+			// If casting the result of an unsigned cast:
 			//
 			case math::operator_id::ucast:
 				// If it was shrinked:
@@ -333,12 +333,12 @@ namespace vtil::symbolic
 				//
 				else
 				{
-					return *this = lhs->resize( new_size, false );
+					*+rhs = new_size;
+					return update( false );
 				}
 				break;
 
-			// If casting the result of a signed cast, change the parameter if 
-			// requested cast is also a signed.
+			// If casting the result of a signed cast:
 			//
 			case math::operator_id::cast:
 				// Signed cast should not be used to shrink.
@@ -355,7 +355,8 @@ namespace vtil::symbolic
 				//
 				else if ( signed_cast )
 				{
-					return *this = lhs->resize( new_size, true );
+					*+rhs = new_size;
+					return update( false );
 				}
 				// Else, convert to unsigned cast since top bits will be zero.
 				//
@@ -713,7 +714,7 @@ namespace vtil::symbolic
 		{
 			auto eval_helper = [ = ] ( const unique_identifier& uid ) 
 			{
-				return uid.hash() ^ key;
+				return uid.hash().as64() ^ key;
 			};
 			if ( this->evaluate( eval_helper ).known_one() != 
 				 other.evaluate( eval_helper ).known_one() )
@@ -722,13 +723,15 @@ namespace vtil::symbolic
 
 		// Simplify both expressions.
 		//
-		expression a = simplify();
-		expression b = other.simplify();
+		expression::reference a = make_local_reference( this );
+		expression::reference b = make_local_reference( &other );
+		a.simplify();
+		b.simplify();
 
 		// Determine the final bitwise hint.
 		//
-		int8_t a_hint = a.is_expression() ? a.get_op_desc().hint_bitwise : 0;
-		int8_t b_hint = b.is_expression() ? b.get_op_desc().hint_bitwise : 0;
+		int8_t a_hint = a->is_expression() ? a->get_op_desc().hint_bitwise : 0;
+		int8_t b_hint = b->is_expression() ? b->get_op_desc().hint_bitwise : 0;
 		int8_t m_hint = a_hint != 0 && b_hint != 0 
 			? ( a_hint == 1 && b_hint == 1 ) 
 			: ( a_hint != 0 ? a_hint : b_hint );

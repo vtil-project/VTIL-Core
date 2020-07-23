@@ -76,7 +76,7 @@ namespace vtil
 			//
 			write_register(
 				ins.operands[ 0 ].reg(),
-				cvt_operand( 1 )->resize( ins.operands[ 0 ].bit_count(), cast_signed )
+				cvt_operand( 1 ).resize( ins.operands[ 0 ].bit_count(), cast_signed )
 			);
 			return vm_exit_reason::none;
 		}
@@ -168,7 +168,7 @@ namespace vtil
 				else if ( ( ins.operands[ 0 ].size() + ins.operands[ 1 ].size() ) <= 8 )
 				{
 					auto op1_low = cvt_operand( 0 );
-					auto op1 = op1_low | ( op1_high->resize( op1_high->size() + op1_low->size() ) << op1_low->size() );
+					auto op1 = op1_low | ( op1_high.resize( op1_high->size() + op1_low->size() ) << op1_low->size() );
 					result = { op1, op_id, cvt_operand( 2 ) };
 				}
 				// If operation is 65 bits or bigger:

@@ -526,8 +526,10 @@ namespace vtil::symbolic
 		// Extend to 64-bits with offset set at 0, shift it and
 		// mask it to experss the value of original register.
 		//
-		expression&& tmp = variable{ at, register_desc{ src.flags, src.local_id, 64, 0, src.architecture } }.to_expression( false );
-		return ( src.bit_offset ? tmp >> src.bit_offset : tmp ).resize( src.bit_count );
+		expression tmp = variable{ at, register_desc{ src.flags, src.local_id, 64, 0, src.architecture } }.to_expression( false );
+		if ( src.bit_offset ) tmp >>= src.bit_offset;
+		tmp.resize( src.bit_count );
+		return tmp;
 	}
 
 	// Conversion to human-readable format.

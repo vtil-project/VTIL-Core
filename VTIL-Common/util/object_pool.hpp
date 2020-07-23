@@ -54,9 +54,13 @@ namespace vtil
 		using generic_iterator = typename plf::colony<bool>::iterator;
 		struct object_entry
 		{
+			static constexpr size_t alignment = std::max( alignof( T ), 64ull );
+			static constexpr size_t header_size = sizeof( void* ) + sizeof( generic_iterator );
+			static constexpr size_t aligned_size = ( sizeof( T ) + header_size + ( alignment - 1 ) ) & ~( alignment - 1 );
+
+			uint8_t raw_data[ aligned_size - header_size ];
 			void* bucket;
 			generic_iterator iterator;
-			uint8_t raw_data[ sizeof( T ) ];
 
 			static object_entry* entry_of( void* obj )
 			{

@@ -299,20 +299,10 @@ namespace vtil::symbolic
 		// the operation as deep as possible.
 		//
 		expression& resize( bitcnt_t new_size, bool signed_cast = false, bool no_explicit = false );
-		expression resize( bitcnt_t new_size, bool signed_cast = false, bool no_explicit = false ) const
-		{ 
-			if ( size() == new_size ) return *this;
-			return std::move( clone().resize( new_size, signed_cast, no_explicit ) );
-		}
 
 		// Simplifies and optionally prettifies the expression.
 		//
 		expression& simplify( bool prettify = false );
-		expression simplify( bool prettify = false ) const 
-		{ 
-			if ( simplify_hint && !prettify ) return *this;
-			return std::move( clone().simplify( prettify ) );
-		}
 
 		// Returns whether the given expression is identical to the current instance.
 		// - Note: basic comparison opeators should not be overloaded since expression is of type
@@ -390,19 +380,10 @@ namespace vtil::symbolic
 			return *this;
 		}
 
-		// Simple way to invoke copy constructor using a pointer.
-		//
-		expression clone() const { return *this; }
-
 		// Disables simplifications for the expression (and it's future parents) 
 		// when set, can be reset by ::simplify().
 		//
 		expression& make_lazy() { is_lazy = true; return *this; }
-		expression make_lazy() const
-		{
-			if ( is_lazy ) return *this;
-			return std::move( clone().make_lazy() );
-		}
 	};
 
 	// Boxed expression solves the aforementioned problem by creating a type that can be 
