@@ -71,11 +71,11 @@ namespace vtil
 		return make_crandom_n( offset, std::make_index_sequence<N>{} );
 	}
 
-	// Picks a random item from the initializer list.
+	// Picks a random item from the argument pack.
 	//
-	template<typename T>
-	static constexpr T pick_crandom( std::initializer_list<T> list, size_t offset = 0 )
+	template<size_t offset = 0, typename... Tx>
+	static constexpr auto pick_crandom( Tx&&... args )
 	{
-		return *( list.begin() + make_crandom( offset ) % list.size() );
+		return std::get<make_crandom( offset ) % sizeof...( args )>( std::tuple<Tx&&...>{ std::forward<Tx>( args )... } );
 	}
 };
