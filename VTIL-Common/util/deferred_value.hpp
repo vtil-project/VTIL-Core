@@ -37,7 +37,7 @@ namespace vtil
 	// Type erased view of deferred value.
 	//
 	template<typename T>
-	struct deferred_view
+	struct deferred_value
 	{
 		// View only holds a pointer to the deferred_value, erasing the type.
 		//
@@ -47,17 +47,17 @@ namespace vtil
 
 		// Construction by type + functor, type erase context and store as is.
 		//
-		deferred_view( void* ctx, getter_type getter )
-			: ctx( ctx ), getter( getter ) {}
+		deferred_value( const void* ctx, getter_type getter )
+			: ctx( ( void* ) ctx ), getter( getter ) {}
 
 		// Construction by value, store pointer in context and use type-casting lambda as getter.
 		//
-		deferred_view( T& value )
+		deferred_value( T& value )
 		{
 			ctx = &value;
 			getter = [ ] ( void* p ) -> T& { return *( T* ) p; };
 		}
-		deferred_view( T&& value ) : deferred_view( ( T& ) value ) {}
+		deferred_value( T&& value ) : deferred_value( ( T& ) value ) {}
 
 		// Simple wrapping ::get() and cast to reference.
 		//
@@ -69,7 +69,7 @@ namespace vtil
 	// type-erased functions nor does any heap allocation.
 	//
 	template<typename Ret, typename Fn, typename... Tx>
-	struct deferred_value
+	struct deferred_result
 	{
 		// Has the functor and its arguments.
 		//
@@ -97,17 +97,17 @@ namespace vtil
 
 		// Null constructor.
 		//
-		deferred_value() {}
-		deferred_value( std::nullopt_t ) {}
+		deferred_result() {}
+		deferred_result( std::nullopt_t ) {}
 
 		// Construct by functor and its arguments.
 		//
-		deferred_value( Fn functor, wrap_t<Tx>... arguments )
+		deferred_result( Fn functor, wrap_t<Tx>... arguments )
 			: future( future_value{ .functor = std::move( functor ), .arguments = { std::move( arguments )... } } ) {}
 
 		// Constructor by known result.
 		//
-		deferred_value( known_value v ) : current( std::move( v ) ) {}
+		deferred_result( known_value v ) : current( std::move( v ) ) {}
 
 		// Returns a reference to the final value stored.
 		//
@@ -131,14 +131,16 @@ namespace vtil
 
 		// Creates a view.
 		//
-		deferred_view<known_value> view()
+		deferred_value<known_value> view()
 		{
-			return { this, [ ] ( void* self ) -> known_value& { return ( ( deferred_value* ) self )->get(); } };
+			return { this, [ ] ( void* self ) -> auto& { return ( ( decltype( this ) ) self )->get(); } };
 		}
-		deferred_view<const known_value> view() const
+		deferred_value<const known_value> view() const
 		{
-			return { ( void* ) this, [ ] ( void* self ) -> const known_value& { return ( ( const deferred_value* ) self )->get(); } };
+			return { this, [ ] ( void* self ) -> auto& { return ( ( decltype( this ) ) self )->get(); } };
 		}
+		operator deferred_value<known_value>() { return view(); }
+		operator deferred_value<const known_value>() const { return view(); }
 
 		// Simple wrappers to check state.
 		//
@@ -167,5 +169,5 @@ namespace vtil
 	// Declare deduction guide.
 	//
 	template<typename Fn, typename... Tx>
-	deferred_value( Fn, Tx... ) -> deferred_value<decltype(std::declval<Fn>()(std::declval<Tx>()...)), Fn, Tx...>;
+	deferred_result( Fn, Tx... ) -> deferred_result<decltype(std::declval<Fn>()(std::declval<Tx>()...)), Fn, Tx...>;
 };
