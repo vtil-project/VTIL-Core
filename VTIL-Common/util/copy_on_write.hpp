@@ -107,6 +107,7 @@ namespace vtil
 				uint64_t temporary : 1;
 			};
 			uint64_t combined_value;
+			T* __global;
 		};
 
 		// Null reference construction.
@@ -289,6 +290,7 @@ namespace vtil
 				uint64_t temporary : 1;
 			};
 			uint64_t combined_value;
+			T* __global;
 		};
 
 		// Default null constructor.
