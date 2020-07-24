@@ -10,6 +10,7 @@
 #include "../../routine/instruction.hpp"
 #include "../../routine/serialization.hpp"
 #include "../../symex/memory.hpp"
+#include "../../symex/context.hpp"
 #include "../../symex/pointer.hpp"
 #include "../../symex/variable.hpp"
 #include "../../symex/translation.hpp"

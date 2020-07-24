@@ -27,36 +27,34 @@
 //
 #pragma once
 #include <vtil/utility>
-#include <list>
-#include "pointer.hpp"
+#include <unordered_map>
 #include "variable.hpp"
 #include "../arch/register_desc.hpp"
 
 namespace vtil::symbolic
 {
-	struct memory
+	struct context
 	{
 		// Common typedefs.
 		//
-		using store_entry =              std::pair<pointer, expression::reference>;
-		using store_type =               std::list<store_entry>;
+		struct segmented_value
+		{
+			symbolic::expression::reference linear_store[ 64 ] = { nullptr };
+			uint64_t bitmap = 0;
+		};
+		using store_type = std::unordered_map<register_desc::weak_id, segmented_value, hasher<>>;
 
-		// The memory state.
+		// The register state.
 		//
-		bool relaxed_aliasing;
 		store_type value_map;
 
-		// Default constructor, optionally takes a boolean to indicate relaxed aliasing.
+		// Default copy/move/construct.
 		//
-		memory( bool relaxed_aliasing = false )
-			: relaxed_aliasing( relaxed_aliasing ) {}
-
-		// Default copy/move.
-		//
-		memory( memory&& ) = default;
-		memory( const memory& ) = default;
-		memory& operator=( memory&& ) = default;
-		memory& operator=( const memory& ) = default;
+		context() = default;
+		context( context&& ) = default;
+		context( const context& ) = default;
+		context& operator=( context&& ) = default;
+		context& operator=( const context& ) = default;
 
 		// Wrap around the store type.
 		//
@@ -67,17 +65,16 @@ namespace vtil::symbolic
 		size_t size() const { return value_map.size(); }
 		void reset() { value_map.clear(); }
 
-		// Checks if the symbolic memory contains any writes to the given memory region.
+		// Checks if the symbolic context contains any writes to the given region described by the register desc.
 		//
-		trilean contains( const pointer& ptr, bitcnt_t size ) const;
+		bool contains( const register_desc& desc ) const;
 
-		// Reads N bits from the given pointer, returns null reference if alias failure occurs.
+		// Reads the value of the given region described by the register desc.
 		//
-		expression::reference read( const pointer& ptr, bitcnt_t size, const il_const_iterator& reference_iterator = symbolic::free_form_iterator ) const;
+		expression::reference read( const register_desc& desc, const il_const_iterator& reference_iterator = symbolic::free_form_iterator ) const;
 
-		// Writes the given value to the pointer, returns null reference if alias failure occurs.
+		// Writes the given value to the region described by the register desc.
 		//
-		optional_reference<expression::reference> write( const pointer& ptr, deferred_value<expression::reference> value, bitcnt_t size );
-		optional_reference<expression::reference> write( const pointer& ptr, expression::reference value ) { return write( ptr, value, value.size() ); }
+		void write( const register_desc& desc, expression::reference value );
 	};
 };
