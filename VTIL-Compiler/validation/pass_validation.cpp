@@ -53,7 +53,7 @@ namespace vtil::optimizer::validation
 		//
 		const call_convention& call_conv = rtn->routine_convention;
 		auto rit = call_conv.param_registers.begin();
-		for ( auto [value, id] : zip( parameters, iindices() ) )
+		for ( auto [value, id] : zip( parameters, iindices ) )
 		{
 			// If we did not reach the end of registers yet:
 			//
@@ -138,7 +138,7 @@ namespace vtil::optimizer::validation
 					//
 					const call_convention& call_conv = rtn->get_cconv( ins.vip );
 					auto it = call_conv.param_registers.begin();
-					for ( auto [value, id] : zip( call.parameters, iindices() ) )
+					for ( auto [value, id] : zip( call.parameters, iindices ) )
 					{
 						symbolic::expression::reference exp;
 

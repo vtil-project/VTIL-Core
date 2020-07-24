@@ -102,7 +102,7 @@ namespace vtil::optimizer
 
 				stack_vector<size_t> read_sp;
 				stack_vector<size_t> write_sp;
-				for ( auto [op, type, idx] : zip( it->operands, it->base->operand_types, iindices() ) )
+				for ( auto [op, type, idx] : zip( it->operands, it->base->operand_types, iindices ) )
 				{
 					// Skip if memory location since it's virtual $sp in that case.
 					//

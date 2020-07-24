@@ -174,7 +174,7 @@ namespace vtil
 		//
 		std::pair<section_descriptor, size_t> rva_to_section( uint64_t rva ) const
 		{
-			for ( auto [scn, idx] : zip( *this, iindices() ) )
+			for ( auto [scn, idx] : zip( *this, iindices ) )
 			{
 				if ( scn.virtual_address <= rva && rva < ( scn.virtual_address + scn.virtual_size ) )
 					return { scn, idx };

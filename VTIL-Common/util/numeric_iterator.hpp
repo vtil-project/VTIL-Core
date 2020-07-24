@@ -31,7 +31,7 @@
 
 namespace vtil
 {
-	template<typename _value_type = size_t>
+	template<typename T = size_t>
 	struct numeric_range
 	{
 		// Declare the iterator type.
@@ -42,7 +42,7 @@ namespace vtil
 			// Generic iterator typedefs.
 			//
 			using iterator_category = std::bidirectional_iterator_tag;
-			using value_type =        _value_type;
+			using value_type = T;
 			using difference_type =   size_t;
 			using pointer =           value_type*;
 			using reference =         value_type&;
@@ -87,24 +87,21 @@ namespace vtil
 
 		// Beginning and the end of the range.
 		//
-		_value_type rng_begin;
-		_value_type rng_end;
+		T min_value = std::numeric_limits<T>::min();
+		T max_value = std::numeric_limits<T>::max();
 
 		// Generic container helpers.
 		//
-		size_t size() const { return rng_end - rng_begin; }
-		iterator begin() const { return { rng_begin, rng_end }; }
-		iterator_end_tag_t end() const { return {}; }
-		_value_type operator[]( size_t n ) const { return rng_begin + n; }
+		constexpr size_t size() const { return max_value - min_value; }
+		constexpr iterator begin() const { return { min_value, max_value }; }
+		constexpr iterator_end_tag_t end() const { return {}; }
+		constexpr T operator[]( size_t n ) const { return min_value + n; }
 	};
 
 	// Simple range creation wrapper.
 	//
-	static const numeric_range<>& iindices() 
-	{
-		static const numeric_range<> cnt = { 0, SIZE_MAX };
-		return cnt;
-	};
+	static constexpr numeric_range<> iindices = {};
+
 	template<typename T>
-	static numeric_range<T> iiota( T x ) { return { x, std::numeric_limits<T>::max() }; }
+	static numeric_range<T> iiota( T x ) { return { x }; }
 };

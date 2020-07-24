@@ -27,6 +27,7 @@
 //
 #pragma once
 #include <algorithm>
+#include <type_traits>
 
 namespace vtil
 {

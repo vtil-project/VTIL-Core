@@ -55,7 +55,7 @@ namespace vtil::symbolic
 	static organized_directive_table build_dynamic_table( const T& container )
 	{
 		organized_directive_table table;
-		for ( auto [table, op] : zip( table, iindices() ) )
+		for ( auto [table, op] : zip( table, iindices ) )
 			for( auto& directive : container )
 				if ( directive.first.op == ( math::operator_id ) op )
 					table.emplace_back( &directive.first, &directive.second );
