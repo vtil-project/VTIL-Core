@@ -55,6 +55,7 @@ namespace vtil::math
             dassert( 0 <= o && o <= std::numeric_limits<T>::max() );
         else
             dassert( std::numeric_limits<T>::min() <= o && o <= std::numeric_limits<T>::max() );
+
         return ( T ) o;
     }
 
@@ -160,13 +161,13 @@ namespace vtil::math
     // Used to find a bit with a specific value in a linear memory region.
     //
     static constexpr size_t bit_npos = ( size_t ) -1;
-    
     template<typename T>
-    static constexpr size_t find_bit( const T* begin, const T* end, bool value )
+    static constexpr size_t bit_find( const T* begin, const T* end, bool value, bool reverse = false )
     {
         constexpr size_t bit_size = sizeof( T ) * 8;
         using uint_t = std::make_unsigned_t<T>;
         using int_t =  std::make_signed_t<T>;
+        const auto scanner = reverse ? msb : lsb;
 
         // Generate the xor mask, if we're looking for 1, -!1 will evaluate to 0,
         // otherwise -!0 will evaluate to 0xFF.. in order to flip all bits.
@@ -180,7 +181,7 @@ namespace vtil::math
         {
             // If we could find the bit in the block:
             //
-            if ( bitcnt_t i = math::lsb( *it ^ xor_mask ) )
+            if ( bitcnt_t i = scanner( *it ^ xor_mask ) )
             {
                 // Return after adjusting the index.
                 //
@@ -193,10 +194,34 @@ namespace vtil::math
         return bit_npos;
     }
 
+    // Used to enumerate each set bit in the integer.
+    //
+    template<typename T>
+    static constexpr void bit_enum( uint64_t mask, T&& fn, bool reverse = false )
+    {
+        const auto scanner = reverse ? msb : lsb;
+        while ( true )
+        {
+            // If scanner returns 0, break.
+            //
+            bitcnt_t idx = scanner( mask );
+            if ( idx == 0 ) return;
+
+            // Adjust the index, reset the bit and invoke the callback.
+            //
+            bit_reset( mask, --idx );
+            fn( idx );
+        }
+    }
+
     // Generate a mask for the given variable size and offset.
     //
     static constexpr uint64_t fill( bitcnt_t bit_count, bitcnt_t bit_offset = 0 )
     {
+        // If bit count is not a positive value, return zero.
+        //
+        if ( bit_count <= 0 ) return 0;
+
         // Determine shift direction and magnitude.
         // - Could have used calculated [sgn] instead of second comparison but
         //   this makes it easier for the compiler to optimize into cmovcc.
@@ -227,11 +252,6 @@ namespace vtil::math
     {
         // The XOR operation with 0b1 flips the sign bit, after which when we subtract
         // one to create 0xFF... for (1) and 0x00... for (0).
-        // - We could have also done [s *= ~0ull], but it's slower since:
-        //    1) XOR ~= [#μop: 1, latency: 1]
-        //    2) SUB ~= [#μop: 1, latency: 1]
-        //    vs
-        //    1) MUL ~= [#μop: 3, latency: 3]
         //
         return ( ( sign ^ 1 ) - 1 ) << bit_offset;
     }

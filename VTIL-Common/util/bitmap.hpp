@@ -62,7 +62,7 @@ namespace vtil
 		{
 			// Invoke find bit.
 			//
-			size_t idx = math::find_bit( std::begin( blocks ), std::end( blocks ), value );
+			size_t idx = math::bit_find( std::begin( blocks ), std::end( blocks ), value );
 			
 			// If block has leftovers, adjust for overflow.
 			//

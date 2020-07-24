@@ -90,10 +90,6 @@ namespace vtil
 		//
 		using known_value = std::decay_t<Ret>;
 
-		// Declares invalid.
-		//
-		struct null_value {};
-
 		// Current value.
 		//
 		std::optional<future_value> future;
