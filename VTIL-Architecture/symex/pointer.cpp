@@ -116,7 +116,7 @@ namespace vtil::symbolic
 		//
 		for ( auto [xptr, key] : zip( xpointer, xpointer_keys ) )
 		{
-			xptr = base->evaluate( [ k = uint64_t( key >> 1 ) ]( const unique_identifier& uid )
+			xptr = base->evaluate( [ k = uint64_t( key ) ]( const unique_identifier& uid )
 			{
 				// Hash the identifier of the value with the current key and mask it.
 				//
@@ -124,13 +124,13 @@ namespace vtil::symbolic
 				if ( var.is_register() )
 				{
 					const variable::register_t& reg = var.reg();
-					uint64_t pseudo_pointer = make_hash( reg.flags, reg.bit_offset, reg.combined_id, k ).as64();
+					uint64_t pseudo_pointer = ( reg.weaken().hash().as64() ^ k ) >> ( reg.bit_offset + 1 );
 					return pseudo_pointer & math::fill( reg.bit_count );
 				}
 				else
 				{
 					const variable::memory_t& mem = var.mem();
-					uint64_t pseudo_pointer = combine_hash( var.hash(), hash_t{ k } ).as64();
+					uint64_t pseudo_pointer = ( var.hash().as64() ^ k ) >> 1;
 					return pseudo_pointer & math::fill( mem.bit_count );
 				}
 			} ).get().value_or( invalid_xpointer );
@@ -169,7 +169,7 @@ namespace vtil::symbolic
 	//
 	bool pointer::can_overlap( const pointer& o ) const
 	{
-		return ( ( flags & o.flags ) == flags ) ||
+		return ( ( flags & o.flags ) == flags   ) ||
 			   ( ( flags & o.flags ) == o.flags );
 	}
 
@@ -177,7 +177,7 @@ namespace vtil::symbolic
 	//
 	bool pointer::can_overlap_s( const pointer& o ) const
 	{
-		return ( ( flags & o.flags ) == flags ) &&
+		return ( ( flags & o.flags ) == flags   ) &&
 			   ( ( flags & o.flags ) == o.flags );
 	}
 };
