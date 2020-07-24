@@ -24,6 +24,7 @@
     <ClInclude Include="routine\routine.hpp" />
     <ClInclude Include="routine\serialization.hpp" />
     <ClInclude Include="symex\batch_translator.hpp" />
+    <ClInclude Include="symex\context.hpp" />
     <ClInclude Include="symex\memory.hpp" />
     <ClInclude Include="symex\pointer.hpp" />
     <ClInclude Include="symex\translation.hpp" />
@@ -40,11 +41,12 @@
     <ClCompile Include="routine\instruction.cpp" />
     <ClCompile Include="routine\routine.cpp" />
     <ClCompile Include="routine\serialization.cpp" />
+    <ClCompile Include="symex\context.cpp" />
+    <ClCompile Include="symex\memory.cpp" />
     <ClCompile Include="symex\pointer.cpp" />
     <ClCompile Include="symex\variable.cpp" />
     <ClCompile Include="trace\cached_tracer.cpp" />
     <ClCompile Include="trace\tracer.cpp" />
-    <ClCompile Include="vm\symbolic.cpp" />
     <ClCompile Include="vm\interface.cpp" />
   </ItemGroup>
   <ItemGroup>

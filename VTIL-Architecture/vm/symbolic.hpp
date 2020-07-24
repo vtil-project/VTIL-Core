@@ -26,8 +26,10 @@
 // POSSIBILITY OF SUCH DAMAGE.        
 //
 #pragma once
+#include <vtil/utility>
 #include "interface.hpp"
 #include "../symex/memory.hpp"
+#include "../symex/context.hpp"
 
 namespace vtil
 {
@@ -35,38 +37,59 @@ namespace vtil
 	//
 	struct symbolic_vm : vm_interface
 	{
-		// Flag to make I/O lazy.
-		//
-		bool lazy_io = false;
-
 		// State of the virtual machine.
 		//
 		symbolic::memory memory_state;
-		std::map<register_desc, symbolic::expression::reference> register_state;
+		symbolic::context register_state;
+
+		// Configuration of the virtual machine.
+		//
+		bool is_lazy = false;
+		il_const_iterator reference_iterator = symbolic::free_form_iterator;
 
 		// Reads from the register.
-		// - Value will be unpacked.
 		//
-		symbolic::expression::reference read_register( const register_desc& desc ) override;
+		symbolic::expression::reference read_register( const register_desc& desc ) override 
+		{ 
+			return register_state.read( desc, reference_iterator ); 
+		}
 
 		// Writes to the register.
 		//
-		void write_register( const register_desc& desc, symbolic::expression::reference value ) override;
+		void write_register( const register_desc& desc, symbolic::expression::reference value ) override 
+		{ 
+			if ( is_lazy ) value.make_lazy();
+			register_state.write( desc, std::move( value ) );
+		}
 
 		// Reads the given number of bytes from the memory.
 		//
-		symbolic::expression::reference read_memory( const symbolic::expression::reference& pointer, size_t byte_count ) override;
+		symbolic::expression::reference read_memory( const symbolic::expression::reference& pointer, size_t byte_count ) override
+		{
+			return memory_state.read( pointer, math::narrow_cast< bitcnt_t >( byte_count * 8 ), reference_iterator );
+		}
 		
 		// Writes the given expression to the memory.
 		//
-		bool write_memory( const symbolic::expression::reference& pointer, deferred_view<symbolic::expression::reference> value, bitcnt_t size ) override;
-
-		// Override execute to enforce lazyness.
-		//
-		vm_exit_reason execute( const instruction& ins ) override;
+		bool write_memory( const symbolic::expression::reference& pointer, deferred_value<symbolic::expression::reference> value, bitcnt_t size ) override
+		{
+			if ( is_lazy )
+			{
+				deferred_result value_n = [ & ]() -> auto { return value.get().make_lazy(); };
+				return memory_state.write( pointer, value_n, size ).has_value();
+			}
+			else
+			{
+				return memory_state.write( pointer, value, size ).has_value();
+			}
+		}
 
 		// Resets the virtual machine state.
 		//
-		void reset() { memory_state.reset(); register_state.clear(); }
+		void reset() 
+		{
+			memory_state.reset(); 
+			register_state.reset(); 
+		}
 	};
 };

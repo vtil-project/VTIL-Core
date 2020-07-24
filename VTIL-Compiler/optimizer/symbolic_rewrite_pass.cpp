@@ -127,10 +127,19 @@ namespace vtil::optimizer
 			//
 			for ( auto& pair : vm.register_state )
 			{
+				// Skip if not written, else collapse value.
+				// -- TODO: Will be reworked...
+				//
+				bitcnt_t msb = math::msb( pair.second.bitmap ) - 1;
+				if ( msb == -1 ) continue;
+				bitcnt_t size = pair.second.linear_store[ msb ].size() + msb;
+
+				register_desc k = { pair.first, size };
+				auto v = vm.read_register( k ).simplify();
+
 				// If value is unchanged, skip.
 				//
-				auto k = pair.first; auto v = pair.second.simplify();
-				symbolic::expression v0 = symbolic::CTX[ k ];
+				symbolic::expression v0 = symbolic::CTX( vm.reference_iterator )[ k ];
 				if ( v->equals( v0 ) )
 					continue;
 
@@ -201,9 +210,9 @@ namespace vtil::optimizer
 			// For each memory state:
 			// -- TODO: Simplify memory state, merge if simplifies, discard if left as is.
 			//
-			for ( auto& [k, _v] : vm.memory_state )
+			for ( auto& [k, v] : vm.memory_state )
 			{
-				auto v = _v.simplify();
+				v.simplify();
 				symbolic::expression v0 = symbolic::MEMORY( k, v.size() );
 
 				// If value is unchanged, skip.
