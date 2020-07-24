@@ -63,7 +63,7 @@ namespace vtil
 		
 		// Writes the given expression to the memory, returns false if aliasing fails.
 		//
-		virtual bool write_memory( const symbolic::expression::reference& pointer, deferred_view<symbolic::expression::reference> value, bitcnt_t size ) { unreachable(); return false; }
+		virtual bool write_memory( const symbolic::expression::reference& pointer, deferred_value<symbolic::expression::reference> value, bitcnt_t size ) { unreachable(); return false; }
 		bool write_memory_v( const symbolic::expression::reference& pointer, symbolic::expression::reference value ) { return write_memory( pointer, value, value.size() ); }
 
 		// Runs the given instruction, returns whether it was successful.

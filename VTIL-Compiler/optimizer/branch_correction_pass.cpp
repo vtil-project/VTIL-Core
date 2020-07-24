@@ -106,7 +106,7 @@ namespace vtil::optimizer
 		{
 			// Attempts to revive an expression via cache.
 			//
-			using deferred_operand = deferred_value<
+			using deferred_operand = deferred_result<
 				operand,
 				decltype( &aux::revive_register ),
 				symbolic::variable, const il_iterator&

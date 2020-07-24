@@ -109,7 +109,7 @@ namespace vtil
 			// Read the source operand and byte-align.
 			//
 			bitcnt_t aligned_size = ( ins.operands[ 2 ].bit_count() + 7 ) & ~7;
-			deferred_value value = [ & ] ()
+			deferred_result value = [ & ] ()
 			{
 				auto src = cvt_operand( 2 );
 				src.resize( aligned_size );
@@ -120,7 +120,7 @@ namespace vtil
 			// add offset. Write the source to the pointer, return status as is.
 			//
 			auto [base, offset] = ins.memory_location();
-			return write_memory( read_register( base ) + offset, value.view(), aligned_size )
+			return write_memory( read_register( base ) + offset, value, aligned_size )
 				? vm_exit_reason::none
 				: vm_exit_reason::alias_failure;
 		}

@@ -88,7 +88,7 @@ namespace vtil
 				? hooks.write_register( desc, std::move( value ) ) 
 				: vm_base::write_register( desc, std::move( value ) );
 		}
-		bool write_memory( const symbolic::expression::reference& pointer, deferred_view<symbolic::expression::reference> value, bitcnt_t size ) override
+		bool write_memory( const symbolic::expression::reference& pointer, deferred_value<symbolic::expression::reference> value, bitcnt_t size ) override
 		{
 			return hooks.write_memory
 				? hooks.write_memory( pointer, std::move( value ), size )

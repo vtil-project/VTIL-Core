@@ -248,7 +248,7 @@ namespace vtil::optimizer::validation
 			return vm.symbolic_vm::read_memory( pointer, sz );
 		};
 
-		vm.hooks.write_memory = [ & ] ( const symbolic::expression::reference& pointer, deferred_view<symbolic::expression::reference> value, bitcnt_t size )
+		vm.hooks.write_memory = [ & ] ( const symbolic::expression::reference& pointer, deferred_value<symbolic::expression::reference> value, bitcnt_t size )
 		{
 			// If action log has a matching write memory on top of the stack:
 			//
