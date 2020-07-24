@@ -34,37 +34,6 @@
 
 namespace vtil
 {
-	// Type erased view of deferred value.
-	//
-	template<typename T>
-	struct deferred_value
-	{
-		// View only holds a pointer to the deferred_value, erasing the type.
-		//
-		using getter_type = T&(*)(void*);
-		void* ctx;
-		getter_type getter;
-
-		// Construction by type + functor, type erase context and store as is.
-		//
-		deferred_value( const void* ctx, getter_type getter )
-			: ctx( ( void* ) ctx ), getter( getter ) {}
-
-		// Construction by value, store pointer in context and use type-casting lambda as getter.
-		//
-		deferred_value( T& value )
-		{
-			ctx = &value;
-			getter = [ ] ( void* p ) -> T& { return *( T* ) p; };
-		}
-		deferred_value( T&& value ) : deferred_value( ( T& ) value ) {}
-
-		// Simple wrapping ::get() and cast to reference.
-		//
-		T& get() const { return getter( ctx ); }
-		operator T&() const { return get(); }
-	};
-
 	// Lightweight version of std::async::deferred that does not store any 
 	// type-erased functions nor does any heap allocation.
 	//
@@ -129,19 +98,6 @@ namespace vtil
 			return make_mutable( this )->get(); 
 		}
 
-		// Creates a view.
-		//
-		deferred_value<known_value> view()
-		{
-			return { this, [ ] ( void* self ) -> auto& { return ( ( decltype( this ) ) self )->get(); } };
-		}
-		deferred_value<const known_value> view() const
-		{
-			return { this, [ ] ( void* self ) -> auto& { return ( ( decltype( this ) ) self )->get(); } };
-		}
-		operator deferred_value<known_value>() { return view(); }
-		operator deferred_value<const known_value>() const { return view(); }
-
 		// Simple wrappers to check state.
 		//
 		bool is_valid() const { return future || current; }
@@ -170,4 +126,53 @@ namespace vtil
 	//
 	template<typename Fn, typename... Tx>
 	deferred_result( Fn, Tx... ) -> deferred_result<decltype(std::declval<Fn>()(std::declval<Tx>()...)), Fn, Tx...>;
+
+	// Type erased view of deferred result.
+	//
+	template<typename T>
+	struct deferred_value
+	{
+		// View only holds a pointer to the deferred_value, erasing the type.
+		//
+		using getter_type = T& (*) ( void* );
+		void* ctx;
+		getter_type getter;
+
+		// Construction by value, store pointer in context and use type-casting lambda as getter.
+		//
+		deferred_value( T& value )
+		{
+			ctx = &value;
+			getter = [ ] ( void* p ) -> T& { return *( T* ) p; };
+		}
+		// -- Lifetime must be guaranteed by the caller.
+		deferred_value( T&& value ) : deferred_value( ( T& ) value ) {}
+
+		// Construction by deferred result.
+		//
+		template<typename... Tx>
+		deferred_value( const deferred_result<T, Tx...>& result )
+		{
+			ctx = ( void* ) &result;
+			getter = [ ] ( void* self ) -> T&
+			{
+				return ( ( deferred_result<T, Tx...>* ) self )->get();
+			};
+		}
+
+		// Construction by type + functor, type erase context and store as is.
+		//
+		deferred_value( const void* ctx, getter_type getter )
+			: ctx( ( void* ) ctx ), getter( getter ) {}
+
+		// Simple wrapping ::get() and cast to reference.
+		//
+		T& get() const { return getter( ctx ); }
+		operator T& () const { return get(); }
+	};
+
+	// Declare deduction guide.
+	//
+	template<typename Ret, typename Fn, typename... Tx>
+	deferred_value( deferred_result<Ret, Fn, Tx...> )->deferred_value<Ret>;
 };

@@ -46,10 +46,11 @@ namespace vtil
 		
 		// Constructs by reference to type.
 		//
-		constexpr optional_reference( T&& ref )                      : pointer( &ref ) {}
 		constexpr optional_reference( T& ref )                       : pointer( &ref ) {}
-		constexpr optional_reference( std::optional<T>&& ref )       : pointer( ref.has_value() ? &ref.value() : nullptr ) {}
 		constexpr optional_reference( std::optional<T>& ref )        : pointer( ref.has_value() ? &ref.value() : nullptr ) {}
+		// -- Lifetime must be guaranteed by the caller.
+		constexpr optional_reference( T&& ref ) : pointer( &ref ) {}
+		constexpr optional_reference( std::optional<T>&& ref ) : pointer( ref.has_value() ? &ref.value() : nullptr ) {}
 		
 		// Default constructor / move / copy.
 		//
