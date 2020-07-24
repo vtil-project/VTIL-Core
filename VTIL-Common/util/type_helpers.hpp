@@ -121,7 +121,7 @@ namespace vtil
 	// Returns the offset of given member reference.
 	//
 	template<typename V, typename C> 
-	static constexpr int32_t make_offset( V C::* ref ) { return ( uint64_t ) &( make_null<C>()->*ref ); }
+	static constexpr int32_t make_offset( V C::* ref ) { return ( int32_t ) ( uint64_t ) &( make_null<C>()->*ref ); }
 
 	// Gets the type at the given offset.
 	//
