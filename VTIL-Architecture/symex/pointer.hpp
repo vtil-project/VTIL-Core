@@ -34,13 +34,6 @@
 #include <vtil/utility>
 #include "../arch/register_desc.hpp"
 
-// [Configuration]
-// Determine the number of xpointers we use to estimate overlapping.
-//
-#ifndef VTIL_SYM_PTR_XPTR_KEYS
-	#define VTIL_SYM_PTR_XPTR_KEYS 4
-#endif
-
 namespace vtil::symbolic
 {
 	// Declare a symbolic pointer to be used within symbolic execution context.
@@ -60,14 +53,10 @@ namespace vtil::symbolic
 		// Special flags of the registers the base contains.
 		//
 		uint64_t flags = 0;
-		
-		// X-Pointers are N-64-bit estimations of the actual virtual adresss.
-		//
-		std::array<uint64_t, VTIL_SYM_PTR_XPTR_KEYS> xpointer;
 
 		// Construct null pointer.
 		//
-		pointer() { xpointer.fill( 0 ); }
+		pointer() {}
 		pointer( std::nullptr_t ) : pointer() {}
 
 		// Construct from symbolic expression.
@@ -108,6 +97,6 @@ namespace vtil::symbolic
 
 		// Define reduction.
 		//
-		REDUCE_TO( flags, xpointer, base ? ( boxed_expression& ) *base : make_static<boxed_expression>() );
+		REDUCE_TO( flags, base ? ( boxed_expression& ) *base : make_static<boxed_expression>() );
 	};
 };

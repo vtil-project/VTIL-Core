@@ -33,14 +33,6 @@
 
 namespace vtil::symbolic
 {
-	// Magic value substituting for invalid xpointers.
-	//
-	static constexpr uint64_t invalid_xpointer = make_crandom();
-
-	// List of keys used for xpointer generation.
-	//
-	static constexpr std::array xpointer_keys = make_crandom_n<VTIL_SYM_PTR_XPTR_KEYS>( 1 );
-
 	// Given a variable or an expression, checks if it is basing from a 
 	// known restricted pointer, if so returns the register it's based off of.
 	//
@@ -111,30 +103,6 @@ namespace vtil::symbolic
 			//
 			return 0ull;
 		} );
-
-		// Initialize X-Pointers.
-		//
-		for ( auto [xptr, key] : zip( xpointer, xpointer_keys ) )
-		{
-			xptr = base->evaluate( [ k = uint64_t( key ) ]( const unique_identifier& uid )
-			{
-				// Hash the identifier of the value with the current key and mask it.
-				//
-				const variable& var = uid.get<variable>();
-				if ( var.is_register() )
-				{
-					const variable::register_t& reg = var.reg();
-					uint64_t pseudo_pointer = ( reg.weaken().hash().as64() ^ k ) >> ( reg.bit_offset + 1 );
-					return pseudo_pointer & math::fill( reg.bit_count );
-				}
-				else
-				{
-					const variable::memory_t& mem = var.mem();
-					uint64_t pseudo_pointer = ( var.hash().as64() ^ k ) >> 1;
-					return pseudo_pointer & math::fill( mem.bit_count );
-				}
-			} ).get().value_or( invalid_xpointer );
-		}
 	}
 
 	// Simple pointer offseting.
@@ -143,11 +111,6 @@ namespace vtil::symbolic
 	{
 		pointer copy = *this;
 		copy.base = std::move( copy.base ) + dst;
-		std::transform(
-			std::begin( xpointer ), std::end( xpointer ),
-			std::begin( copy.xpointer ),
-			[ = ] ( auto v ) { return v + dst; }
-		);
 		return copy;
 	}
 
@@ -155,9 +118,9 @@ namespace vtil::symbolic
 	//
 	std::optional<int64_t> pointer::operator-( const pointer& o ) const
 	{
-		int64_t delta = xpointer[ 0 ] - o.xpointer[ 0 ];
-		for ( size_t n = 1; n < xpointer.size(); n++ )
-			if ( ( xpointer[ n ] - o.xpointer[ n ] ) != delta )
+		int64_t delta = base->xvalues[ 0 ] - o.base->xvalues[ 0 ];
+		for ( size_t n = 1; n < base->xvalues.size(); n++ )
+			if ( ( base->xvalues[ n ] - o.base->xvalues[ n ] ) != delta )
 				return std::nullopt;
 		return ( base - o.base ).get<true>();
 	}

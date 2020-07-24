@@ -392,11 +392,12 @@ namespace vtil::symbolic
 		return *this;
 	}
 
-
 	// Updates the expression state.
 	//
 	expression& expression::update( bool auto_simplify )
 	{
+		static constexpr auto xvalue_keys = make_crandom_n<VTIL_SYMEX_XVAL_KEYS>();
+
 		// Propagate lazyness.
 		//
 		if ( ( lhs && lhs->is_lazy ) ||
@@ -427,6 +428,10 @@ namespace vtil::symbolic
 				// Hash is made up of the bit vector masks and the number of bits.
 				//
 				hash_value = make_hash( value.known_zero(), value.known_one(), ( uint8_t ) value.size() );
+
+				// All x values are equivalent to the actual value.
+				//
+				xvalues.fill( ( uint64_t ) cval );
 			}
 			// If symbolic variable:
 			//
@@ -441,6 +446,11 @@ namespace vtil::symbolic
 				// Hash is made up of UID's hash and the number of bits.
 				//
 				hash_value = make_hash( uid.hash(), ( uint8_t ) value.size() );
+
+				// Generate x values based on the hash.
+				//
+				for ( auto [out, key] : zip( xvalues, xvalue_keys ) )
+					out = (hash_value ^ key) & value.value_mask();
 			}
 
 			// Set simplification state.
@@ -459,6 +469,20 @@ namespace vtil::symbolic
 				// Partially evaluate the expression.
 				//
 				value = math::evaluate_partial( op, {}, rhs->value );
+
+				// Speculative simplification, if value is known replace with a constant, this 
+				// is a major performance boost with lazy expressions as child copies and large 
+				// destruction chains are completely avoided. Lazy expressions are meant to
+				// delay complex simplification rather than block all simplification so this
+				// step is totally fine. [1]
+				//
+				if ( ( is_lazy || auto_simplify ) && value.is_known() )
+				{
+					lhs = {}; rhs = {};
+					op = math::operator_id::invalid;
+					is_lazy = false;
+					return update( false );
+				}
 
 				// Calculate base complexity and the depth.
 				//
@@ -491,11 +515,7 @@ namespace vtil::symbolic
 					value = math::evaluate_partial( op, lhs->value, rhs->value );
 				}
 
-				// Speculative simplification, if value is known replace with a constant, this 
-				// is a major performance boost with lazy expressions as child copies and large 
-				// destruction chains are completely avoided. Lazy expressions are meant to
-				// delay complex simplification rather than block all simplification so this
-				// step is totally fine.
+				// Speculative simplification, see [1].
 				//
 				if ( ( is_lazy || auto_simplify ) && value.is_known() )
 				{
@@ -639,6 +659,27 @@ namespace vtil::symbolic
 			// Reset simplification state since expression was updated.
 			//
 			simplify_hint = false;
+
+			// Calculate x values.
+			//
+			uint64_t rhs_mask;
+			switch ( op )
+			{
+				case math::operator_id::shift_right:
+				case math::operator_id::shift_left:
+				case math::operator_id::rotate_right:
+				case math::operator_id::rotate_left:
+				case math::operator_id::bit_test:     rhs_mask = lhs->size() - 1; break;
+				default:                              rhs_mask = ~0ull;           break;
+			}
+
+			for ( auto [out, idx] : zip( xvalues, iindices ) )
+			{
+				if ( lhs )
+					out = math::evaluate( op, lhs->size(), lhs->xvalues[ idx ], rhs->size(), rhs->xvalues[ idx ] & rhs_mask ).first;
+				else
+					out = math::evaluate( op, 0,           0,                   rhs->size(), rhs->xvalues[ idx ] & rhs_mask ).first;
+			}
 		
 			// If auto simplification is relevant, invoke it.
 			//
@@ -707,19 +748,11 @@ namespace vtil::symbolic
 			 ( other.known_zero() & known_one() ))
 			return false;
 
-		// Try evaluating with 2 random values, if values do not match, expressions cannot be equivalent.
+		// Fast path: if x values do not match, expressions cannot be equivalent.
 		//
-		static constexpr auto eval_keys = make_crandom_n<2>();
-		for ( uint64_t key : eval_keys )
-		{
-			auto eval_helper = [ = ] ( const unique_identifier& uid ) 
-			{
-				return uid.hash().as64() ^ key;
-			};
-			if ( this->evaluate( eval_helper ).known_one() != 
-				 other.evaluate( eval_helper ).known_one() )
+		for ( auto [a, b] : zip( xvalues, other.xvalues ) )
+			if ( a != b ) 
 				return false;
-		}
 
 		// Simplify both expressions.
 		//

@@ -31,6 +31,14 @@
 #include <set>
 #include "unique_identifier.hpp"
 
+
+// [Configuration]
+// Determine the number of x value keys we use to estimate values.
+//
+#ifndef VTIL_SYMEX_XVAL_KEYS
+	#define VTIL_SYMEX_XVAL_KEYS 4
+#endif
+
 // Allow expression::reference to be used with expression type directly as operable.
 //
 namespace vtil::symbolic { struct expression; struct expression_reference; };
@@ -174,6 +182,10 @@ namespace vtil::symbolic
 		using delegate =       expression_delegate;
 		using reference =      expression_reference;
 		using weak_reference = weak_reference<expression>;
+
+		// X values approximating the result with different unique keys generated from each UID.
+		//
+		std::array<uint64_t, VTIL_SYMEX_XVAL_KEYS> xvalues;
 
 		// If symbolic variable, the unique identifier that it maps to.
 		//
