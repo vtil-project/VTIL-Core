@@ -179,20 +179,7 @@ namespace vtil
 
     // Helper used to create reduced tuples.
     //
-    template <typename... Tx>
-    static constexpr std::tuple<Tx...> reference_as_tuple( Tx&&... args )
-    {
-        static_assert
-        ( 
-            std::conjunction_v<
-                std::bool_constant<
-                    std::is_trivial_v<Tx> || 
-                    std::is_reference_v<Tx> || 
-                    impl::is_optional_reference_v<Tx>>...>,
-            "Reduction function should not pass any non-trivial values by value." 
-        );
-
-        return std::tuple<Tx...>( std::forward<Tx>( args )... );
-    }
+    template<typename... Tx>
+    static constexpr std::tuple<Tx...> reference_as_tuple( Tx&&... args ) { return std::tuple<Tx...>( std::forward<Tx>( args )... ); }
 };
 #pragma warning(pop)
