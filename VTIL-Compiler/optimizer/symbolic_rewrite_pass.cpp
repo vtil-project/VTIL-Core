@@ -323,6 +323,11 @@ namespace vtil::optimizer
 			vm.reset();
 		}
 
+		// Purge simplifier cache since block iterators are now invalidated 
+		// making the cache also invalid.
+		//
+		symbolic::purge_simplifier_cache();
+
 		// Skip rewriting if we produced larger code.
 		//
 		int64_t opt_count = blk->stream.size() - temporary_block.stream.size();
@@ -332,12 +337,10 @@ namespace vtil::optimizer
 			opt_count = 0;
 		}
 
-		// Acquire a unique lock and rewrite the stream. Purge simplifier cache since block 
-		// iterators are now invalidated making the cache also invalid.
+		// Acquire a unique lock and rewrite the stream. 
 		//
 		blk->stream = temporary_block.stream;
 		blk->last_temporary_index = temporary_block.last_temporary_index;
-		symbolic::purge_simplifier_cache();
 		return opt_count;
 	}
 };
