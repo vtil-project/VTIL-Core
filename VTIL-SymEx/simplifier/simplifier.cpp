@@ -34,10 +34,13 @@
 #include <vtil/utility>
 
 // [Configuration]
-// Determine the depth limit after which we start self generated signature matching.
+// Determine the depth limit after which we start self generated signature matching and
+// the properties of the LRU cache.
 //
-#ifndef VTIL_SELFGEN_SIGMATCH_DEPTH_LIM
-	#define	VTIL_SELFGEN_SIGMATCH_DEPTH_LIM		3
+#ifndef VTIL_SYMEX_SELFGEN_SIGMATCH_DEPTH_LIM
+	#define	VTIL_SYMEX_SELFGEN_SIGMATCH_DEPTH_LIM   3
+	#define VTIL_SYMEX_LRU_CACHE_SIZE               65536
+	#define VTIL_SYMEX_LRU_PRUNE_COEFF              0.35
 #endif
 namespace vtil::symbolic
 {
@@ -77,11 +80,11 @@ namespace vtil::symbolic
 
 	// Simplifier cache and its accessors.
 	//
-	static constexpr size_t max_cache_entries = 256000;
-	static constexpr size_t cache_prune_count = max_cache_entries / 2;
-
-	struct local_cache_t
+	struct local_simplification_cache
 	{
+		static constexpr size_t max_cache_entries = VTIL_SYMEX_LRU_CACHE_SIZE;
+		static constexpr size_t cache_prune_count = ( size_t ) ( max_cache_entries * VTIL_SYMEX_LRU_PRUNE_COEFF );
+
 		// Non-allocating linked list for tracking entries in a seperate order.
 		//
 		template<typename T>
@@ -184,7 +187,7 @@ namespace vtil::symbolic
 
 					// If other's past depth limit:
 					//
-					if ( other->depth > VTIL_SELFGEN_SIGMATCH_DEPTH_LIM )
+					if ( other->depth > VTIL_SYMEX_SELFGEN_SIGMATCH_DEPTH_LIM )
 					{
 						// If matching signature, save the match.
 						//
@@ -340,7 +343,7 @@ namespace vtil::symbolic
 			// Signal signature matcher.
 			//
 			signature_matcher::result sig_search = { exp };
-			signature_matcher::signal = exp->depth > VTIL_SELFGEN_SIGMATCH_DEPTH_LIM ? &sig_search : nullptr;
+			signature_matcher::signal = exp->depth > VTIL_SYMEX_SELFGEN_SIGMATCH_DEPTH_LIM ? &sig_search : nullptr;
 			auto [it, inserted] = map.emplace( exp, make_default<cache_value>() );
 			signature_matcher::signal = nullptr;
 
@@ -393,7 +396,7 @@ namespace vtil::symbolic
 			return { it->second.result, it->second.is_simplified, !inserted, it->second.lock_count };
 		}
 	};
-	static thread_local local_cache_t local_cache;
+	static thread_local local_simplification_cache local_cache;
 	void purge_simplifier_cache() { local_cache.reset(); }
 
 	// Attempts to prettify the expression given.
