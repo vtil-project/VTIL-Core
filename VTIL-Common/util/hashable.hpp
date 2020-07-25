@@ -170,6 +170,12 @@ namespace vtil
 				uint64_t identifier = ( ( uint64_t ) value ) & ( ( 1ull << 48 ) - 1 );
 				return hash_t{ ( identifier << 16 ) ^ ( identifier ) };
 			}
+			// If hashable using std::hash<>, redirect.
+			//
+			else if constexpr ( StdHashable<T> )
+			{
+				return hash_t{ std::hash<T>{}( value ) };
+			}
 			// If trivial type, hash each byte.
 			//
 			else if constexpr ( std::is_trivial_v<T> )
@@ -177,12 +183,6 @@ namespace vtil
 				hash_t hash = {};
 				hash.add_bytes( value );
 				return hash;
-			}
-			// If hashable using std::hash<>, redirect.
-			//
-			else if constexpr ( StdHashable<const T&> )
-			{
-				return hash_t{ std::hash<T>{}( value ) };
 			}
 			// Throw assert fail.
 			//
