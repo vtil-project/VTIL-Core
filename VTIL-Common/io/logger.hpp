@@ -112,13 +112,11 @@ namespace vtil::logger
 			state::get()->lock.lock();
 			prev = state::get()->padding;
 			state::get()->padding += u;
-			state::get()->lock.unlock();
 		}
 
 		void end()
 		{
 			if ( active-- <= 0 ) return;
-			state::get()->lock.lock();
 			state::get()->padding = prev;
 			state::get()->lock.unlock();
 		}
@@ -139,13 +137,11 @@ namespace vtil::logger
 			state::get()->lock.lock();
 			prev = state::get()->mute;
 			state::get()->mute |= !verbose_output;
-			state::get()->lock.unlock();
 		}
 
 		void end()
 		{
 			if ( active-- <= 0 ) return;
-			state::get()->lock.lock();
 			state::get()->mute = prev;
 			state::get()->lock.unlock();
 		}
