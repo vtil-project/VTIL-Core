@@ -72,7 +72,7 @@ namespace vtil::symbolic
 	// Simplifier cache and its accessors.
 	//
 	static constexpr size_t max_cache_entries = 65536;
-	static constexpr size_t cache_prune_count = max_cache_entries / 4;
+	static constexpr size_t cache_prune_count = max_cache_entries / 2;
 
 	struct local_cache_t
 	{
@@ -173,7 +173,7 @@ namespace vtil::symbolic
 
 		// Cache map.
 		//
-		cache_map map;
+		cache_map map{ max_cache_entries };
 
 		// Resets the local cache.
 		//
@@ -184,6 +184,7 @@ namespace vtil::symbolic
 			spec_list = {};
 			is_speculative = false;
 			map.clear();
+			map.reserve( max_cache_entries );
 		}
 
 		// Begins speculative execution.
