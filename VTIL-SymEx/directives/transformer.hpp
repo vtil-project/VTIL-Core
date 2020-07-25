@@ -94,10 +94,19 @@ namespace vtil::symbolic
 					//
 					if ( exp_new->size() != exp->size() )
 					{
-						log( "\n" );
-						log<CON_RED>( "Input  (%d bits):   %s\n", exp->size(), exp->to_string() );
-						log<CON_RED>( "Output (%d bits):   %s\n", exp_new->size(), exp_new->to_string() );
-						error( "Directive '%s' => '%s' left the simplifier unbalanced.", from->to_string(), to->to_string() );
+						// Auto fix if constant:
+						//
+						if ( exp_new->is_constant() )
+						{
+							exp_new = { *exp_new->value.get(), exp->size() };
+						}
+						else
+						{
+							log( "\n" );
+							log<CON_RED>( "Input  (%d bits):   %s\n", exp->size(), exp->to_string() );
+							log<CON_RED>( "Output (%d bits):   %s\n", exp_new->size(), exp_new->to_string() );
+							error( "Directive '%s' => '%s' left the simplifier unbalanced.", from->to_string(), to->to_string() );
+						}
 					}
 
 					return exp_new;
