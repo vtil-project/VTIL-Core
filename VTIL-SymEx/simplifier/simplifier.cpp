@@ -71,84 +71,218 @@ namespace vtil::symbolic
 
 	// Simplifier cache and its accessors.
 	//
-	using cache_bucket_t = std::unordered_map<expression::reference, std::pair<expression::reference, bool>, 
-		                                      expression::reference::hasher, 
-		                                      expression::reference::if_identical                          >;
-
-	static constexpr size_t simplifier_bucket_count = 16;
+	static constexpr size_t max_cache_entries = 65536;
+	static constexpr size_t cache_prune_count = max_cache_entries / 4;
 
 	struct local_cache_t
 	{
-		cache_bucket_t main_cache[ simplifier_bucket_count ];
-		cache_bucket_t spec_cache[ simplifier_bucket_count ];
-		bool spec_cache_enabled = false;
-		bitmap<simplifier_bucket_count> spec_cache_dirty;
+		// Non-allocating linked list for tracking entries in a seperate order.
+		//
+		template<typename T>
+		struct linked_list
+		{
+			// Dynamically inserted key.
+			//
+			struct key
+			{
+				key* prev;
+				key* next;
 
+				T* get( member_reference_t<T, key> ref ) { return ptr_at<T>( this, -make_offset( ref ) ); }
+				const T* get( member_reference_t<T, key> ref ) const { return make_mutable( this )->get( std::move( ref ) ); }
+			};
+
+			// Head and tail for tracking the list.
+			//
+			key* head = nullptr;
+			key* tail = nullptr;
+
+			// Inserts the key into the list.
+			//
+			void emplace_back( key* k )
+			{
+				k->prev = tail;
+				k->next = nullptr;
+				if ( tail ) tail->next = k;
+				if ( !head ) head = k;
+				tail = k;
+			}
+
+			// Erases the key from the list.
+			//
+			void erase( key* k )
+			{
+				if ( head == k ) head = k->next;
+				if ( tail == k ) tail = k->prev;
+				if ( k->prev ) k->prev->next = k->next;
+				if ( k->next ) k->next->prev = k->prev;
+				k->prev = nullptr;
+				k->next = nullptr;
+			}
+		};
+
+		// Non-atomic integer incremented during the duration of scope.
+		//
+		template<typename T>
+		struct scope_lock
+		{
+			T* lock_count;
+			scope_lock( T& i ) : lock_count( &i ) { ++( *lock_count ); }
+
+			scope_lock( scope_lock&& ) = delete;
+			scope_lock( const scope_lock& ) = delete;
+
+			~scope_lock() { --( *lock_count ); }
+		};
+
+		// Cache entry and bucket type.
+		//
+		struct cache_value;
+		using cache_map = std::unordered_map<expression::reference, cache_value,
+		                                     expression::reference::hasher, 
+		                                     expression::reference::if_identical>;
+		struct cache_value
+		{
+			using list_key = typename linked_list<cache_value>::key;
+
+			// Entry itself:
+			//
+			expression::reference result = {};
+			bool is_simplified = false;
+
+			// Implementation details:
+			//
+			int8_t lock_count = 0;
+			cache_map::const_iterator iterator = {};
+			list_key list_use = {};
+			list_key list_spec = {};
+		};
+
+		// Size of the current cache, [sum {bucket} [.size()]].
+		//
+		size_t size = 0;
+
+		// Whether we're executing speculatively or not.
+		//
+		bool is_speculative = false;
+
+		// Linked list head/tails for LRU use list and the speculative list.
+		//
+		linked_list<cache_value> use_list;
+		linked_list<cache_value> spec_list;
+
+		// Cache map.
+		//
+		cache_map map;
+
+		// Resets the local cache.
+		//
+		void reset()
+		{
+			size = 0;
+			use_list = {};
+			spec_list = {};
+			is_speculative = false;
+			map.clear();
+		}
+
+		// Begins speculative execution.
+		//
 		void begin_speculative()
 		{
-			spec_cache_enabled = true;
-			spec_cache_dirty = {};
+			is_speculative = true;
 		}
+
+		// Ends speculative execution and marks all speculative entries valid.
+		//
 		void join_speculative()
 		{
-			while ( true )
+			for ( auto it = spec_list.head; it; )
 			{
-				size_t n = spec_cache_dirty.find( true );
-				if ( n == math::bit_npos ) break;
-				spec_cache_dirty.set( n, false );
-
-				auto& main = main_cache[ n ];
-				auto& spec = spec_cache[ n ];
-				main.insert( std::make_move_iterator( spec.begin() ), std::make_move_iterator( spec.end() ) );
-				spec.clear();
+				auto next = it->next;
+				spec_list.erase( it );
+				it = next;
 			}
-			spec_cache_enabled = false;
+			is_speculative = false;
 		}
+
+		// Ends speculative execution and trashes all incomplete speculative entries.
+		//
 		void trash_speculative()
 		{
-			while ( true )
+			for ( auto it = spec_list.head; it; )
 			{
-				size_t n = spec_cache_dirty.find( true );
-				if ( n == math::bit_npos ) break;
-				spec_cache_dirty.set( n, false );
-
-				auto& spec = spec_cache[ n ];
-				spec.clear();
+				auto next = it->next;
+				cache_value* value = it->get( &cache_value::list_spec );
+				dassert( value->lock_count <= 0 );
+				if ( value->is_simplified )
+					spec_list.erase( it );
+				else
+					erase( value );
+				it = next;
 			}
-			spec_cache_enabled = false;
+			is_speculative = false;
 		}
-		std::tuple<expression::reference&, bool&, bool> lookup( const expression::reference& exp )
+
+		// Erases a cache entry.
+		//
+		void erase( cache_value* value )
 		{
-			size_t bucket_id = ( size_t ) exp->op % simplifier_bucket_count;
+			use_list.erase( &value->list_use );
+			spec_list.erase( &value->list_spec );
+			map.erase( std::move( value->iterator ) );
+			size--;
+		}
 
-			if ( spec_cache_enabled )
+		// Looks up the cache for the expression, returns [<result>, <simplified?>, <exists?>, <LRU lock>].
+		//
+		std::tuple<expression::reference&, bool&, bool, scope_lock<int8_t>> lookup( const expression::reference& exp )
+		{
+			// Lookup or insert into the cache.
+			//
+			auto [it, inserted] = map.emplace( exp, make_default<cache_value>() );
+			
+			// If newly inserted:
+			//
+			if ( inserted )
 			{
-				if ( auto it = main_cache[ bucket_id ].find( exp ); it != main_cache[ bucket_id ].end() )
-					return { it->second.first, it->second.second, true };
+				// Save the iterator.
+				//
+				it->second.iterator = it;
 
-				if ( spec_cache_dirty.blocks[ 0 ] == 0 )
+				// If simplifying speculatively, link to tail.
+				//
+				if ( is_speculative )
+					spec_list.emplace_back( &it->second.list_spec );
+
+				// Increment global size, if we reached max entries, prune:
+				//
+				if ( ++size == max_cache_entries )
 				{
-					auto [it, inserted] = main_cache[ bucket_id ].emplace( exp, make_default<std::pair<expression::reference, bool>>() );
-					return { it->second.first, it->second.second, !inserted };
-				}
+					for ( auto it = use_list.head; it && ( size + cache_prune_count ) > max_cache_entries; )
+					{
+						auto next = it->next;
 
-				auto [it, inserted] = spec_cache[ bucket_id ].emplace( exp, make_default<std::pair<expression::reference, bool>>() );
-				spec_cache_dirty.set( bucket_id, true );
-				return { it->second.first, it->second.second, !inserted };
+						// Erase if not locked:
+						//
+						cache_value* value = it->get( &cache_value::list_use );
+						if ( value->lock_count <= 0 )
+							erase( value );
+
+						it = next;
+					}
+				}
 			}
 
-			auto [it, inserted] = main_cache[ bucket_id ].emplace( exp, make_default<std::pair<expression::reference, bool>>() );
-			return { it->second.first, it->second.second, !inserted };
-		}
-
-		void purge()
-		{
-			for ( auto& bucket : main_cache )
-				bucket.clear();
+			// Insert into the tail of use list.
+			//
+			use_list.erase( &it->second.list_use );
+			use_list.emplace_back( &it->second.list_use );
+			return { it->second.result, it->second.is_simplified, !inserted, it->second.lock_count };
 		}
 	};
 	static thread_local local_cache_t local_cache;
-	void purge_simplifier_cache() { local_cache = {}; }
+	void purge_simplifier_cache() { local_cache.reset(); }
 
 	// Attempts to prettify the expression given.
 	//
@@ -340,7 +474,7 @@ namespace vtil::symbolic
 		// Lookup the expression in the cache.
 		//
 		auto& lcache = local_cache;
-		auto [cache_entry, success_flag, found] = lcache.lookup( exp );
+		auto [cache_entry, success_flag, found, _lock] = lcache.lookup( exp );
 
 		// If we resolved a valid cache entry:
 		//

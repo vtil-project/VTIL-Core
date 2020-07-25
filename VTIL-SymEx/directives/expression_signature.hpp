@@ -56,6 +56,10 @@ namespace vtil::symbolic
 		expression_signature& operator=( expression_signature&& ) = default;
 		expression_signature& operator=( const expression_signature& ) = default;
 		
+		// Shinks to a single 64-bit integer.
+		//
+		uint64_t shrink() const;
+		
 		// Checks if RHS can match into LHS.
 		//
 		bool can_match( const expression_signature& o ) const

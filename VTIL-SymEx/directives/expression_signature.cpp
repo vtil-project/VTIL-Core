@@ -45,7 +45,7 @@ namespace vtil::symbolic
 	// Extend from N bits into 64 bits.
 	//
 	template<bitcnt_t N>
-	static constexpr uint64_t extend( uint64_t i )
+	static constexpr uint64_t extend_u( uint64_t i )
 	{
 		constexpr bitcnt_t middle_original = 64 / 2;
 		constexpr bitcnt_t middle_new =      N / 2;
@@ -54,13 +54,13 @@ namespace vtil::symbolic
 	}
 	static constexpr uint64_t extend( math::operator_id o ) 
 	{ 
-		return extend<num_operator_bits>( ( uint64_t ) o ); 
+		return extend_u<num_operator_bits>( ( uint64_t ) o ); 
 	}
 
 	// Shrink from 64 bits into N bits.
 	//
 	template<bitcnt_t N>
-	static constexpr uint64_t shrink( uint64_t i )
+	static constexpr uint64_t shrink_u( uint64_t i )
 	{
 		constexpr bitcnt_t middle_original = 64 / 2;
 		constexpr bitcnt_t middle_new =      N / 2;
@@ -72,15 +72,10 @@ namespace vtil::symbolic
 		i |= i << shl_n;
 		return ( ( i >> shr_n ) | ( i << shl_n ) ) & mask;
 	}
-	template<bitcnt_t N>
-	static constexpr uint64_t shrink( const expression_signature& sig ) 
-	{ 
-		return shrink<N>( sig.signature[ 0 ] ) | sig.signature[ 1 ] | ( shrink<N>( sig.signature[ 2 ] ) << ( 64 - N ) ); 
-	}
 
 	// Rebalance I64 so that middle is LSB.
 	//
-	static constexpr uint64_t rebalance( uint64_t i ) { return ( i >> 32 ) | ( i << 32 ); }
+	static constexpr uint64_t rebalance_u( uint64_t i ) { return ( i >> 32 ) | ( i << 32 ); }
 
 	// Declare constructors.
 	//
@@ -89,14 +84,14 @@ namespace vtil::symbolic
 		// Write rebalanced integer.
 		//
 		signature[ 0 ] = 0;
-		signature[ 1 ] = rebalance( value.known_one() );
+		signature[ 1 ] = rebalance_u( value.known_one() );
 		signature[ 2 ] = 0;
 	}
 	expression_signature::expression_signature( math::operator_id op, const expression_signature& rhs )
 	{
 		// Write [rhs, op, rhs].
 		//
-		signature[ 0 ] = shrink<shrink_to>( rhs );
+		signature[ 0 ] = rhs.shrink();
 		signature[ 1 ] = extend( op );
 		signature[ 2 ] = signature[ 0 ];
 	}
@@ -112,13 +107,20 @@ namespace vtil::symbolic
 
 		// Write [lhs, op, rhs].
 		//
-		signature[ 0 ] = shrink<shrink_to>( lhs );
+		signature[ 0 ] = lhs.shrink();
 		signature[ 1 ] = extend( op );
-		signature[ 2 ] = shrink<shrink_to>( rhs );
+		signature[ 2 ] = rhs.shrink();
 
 		// Or both sides with each other if commutative.
 		//
 		if ( math::descriptor_of( op ).is_commutative )
 			signature[ 2 ] = ( signature[ 0 ] |= signature[ 2 ] );
+	}
+
+	// Shinks to a single 64-bit integer.
+	//
+	uint64_t expression_signature::shrink() const
+	{
+		return shrink_u<shrink_to>( signature[ 0 ] ) | signature[ 1 ] | ( shrink_u<shrink_to>( signature[ 2 ] ) << ( 64 - shrink_to ) );
 	}
 };
