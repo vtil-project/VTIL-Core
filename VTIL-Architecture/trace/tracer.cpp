@@ -388,7 +388,11 @@ namespace vtil
 							result.transform( [ ] ( symbolic::expression::delegate& exp )
 							{
 								if ( exp->is_variable() )
-									( +exp )->uid.get<symbolic::variable>().is_branch_dependant = true;
+								{
+									symbolic::variable&& var = std::move( ( +exp )->uid.get<symbolic::variable>() );
+									var.is_branch_dependant = true;
+									*+exp = { var, exp->size() };
+								}
 							}, true, false );
 						}
 						break;

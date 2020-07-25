@@ -150,14 +150,14 @@ namespace vtil::format
 	static auto as_string( const T& x )
 	{
 		using base_type = std::decay_t<T>;
-
-		if constexpr ( StdStringConvertible<T> )
-		{
-			return std::to_string( x );
-		}
-		else if constexpr ( CustomStringConvertible<T> )
+		
+		if constexpr ( CustomStringConvertible<T> )
 		{
 			return x.to_string();
+		}
+		else if constexpr ( StdStringConvertible<T> )
+		{
+			return std::to_string( x );
 		}
 		else if constexpr ( std::is_same_v<base_type, std::string> || 
 							std::is_same_v<base_type, const char*> )
