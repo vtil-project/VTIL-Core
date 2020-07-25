@@ -71,7 +71,7 @@ namespace vtil::symbolic
 
 	// Simplifier cache and its accessors.
 	//
-	static constexpr size_t max_cache_entries = 65536;
+	static constexpr size_t max_cache_entries = 256000;
 	static constexpr size_t cache_prune_count = max_cache_entries / 2;
 
 	struct local_cache_t
@@ -135,12 +135,67 @@ namespace vtil::symbolic
 			~scope_lock() { --( *lock_count ); }
 		};
 
-		// Cache entry and bucket type.
+		// Declare custom hash / equivalence checks hijacking the hash map iteration.
+		//
+		struct signature_hasher
+		{
+			size_t operator()( const expression::reference& ref ) const noexcept { return ref->signature.hash(); }
+		};
+		struct signature_matcher
+		{
+			struct result
+			{
+				const expression::reference& key;
+				expression::weak_reference match;
+				expression::uid_relation_table table;
+			};
+			inline static thread_local result* signal = nullptr;
+
+			bool operator()( const expression::reference& a,
+							 const expression::reference& b ) const noexcept 
+			{ 
+				// If identical expressions, return true.
+				//
+				if ( a.is_identical( *b ) )
+					return true;
+
+				// If there's a pending signature matching request:
+				//
+				if ( signal )
+				{
+					// Find out which argument is "this", if failed return false.
+					//
+					expression::weak_reference self, other;
+					if ( a == signal->key )       self = a, other = b;
+					else if ( b == signal->key )  self = b, other = a;
+					else                          return false;
+
+					// If other's complexity is less than self:
+					//
+					if ( other->complexity < self->complexity )
+					{
+						// If matching signature, save the match.
+						//
+						if ( auto vec = other->match_to( *self ) )
+						{
+							signal->match = other;
+							signal->table = std::move( *vec );
+
+							// Clear the request.
+							//
+							signal = nullptr;
+						}
+					}
+				}
+				return false;
+			}
+		};
+
+
+		// Cache entry and map type.
 		//
 		struct cache_value;
-		using cache_map = std::unordered_map<expression::reference, cache_value,
-		                                     expression::reference::hasher, 
-		                                     expression::reference::if_identical>;
+		using cache_map = std::unordered_map<expression::reference, cache_value, signature_hasher, signature_matcher>;
 		struct cache_value
 		{
 			using list_key = typename linked_list<cache_value>::key;
@@ -235,44 +290,84 @@ namespace vtil::symbolic
 			size--;
 		}
 
+		// Initializes a new entry in the map.
+		//
+		void init_entry( const cache_map::iterator& entry_it )
+		{
+			// Save the iterator.
+			//
+			entry_it->second.iterator = entry_it;
+
+			// If simplifying speculatively, link to tail.
+			//
+			if ( is_speculative )
+				spec_list.emplace_back( &entry_it->second.list_spec );
+
+			// Increment global size, if we reached max entries, prune:
+			//
+			if ( ++size == max_cache_entries )
+			{
+				for ( auto it = use_list.head; it && ( size + cache_prune_count ) > max_cache_entries; )
+				{
+					auto next = it->next;
+
+					// Erase if not locked:
+					//
+					cache_value* value = it->get( &cache_value::list_use );
+					if ( value->lock_count <= 0 )
+						erase( value );
+
+					it = next;
+				}
+			}
+		}
+
 		// Looks up the cache for the expression, returns [<result>, <simplified?>, <exists?>, <LRU lock>].
 		//
 		std::tuple<expression::reference&, bool&, bool, scope_lock<int8_t>> lookup( const expression::reference& exp )
 		{
-			// Lookup or insert into the cache.
+			// Signal signature matcher.
 			//
+			signature_matcher::result sig_search = { exp };
+			signature_matcher::signal = &sig_search;
 			auto [it, inserted] = map.emplace( exp, make_default<cache_value>() );
-			
-			// If newly inserted:
+			signature_matcher::signal = nullptr;
+
+			// If we inserted a new entry:
 			//
 			if ( inserted )
 			{
-				// Save the iterator.
+				// If there is a partial match:
 				//
-				it->second.iterator = it;
-
-				// If simplifying speculatively, link to tail.
-				//
-				if ( is_speculative )
-					spec_list.emplace_back( &it->second.list_spec );
-
-				// Increment global size, if we reached max entries, prune:
-				//
-				if ( ++size == max_cache_entries )
+				expression::reference result = nullptr;
+				if ( sig_search.match )
 				{
-					for ( auto it = use_list.head; it && ( size + cache_prune_count ) > max_cache_entries; )
+					// Transform according to the UID table.
+					//
+					result = sig_search.match.make_shared();
+					result.transform( [ & ] ( expression::delegate& exp )
 					{
-						auto next = it->next;
+						for ( auto& [a, b] : sig_search.table )
+						{
+							if ( exp->uid == a->uid )
+							{
+								exp = b.make_shared();
+								return;
+							}
+						}
+					}, true, false );
+					result->simplify_hint = true;
 
-						// Erase if not locked:
-						//
-						cache_value* value = it->get( &cache_value::list_use );
-						if ( value->lock_count <= 0 )
-							erase( value );
-
-						it = next;
-					}
+					// Write the new result and clear inserted flag.
+					//
+					it->second.result = std::move( result );
+					it->second.is_simplified = true;
+					inserted = false;
 				}
+
+				// Initialize it.
+				//
+				init_entry( it );
 			}
 
 			// Insert into the tail of use list.
