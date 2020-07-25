@@ -453,6 +453,10 @@ namespace vtil::symbolic
 					out = ( hash_value ^ key ) & value.value_mask();
 			}
 
+			// Set the signature.
+			//
+			signature = { value };
+
 			// Set simplification state.
 			//
 			simplify_hint = true;
@@ -668,11 +672,14 @@ namespace vtil::symbolic
 
 			for ( auto [out, idx] : zip( xvalues, iindices ) )
 			{
-				if ( lhs )
-					out = math::evaluate( op, lhs->size(), lhs->xvalues[ idx ], rhs->size(), rhs->xvalues[ idx ] & rhs_mask ).first;
-				else
-					out = math::evaluate( op, 0,           0,                   rhs->size(), rhs->xvalues[ idx ] & rhs_mask ).first;
+				if ( lhs ) out = math::evaluate( op, lhs->size(), lhs->xvalues[ idx ], rhs->size(), rhs->xvalues[ idx ] & rhs_mask ).first;
+				else       out = math::evaluate( op, 0,           0,                   rhs->size(), rhs->xvalues[ idx ] & rhs_mask ).first;
 			}
+
+			// Set the signature.
+			//
+			if ( lhs ) signature = { lhs->signature, op, rhs->signature };
+			else       signature = {                 op, rhs->signature };
 		
 			// If auto simplification is relevant, invoke it.
 			//

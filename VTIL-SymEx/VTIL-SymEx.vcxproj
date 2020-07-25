@@ -113,6 +113,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="directives\directive.cpp" />
+    <ClCompile Include="directives\expression_signature.cpp" />
     <ClCompile Include="directives\transformer.cpp" />
     <ClCompile Include="expressions\expression.cpp" />
     <ClCompile Include="expressions\unique_identifier.cpp" />
@@ -121,6 +122,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="directives\directive.hpp" />
+    <ClInclude Include="directives\expression_signature.hpp" />
     <ClInclude Include="directives\fast_matcher.hpp" />
     <ClInclude Include="directives\transformer.hpp" />
     <ClInclude Include="expressions\expression.hpp" />

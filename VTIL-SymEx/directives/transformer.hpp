@@ -54,10 +54,16 @@ namespace vtil::symbolic
 	{
 		using namespace logger;
 
+		// Fast path: check if signature matches.
+		//
+		if ( !exp->signature.can_match( from->signatures[ exp->size() - 1 ] ) )
+			return {};
+
 		// Match the expresison.
 		//
 		stack_vector<directive::symbol_table_t, 8> results;
-		if ( !directive::fast_match( &results, from, exp ) ) return {};
+		if ( !directive::fast_match( &results, from, exp ) ) 
+			return {};
 
 		// If a filter is provided:
 		//

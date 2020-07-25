@@ -30,7 +30,7 @@
 #include <vtil/utility>
 #include <set>
 #include "unique_identifier.hpp"
-
+#include "../directives/expression_signature.hpp"
 
 // [Configuration]
 // Determine the number of x value keys we use to estimate values.
@@ -210,6 +210,10 @@ namespace vtil::symbolic
 		// Hash of the expression used by the simplifier cache.
 		//
 		hash_t hash_value = {};
+
+		// Signature of the expression.
+		//
+		expression_signature signature = {};
 
 		// Whether expression passed the simplifier already or not, note that this is a hint and there may 
 		// be cases where it already has passed it and this flag was not set. Albeit those cases will most 

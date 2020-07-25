@@ -19,6 +19,9 @@
     <ClCompile Include="simplifier\boolean_directives.cpp">
       <Filter>Simplifier</Filter>
     </ClCompile>
+    <ClCompile Include="directives\expression_signature.cpp">
+      <Filter>Directives</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="directives\directive.hpp">
@@ -47,6 +50,9 @@
     </ClInclude>
     <ClInclude Include="simplifier\boolean_directives.hpp">
       <Filter>Simplifier</Filter>
+    </ClInclude>
+    <ClInclude Include="directives\expression_signature.hpp">
+      <Filter>Directives</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

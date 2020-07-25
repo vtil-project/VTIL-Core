@@ -30,6 +30,7 @@
 #include <vtil/utility>
 #include <type_traits>
 #include <unordered_set>
+#include "expression_signature.hpp"
 
 namespace vtil::symbolic::directive
 {
@@ -197,6 +198,10 @@ namespace vtil::symbolic::directive
         reference lhs = {};
         reference rhs = {};
 
+        // Signature of the directive for each possible size.
+        //
+        std::array<expression_signature, 64> signatures = {};
+
         // Default/copy/move constructors.
         //
         instance() {};
@@ -208,17 +213,31 @@ namespace vtil::symbolic::directive
         // Variable constructor.
         //
         template<typename T = uint64_t, std::enable_if_t<std::is_integral_v<T>, int> = 0>
-        instance( T value ) : operable( int64_t( value ) ) {}
+        instance( T v ) : operable( int64_t( v ) )
+        {
+            for ( auto [out, idx] : zip( signatures, iindices ) )
+                out = { make_copy( value ).resize( math::narrow_cast<bitcnt_t>( idx + 1 ) ) };
+        }
         instance( const char* id, int lookup_index, matching_type mtype = match_any ) : 
-            id( id ), lookup_index( lookup_index ), mtype( mtype ) { }
+            id( id ), lookup_index( lookup_index ), mtype( mtype ) {}
 
         // Constructor for directive representing the result of an unary operator.
         //
-        instance( math::operator_id _op, const instance& e1 );
+        instance( math::operator_id op, const instance& e1 ) :
+            rhs( e1 ), op( op )
+        {
+            for ( auto [out, rhs] : zip( signatures, e1.signatures ) )
+                out = { op, rhs };
+        }
 
         // Constructor for directive representing the result of a binary operator.
         //
-        instance( const instance& e1, math::operator_id _op, const instance& e2 );
+        instance( const instance& e1, math::operator_id op, const instance& e2 ) :
+            lhs( e1 ), rhs( e2 ), op( op ) 
+        {
+            for ( auto [lhs, out, rhs] : zip( e1.signatures, signatures, e2.signatures ) )
+                out = { lhs, op, rhs };
+        }
 
         // Enumerates each unique variable.
         //
