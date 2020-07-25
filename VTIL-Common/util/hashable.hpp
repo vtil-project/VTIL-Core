@@ -125,10 +125,10 @@ namespace vtil
 		static constexpr int N = VTIL_HASH_SIZE / 64;
 		for ( int i = 0; i < N; i++ )
 		{
-			// We can only do position-independent operations so simply XOR and return.
+			// We can only do position-independent arithmetic.
 			//
-			a.value[ i ] ^= b.value[ i ];
-			a.value[ i ] ^= impl::hash_combination_keys[ i ];
+			a.value[ i ] += b.value[ i ];
+			a.value[ i ] -= impl::hash_combination_keys[ i ];
 		}
 		return a;
 	}
