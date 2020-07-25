@@ -950,8 +950,9 @@ namespace vtil::symbolic
 				case math::operator_id::shift_left:
 				case math::operator_id::rotate_right:
 				case math::operator_id::rotate_left:
-				case math::operator_id::bit_test:     rhs_mask = lhs->size() - 1; break;
-				default:                              rhs_mask = ~0ull;           break;
+				case math::operator_id::bit_test:     rhs_mask = rhs->is_variable() 
+					                                               ? lhs->size() - 1 : ~0ull; break;
+				default:                              rhs_mask = ~0ull;                       break;
 			}
 
 			// Evalute based on lhs's and rhs's xvalues.
