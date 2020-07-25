@@ -437,7 +437,7 @@ namespace vtil::symbolic
 			//
 			else
 			{
-				fassert( is_variable() );
+				dassert( is_variable() );
 
 				// Assign the constant complexity value.
 				//
@@ -463,7 +463,7 @@ namespace vtil::symbolic
 		}
 		else
 		{
-			fassert( is_expression() );
+			dassert( is_expression() );
 
 			// If unary operator:
 			//
@@ -492,17 +492,23 @@ namespace vtil::symbolic
 				//
 				depth = rhs->depth + 1;
 				complexity = rhs->complexity * 2;
-				fassert( complexity != 0 );
+				dassert( complexity != 0 );
 				
 				// Begin hash as combine(rhs, rhs).
 				//
 				hash_value = make_hash( rhs->hash() );
+
+				// Calculate x values and set the signature.
+				//
+				for ( auto [out, idx] : zip( xvalues, iindices ) )
+					out = math::evaluate( op, 0, 0, rhs->size(), rhs->xvalues[ idx ] ).first;
+				signature = { op, rhs->signature };
 			}
 			// If binary operator:
 			//
 			else
 			{
-				fassert( desc.operand_count == 2 );
+				dassert( desc.operand_count == 2 );
 
 				// If operation is __cast or __ucast, right hand side must always be a constant, propagate 
 				// left hand side value and resize as requested.
@@ -623,7 +629,7 @@ namespace vtil::symbolic
 				//
 				depth = std::max( lhs->depth, rhs->depth ) + 1;
 				complexity = ( lhs->complexity + rhs->complexity ) * 2;
-				fassert( complexity != 0 );
+				dassert( complexity != 0 );
 
 				// Multiply with operator complexity coefficient.
 				//
@@ -632,6 +638,23 @@ namespace vtil::symbolic
 				// Begin hash as combine(op#1, op#2), make it unordered if operator is commutative.
 				//
 				hash_value = desc.is_commutative ? make_unordered_hash( lhs, rhs ) : make_hash( lhs, rhs );
+
+				// Calculate x values and set the signature.
+				//
+				uint64_t rhs_mask;
+				switch ( op )
+				{
+					case math::operator_id::shift_right:
+					case math::operator_id::shift_left:
+					case math::operator_id::rotate_right:
+					case math::operator_id::rotate_left:
+					case math::operator_id::bit_test:     rhs_mask = lhs->size() - 1; break;
+					default:                              rhs_mask = ~0ull;           break;
+				}
+
+				for ( auto [out, idx] : zip( xvalues, iindices ) )
+					out = math::evaluate( op, lhs->size(), lhs->xvalues[ idx ], rhs->size(), rhs->xvalues[ idx ] & rhs_mask ).first;
+				signature = { lhs->signature, op, rhs->signature };
 			}
 
 			// Append depth, size, and operator information to the hash.
@@ -652,34 +675,10 @@ namespace vtil::symbolic
 					complexity *= 1 + math::sgn( operand->get()->get_op_desc().hint_bitwise * desc.hint_bitwise );
 				}
 			}
-			
+
 			// Reset simplification state since expression was updated.
 			//
 			simplify_hint = false;
-
-			// Calculate x values.
-			//
-			uint64_t rhs_mask;
-			switch ( op )
-			{
-				case math::operator_id::shift_right:
-				case math::operator_id::shift_left:
-				case math::operator_id::rotate_right:
-				case math::operator_id::rotate_left:
-				case math::operator_id::bit_test:     rhs_mask = lhs->size() - 1; break;
-				default:                              rhs_mask = ~0ull;           break;
-			}
-
-			for ( auto [out, idx] : zip( xvalues, iindices ) )
-			{
-				if ( lhs ) out = math::evaluate( op, lhs->size(), lhs->xvalues[ idx ], rhs->size(), rhs->xvalues[ idx ] & rhs_mask ).first;
-				else       out = math::evaluate( op, 0,           0,                   rhs->size(), rhs->xvalues[ idx ] & rhs_mask ).first;
-			}
-
-			// Set the signature.
-			//
-			if ( lhs ) signature = { lhs->signature, op, rhs->signature };
-			else       signature = {                 op, rhs->signature };
 		
 			// If auto simplification is relevant, invoke it.
 			//

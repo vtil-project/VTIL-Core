@@ -49,11 +49,6 @@ namespace vtil::symbolic
 		log<CON_BLU>( "[%s].\n", *dir );
 #endif
 
-		// Dummy expression used just to indicate success if speculative_condition is used, if seen in
-		// output of the simplifier, there's a major bug.
-		//
-		static const expression::reference dummy_expression = expression{ { "@dummmy" }, 1 };
-
 		// If expression operator:
 		//
 		if ( dir->op < math::operator_id::max )
@@ -76,7 +71,10 @@ namespace vtil::symbolic
 				{
 					if ( dir->lhs && !translate( sym, dir->lhs, 0, true, max_depth ) ) return {};
 					if ( !translate( sym, dir->rhs, bit_cnt, true, max_depth ) ) return {};
-					return dummy_expression;
+
+					// Dummy expression used to indicate success.
+					//
+					return make_static<expression::reference, 0xDEADDEADDEADDEAD, 55>();
 				}
 
 				// Handle casts as a redirect to resize.

@@ -66,7 +66,7 @@ namespace vtil::symbolic
 		constexpr bitcnt_t middle_new =      N / 2;
 		constexpr bitcnt_t shr_n =           middle_original - middle_new;
 		constexpr bitcnt_t shl_n =           64 - shr_n;
-		constexpr bitcnt_t mask =            math::fill( N );
+		constexpr uint64_t mask =            math::fill( N );
 
 		i |= i >> shl_n;
 		i |= i << shl_n;
