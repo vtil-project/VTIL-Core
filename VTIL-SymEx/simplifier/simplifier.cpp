@@ -85,51 +85,6 @@ namespace vtil::symbolic
 		static constexpr size_t max_cache_entries = VTIL_SYMEX_LRU_CACHE_SIZE;
 		static constexpr size_t cache_prune_count = ( size_t ) ( max_cache_entries * VTIL_SYMEX_LRU_PRUNE_COEFF );
 
-		// Non-allocating linked list for tracking entries in a seperate order.
-		//
-		template<typename T>
-		struct linked_list
-		{
-			// Dynamically inserted key.
-			//
-			struct key
-			{
-				key* prev;
-				key* next;
-
-				T* get( member_reference_t<T, key> ref ) { return ptr_at<T>( this, -make_offset( ref ) ); }
-				const T* get( member_reference_t<T, key> ref ) const { return make_mutable( this )->get( std::move( ref ) ); }
-			};
-
-			// Head and tail for tracking the list.
-			//
-			key* head = nullptr;
-			key* tail = nullptr;
-
-			// Inserts the key into the list.
-			//
-			void emplace_back( key* k )
-			{
-				k->prev = tail;
-				k->next = nullptr;
-				if ( tail ) tail->next = k;
-				if ( !head ) head = k;
-				tail = k;
-			}
-
-			// Erases the key from the list.
-			//
-			void erase( key* k )
-			{
-				if ( head == k ) head = k->next;
-				if ( tail == k ) tail = k->prev;
-				if ( k->prev ) k->prev->next = k->next;
-				if ( k->next ) k->next->prev = k->prev;
-				k->prev = nullptr;
-				k->next = nullptr;
-			}
-		};
-
 		// Non-atomic integer incremented during the duration of scope.
 		//
 		template<typename T>
@@ -212,7 +167,7 @@ namespace vtil::symbolic
 		using cache_map = std::unordered_map<expression::reference, cache_value, signature_hasher, cache_scanner>;
 		struct cache_value
 		{
-			using list_key = typename linked_list<cache_value>::key;
+			using queue_key = typename detached_queue<cache_value>::key;
 
 			// Entry itself:
 			//
@@ -222,9 +177,9 @@ namespace vtil::symbolic
 			// Implementation details:
 			//
 			int8_t lock_count = 0;
+			queue_key lru_key = {};
+			queue_key spec_key = {};
 			cache_map::const_iterator iterator = {};
-			list_key list_use = {};
-			list_key list_spec = {};
 		};
 
 		// Size of the current cache, [sum {bucket} [.size()]].
@@ -235,10 +190,10 @@ namespace vtil::symbolic
 		//
 		bool is_speculative = false;
 
-		// Linked list head/tails for LRU use list and the speculative list.
+		// Queue for LRU age tracking and the speculativeness.
 		//
-		linked_list<cache_value> use_list;
-		linked_list<cache_value> spec_list;
+		detached_queue<cache_value> lru_queue;
+		detached_queue<cache_value> spec_queue;
 
 		// Cache map.
 		//
@@ -249,8 +204,8 @@ namespace vtil::symbolic
 		void reset()
 		{
 			size = 0;
-			use_list = {};
-			spec_list = {};
+			lru_queue = {};
+			spec_queue = {};
 			is_speculative = false;
 			map.clear();
 			map.reserve( max_cache_entries );
@@ -267,10 +222,10 @@ namespace vtil::symbolic
 		//
 		void join_speculative()
 		{
-			for ( auto it = spec_list.head; it; )
+			for ( auto it = spec_queue.head; it; )
 			{
 				auto next = it->next;
-				spec_list.erase( it );
+				spec_queue.erase( it );
 				it = next;
 			}
 			is_speculative = false;
@@ -280,13 +235,13 @@ namespace vtil::symbolic
 		//
 		void trash_speculative()
 		{
-			for ( auto it = spec_list.head; it; )
+			for ( auto it = spec_queue.head; it; )
 			{
 				auto next = it->next;
-				cache_value* value = it->get( &cache_value::list_spec );
+				cache_value* value = it->get( &cache_value::spec_key );
 				dassert( value->lock_count <= 0 );
 				if ( value->is_simplified )
-					spec_list.erase( it );
+					spec_queue.erase( it );
 				else
 					erase( value );
 				it = next;
@@ -298,8 +253,8 @@ namespace vtil::symbolic
 		//
 		void erase( cache_value* value )
 		{
-			use_list.erase( &value->list_use );
-			spec_list.erase( &value->list_spec );
+			lru_queue.erase( &value->lru_key );
+			spec_queue.erase( &value->spec_key );
 			map.erase( std::move( value->iterator ) );
 			size--;
 		}
@@ -315,19 +270,19 @@ namespace vtil::symbolic
 			// If simplifying speculatively, link to tail.
 			//
 			if ( is_speculative )
-				spec_list.emplace_back( &entry_it->second.list_spec );
+				spec_queue.emplace_back( &entry_it->second.spec_key );
 
 			// Increment global size, if we reached max entries, prune:
 			//
 			if ( ++size == max_cache_entries )
 			{
-				for ( auto it = use_list.head; it && ( size + cache_prune_count ) > max_cache_entries; )
+				for ( auto it = lru_queue.head; it && ( size + cache_prune_count ) > max_cache_entries; )
 				{
 					auto next = it->next;
 
 					// Erase if not locked:
 					//
-					cache_value* value = it->get( &cache_value::list_use );
+					cache_value* value = it->get( &cache_value::lru_key );
 					if ( value->lock_count <= 0 )
 						erase( value );
 
@@ -397,8 +352,8 @@ namespace vtil::symbolic
 
 			// Insert into the tail of use list.
 			//
-			use_list.erase( &it->second.list_use );
-			use_list.emplace_back( &it->second.list_use );
+			lru_queue.erase( &it->second.lru_key );
+			lru_queue.emplace_back( &it->second.lru_key );
 			return { it->second.result, it->second.is_simplified, !inserted, it->second.lock_count };
 		}
 	};
