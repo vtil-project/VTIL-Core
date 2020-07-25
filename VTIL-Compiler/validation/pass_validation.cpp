@@ -346,9 +346,5 @@ namespace vtil::optimizer::validation
 			logger::warning( "Failing execution at: %s\n", lim->to_string() );
 			return false;
 		}
-
-		// Purge simplifier cache.
-		//
-		symbolic::purge_simplifier_cache();
 	}
 };
