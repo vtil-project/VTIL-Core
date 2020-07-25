@@ -72,15 +72,8 @@ namespace vtil
 	//
 	struct hasher_proxy_t {};
 
-	// Used to combine two hashes of arbitrary size.
-	//
-	__forceinline static hash_t combine_hash( hash_t a, const hash_t& b )
+	namespace impl
 	{
-		static constexpr auto rotl64 = [ ] ( uint64_t x, int r )
-		{
-			return ( x << r ) | ( x >> ( 64 - r ) );
-		};
-
 		static constexpr uint64_t hash_combination_keys[] =
 		{
 			0x0c214449f2ced59a, 0x63799bb9f17566b6,	0xbccb2d46778c06d1, 0x4570d058141eca81,
@@ -100,6 +93,16 @@ namespace vtil
 			0x2271b75f2a889123, 0x0b892f4ae4e5f9f5, 0x0095bb746454d0b7, 0xc0e948fe1a9dc9eb,
 			0x96b1d69df03265c6, 0xbeac9571cabb01c1, 0x7d9ef1d2fde07fc1, 0x3217c6c2c98498c1,
 		};
+	};
+
+	// Used to combine two hashes of arbitrary size.
+	//
+	__forceinline static hash_t combine_hash( hash_t a, const hash_t& b )
+	{
+		static constexpr auto rotl64 = [ ] ( uint64_t x, int r )
+		{
+			return ( x << r ) | ( x >> ( 64 - r ) );
+		};
 
 		static constexpr int N = VTIL_HASH_SIZE / 64;
 
@@ -113,7 +116,19 @@ namespace vtil
 
 			// Rotate both hashes, add together and combine with the combination key.
 			//
-			a.value[ i ] = ( rotl64( a.value[ i ], ka ) + rotl64( b.value[ i ], kb ) ) ^ hash_combination_keys[ ka ];
+			a.value[ i ] = ( rotl64( a.value[ i ], ka ) + rotl64( b.value[ i ], kb ) ) ^ impl::hash_combination_keys[ ka ];
+		}
+		return a;
+	}
+	__forceinline static hash_t combine_unordered_hash( hash_t a, const hash_t& b )
+	{
+		static constexpr int N = VTIL_HASH_SIZE / 64;
+		for ( int i = 0; i < N; i++ )
+		{
+			// We can only do position-independent operations so simply XOR and return.
+			//
+			a.value[ i ] ^= b.value[ i ];
+			a.value[ i ] ^= impl::hash_combination_keys[ i ];
 		}
 		return a;
 	}
@@ -188,6 +203,19 @@ namespace vtil
 		return combine_hash( 
 			make_hash( std::forward<T>( rest )... ), 
 			make_hash( current ) 
+		);
+	}
+
+	// Vararg hasher wrapper that should be used to create hashes from N values, explicitly ignoring the order.
+	//
+	template<typename T>
+	__forceinline static hash_t make_unordered_hash( const T& value ) { return hasher<T>{}( value ); }
+	template<typename C, typename... T>
+	__forceinline static hash_t make_unordered_hash( const C& current, T&&... rest )
+	{
+		return combine_unordered_hash(
+			make_unordered_hash( std::forward<T>( rest )... ),
+			make_unordered_hash( current )
 		);
 	}
 

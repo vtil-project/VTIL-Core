@@ -450,7 +450,7 @@ namespace vtil::symbolic
 				// Generate x values based on the hash.
 				//
 				for ( auto [out, key] : zip( xvalues, xvalue_keys ) )
-					out = (hash_value ^ key) & value.value_mask();
+					out = ( hash_value ^ key ) & value.value_mask();
 			}
 
 			// Set simplification state.
@@ -625,16 +625,9 @@ namespace vtil::symbolic
 				//
 				complexity *= desc.complexity_coeff;
 
-				// If operator is commutative, sort the array so that the
-				// positioning does not matter.
+				// Begin hash as combine(op#1, op#2), make it unordered if operator is commutative.
 				//
-				hash_t operand_hashes[] = { lhs->hash(), rhs->hash() };
-				if ( desc.is_commutative )
-					std::sort( operand_hashes, std::end( operand_hashes ) );
-				
-				// Begin hash as combine(op#1, op#2).
-				//
-				hash_value = make_hash( operand_hashes );
+				hash_value = desc.is_commutative ? make_unordered_hash( lhs, rhs ) : make_hash( lhs, rhs );
 			}
 
 			// Append depth, size, and operator information to the hash.
@@ -750,9 +743,8 @@ namespace vtil::symbolic
 
 		// Fast path: if x values do not match, expressions cannot be equivalent.
 		//
-		for ( auto [a, b] : zip( xvalues, other.xvalues ) )
-			if ( a != b ) 
-				return false;
+		if( xvalues != other.xvalues )
+			return false;
 
 		// Simplify both expressions.
 		//
@@ -795,6 +787,11 @@ namespace vtil::symbolic
 		// If hash mismatch, return false without checking anything.
 		//
 		if ( hash() != other.hash() )
+			return false;
+
+		// Fast path: if x values do not match, expressions cannot be equivalent.
+		//
+		if ( xvalues != other.xvalues )
 			return false;
 
 		// If operator or the sizes are not the same, return false.
