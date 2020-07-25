@@ -106,16 +106,16 @@ namespace vtil::symbolic::directive
 
         // Default constructor / move / copy.
         //
-        directive_op_desc() = default;
-        directive_op_desc( directive_op_desc&& ) = default;
-        directive_op_desc( const directive_op_desc& ) = default;
-        directive_op_desc& operator=( directive_op_desc&& ) = default;
-        directive_op_desc& operator=( const directive_op_desc& ) = default;
+        constexpr directive_op_desc() = default;
+        constexpr directive_op_desc( directive_op_desc&& ) = default;
+        constexpr directive_op_desc( const directive_op_desc& ) = default;
+        constexpr directive_op_desc& operator=( directive_op_desc&& ) = default;
+        constexpr directive_op_desc& operator=( const directive_op_desc& ) = default;
 
         // Construct from tagged enum and math::operator_id.
         //
         constexpr directive_op_desc( _tag i ) : value( i ) {}
-        directive_op_desc( math::operator_id op ) : value( _tag( ( uint8_t ) op - begin_id ) ) { fassert( min < value && value < max ); }
+        constexpr directive_op_desc( math::operator_id op ) : value( _tag( ( uint8_t ) op - begin_id ) ) { fassert( min < value && value < max ); }
 
         // Conversion back to math::operator_id and integer.
         //
