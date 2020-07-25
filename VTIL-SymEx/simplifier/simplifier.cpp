@@ -33,6 +33,12 @@
 #include <vtil/io>
 #include <vtil/utility>
 
+// [Configuration]
+// Determine the depth limit after which we start self generated signature matching.
+//
+#ifndef VTIL_SELFGEN_SIGMATCH_DEPTH_LIM
+	#define	VTIL_SELFGEN_SIGMATCH_DEPTH_LIM		3
+#endif
 namespace vtil::symbolic
 {
 	struct join_depth_exception : std::exception
@@ -150,10 +156,16 @@ namespace vtil::symbolic
 				expression::uid_relation_table table;
 			};
 			inline static thread_local result* signal = nullptr;
+			inline static thread_local bool match_ptr = false;
 
 			bool operator()( const expression::reference& a,
 							 const expression::reference& b ) const noexcept 
 			{ 
+				// If pointer matching:
+				//
+				if ( match_ptr )
+					return a == b;
+
 				// If identical expressions, return true.
 				//
 				if ( a.is_identical( *b ) )
@@ -170,9 +182,9 @@ namespace vtil::symbolic
 					else if ( b == signal->key )  self = b, other = a;
 					else                          return false;
 
-					// If other's complexity is less than self:
+					// If other's past depth limit:
 					//
-					if ( other->complexity < self->complexity )
+					if ( other->depth > VTIL_SELFGEN_SIGMATCH_DEPTH_LIM )
 					{
 						// If matching signature, save the match.
 						//
@@ -190,7 +202,6 @@ namespace vtil::symbolic
 				return false;
 			}
 		};
-
 
 		// Cache entry and map type.
 		//
@@ -329,7 +340,7 @@ namespace vtil::symbolic
 			// Signal signature matcher.
 			//
 			signature_matcher::result sig_search = { exp };
-			signature_matcher::signal = &sig_search;
+			signature_matcher::signal = exp->depth > VTIL_SELFGEN_SIGMATCH_DEPTH_LIM ? &sig_search : nullptr;
 			auto [it, inserted] = map.emplace( exp, make_default<cache_value>() );
 			signature_matcher::signal = nullptr;
 
@@ -339,30 +350,35 @@ namespace vtil::symbolic
 			{
 				// If there is a partial match:
 				//
-				expression::reference result = nullptr;
 				if ( sig_search.match )
 				{
-					// Transform according to the UID table.
-					//
-					result = sig_search.match.make_shared();
-					result.transform( [ & ] ( expression::delegate& exp )
-					{
-						for ( auto& [a, b] : sig_search.table )
-						{
-							if ( exp->uid == a->uid )
-							{
-								exp = b.make_shared();
-								return;
-							}
-						}
-					}, true, false );
-					result->simplify_hint = true;
-
 					// Write the new result and clear inserted flag.
 					//
-					it->second.result = std::move( result );
-					it->second.is_simplified = true;
+					signature_matcher::match_ptr = true;
+					auto& base = map.find( sig_search.match.make_shared() )->second;
+					signature_matcher::match_ptr = false;
+
+					it->second.result = base.result;
+					it->second.is_simplified = base.is_simplified;
 					inserted = false;
+
+					// Transform according to the UID table.
+					//
+					if ( it->second.result )
+					{
+						it->second.result.transform( [ & ] ( expression::delegate& exp )
+						{
+							for ( auto& [a, b] : sig_search.table )
+							{
+								if ( exp->uid == a->uid )
+								{
+									exp = b.make_shared();
+									return;
+								}
+							}
+						}, true, false );
+						it->second.result->simplify_hint = true;
+					}
 				}
 
 				// Initialize it.
