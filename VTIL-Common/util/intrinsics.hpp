@@ -32,6 +32,7 @@
     #include <intrin.h>
     #define unreachable() __assume(0)
 #else
+    #include <emmintrin.h>
     #define unreachable() __builtin_unreachable()
     #define __forceinline __attribute__((always_inline))
 
@@ -42,7 +43,7 @@
         uint64_t LowProduct;
         uint64_t HighProduct;
 
-        __asm__( "mulq  %[b]\n"
+        __asm__( "mulq  %[b]"
                  :"=d"( HighProduct ), "=a"( LowProduct )
                  : "1"( _Multiplier ), [ b ]"rm"( _Multiplicand ) );
 
@@ -55,7 +56,7 @@
         int64_t LowProduct;
         int64_t HighProduct;
 
-        __asm__( "imulq  %[b]\n"
+        __asm__( "imulq  %[b]"
                  :"=d"( HighProduct ), "=a"( LowProduct )
                  : "1"( _Multiplier ), [ b ]"rm"( _Multiplicand ) );
 

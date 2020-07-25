@@ -182,10 +182,6 @@ namespace vtil::symbolic
 			cache_map::const_iterator iterator = {};
 		};
 
-		// Size of the current cache, [sum {bucket} [.size()]].
-		//
-		size_t size = 0;
-
 		// Whether we're executing speculatively or not.
 		//
 		bool is_speculative = false;
@@ -203,9 +199,8 @@ namespace vtil::symbolic
 		//
 		void reset()
 		{
-			size = 0;
-			lru_queue = {};
-			spec_queue = {};
+			lru_queue.reset();
+			spec_queue.reset();
 			is_speculative = false;
 			map.clear();
 			map.reserve( max_cache_entries );
@@ -256,7 +251,6 @@ namespace vtil::symbolic
 			lru_queue.erase( &value->lru_key );
 			spec_queue.erase( &value->spec_key );
 			map.erase( std::move( value->iterator ) );
-			size--;
 		}
 
 		// Initializes a new entry in the map.
@@ -272,11 +266,11 @@ namespace vtil::symbolic
 			if ( is_speculative )
 				spec_queue.emplace_back( &entry_it->second.spec_key );
 
-			// Increment global size, if we reached max entries, prune:
+			// If we reached max entries, prune:
 			//
-			if ( ++size == max_cache_entries )
+			if ( lru_queue.size == max_cache_entries )
 			{
-				for ( auto it = lru_queue.head; it && ( size + cache_prune_count ) > max_cache_entries; )
+				for ( auto it = lru_queue.head; it && ( lru_queue.size + cache_prune_count ) > max_cache_entries; )
 				{
 					auto next = it->next;
 

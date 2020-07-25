@@ -112,9 +112,13 @@ namespace vtil
 			if ( tail == k ) tail = k->prev;
 			if ( k->prev ) k->prev->next = k->next;
 			if ( k->next ) k->next->prev = k->prev;
-			k->prev = nullptr;
-			k->next = nullptr;
-			size--;
+
+			if ( k->prev || k->next )
+			{
+				k->prev = nullptr;
+				k->next = nullptr;
+				size--;
+			}
 
 			unlock();
 		}
