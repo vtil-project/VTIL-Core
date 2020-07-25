@@ -182,7 +182,7 @@ namespace vtil::symbolic
 		using delegate =           expression_delegate;
 		using reference =          expression_reference;
 		using weak_reference =     weak_reference<expression>;
-
+		using uid_relation_table = std::vector<std::pair<expression::weak_reference, expression::weak_reference>>;
 
 		// If symbolic variable, the unique identifier that it maps to.
 		//
@@ -329,6 +329,10 @@ namespace vtil::symbolic
 		//
 		bool equals( const expression& other ) const;
 
+		// Returns whether the given expression is matching the current instance, if so returns
+		// the UID relation table, otherwise returns nullopt.
+		//
+		std::optional<uid_relation_table> match_to( const expression& other ) const;
 
 		// Calculates the x values.
 		//

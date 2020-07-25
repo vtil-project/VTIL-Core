@@ -698,15 +698,78 @@ namespace vtil::symbolic
 		return *this;
 	}
 
+	// Returns whether the given expression is identical to the current instance.
+	//
+	template<size_t depth = 1>
+	static bool is_identical_impl( const expression& self, const expression& other )
+	{
+		if ( &self == &other ) return true;
+
+		constexpr auto report_hash_collision = [ & ] ()
+		{
+#ifdef _DEBUG
+			logger::log( "Hash collision detected!\n" );
+			logger::log( "[0]: %s\n", self );
+			logger::log( "[1]: %s\n", other );
+
+			if ( make_copy( self ).update( false ).hash() != self.hash() )
+				logger::log( "Invalid hash for A\n" );
+			else if ( make_copy( other ).update( false ).hash() != other.hash() )
+				logger::log( "Invalid hash for B\n" );
+#endif
+			return false;
+		};
+
+		// If hash mismatch, return false without checking anything.
+		//
+		if ( self.hash() != other.hash() )
+			return false;
+
+		// If not in debug mode, assume equivalence after total hash reaches 256 bits.
+		//
+		static constexpr size_t max_depth = 256 / VTIL_HASH_SIZE;
+#ifndef _DEBUG
+		if constexpr ( depth == max_depth ) 
+			return true;
+#endif
+		constexpr auto cmp = is_identical_impl<depth == max_depth ? max_depth : ( depth + 1 )>;
+
+		// If variable, check if the identifiers match.
+		//
+		if ( self.is_variable() )
+			return ( other.is_variable() && self.uid == other.uid ) || report_hash_collision();
+
+		// If constant, check if the constants match.
+		//
+		if ( self.is_constant() )
+			return ( other.is_constant() && self.value == other.value ) || report_hash_collision();
+
+		// If operator is not the same, return false.
+		//
+		if ( self.op != other.op )
+			return report_hash_collision();
+
+		// Resolve operator descriptor, if unary, just compare right hand side.
+		//
+		const math::operator_desc& desc = self.get_op_desc();
+		if ( desc.operand_count == 1 )
+			return cmp( *self.rhs, *other.rhs ) || report_hash_collision();
+
+		// If both sides match, return true.
+		//
+		if ( cmp( *self.lhs, *other.lhs ) && cmp( *self.rhs, *other.rhs ) )
+			return true;
+
+		// If not, check in reverse as well if commutative and return the final result.
+		//
+		return ( desc.is_commutative && cmp( *self.lhs, *other.rhs ) && cmp( *self.rhs, *other.lhs ) ) || report_hash_collision();
+	}
+	bool expression::is_identical( const expression& other ) const { return is_identical_impl<>( *this, other ); }
+
 	// Returns whether the given expression is equivalent to the current instance.
 	//
 	bool expression::equals( const expression& other ) const
 	{
-		// Propagate invalid.
-		//
-		if ( !is_valid() )            return !other.is_valid();
-		else if ( !other.is_valid() ) return false;
-
 		// If identical, return true.
 		//
 		if ( is_identical( other ) )
@@ -751,51 +814,108 @@ namespace vtil::symbolic
 			       ( a - b ).get().value_or( -1 ) == 0;
 	}
 
-	// Returns whether the given expression is identical to the current instance.
+	// Returns whether the given expression is matching the current instance, if so returns
+	// the UID relation table, otherwise returns nullopt.
 	//
-	bool expression::is_identical( const expression& other ) const
+	using fast_uid_relation_table = stack_vector<std::pair<expression::weak_reference, expression::weak_reference>>;
+	static bool match_to_impl( const expression::reference& a, const expression::reference& b, fast_uid_relation_table* tbl )
 	{
-		// Propagate invalid and self.
+		// If identical, return true.
 		//
-		if ( !is_valid() )            return !other.is_valid();
-		else if ( !other.is_valid() ) return false;
-		else if ( this == &other )    return true;
+		if ( a->is_identical( *b ) )
+			return true;
 
-		// If hash mismatch, return false without checking anything.
+		// Check if properties match.
 		//
-		if ( hash() != other.hash() )
+		if ( a->op != b->op || a->depth != b->depth || 
+			 a->signature != b->signature || a->complexity != b->complexity )
 			return false;
 
-		// Fast path: if x values do not match, expressions cannot be equivalent.
+		// If variable:
 		//
-		if ( xvalues != other.xvalues )
-			return false;
+		if ( a->is_variable() )
+		{
+			// Skip if compared expression is not a variable.
+			//
+			if ( !b->is_variable() )
+				return false;
 
-		// If operator or the sizes are not the same, return false.
-		//
-		if ( op != other.op || size() != other.size() )
-			return false;
+			// If UIDs are equivalent, return true.
+			//
+			if ( a->uid == b->uid )
+				return true;
 
-		// If variable, check if the identifiers match.
-		//
-		if ( is_variable() )
-			return other.is_variable() && uid == other.uid;
+			// Check if this UID is already in the table, if so return the result of
+			// the comparison of the mapping. Otherwise insert into the table.
+			//
+			for ( auto& [src, dst] : *tbl )
+				if ( src->uid == a->uid )
+					return dst->uid == b->uid;
+			tbl->emplace_back( a, b );
+			return true;
+		}
 
 		// If constant, check if the constants match.
 		//
-		if ( is_constant() )
-			return other.is_constant() && value == other.value;
+		if ( a->is_constant() )
+			return b->is_constant() && a->value == b->value;
 
 		// Resolve operator descriptor, if unary, just compare right hand side.
 		//
-		const math::operator_desc& desc = get_op_desc();
+		const math::operator_desc& desc = a->get_op_desc();
 		if ( desc.operand_count == 1 )
-			return rhs == other.rhs || rhs->is_identical( *other.rhs );
+		{
+			size_t prev = tbl->size();
+			if ( match_to_impl( a->rhs, b->rhs, tbl ) )
+				return true;
+			tbl->resize( prev );
+			return false;
+		}
 
 		// If both sides match, return true.
 		//
-		if ( lhs->is_identical( *other.lhs ) && rhs->is_identical( *other.rhs ) )
+		size_t prev = tbl->size();
+		if ( match_to_impl( a->lhs, b->lhs, tbl ) &&
+			 match_to_impl( a->rhs, b->rhs, tbl ) )
 			return true;
+		tbl->resize( prev );
+
+		// Fail if not commutative.
+		//
+		if ( !desc.is_commutative ) 
+			return false;
+
+		// Check in reverse as well and return the final result.
+		//
+		prev = tbl->size();
+		if ( match_to_impl( a->rhs, b->lhs, tbl ) &&
+			 match_to_impl( a->lhs, b->rhs, tbl ) )
+			return true;
+		tbl->resize( prev );
+		return false;
+	}
+	std::optional<expression::uid_relation_table> expression::match_to( const expression& other ) const
+	{
+		auto a = make_local_reference( this );
+		auto b = make_local_reference( &other );
+
+		// If variable, fail if other expression is not a variable of same size.
+		//
+		if ( is_variable() )
+		{
+			if ( b->is_variable() && size() == b->size() )
+				return a->uid != b->uid ? expression::uid_relation_table{ { a, b } } : expression::uid_relation_table{};
+		}
+		// Otherwise, create the relation table and call into real implementation.
+		//
+		else
+		{
+			fast_uid_relation_table fast_tbl;
+			if ( match_to_impl( ( expression::reference& )a, ( expression::reference& )b, &fast_tbl ) )
+				return expression::uid_relation_table{ fast_tbl.begin(), fast_tbl.end() };
+		}
+		return std::nullopt;
+	}
 
 	// Calculates the x values.
 	//
