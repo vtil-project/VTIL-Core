@@ -366,23 +366,21 @@ namespace vtil::symbolic
 					//
 					if ( base.is_simplified )
 					{
-						it->second.result = base.result;
-						it->second.result.transform( [ &sig_search ] ( expression::delegate& exp )
+						it->second.result = make_const( base.result ).transform( [ &sig_search ] ( expression::delegate& exp )
 						{
 							if ( !exp->is_variable() )
 								return;
 							for ( auto& [a, b] : sig_search.table )
 							{
-								if ( exp->uid == a->uid )
+								if ( exp->uid == a->uid && a->uid != b->uid )
 								{
 									exp = b.make_shared();
 									break;
 								}
 							}
 						}, true, false );
-
-						it->second.is_simplified = true;
 						it->second.result->simplify_hint = true;
+						it->second.is_simplified = true;
 					}
 					// Otherwise, declare failure.
 					//

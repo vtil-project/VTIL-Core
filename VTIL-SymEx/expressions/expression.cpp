@@ -822,10 +822,28 @@ namespace vtil::symbolic
 	using fast_uid_relation_table = stack_vector<std::pair<expression::weak_reference, expression::weak_reference>>;
 	static bool match_to_impl( const expression::reference& a, const expression::reference& b, fast_uid_relation_table* tbl )
 	{
-		// If identical, return true.
+		// If identical, try pushing all variables into the table.
 		//
 		if ( a->is_identical( *b ) )
-			return true;
+		{
+			bool success = true;
+			a.transform( [ & ] ( symbolic::expression_delegate& exp )
+			{
+				if ( !success || !exp->is_variable() ) 
+					return;
+				for ( auto& [src, dst] : *tbl )
+				{
+					if ( exp->uid == src->uid && 
+						 exp->uid != dst->uid )
+					{
+						success = false;
+						return;
+					}
+				}
+				tbl->emplace_back( exp.ref, exp.ref );
+			}, true, false );
+			return success;
+		}
 
 		// Check if properties match.
 		//
@@ -840,11 +858,6 @@ namespace vtil::symbolic
 			//
 			if ( !b->is_variable() )
 				return false;
-
-			// If UIDs are equivalent, return true.
-			//
-			if ( a->uid == b->uid )
-				return true;
 
 			// Check if this UID is already in the table, if so return the result of
 			// the comparison of the mapping. Otherwise insert into the table.
@@ -922,29 +935,11 @@ namespace vtil::symbolic
 	//
 	std::array<uint64_t, VTIL_SYMEX_XVAL_KEYS> expression::xvalues() const
 	{
-		// If constant:
-		//
 		std::array<uint64_t, VTIL_SYMEX_XVAL_KEYS> result;
-		if ( is_constant() )
-		{
-			// All x values are equivalent to the actual value.
-			//
-			result.fill( *value.get() );
-		}
-		// If variable:
-		//
-		else if ( is_variable() )
-		{
-			static constexpr auto keys = make_crandom_n<VTIL_SYMEX_XVAL_KEYS>();
-
-			// Generate x values based on the hash.
-			//
-			for ( auto [out, key] : zip( result, keys ) )
-				out = ( hash_value ^ key ) & value.value_mask();
-		}
+		
 		// If binary operation:
 		//
-		else if ( lhs )
+		if ( lhs )
 		{
 			// Determine rhs mask.
 			//
@@ -961,20 +956,43 @@ namespace vtil::symbolic
 
 			// Evalute based on lhs's and rhs's xvalues.
 			//
-			auto x_lhs = lhs->xvalues();
-			auto x_rhs = rhs->xvalues();
-			for ( auto [out, idx] : zip( result, iindices ) )
-				out = math::evaluate( op, lhs->size(), x_lhs[ idx ], rhs->size(), x_rhs[ idx ] & rhs_mask ).first;
+			auto xlhs = lhs->xvalues();
+			auto xrhs = rhs->xvalues();
+			for ( auto [out, vlhs, vrhs] : zip( result, xlhs, xrhs ) )
+				out = math::evaluate( op, lhs->size(), vlhs, rhs->size(), vrhs & rhs_mask ).first;
 		}
 		// If unary operation:
 		//
-		else
+		else if( rhs )
 		{
 			// Evalute based on rhs's xvalues.
 			//
-			auto x_rhs = rhs->xvalues();
-			for ( auto [out, idx] : zip( result, iindices ) )
-				out = math::evaluate( op, 0, 0, rhs->size(), x_rhs[ idx ] ).first;
+			auto xrhs = rhs->xvalues();
+			for ( auto [out, vrhs] : zip( result, xrhs ) )
+				out = math::evaluate( op, 0, 0, rhs->size(), vrhs ).first;
+		}
+		// If constant:
+		//
+		else if ( is_constant() )
+		{
+			// All x values are equivalent to the actual value.
+			//
+			result.fill( *value.get() );
+		}
+		// If variable:
+		//
+		else if ( is_variable() )
+		{
+			static constexpr auto keys = make_crandom_n<VTIL_SYMEX_XVAL_KEYS>();
+
+			// Generate x values based on the hash.
+			//
+			for ( auto [out, key] : zip( result, keys ) )
+				out = ( hash_value ^ key ) & value.value_mask();
+		}
+		else
+		{
+			unreachable();
 		}
 		return result;
 	}
