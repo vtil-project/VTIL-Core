@@ -41,6 +41,10 @@ namespace vtil::symbolic
 		// Signature itself.
 		//
 		std::array<uint64_t, 3> signature;
+
+		// Signature hash.
+		//
+		hash_t hash_value;
 		
 		// Declare constructors.
 		//
@@ -69,6 +73,10 @@ namespace vtil::symbolic
 					return false;
 			return true;
 		}
+
+		// Custom hasher.
+		//
+		hash_t hash() const { return hash_value; }
 		
 		// Declare reduction.
 		//

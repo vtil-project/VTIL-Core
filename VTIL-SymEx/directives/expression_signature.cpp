@@ -86,6 +86,10 @@ namespace vtil::symbolic
 		signature[ 0 ] = 0;
 		signature[ 1 ] = rebalance_u( value.known_one() );
 		signature[ 2 ] = 0;
+
+		// Write hash.
+		//
+		hash_value = { value.known_one() };
 	}
 	expression_signature::expression_signature( math::operator_id op, const expression_signature& rhs )
 	{
@@ -94,6 +98,10 @@ namespace vtil::symbolic
 		signature[ 0 ] = rhs.shrink();
 		signature[ 1 ] = extend( op );
 		signature[ 2 ] = signature[ 0 ];
+
+		// Write hash.
+		//
+		hash_value = make_hash( rhs.hash(), ( uint8_t ) op );
 	}
 	expression_signature::expression_signature( const expression_signature& lhs, math::operator_id op, const expression_signature& rhs )
 	{
@@ -113,8 +121,16 @@ namespace vtil::symbolic
 
 		// Or both sides with each other if commutative.
 		//
-		if ( math::descriptor_of( op ).is_commutative )
+		bool is_commutative = math::descriptor_of( op ).is_commutative;
+		if ( is_commutative )
 			signature[ 2 ] = ( signature[ 0 ] |= signature[ 2 ] );
+
+		// Write hash.
+		//
+		hash_value = make_hash( 
+			( uint8_t ) op,
+			is_commutative ? combine_unordered_hash( lhs.hash(), rhs.hash() ) : combine_hash( lhs.hash(), rhs.hash() ) 
+		);
 	}
 
 	// Shinks to a single 64-bit integer.
