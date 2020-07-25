@@ -259,7 +259,7 @@ namespace vtil
 				{
 					if ( --entry->second == 0 )
 					{
-						( ( T* ) &entry->first )->~T();
+						std::destroy_at<T>( &entry->first );
 						allocator_type{}.deallocate( ( object_entry* ) entry );
 					}
 				}

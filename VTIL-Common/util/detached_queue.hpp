@@ -52,7 +52,7 @@ namespace vtil
 
 		// Spinlock protecting the list.
 		//
-		mutable std::atomic_flag spinlock = ATOMIC_FLAG_INIT;
+		std::atomic_flag spinlock = ATOMIC_FLAG_INIT;
 
 		// Head, tail and size tracking the list.
 		//
@@ -62,13 +62,13 @@ namespace vtil
 
 		// Controls the lock.
 		//
-		void lock() const
+		void lock()
 		{
 			if constexpr ( atomic )
 				while ( spinlock.test_and_set( std::memory_order_acquire ) )
 					_mm_pause();
 		}
-		void unlock() const
+		void unlock()
 		{
 			if constexpr ( atomic )
 				spinlock.clear( std::memory_order_release );
@@ -120,7 +120,7 @@ namespace vtil
 				size--;
 			}
 
-			unlock();
+			if ( !inherit_lock ) unlock();
 		}
 
 		// Resets the list.
@@ -142,7 +142,7 @@ namespace vtil
 
 			if ( key* entry = head )
 			{
-				T* value = entry->get( ref );
+				T* value = entry->get( std::move( ref ) );
 				erase( entry, true );
 				return value;
 			}
@@ -154,7 +154,7 @@ namespace vtil
 
 			if ( key* entry = tail )
 			{
-				T* value = entry->get( ref );
+				T* value = entry->get( std::move( ref ) );
 				erase( entry, true );
 				return value;
 			}
