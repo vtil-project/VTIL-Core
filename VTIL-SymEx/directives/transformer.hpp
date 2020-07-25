@@ -56,6 +56,7 @@ namespace vtil::symbolic
 
 		// Fast path: check if signature matches.
 		//
+		dassert( 0 < exp->size() && exp->size() <= 64 );
 		if ( !exp->signature.can_match( from->signatures[ exp->size() - 1 ] ) )
 			return {};
 
