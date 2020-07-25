@@ -720,19 +720,21 @@ namespace vtil::symbolic
 			return false;
 		};
 
-		// If hash mismatch, return false without checking anything.
+		// If hash/size mismatches, return false without checking anything.
 		//
-		if ( self.hash() != other.hash() )
+		if ( self.hash() != other.hash() || self.size() != other.size() )
 			return false;
 
-		// If not in debug mode, assume equivalence after total hash reaches 256 bits.
+		// If not in debug mode, assume equivalence after total hash reaches 384 bits.
 		//
-		static constexpr size_t max_depth = 256 / VTIL_HASH_SIZE;
+		static constexpr size_t max_depth = 384 / VTIL_HASH_SIZE;
 #ifndef _DEBUG
 		if constexpr ( depth == max_depth ) 
 			return true;
-#endif
 		constexpr auto cmp = is_identical_impl<depth == max_depth ? max_depth : ( depth + 1 )>;
+#else
+		constexpr auto cmp = is_identical_impl<depth>;
+#endif
 
 		// If variable, check if the identifiers match.
 		//
@@ -827,8 +829,7 @@ namespace vtil::symbolic
 
 		// Check if properties match.
 		//
-		if ( a->op != b->op || a->depth != b->depth || 
-			 a->signature != b->signature || a->complexity != b->complexity )
+		if ( a->signature != b->signature || a->depth != b->depth || a->size() != b->size() )
 			return false;
 
 		// If variable:

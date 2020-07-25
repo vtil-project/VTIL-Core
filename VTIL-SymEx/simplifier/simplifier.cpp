@@ -150,15 +150,15 @@ namespace vtil::symbolic
 		{
 			size_t operator()( const expression::reference& ref ) const noexcept { return ref->signature.hash(); }
 		};
-		struct signature_matcher
+		struct cache_scanner
 		{
-			struct result
+			struct sigscan_result
 			{
 				const expression::reference& key;
 				expression::weak_reference match;
 				expression::uid_relation_table table;
 			};
-			inline static thread_local result* signal = nullptr;
+			inline static thread_local sigscan_result* sigscan = nullptr;
 			inline static thread_local bool match_ptr = false;
 
 			bool operator()( const expression::reference& a,
@@ -176,14 +176,14 @@ namespace vtil::symbolic
 
 				// If there's a pending signature matching request:
 				//
-				if ( signal )
+				if ( sigscan )
 				{
 					// Find out which argument is "this", if failed return false.
 					//
 					expression::weak_reference self, other;
-					if ( a == signal->key )       self = a, other = b;
-					else if ( b == signal->key )  self = b, other = a;
-					else                          return false;
+					if ( a == sigscan->key )       self = a, other = b;
+					else if ( b == sigscan->key )  self = b, other = a;
+					else                           return false;
 
 					// If other's past depth limit:
 					//
@@ -193,12 +193,12 @@ namespace vtil::symbolic
 						//
 						if ( auto vec = other->match_to( *self ) )
 						{
-							signal->match = other;
-							signal->table = std::move( *vec );
+							sigscan->match = other;
+							sigscan->table = std::move( *vec );
 
 							// Clear the request.
 							//
-							signal = nullptr;
+							sigscan = nullptr;
 						}
 					}
 				}
@@ -209,7 +209,7 @@ namespace vtil::symbolic
 		// Cache entry and map type.
 		//
 		struct cache_value;
-		using cache_map = std::unordered_map<expression::reference, cache_value, signature_hasher, signature_matcher>;
+		using cache_map = std::unordered_map<expression::reference, cache_value, signature_hasher, cache_scanner>;
 		struct cache_value
 		{
 			using list_key = typename linked_list<cache_value>::key;
@@ -342,10 +342,10 @@ namespace vtil::symbolic
 		{
 			// Signal signature matcher.
 			//
-			signature_matcher::result sig_search = { exp };
-			signature_matcher::signal = exp->depth > VTIL_SYMEX_SELFGEN_SIGMATCH_DEPTH_LIM ? &sig_search : nullptr;
+			cache_scanner::sigscan_result sig_search = { exp };
+			cache_scanner::sigscan = exp->depth > VTIL_SYMEX_SELFGEN_SIGMATCH_DEPTH_LIM ? &sig_search : nullptr;
 			auto [it, inserted] = map.emplace( exp, make_default<cache_value>() );
-			signature_matcher::signal = nullptr;
+			cache_scanner::sigscan = nullptr;
 
 			// If we inserted a new entry:
 			//
@@ -355,32 +355,40 @@ namespace vtil::symbolic
 				//
 				if ( sig_search.match )
 				{
-					// Write the new result and clear inserted flag.
+					// Find the entry in map, matching only by the pointer and reset inserted flag.
 					//
-					signature_matcher::match_ptr = true;
+					cache_scanner::match_ptr = true;
 					auto& base = map.find( sig_search.match.make_shared() )->second;
-					signature_matcher::match_ptr = false;
-
-					it->second.result = base.result;
-					it->second.is_simplified = base.is_simplified;
+					cache_scanner::match_ptr = false;
 					inserted = false;
 
-					// Transform according to the UID table.
+					// If simplified, transform according to the UID table.
 					//
-					if ( it->second.result )
+					if ( base.is_simplified )
 					{
-						it->second.result.transform( [ & ] ( expression::delegate& exp )
+						it->second.result = base.result;
+						it->second.result.transform( [ &sig_search ] ( expression::delegate& exp )
 						{
+							if ( !exp->is_variable() )
+								return;
 							for ( auto& [a, b] : sig_search.table )
 							{
 								if ( exp->uid == a->uid )
 								{
 									exp = b.make_shared();
-									return;
+									break;
 								}
 							}
 						}, true, false );
+
+						it->second.is_simplified = true;
 						it->second.result->simplify_hint = true;
+					}
+					// Otherwise, declare failure.
+					//
+					else
+					{
+						it->second.is_simplified = false;
 					}
 				}
 
