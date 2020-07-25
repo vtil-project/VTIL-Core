@@ -103,6 +103,10 @@ namespace vtil::symbolic
 			//
 			return 0ull;
 		} );
+
+		// Initialize x values.
+		//
+		xvalues = base->xvalues();
 	}
 
 	// Simple pointer offseting.
@@ -111,6 +115,11 @@ namespace vtil::symbolic
 	{
 		pointer copy = *this;
 		copy.base = std::move( copy.base ) + dst;
+		std::transform(
+			std::begin( xvalues ), std::end( xvalues ),
+			std::begin( copy.xvalues ),
+			[ = ] ( auto v ) { return v + dst; }
+		);
 		return copy;
 	}
 
@@ -118,9 +127,9 @@ namespace vtil::symbolic
 	//
 	std::optional<int64_t> pointer::operator-( const pointer& o ) const
 	{
-		int64_t delta = base->xvalues[ 0 ] - o.base->xvalues[ 0 ];
-		for ( size_t n = 1; n < base->xvalues.size(); n++ )
-			if ( ( base->xvalues[ n ] - o.base->xvalues[ n ] ) != delta )
+		int64_t delta = xvalues[ 0 ] - o.xvalues[ 0 ];
+		for ( size_t n = 1; n < xvalues.size(); n++ )
+			if ( ( xvalues[ n ] - o.xvalues[ n ] ) != delta )
 				return std::nullopt;
 		return ( base - o.base ).get<true>();
 	}

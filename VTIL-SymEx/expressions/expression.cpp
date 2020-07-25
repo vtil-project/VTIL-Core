@@ -396,8 +396,6 @@ namespace vtil::symbolic
 	//
 	expression& expression::update( bool auto_simplify )
 	{
-		static constexpr auto xvalue_keys = make_crandom_n<VTIL_SYMEX_XVAL_KEYS>();
-
 		// Propagate lazyness.
 		//
 		if ( ( lhs && lhs->is_lazy ) ||
@@ -428,10 +426,6 @@ namespace vtil::symbolic
 				// Hash is made up of the bit vector masks and the number of bits.
 				//
 				hash_value = make_hash( value.known_zero(), value.known_one(), ( uint8_t ) value.size() );
-
-				// All x values are equivalent to the actual value.
-				//
-				xvalues.fill( ( uint64_t ) cval );
 			}
 			// If symbolic variable:
 			//
@@ -446,11 +440,6 @@ namespace vtil::symbolic
 				// Hash is made up of UID's hash and the number of bits.
 				//
 				hash_value = make_hash( uid.hash(), ( uint8_t ) value.size() );
-
-				// Generate x values based on the hash.
-				//
-				for ( auto [out, key] : zip( xvalues, xvalue_keys ) )
-					out = ( hash_value ^ key ) & value.value_mask();
 			}
 
 			// Set the signature.
@@ -494,15 +483,9 @@ namespace vtil::symbolic
 				complexity = rhs->complexity * 2;
 				dassert( complexity != 0 );
 				
-				// Begin hash as combine(rhs, rhs).
+				// Begin hash as rhs.
 				//
-				hash_value = make_hash( rhs->hash() );
-
-				// Calculate x values and set the signature.
-				//
-				for ( auto [out, idx] : zip( xvalues, iindices ) )
-					out = math::evaluate( op, 0, 0, rhs->size(), rhs->xvalues[ idx ] ).first;
-				signature = { op, rhs->signature };
+				hash_value = rhs->hash();
 			}
 			// If binary operator:
 			//
@@ -637,25 +620,13 @@ namespace vtil::symbolic
 
 				// Begin hash as combine(op#1, op#2), make it unordered if operator is commutative.
 				//
-				hash_value = desc.is_commutative ? make_unordered_hash( lhs, rhs ) : make_hash( lhs, rhs );
-
-				// Calculate x values and set the signature.
-				//
-				uint64_t rhs_mask;
-				switch ( op )
-				{
-					case math::operator_id::shift_right:
-					case math::operator_id::shift_left:
-					case math::operator_id::rotate_right:
-					case math::operator_id::rotate_left:
-					case math::operator_id::bit_test:     rhs_mask = lhs->size() - 1; break;
-					default:                              rhs_mask = ~0ull;           break;
-				}
-
-				for ( auto [out, idx] : zip( xvalues, iindices ) )
-					out = math::evaluate( op, lhs->size(), lhs->xvalues[ idx ], rhs->size(), rhs->xvalues[ idx ] & rhs_mask ).first;
-				signature = { lhs->signature, op, rhs->signature };
+				hash_value = desc.is_commutative ? combine_unordered_hash( lhs->hash(), rhs->hash() ) : combine_hash( lhs->hash(), rhs->hash() );
 			}
+
+			// Set the signature.
+			//
+			if( lhs ) signature = { lhs->signature, op, rhs->signature };
+			else      signature = {                 op, rhs->signature };
 
 			// Append depth, size, and operator information to the hash.
 			//
@@ -749,7 +720,7 @@ namespace vtil::symbolic
 
 		// Fast path: if x values do not match, expressions cannot be equivalent.
 		//
-		if( xvalues != other.xvalues )
+		if( xvalues() != other.xvalues() )
 			return false;
 
 		// Simplify both expressions.
@@ -826,9 +797,65 @@ namespace vtil::symbolic
 		if ( lhs->is_identical( *other.lhs ) && rhs->is_identical( *other.rhs ) )
 			return true;
 
-		// If not, check in reverse as well if commutative and return the final result.
+	// Calculates the x values.
+	//
+	std::array<uint64_t, VTIL_SYMEX_XVAL_KEYS> expression::xvalues() const
+	{
+		// If constant:
 		//
-		return desc.is_commutative && lhs->is_identical( *other.rhs ) && rhs->is_identical( *other.lhs );
+		std::array<uint64_t, VTIL_SYMEX_XVAL_KEYS> result;
+		if ( is_constant() )
+		{
+			// All x values are equivalent to the actual value.
+			//
+			result.fill( *value.get() );
+		}
+		// If variable:
+		//
+		else if ( is_variable() )
+		{
+			static constexpr auto keys = make_crandom_n<VTIL_SYMEX_XVAL_KEYS>();
+
+			// Generate x values based on the hash.
+			//
+			for ( auto [out, key] : zip( result, keys ) )
+				out = ( hash_value ^ key ) & value.value_mask();
+		}
+		// If binary operation:
+		//
+		else if ( lhs )
+		{
+			// Determine rhs mask.
+			//
+			uint64_t rhs_mask;
+			switch ( op )
+			{
+				case math::operator_id::shift_right:
+				case math::operator_id::shift_left:
+				case math::operator_id::rotate_right:
+				case math::operator_id::rotate_left:
+				case math::operator_id::bit_test:     rhs_mask = lhs->size() - 1; break;
+				default:                              rhs_mask = ~0ull;           break;
+			}
+
+			// Evalute based on lhs's and rhs's xvalues.
+			//
+			auto x_lhs = lhs->xvalues();
+			auto x_rhs = rhs->xvalues();
+			for ( auto [out, idx] : zip( result, iindices ) )
+				out = math::evaluate( op, lhs->size(), x_lhs[ idx ], rhs->size(), x_rhs[ idx ] & rhs_mask ).first;
+		}
+		// If unary operation:
+		//
+		else
+		{
+			// Evalute based on rhs's xvalues.
+			//
+			auto x_rhs = rhs->xvalues();
+			for ( auto [out, idx] : zip( result, iindices ) )
+				out = math::evaluate( op, 0, 0, rhs->size(), x_rhs[ idx ] ).first;
+		}
+		return result;
 	}
 
 	// Converts to human-readable format.
@@ -888,11 +915,11 @@ namespace vtil::symbolic
 	//
 	hash_t expression_reference::hash() const
 	{
-		return is_valid() ? get()->hash() : hash_t{ 0 };
+		return get()->hash();
 	}
 	bool expression_reference::is_simple() const
 	{
-		return !is_valid() || get()->simplify_hint;
+		return get()->simplify_hint;
 	}
 	void expression_reference::update( bool auto_simplify ) 
 	{

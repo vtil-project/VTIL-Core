@@ -179,13 +179,10 @@ namespace vtil::symbolic
 	//
 	struct expression : math::operable<expression>
 	{
-		using delegate =       expression_delegate;
-		using reference =      expression_reference;
-		using weak_reference = weak_reference<expression>;
+		using delegate =           expression_delegate;
+		using reference =          expression_reference;
+		using weak_reference =     weak_reference<expression>;
 
-		// X values approximating the result with different unique keys generated from each UID.
-		//
-		std::array<uint64_t, VTIL_SYMEX_XVAL_KEYS> xvalues;
 
 		// If symbolic variable, the unique identifier that it maps to.
 		//
@@ -331,6 +328,11 @@ namespace vtil::symbolic
 		//   match the operators operands and uids one to one.
 		//
 		bool equals( const expression& other ) const;
+
+
+		// Calculates the x values.
+		//
+		std::array<uint64_t, VTIL_SYMEX_XVAL_KEYS> xvalues() const;
 
 		// Evaluates the expression invoking the callback passed for unknown variables,
 		// this avoids copying of the entire tree and any simplifier calls so is preferred
