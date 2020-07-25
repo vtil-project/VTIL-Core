@@ -374,6 +374,8 @@ namespace vtil
 				return { register_physical | register_flags,         0, size * 8, offset * 8            };
 			else
 				return { register_physical, ( uint64_t ) base, size * 8, offset * 8, architecture_arm64 };
+			
+			
 		}
 	};
 
@@ -386,10 +388,5 @@ namespace vtil
 
 	// Helper to make undefined of N bits.
 	//
-	static constexpr register_desc make_undefined( bitcnt_t sz )
-	{
-		register_desc copy = UNDEFINED;
-		copy.bit_count = sz;
-		return copy;
-	}
+	static constexpr register_desc make_undefined( bitcnt_t sz ) { return UNDEFINED.select( sz, 0 ); }
 };

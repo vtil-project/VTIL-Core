@@ -688,13 +688,20 @@ namespace vtil::symbolic
 		// this way and additionally we avoid copying where an operand is being simplified
 		// as that can be replaced by a simple swap of shared references.
 		//
-		reference ref = make_local_reference( this );
+		reference ref = ( reference&& ) make_local_reference( this );
 		simplify_expression( ref, prettify );
-		if ( &*ref != this ) operator=( *ref );
 
 		// Set the simplifier hint to indicate skipping further calls to simplify_expression.
 		//
-		simplify_hint = true;
+		ref->simplify_hint = true;
+
+		// If reference is changed, move from it.
+		//
+		if ( ref.get() != this )
+		{
+			if( ref.get_entry()->second.load() == 1 ) operator=( std::move( *ref ) );
+			else                                      operator=( *ref );
+		}
 		return *this;
 	}
 

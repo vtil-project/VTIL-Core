@@ -135,7 +135,7 @@ namespace vtil
 		{
 			// Must not be used to allocate an array.
 			//
-			fassert( count == 1 );
+			dassert( count == 1 );
 
 			// Try the fast path where possible.
 			//
@@ -191,7 +191,7 @@ namespace vtil
 		{
 			// Must not be used to deallocate an array.
 			//
-			fassert( count == 1 );
+			dassert( count == 1 );
 
 			// Try the fast path where possible.
 			//
