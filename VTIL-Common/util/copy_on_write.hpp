@@ -91,7 +91,7 @@ namespace vtil
 	{
 		// Declare the object entry.
 		//
-		using object_entry =   std::pair<T, std::atomic<size_t>>;
+		using object_entry =   std::pair<T, std::atomic<uint32_t>>;
 
 		// Declare object allocator.
 		//
