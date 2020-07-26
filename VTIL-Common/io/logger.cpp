@@ -31,6 +31,7 @@
 	#include <Windows.h>
 #endif
 #include "logger.hpp"
+#include <cstdlib>
 
 namespace vtil::logger
 {
@@ -46,6 +47,14 @@ namespace vtil::logger
 		{
 #if _WIN64
 			SetConsoleOutputCP( CP_UTF8 );
+			if ( std::getenv( "GITLAB_CI" ) != nullptr )
+			{
+				global_state.ansi_escape_codes = true;
+			}
+			else
+			{
+				global_state.ansi_escape_codes = false;
+			}
 #endif
 			global_state.initialized = true;
 		}
@@ -57,11 +66,10 @@ namespace vtil::logger
 	//
 	void set_color( console_color color )
 	{
-#if _WIN64
-		SetConsoleTextAttribute( GetStdHandle( STD_OUTPUT_HANDLE ), color );
-#else
-		switch ( color )
+		if ( state::get()->ansi_escape_codes )
 		{
+			switch ( color )
+			{
 			case CON_BRG: printf( "\x1b[37m" ); break;
 			case CON_YLW: printf( "\x1b[33m" ); break;
 			case CON_PRP: printf( "\x1b[35m" ); break;
@@ -70,7 +78,14 @@ namespace vtil::logger
 			case CON_GRN: printf( "\x1b[32m" ); break;
 			case CON_BLU: printf( "\x1b[34m" ); break;
 			case CON_DEF: printf( "\x1b[0m" ); break;
+			}
 		}
+		else
+		{
+#if _WIN64
+		SetConsoleTextAttribute( GetStdHandle( STD_OUTPUT_HANDLE ), color );
 #endif
+		}
+		
 	}
 };

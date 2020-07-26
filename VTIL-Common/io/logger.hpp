@@ -88,6 +88,11 @@ namespace vtil::logger
 		//
 		bool initialized = false;
 
+		// Whether to use ANSI escape codes or Windows console API for colors.
+		// Defaults to false on Windows, unless in a Gitlab CI environment.
+		//
+		bool ansi_escape_codes = true;
+
 		// Gets the global logger state.
 		//
 		static state* get();
