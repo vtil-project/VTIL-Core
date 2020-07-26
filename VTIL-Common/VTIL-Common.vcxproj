@@ -119,7 +119,6 @@
     </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="ext\colony.hpp" />
     <ClInclude Include="formats\image_descriptor.hpp" />
     <ClInclude Include="formats\winpe.hpp" />
     <ClInclude Include="arch\amd64\amd64_assembler.hpp" />

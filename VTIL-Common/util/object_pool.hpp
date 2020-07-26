@@ -27,18 +27,21 @@
 //
 #pragma once
 #include <mutex>
+#include <cstdlib>
 #include <atomic>
-#include "../ext/colony.hpp"
-#include "../util/bitmap.hpp"
+#include <algorithm>
+#include "detached_queue.hpp"
 #include "thread_identifier.hpp"
+#include "type_helpers.hpp"
 
 // [Configuration]
 // Determine the number of buckets and the rellocation buffer entries we allocate and reserve.
 //
 #ifndef VTIL_OBJECT_POOL_BUCKETS
-	#define	VTIL_OBJECT_POOL_BUCKETS         512
-	#define VTIL_OBJECT_POOL_REALLOC_BUFFER  1024
-	#define VTIL_OBJECT_POOL_REALLOC_RESERVE 512
+	#define	VTIL_OBJECT_POOL_BUCKETS       128
+	#define VTIL_OBJECT_POOL_INITIAL_SIZE  ( 1ull   * 1024 * 1024 )
+	#define VTIL_OBJECT_POOL_GROWTH_CAP    ( 256ull * 1024 * 1024 )
+	#define VTIL_OBJECT_POOL_GROWTH_FACTOR 4
 #endif
 namespace vtil
 {
@@ -47,178 +50,233 @@ namespace vtil
 	template <typename T>
 	struct object_pool
 	{
+		// Forward declares and type exports.
+		//
 		using value_type = T;
+		struct pool_instance;
+		struct bucket_entry;
 
-		// Define a type-less iterator to store in the value entry.
+		// A single entry in the pool.
 		//
-		using generic_iterator = typename plf::colony<bool>::iterator;
-		struct object_entry
+		struct alignas( T ) object_entry
 		{
-			static constexpr size_t alignment = std::max<size_t>( alignof( T ), 64ull );
-			static constexpr size_t header_size = sizeof( void* ) + sizeof( generic_iterator );
-			static constexpr size_t aligned_size = ( sizeof( T ) + header_size + ( alignment - 1 ) ) & ~( alignment - 1 );
+			// Stores raw data.
+			//
+			uint8_t raw_data[ sizeof( T ) ];
 
-			uint8_t raw_data[ aligned_size - header_size ];
-			void* bucket;
-			generic_iterator iterator;
+			// Pointer to owning pool.
+			//
+			pool_instance* pool;
 
-			static object_entry* entry_of( void* obj )
-			{
-				uint64_t obj_adr = ( uint64_t ) obj - ( uint64_t ) ( &( ( object_entry* )nullptr )->raw_data );
-				return ( object_entry* ) obj_adr;
-			}
+			// Whether object has to be destructed to be used again or not.
+			//
+			bool deferred_destruction = false;
+
+			// Key for free queue.
+			//
+			detached_queue_key<object_entry> free_queue_key;
+
+			// Decay into object pointer.
+			//
+			T* decay() { return ( T* ) &raw_data[ 0 ]; }
+			const T* decay() const { return ( const T* ) make_mutable( this )->decay(); }
+
+			// Resolve from object pointer.
+			//
+			static object_entry* resolve( const void* obj ) { return ptr_at<object_entry>( ( T* ) obj, -make_offset( &object_entry::raw_data ) ); }
 		};
 
-		// Define the typed iterator to actually use.
+		// Base pool type.
 		//
-		using type_iterator = typename plf::colony<object_entry>::iterator;
-		static_assert( sizeof( type_iterator ) == sizeof( generic_iterator ), "Iterator sizes are not matching." );
-
-		// Define a colony wrapped around a mutex.
-		//
-		struct colony_bucket
+		struct pool_instance
 		{
-			plf::colony<object_entry> colony;
-			std::mutex mtx;
+			// Key for the pool queue.
+			//
+			detached_queue_key<pool_instance> pool_queue_key;
+
+			// Number of objects we store and the objects themselves.
+			//
+			size_t object_count;
+			object_entry objects[ 1 /* N */ ];
 		};
 
-		// Gets the current colony assigned to the thread.
+		// Bucket entry dedicating a pool list to each thread.
 		//
-		static colony_bucket* get_bucket()
+		struct bucket_entry
 		{
-			static colony_bucket buckets[ VTIL_OBJECT_POOL_BUCKETS ] = {};
-			return &buckets[ get_thread_id() % VTIL_OBJECT_POOL_BUCKETS ];
-		}
-
-		// Define a simple buffer used for fast "reallocation".
-		//
-		struct reallocation_buffer
-		{
-			bitmap<VTIL_OBJECT_POOL_REALLOC_BUFFER> state = {};
-			T* entries[ VTIL_OBJECT_POOL_REALLOC_BUFFER ] = {};
-
-			// Pushes the given pointer to the buffer.
+			// Atomic queue of free memory regions.
 			//
-			bool push( T* p )
-			{
-				size_t n = state.find( false );
-				if ( n == math::bit_npos ) return false;
-				state.set( n, true );
-				entries[ n ] = p;
-				return true;
-			}
+			atomic_detached_queue<object_entry> free_queue;
 
-			// Tries to pop an entry from the buffer, returns nullptr on failure.
+			// Mutex protecting the pool list.
 			//
-			T* pop()
-			{
-				size_t n = state.find( true );
-				if ( n == math::bit_npos ) return nullptr;
-				state.set( n, false );
-				return std::exchange( entries[ n ], nullptr );
-			}
+			std::mutex pool_allocator_mutex;
 
-			// Deallocate any leftovers upon destruction.
+			// Last of last pool in bytes, approximated.
 			//
-			~reallocation_buffer()
-			{
-				auto entry_it = entries;
-				for ( auto it = std::begin( state.blocks ); it != std::end( state.blocks ); it++, entry_it += 64 )
-					for ( size_t i = 0; i < 64; i++, *it >>= 1 )
-						if( *it & 1 )
-							object_pool<T>{}.deallocate( entry_it[ i ] );
-			}
+			size_t last_pool_size_raw = 0;
+			
+			// List of pools.
+			//
+			detached_queue<pool_instance> pools;
 		};
-		inline static thread_local reallocation_buffer buffer = {};
 
-		inline T* allocate( size_t count = 1 ) const
+		// Declare the pool allocator.
+		//
+		using pool_base_unit = std::aligned_storage<1, alignof( pool_instance )>;
+		using pool_allocator = std::allocator<pool_base_unit>;
+
+		// Atomic counter responsible of the grouping of threads => buckets.
+		//
+		inline static std::atomic<size_t> counter = { 0 };
+		
+		// Global list of buckets.
+		//
+		inline static bucket_entry buckets[ VTIL_OBJECT_POOL_BUCKETS ] = {};
+		
+		// Current bucket entry, decided at thread initialization.
+		//
+		inline static thread_local bucket_entry& local_bucket = buckets[ counter++ % VTIL_OBJECT_POOL_BUCKETS ];
+
+		// Allocation and deallocation.
+		//
+		static T* allocate( bool deferred_destruction = false )
 		{
-			// Must not be used to allocate an array.
-			//
-			dassert( count == 1 );
+			static_assert( sizeof( object_entry ) < VTIL_OBJECT_POOL_INITIAL_SIZE, "Objects cannot be larger than initial size." );
 
-			// Try the fast path where possible.
+			// Fetch local bucket from TLS.
 			//
-			if ( auto p = buffer.pop() )
-				return p;
+			bucket_entry& bucket = local_bucket;
 
-			// Get current bucket.
+			// Enter pool allocation loop:
 			//
-			colony_bucket* bucket = get_bucket();
-
-			// If buffer is empty, populate it.
-			//
-			if ( buffer.state.find( true ) == math::bit_npos )
+			while ( true )
 			{
-				static constexpr size_t reserved_count = VTIL_OBJECT_POOL_REALLOC_RESERVE & ~7;
-
-				// Lock the mutex.
+				// Pop entry from free queue, if non null:.
 				//
-				std::lock_guard _g{ bucket->mtx };
-
-				// Insert N reserved entries and insert them.
-				//
-				for ( size_t n = 0; n < reserved_count; n++ )
+				if ( object_entry* entry = bucket.free_queue.pop_back( &object_entry::free_queue_key ) )
 				{
-					type_iterator it = bucket->colony.emplace();
-					it->bucket = bucket;
-					it->iterator = ( generic_iterator& ) it;
-					buffer.entries[ n ] = ( T* ) it->raw_data;
+					// If it's destruction was deferred, do so now.
+					//
+					if ( entry->deferred_destruction )
+						std::destroy_at<T>( entry->decay() );
+
+					// Return the entry.
+					//
+					entry->deferred_destruction = deferred_destruction;
+					return entry->decay();
 				}
-				memset( buffer.state.blocks, 0xFF, reserved_count / 8 );
 
-				// Allocate an additional entry and return it.
+				// Acquire pool allocator mutex.
 				//
-				type_iterator it = bucket->colony.emplace();
-				it->bucket = bucket;
-				it->iterator = ( generic_iterator& ) it;
-				return ( T* ) it->raw_data;
+				std::lock_guard _gp{ bucket.pool_allocator_mutex };
+
+				// If free queue is already filled, try again.
+				//
+				if ( !bucket.free_queue.empty() )
+					continue;
+
+				// Determine new pool's size (raw size is merely an approximation).
+				//
+				size_t new_pool_size_raw = bucket.last_pool_size_raw
+					? std::min<size_t>( bucket.last_pool_size_raw * VTIL_OBJECT_POOL_GROWTH_FACTOR, VTIL_OBJECT_POOL_GROWTH_CAP )
+					: VTIL_OBJECT_POOL_INITIAL_SIZE;
+				bucket.last_pool_size_raw = new_pool_size_raw;
+				size_t object_count = new_pool_size_raw / sizeof( object_entry );
+
+				// Allocate the pool, initialize the header.
+				//
+				pool_instance* new_pool = ( pool_instance* ) pool_allocator{}.allocate(
+					( sizeof( pool_instance ) + sizeof( object_entry ) * ( object_count - 1 ) + sizeof( pool_base_unit ) - 1 ) / sizeof( pool_base_unit )
+				);
+				new_pool->object_count = object_count;
+
+				// We'll keep the first object to ourselves.
+				//
+				object_entry* return_value = &new_pool->objects[ 0 ];
+				return_value->pool = new_pool;
+				return_value->deferred_destruction = deferred_destruction;
+				return_value->free_queue_key.active = false;
+
+				// Initialize every other object, linking them internally so that 
+				// we don't have to hold the free-list lock too long.
+				//
+				object_entry* tmp_prev = nullptr;
+				for ( size_t i = 1; i < object_count; i++ )
+				{
+					new ( new_pool->objects + i ) object_entry{
+						.pool = new_pool,
+						.deferred_destruction = false,
+						.free_queue_key = {
+							.active = true,
+							.prev = &new_pool->objects[ i - 1 ].free_queue_key,
+							.next = &new_pool->objects[ i + 1 ].free_queue_key
+						}
+					};
+				}
+				auto* head = &new_pool->objects[ 1 ];
+				auto* tail = &new_pool->objects[ object_count - 1 ];
+				head->free_queue_key.prev = nullptr;
+				tail->free_queue_key.next = nullptr;
+				
+				// Insert into pools list.
+				//
+				bucket.pools.emplace_back( &new_pool->pool_queue_key );
+
+				// Lock the free queue and manually link.
+				//
+				std::lock_guard _gf{ bucket.free_queue };
+
+				if ( bucket.free_queue.tail )
+				{
+					bucket.free_queue.tail->next = &head->free_queue_key;
+					head->free_queue_key.prev = bucket.free_queue.tail;
+					bucket.free_queue.tail = &tail->free_queue_key;
+				}
+				else
+				{
+					bucket.free_queue.head = &head->free_queue_key;
+					bucket.free_queue.tail = &tail->free_queue_key;
+				}
+				bucket.free_queue.list_size += object_count - 1;
+
+				// Return the allocated address.
+				//
+				return return_value->decay();
 			}
-
-			// Lock the mutex, emplace an empty object and unlock.
-			//
-			bucket->mtx.lock();
-			type_iterator it = bucket->colony.emplace();
-			bucket->mtx.unlock();
-
-			// Insert bucket and iterator information into the bucket entry and return raw data pointer as is.
-			//
-			it->bucket = bucket;
-			it->iterator = ( generic_iterator& ) it;
-			return ( T* ) it->raw_data;
 		}
-		inline void deallocate( T* pointer, size_t count = 1 ) const
+		static void deallocate( T* pointer, bool deferred_destruction = false )
 		{
-			// Must not be used to deallocate an array.
+			// Fetch local bucket from TLS.
 			//
-			dassert( count == 1 );
+			bucket_entry& bucket = local_bucket;
 
-			// Try the fast path where possible.
+			// Resolve object entry, set deferred destruction and emplace it into the free queue.
 			//
-			if ( buffer.push( pointer ) )
-				return;
+			object_entry* object_entry = object_entry::resolve( pointer );
+			object_entry->deferred_destruction = deferred_destruction;
+			bucket.free_queue.emplace_back( &object_entry->free_queue_key );
 
-			// Get the object header from the pointer.
-			//
-			object_entry* entry = object_entry::entry_of( pointer );
-			colony_bucket* bucket = ( colony_bucket* ) entry->bucket;
+			/*
+			// TODO: Perhaps deallocate if whole pool is not used?
 
-			// Lock the mutex and erase from the colony.
+			// Delete from bucket.
 			//
-			bucket->mtx.lock();
-			bucket->colony.erase( ( type_iterator& ) entry->iterator );
-			bucket->mtx.unlock();
+			bucket->pools.erase( std::remove( bucket->pools.begin(), bucket->pools.end(), pool ), bucket->pools.end() );
+
+			// Simply deallocate the pool.
+			//
+			allocator{}.deallocate(
+				pool,
+				( sizeof( pool_instance ) + sizeof( object_entry ) * ( pool->object_count - 1 ) ) / sizeof( base_unit )
+			);
+			*/
 		}
 
-		// Default construction, conversion is no-op.
+		// Construct / deconsturct wrappers.
 		//
-		constexpr object_pool() = default;
-		template <typename T2>
-		constexpr object_pool( const object_pool<T2>& ) noexcept {}
-
-		// Different types are never equal.
-		//
-		template <typename T2> constexpr bool operator==( const object_pool<T2>& ) { return false; }
-		template <typename T2> constexpr bool operator!=( const object_pool<T2>& ) { return true; }
+		template<typename... Tx>
+		__forceinline static T* construct( Tx&&... args ) { return new ( allocate( true ) ) T( std::forward<Tx>( args )... ); }
+		__forceinline static void destruct( T* pointer ) { return deallocate( pointer, true ); }
 	};
 };

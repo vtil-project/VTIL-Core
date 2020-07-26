@@ -89,13 +89,10 @@ namespace vtil
 	template<typename T>
 	struct shared_reference
 	{
-		// Declare the object entry.
+		// Declare the object entry and its pool.
 		//
 		using object_entry =   std::pair<T, std::atomic<uint32_t>>;
-
-		// Declare object allocator.
-		//
-		using allocator_type = object_pool<object_entry>;
+		using object_pool  =   object_pool<object_entry>;
 
 		// Store pointer as a 63-bit integer and append an additional bit to control temporary/allocated.
 		//
@@ -121,11 +118,11 @@ namespace vtil
 		template<typename... params, impl::enable_if_constructor<shared_reference<T>, params...> = 0>
 		shared_reference( params&&... p ) 
 		{
-			object_entry* entry = allocator_type{}.allocate();
-			new ( &entry->first ) T( std::forward<params>( p )... );
-			entry->second = { 1 };
-
-			pointer = ( uint64_t ) entry;
+			pointer = ( uint64_t ) object_pool::construct
+			(
+				/*Object itself*/     T( std::forward<params>( p )... ), 
+				/*Reference counter*/ 1
+			);
 			temporary = false;
 		}
 
@@ -169,7 +166,7 @@ namespace vtil
 
 		// Gets object entry.
 		//
-		object_entry* get_entry() const { dassert( !is_temporary() ); return ( object_entry* ) pointer; }
+		constexpr object_entry* get_entry() const { dassert( !is_temporary() ); return ( object_entry* ) get(); }
 
 		// Gets object itself.
 		//
@@ -189,24 +186,16 @@ namespace vtil
 			//
 			if ( is_temporary() )
 			{
-				object_entry* new_entry = allocator_type{}.allocate();
-				new ( &new_entry->first ) T{ *get() };
-				new_entry->second = { 1 };
-
-				pointer = ( uint64_t ) new_entry;
+				pointer = ( uint64_t ) object_pool::construct( *get(), 1 );
 				temporary = false;
 			}
 			// If shared, copy if reference count is above 1.
 			//
 			else if ( auto entry = get_entry(); entry && entry->second != 1 )
 			{
-				object_entry* new_entry = allocator_type{}.allocate();
-				new ( &new_entry->first ) T{ *get() };
-				new_entry->second = { 1 };
-				entry->second--;
-
-				pointer = ( uint64_t ) new_entry;
+				pointer = ( uint64_t ) object_pool::construct( *get(), 1 );
 				temporary = false;
+				entry->second--;
 			}
 
 			// Return the current pointer without const-qualifiers.
@@ -248,7 +237,7 @@ namespace vtil
 
 		// Resets the reference to nullptr.
 		//
-		shared_reference& reset()
+		__forceinline shared_reference& reset()
 		{
 			// If non-temporary and non-null, decrement reference count, if 
 			// it reaches 0, destroy the object and deallocate.
@@ -258,10 +247,7 @@ namespace vtil
 				if ( auto entry = get_entry() )
 				{
 					if ( --entry->second == 0 )
-					{
-						std::destroy_at<T>( &entry->first );
-						allocator_type{}.deallocate( ( object_entry* ) entry );
-					}
+						object_pool::destruct( entry );
 				}
 			}
 			

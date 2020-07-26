@@ -29,9 +29,6 @@
     <Filter Include="Architecture\arm64">
       <UniqueIdentifier>{cee1cbfd-3d49-43f8-9efc-77d85f117d5f}</UniqueIdentifier>
     </Filter>
-    <Filter Include="External">
-      <UniqueIdentifier>{3062bc5f-e00e-4154-804d-97d4c9f9ecbc}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="io\asserts.hpp">
@@ -177,9 +174,6 @@
     </ClInclude>
     <ClInclude Include="util\static_warning.hpp">
       <Filter>Utility</Filter>
-    </ClInclude>
-    <ClInclude Include="ext\colony.hpp">
-      <Filter>External</Filter>
     </ClInclude>
     <ClInclude Include="util\random.hpp">
       <Filter>Utility</Filter>
