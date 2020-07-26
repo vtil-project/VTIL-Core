@@ -33,6 +33,19 @@
 
 namespace vtil
 {
+	// Detached key.
+	//
+	template<typename T>
+	struct detached_queue_key
+	{
+		bool active = false;
+		detached_queue_key* prev;
+		detached_queue_key* next;
+
+		T* get( member_reference_t<T, detached_queue_key> ref ) { return ptr_at<T>( this, -make_offset( ref ) ); }
+		const T* get( member_reference_t<T, detached_queue_key> ref ) const { return make_mutable( this )->get( std::move( ref ) ); }
+	};
+
 	// Detached in-place queue for tracking already allocated objects 
 	// in a different order with no allocations.
 	//
@@ -41,34 +54,40 @@ namespace vtil
 	{
 		// Detached key.
 		//
-		struct key
-		{
-			key* prev;
-			key* next;
-
-			T* get( member_reference_t<T, key> ref ) { return ptr_at<T>( this, -make_offset( ref ) ); }
-			const T* get( member_reference_t<T, key> ref ) const { return make_mutable( this )->get( std::move( ref ) ); }
-		};
+		using key = detached_queue_key<T>;
 
 		// Spinlock protecting the list.
 		//
-		std::atomic_flag spinlock = ATOMIC_FLAG_INIT;
+		mutable std::atomic_flag spinlock = ATOMIC_FLAG_INIT;
 
 		// Head, tail and size tracking the list.
 		//
 		key* head = nullptr;
 		key* tail = nullptr;
-		size_t size = 0;
+		size_t list_size = 0;
+
+		// Size getter, no locks because if caller doesn't hold the
+		// lock while processing this information it doesn't make 
+		// sense eitherway.
+		//
+		bool empty() const  
+		{ 
+			return list_size == 0;
+		}
+		size_t size() const 
+		{ 
+			return list_size;
+		}
 
 		// Controls the lock.
 		//
-		void lock()
+		void lock() const
 		{
 			if constexpr ( atomic )
 				while ( spinlock.test_and_set( std::memory_order_acquire ) )
 					_mm_pause();
 		}
-		void unlock()
+		void unlock() const
 		{
 			if constexpr ( atomic )
 				spinlock.clear( std::memory_order_release );
@@ -82,10 +101,11 @@ namespace vtil
 
 			k->prev = nullptr;
 			k->next = head;
+			k->active = true;
 			if ( head ) head->prev = k;
 			if ( !tail ) tail = k;
 			head = k;
-			size++;
+			list_size++;
 		}
 
 		// Inserts the key into the list.
@@ -96,29 +116,29 @@ namespace vtil
 
 			k->prev = tail;
 			k->next = nullptr;
+			k->active = true;
 			if ( tail ) tail->next = k;
 			if ( !head ) head = k;
 			tail = k;
-			size++;
+			list_size++;
 		}
 
-		// Erases the key from the list.
+		// Erases the key from the list, if linked.
 		//
 		void erase( key* k, bool inherit_lock = false )
 		{
+			if ( !k->active ) return;
+
 			if ( !inherit_lock ) lock();
 
 			if ( head == k ) head = k->next;
 			if ( tail == k ) tail = k->prev;
 			if ( k->prev ) k->prev->next = k->next;
 			if ( k->next ) k->next->prev = k->prev;
-
-			if ( k->prev || k->next )
-			{
-				k->prev = nullptr;
-				k->next = nullptr;
-				size--;
-			}
+			k->prev = nullptr;
+			k->next = nullptr;
+			k->active = false;
+			list_size--;
 
 			if ( !inherit_lock ) unlock();
 		}
@@ -131,7 +151,22 @@ namespace vtil
 
 			head = nullptr;
 			tail = nullptr;
-			size = 0;
+			list_size = 0;
+		}
+
+		// Peek front / back, no locks, same reason as ::size.
+		//
+		T* front( member_reference_t<T, key> ref )
+		{
+			if ( key* entry = head )
+				return entry->get( std::move( ref ) );
+			return nullptr;
+		}
+		T* back( member_reference_t<T, key> ref )
+		{
+			if ( key* entry = head )
+				return entry->get( std::move( ref ) );
+			return nullptr;
 		}
 		
 		// Pop front / back.

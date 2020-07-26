@@ -268,9 +268,9 @@ namespace vtil::symbolic
 
 			// If we reached max entries, prune:
 			//
-			if ( lru_queue.size == max_cache_entries )
+			if ( lru_queue.size() == max_cache_entries )
 			{
-				for ( auto it = lru_queue.head; it && ( lru_queue.size + cache_prune_count ) > max_cache_entries; )
+				for ( auto it = lru_queue.head; it && ( lru_queue.size() + cache_prune_count ) > max_cache_entries; )
 				{
 					auto next = it->next;
 

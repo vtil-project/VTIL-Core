@@ -180,6 +180,6 @@ namespace vtil
     // Helper used to create reduced tuples.
     //
     template<typename... Tx>
-    static constexpr std::tuple<Tx...> reference_as_tuple( Tx&&... args ) { return std::tuple<Tx...>( std::forward<Tx>( args )... ); }
+    __forceinline static constexpr std::tuple<Tx...> reference_as_tuple( Tx&&... args ) { return std::tuple<Tx...>( std::forward<Tx>( args )... ); }
 };
 #pragma warning(pop)

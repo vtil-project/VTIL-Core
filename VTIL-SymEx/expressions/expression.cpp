@@ -712,7 +712,7 @@ namespace vtil::symbolic
 	{
 		if ( &self == &other ) return true;
 
-		constexpr auto report_hash_collision = [ & ] ()
+		auto report_hash_collision = [ & ] ()
 		{
 #ifdef _DEBUG
 			logger::log( "Hash collision detected!\n" );
