@@ -118,12 +118,8 @@ namespace vtil::symbolic
 			//
 			compare_value = [ ] ( const unique_identifier& a, const unique_identifier& b )
 			{
-				if ( &a == &b )                    return  0;
-				if ( a.hash_value < b.hash_value ) return -1;
-				if ( a.hash_value > b.hash_value ) return +1;
-
-				auto& ta = a.get<T>();
-				auto& tb = b.get<T>();
+				const T& ta = a.get<T>();
+				const T& tb = b.get<T>();
 				if ( ta == tb ) return  0;
 				if ( ta < tb )  return -1;
 				else            return +1;

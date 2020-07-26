@@ -38,10 +38,10 @@
 // Determine the number of buckets and the rellocation buffer entries we allocate and reserve.
 //
 #ifndef VTIL_OBJECT_POOL_BUCKETS
-	#define	VTIL_OBJECT_POOL_BUCKETS       128
+	#define	VTIL_OBJECT_POOL_BUCKETS       36
 	#define VTIL_OBJECT_POOL_INITIAL_SIZE  ( 1ull   * 1024 * 1024 )
-	#define VTIL_OBJECT_POOL_GROWTH_CAP    ( 256ull * 1024 * 1024 )
-	#define VTIL_OBJECT_POOL_GROWTH_FACTOR 4
+	#define VTIL_OBJECT_POOL_GROWTH_CAP    ( 512ull * 1024 * 1024 )
+	#define VTIL_OBJECT_POOL_GROWTH_FACTOR 2
 #endif
 namespace vtil
 {
