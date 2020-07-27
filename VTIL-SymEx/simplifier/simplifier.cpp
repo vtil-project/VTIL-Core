@@ -85,20 +85,6 @@ namespace vtil::symbolic
 		static constexpr size_t max_cache_entries = VTIL_SYMEX_LRU_CACHE_SIZE;
 		static constexpr size_t cache_prune_count = ( size_t ) ( max_cache_entries * VTIL_SYMEX_LRU_PRUNE_COEFF );
 
-		// Non-atomic integer incremented during the duration of scope.
-		//
-		template<typename T>
-		struct scope_lock
-		{
-			T* lock_count;
-			scope_lock( T& i ) : lock_count( &i ) { ++( *lock_count ); }
-
-			scope_lock( scope_lock&& ) = delete;
-			scope_lock( const scope_lock& ) = delete;
-
-			~scope_lock() { --( *lock_count ); }
-		};
-
 		// Declare custom hash / equivalence checks hijacking the hash map iteration.
 		//
 		struct signature_hasher
@@ -176,10 +162,22 @@ namespace vtil::symbolic
 
 			// Implementation details:
 			//
-			int8_t lock_count = 0;
+			int32_t lock_count = 0;
 			queue_key lru_key = {};
 			queue_key spec_key = {};
 			cache_map::const_iterator iterator = {};
+		};
+
+		// References a cache value until its destruction.
+		//
+		struct scope_reference
+		{
+			int32_t& lock_count;
+
+			scope_reference( cache_value* value ) : lock_count( ++value->lock_count ) {}
+			scope_reference( scope_reference&& o ) = delete;
+			scope_reference( const scope_reference& a ) = delete;
+			~scope_reference() { lock_count--; }
 		};
 
 		// Whether we're executing speculatively or not.
@@ -287,7 +285,7 @@ namespace vtil::symbolic
 
 		// Looks up the cache for the expression, returns [<result>, <simplified?>, <exists?>, <LRU lock>].
 		//
-		std::tuple<expression::reference&, bool&, bool, scope_lock<int8_t>> lookup( const expression::reference& exp )
+		std::tuple<expression::reference&, bool&, bool, scope_reference> lookup( const expression::reference& exp )
 		{
 			// Signal signature matcher.
 			//
@@ -298,6 +296,7 @@ namespace vtil::symbolic
 
 			// If we inserted a new entry:
 			//
+			bool was_matched = false;
 			if ( inserted )
 			{
 				// If there is a partial match:
@@ -307,15 +306,15 @@ namespace vtil::symbolic
 					// Find the entry in map, matching only by the pointer and reset inserted flag.
 					//
 					cache_scanner::match_ptr = true;
-					auto& base = map.find( sig_search.match.make_shared() )->second;
+					auto base = map.find( sig_search.match.make_shared() );
 					cache_scanner::match_ptr = false;
 					inserted = false;
 
 					// If simplified, transform according to the UID table.
 					//
-					if ( base.is_simplified )
+					if ( base->second.is_simplified )
 					{
-						it->second.result = make_const( base.result ).transform( [ &sig_search ] ( expression::delegate& exp )
+						it->second.result = make_const( base->second.result ).transform( [ &sig_search ] ( expression::delegate& exp )
 						{
 							if ( !exp->is_variable() )
 								return;
@@ -330,6 +329,7 @@ namespace vtil::symbolic
 						}, true, false );
 						it->second.result->simplify_hint = true;
 						it->second.is_simplified = true;
+						was_matched = true;
 					}
 					// Otherwise, declare failure.
 					//
@@ -337,6 +337,8 @@ namespace vtil::symbolic
 					{
 						it->second.is_simplified = false;
 					}
+
+					erase( &base->second );
 				}
 
 				// Initialize it.
@@ -348,7 +350,7 @@ namespace vtil::symbolic
 			//
 			lru_queue.erase( &it->second.lru_key );
 			lru_queue.emplace_back( &it->second.lru_key );
-			return { it->second.result, it->second.is_simplified, !inserted, it->second.lock_count };
+			return { it->second.result, it->second.is_simplified, !inserted, &it->second };
 		}
 	};
 	static thread_local local_simplification_cache local_cache;
