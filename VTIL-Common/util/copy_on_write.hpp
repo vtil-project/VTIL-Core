@@ -94,17 +94,31 @@ namespace vtil
 		using object_entry =   std::pair<T, std::atomic<long>>;
 		using object_pool  =   object_pool<object_entry>;
 
+		// Wrap atomic operations on reference counter.
+		//
 		__forceinline static void inc_ref( object_entry* entry )
 		{
+#ifdef _MSC_VER
 			std::atomic_fetch_add_explicit( &entry->second, +1, std::memory_order::relaxed );
+#else
+			entry->second++;
+#endif
 		}
 		__forceinline static bool dec_ref( object_entry* entry )
 		{
-			return std::atomic_fetch_add_explicit( &entry->second, -1, std::memory_order::acq_rel ) == 1;
+#ifdef _MSC_VER
+			return std::atomic_fetch_add_explicit( &entry->second, -1, std::memory_order::acq_rel ) == 1
+#else
+			return --entry->second == 0;
+#endif
 		}
 		__forceinline static long get_ref( object_entry* entry )
 		{
+#ifdef _MSC_VER
 			return std::atomic_load_explicit( &entry->second, std::memory_order::relaxed );
+#else
+			return entry->second.load();
+#endif
 		}
 
 		// Store pointer as a 63-bit integer and append an additional bit to control temporary/allocated.
