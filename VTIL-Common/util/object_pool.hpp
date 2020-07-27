@@ -314,7 +314,7 @@ namespace vtil
 
 				// Dispatch to bucket.
 				//
-				return bucket->allocate<true>();
+				return bucket->template allocate<true>();
 			}
 			void deallocate( T* pointer )
 			{
