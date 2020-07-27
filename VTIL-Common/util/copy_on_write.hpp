@@ -107,7 +107,7 @@ namespace vtil
 		__forceinline static bool dec_ref( object_entry* entry )
 		{
 #ifdef _MSC_VER
-			return std::atomic_fetch_add_explicit( &entry->second, -1, std::memory_order::acq_rel ) == 1
+			return std::atomic_fetch_add_explicit( &entry->second, -1, std::memory_order::acq_rel ) == 1;
 #else
 			return --entry->second == 0;
 #endif
