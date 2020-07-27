@@ -92,23 +92,51 @@ namespace vtil
 		constexpr operator T() const noexcept { static_assert( sizeof( T ) == -1, "Static default immediately decays, unnecessary use." ); unreachable(); }
 	} static_default;
 
-	// Converts from a const qualified ref/ptr to a non-const-qualified ref/ptr.
-	// - Make sure the use is documented, this is very hacky behaviour!
+	// Implementation of type-helpers for the functions below.
 	//
-	template<typename T> static constexpr T& make_mutable( const T& x ) noexcept { return ( T& ) x; }
-	template<typename T> static constexpr T* make_mutable( const T* x ) noexcept { return ( T* ) x; }
+	namespace impl
+	{
+		template<typename T, typename = void> struct make_const { using type = T; };
+		template<typename T> struct make_const<T&&, void>   { using type = std::add_const_t<T>&&;   };
+		template<typename T> struct make_const<T&, void>    { using type = std::add_const_t<T>&;    };
+		template<typename T> struct make_const<T*, void>    { using type = std::add_const_t<T>*;    };
+
+		template<typename T, typename = void> struct make_mutable { using type = T; };
+		template<typename T> struct make_mutable<T&&, void> { using type = std::remove_const_t<T>&&; };
+		template<typename T> struct make_mutable<T&, void>  { using type = std::remove_const_t<T>&;  };
+		template<typename T> struct make_mutable<T*, void>  { using type = std::remove_const_t<T>*;  };
+
+		template<typename T, typename = void> struct is_const : std::false_type {};
+		template<typename T> struct is_const<const T&&, void> : std::true_type  {};
+		template<typename T> struct is_const<const T&, void>  : std::true_type  {};
+		template<typename T> struct is_const<const T*, void>  : std::true_type  {};
+
+		template<typename B, typename T>
+		struct carry_const
+		{
+			using type = std::conditional_t<
+				is_const<B>::value, 
+				typename make_const<T>::type, 
+				typename make_mutable<T>::type
+			>;
+		};
+	};
 
 	// Converts from a non-const qualified ref/ptr to a const-qualified ref/ptr.
 	//
-	template<typename T> static constexpr std::add_const_t<T>& make_const( T& x ) noexcept { return x; }
-	template<typename T> static constexpr std::add_const_t<T>* make_const( T* x ) noexcept { return x; }
+	template<typename T> using make_const_t = typename impl::make_const<T>::type;
+	template<typename T> static constexpr make_const_t<T> make_const( T&& x ) noexcept { return ( make_const_t<T> ) x; }
+
+	// Converts from a const qualified ref/ptr to a non-const-qualified ref/ptr.
+	// - Make sure the use is documented, this is very hacky behaviour!
+	//
+	template<typename T> using make_mutable_t = typename impl::make_mutable<T>::type;
+	template<typename T> static constexpr make_mutable_t<T> make_mutable( T&& x ) noexcept { return ( make_mutable_t<T> ) x; }
 
 	// Carries constant qualifiers of first type into second.
 	//
-	template<typename B, typename T, std::enable_if_t<!std::is_const_v<T>, int> = 0>
-	static constexpr std::conditional_t<std::is_const_v<B>, const T*, T*> carry_const( B* base, T* value ) { return value; }
-	template<typename B, typename T, std::enable_if_t<!std::is_const_v<T>, int> = 0>
-	static constexpr std::conditional_t<std::is_const_v<B>, const T&, T&> carry_const( B& base, T& value ) { return value; }
+	template<typename B, typename T> using carry_const_t = typename impl::carry_const<B, T>::type;
+	template<typename B, typename T> static constexpr carry_const_t<B, T> carry_const( B&& base, T&& value ) noexcept { return ( carry_const_t<B, T> ) value; }
 
 	// Creates a copy of the given value.
 	//
@@ -116,19 +144,19 @@ namespace vtil
 
 	// Makes a null pointer to type.
 	//
-	template<typename T> static constexpr T* make_null() { return ( T* ) nullptr; }
+	template<typename T> static constexpr T* make_null() noexcept { return ( T* ) nullptr; }
 
 	// Returns the offset of given member reference.
 	//
 	template<typename V, typename C> 
-	static constexpr int32_t make_offset( V C::* ref ) { return ( int32_t ) ( uint64_t ) &( make_null<C>()->*ref ); }
+	static constexpr int32_t make_offset( V C::* ref ) noexcept { return ( int32_t ) ( uint64_t ) &( make_null<C>()->*ref ); }
 
 	// Gets the type at the given offset.
 	//
 	template<typename T = void, typename B = void>
-	static auto* ptr_at( B* base, int32_t off ) { return carry_const( base, ( T* ) ( ( ( uint64_t ) base ) + off ) ); }
+	static auto* ptr_at( B* base, int32_t off ) noexcept { return carry_const( base, ( T* ) ( ( ( uint64_t ) base ) + off ) ); }
 	template<typename T, typename B>
-	static auto& ref_at( B* base, int32_t off ) { return *ptr_at<T>(base, off); }
+	static auto& ref_at( B* base, int32_t off ) noexcept { return *ptr_at<T>(base, off); }
 
 	// Member reference helper.
 	//
