@@ -104,7 +104,9 @@ namespace vtil
 				uint64_t temporary : 1;
 			};
 			uint64_t combined_value;
-			T* __global;
+
+			T* _value;
+			object_entry* _entry;
 		};
 
 		// Null reference construction.
@@ -166,7 +168,7 @@ namespace vtil
 
 		// Gets object entry.
 		//
-		constexpr object_entry* get_entry() const { dassert( !is_temporary() ); return ( object_entry* ) get(); }
+		constexpr object_entry* get_entry() const { dassert( !is_temporary() ); return _entry; }
 
 		// Gets object itself.
 		//
@@ -276,7 +278,8 @@ namespace vtil
 				uint64_t temporary : 1;
 			};
 			uint64_t combined_value;
-			T* __global;
+			
+			T* _value;
 		};
 
 		// Default null constructor.

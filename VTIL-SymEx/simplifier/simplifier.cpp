@@ -39,8 +39,12 @@
 //
 #ifndef VTIL_SYMEX_SELFGEN_SIGMATCH_DEPTH_LIM
 	#define	VTIL_SYMEX_SELFGEN_SIGMATCH_DEPTH_LIM   3
+#endif
+#ifndef VTIL_SYMEX_LRU_CACHE_SIZE
 	#define VTIL_SYMEX_LRU_CACHE_SIZE               65536
-	#define VTIL_SYMEX_LRU_PRUNE_COEFF              0.35
+#endif
+#ifndef VTIL_SYMEX_LRU_PRUNE_COEFF
+	#define VTIL_SYMEX_LRU_PRUNE_COEFF              0.333
 #endif
 namespace vtil::symbolic
 {
@@ -228,6 +232,8 @@ namespace vtil::symbolic
 		//
 		void trash_speculative()
 		{
+			spec_queue.pop_front( &cache_value::spec_key );
+
 			for ( auto it = spec_queue.head; it; )
 			{
 				auto next = it->next;

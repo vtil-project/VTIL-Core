@@ -39,6 +39,8 @@
 //
 #ifndef VTIL_OPT_USE_THREAD_POOLING
 	#define VTIL_OPT_USE_PARALLEL_TRANSFORM true
+#endif
+#ifndef VTIL_OPT_USE_THREAD_POOLING
 	#define VTIL_OPT_USE_THREAD_POOLING     true
 #endif
 
