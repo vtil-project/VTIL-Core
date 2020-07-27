@@ -77,8 +77,6 @@ namespace vtil::optimizer
 			{
 				pool.emplace_back( std::async( std::launch::async, worker, blk ) );
 			} );
-
-			std::for_each( pool.begin(), pool.end(), std::mem_fn( &std::future<void>::wait ) );
 		}
 		// If thread pooling is disabled, use std::thread.
 		//

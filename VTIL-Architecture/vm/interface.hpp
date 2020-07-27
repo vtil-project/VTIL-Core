@@ -45,10 +45,6 @@ namespace vtil
 	//
 	struct vm_interface
 	{
-		// Returns the full register size for the given descriptor.
-		//
-		virtual bitcnt_t size_register( const register_desc& desc ) { return 64; }
-
 		// Reads from the register.
 		//
 		virtual symbolic::expression::reference read_register( const register_desc& desc ) { unreachable(); return {}; }

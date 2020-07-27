@@ -53,17 +53,6 @@ namespace vtil::optimizer
 		// instructions that cannot be executed out-of-order.
 		//
 		lambda_vm<symbolic_vm> vm;
-		vm.hooks.size_register = [ & ] ( const register_desc& reg )
-		{
-			if ( auto it = temp_sizes.find( { reg.flags, reg.combined_id } );
-				      it != temp_sizes.end() )
-			{
-				// Pick the minimum size from preferred sizes.
-				//
-				return it->second ? it->second : 64;
-			}
-			return 64;
-		};
 		vm.hooks.execute = [ & ] ( const instruction& ins )
 		{
 			// Halt if branching instruction.
@@ -86,20 +75,6 @@ namespace vtil::optimizer
 			for ( auto& op : ins.operands )
 				if ( op.is_register() && op.reg().is_volatile() && !op.reg().is_undefined() )
 					return vm_exit_reason::unknown_instruction;
-
-			// Halt if instruction is accessing to non-restricted memory.
-			//
-			if ( ins.base->accesses_memory() )
-			{
-				auto [base, offset] = ins.memory_location();
-				if ( !symbolic::pointer::restricted_bases.contains( base ) )
-				{
-					auto ptr = vm.read_register( base ) + offset;
-					for ( auto& [k, v] : vm.memory_state )
-						if ( k.can_overlap( ptr ) && !( k - ptr ).has_value() )
-							return vm_exit_reason::alias_failure;
-				}
-			}
 
 			// Invoke original handler.
 			//

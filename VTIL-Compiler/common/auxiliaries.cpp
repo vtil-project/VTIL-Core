@@ -315,7 +315,6 @@ namespace vtil::optimizer::aux
 
 		// Declare tracer.
 		//
-
 		const auto trace = [ & ] ( symbolic::variable&& lookup )
 		{
 			symbolic::expression::reference exp = tracer->trace( lookup );
