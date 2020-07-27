@@ -261,7 +261,7 @@ namespace vtil
 
 		// Simple validity checks.
 		//
-		constexpr bool is_valid() const { return get(); }
+		constexpr bool is_valid() const { return combined_value; }
 		constexpr explicit operator bool() const { return is_valid(); }
 
 		// Wrapper around ::own that can be called with arguments that are const-qualified 
