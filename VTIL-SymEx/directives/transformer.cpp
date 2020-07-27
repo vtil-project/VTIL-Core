@@ -174,6 +174,7 @@ namespace vtil::symbolic
 
 				// Continue the translation from the right hand side.
 				//
+				condition_status.reset();
 				return translate( sym, dir->rhs, bit_cnt, max_depth );
 			}
 			case directive_op_desc::mask_unknown:
@@ -184,7 +185,8 @@ namespace vtil::symbolic
 				{
 					// Return the unknown mask.
 					//
-					return expression{ exp->unknown_mask(), exp->size() };
+					
+					return ( *+exp = expression{ exp->unknown_mask(), exp->size() }, exp );
 				}
 				break;
 			}
@@ -196,7 +198,7 @@ namespace vtil::symbolic
 				{
 					// Return the unknown mask.
 					//
-					return expression{ exp->known_one(), exp->size() };
+					return ( *+exp = expression{ exp->known_one(), exp->size() }, exp );
 				}
 				break;
 			}
@@ -208,7 +210,7 @@ namespace vtil::symbolic
 				{
 					// Return the unknown mask.
 					//
-					return expression{ exp->known_zero(), exp->size() };
+					return ( *+exp = expression{ exp->known_zero(), exp->size() }, exp );
 				}
 				break;
 			}

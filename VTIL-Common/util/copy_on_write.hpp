@@ -91,8 +91,21 @@ namespace vtil
 	{
 		// Declare the object entry and its pool.
 		//
-		using object_entry =   std::pair<T, std::atomic<uint32_t>>;
+		using object_entry =   std::pair<T, std::atomic<long>>;
 		using object_pool  =   object_pool<object_entry>;
+
+		__forceinline static void inc_ref( object_entry* entry )
+		{
+			std::atomic_fetch_add_explicit( &entry->second, +1, std::memory_order::relaxed );
+		}
+		__forceinline static bool dec_ref( object_entry* entry )
+		{
+			return std::atomic_fetch_add_explicit( &entry->second, -1, std::memory_order::acq_rel ) == 1;
+		}
+		__forceinline static long get_ref( object_entry* entry )
+		{
+			return std::atomic_load_explicit( &entry->second, std::memory_order::relaxed );
+		}
 
 		// Store pointer as a 63-bit integer and append an additional bit to control temporary/allocated.
 		//
@@ -120,12 +133,11 @@ namespace vtil
 		template<typename... params, impl::enable_if_constructor<shared_reference<T>, params...> = 0>
 		shared_reference( params&&... p ) 
 		{
-			pointer = ( uint64_t ) object_pool::construct
+			combined_value = ( uint64_t ) object_pool::construct
 			(
 				/*Object itself*/     T( std::forward<params>( p )... ), 
 				/*Reference counter*/ 1
 			);
-			temporary = false;
 		}
 
 		// Shared reference constructor.
@@ -133,26 +145,68 @@ namespace vtil
 		shared_reference( const shared_reference& ref )
 			: combined_value( ref.combined_value )
 		{
+			// If object is null, return.
+			//
+			if ( !combined_value )
+				return;
+
 			// If object is temporary (flag implies non-null), gain ownership of the reference.
 			//
-			if ( temporary )
-				own();
-			// If object is (non-null) and shared, increment reference.
+			if ( is_temporary() ) [[unlikely]]
+				combined_value = ( uint64_t ) object_pool::construct( *get(), 1 );
+			// Otherwise, increment reference.
 			//
-			else if ( auto entry = get_entry() ) 
-				entry->second++;
+			else
+				inc_ref( get_entry() );
 		}
 		shared_reference& operator=( const shared_reference& o ) 
 		{ 
-			// If object is temporary (flag implies non-null) and we have a valid unique memory:
+			// If object is null, reset and return.
 			//
-			if ( o.temporary && !temporary && pointer && get_entry()->second == 1 )
+			if ( !o.combined_value ) [[unlikely]]
+				return reset();
+
+			// If object is temporary (flag implies non-null):
+			//
+			if ( o.is_temporary() ) [[unlikely]]
 			{
-				*own() = *o.get();
-				return *this;
+				// If we have valid unique memory, copy over it:
+				//
+				if( combined_value && !is_temporary() && get_ref( get_entry() ) == 1 )
+					*_value = *o.get();
+				// Otherwise, allocate:
+				//
+				else
+					reset().combined_value = ( uint64_t ) object_pool::construct( *o.get(), 1 );
 			}
-			shared_reference copy = o; // This fixes cases where o was referenced by self and it gets deallocated.
-			return *new ( &reset() ) shared_reference( std::move( copy ) );
+			// If we hold a valid entry:
+			//
+			else if ( combined_value && !is_temporary() ) [[likely]]
+			{
+				// Return as is if same entry.
+				//
+				object_entry* prev = get_entry();
+				if ( prev == o.get_entry() ) [[unlikely]]
+					return *this;
+
+				// Copy combined value and increment reference.
+				//
+				inc_ref( o.get_entry() );
+				combined_value = o.combined_value;
+
+				// Decrement previous entry's reference, if reached 0, destruct.
+				//
+				if ( dec_ref( prev ) )
+					object_pool::destruct( prev );
+			}
+			// Otherwise, copy combined value and increment reference.
+			//
+			else
+			{
+				inc_ref( o.get_entry() );
+				combined_value = o.combined_value;
+			}
+			return *this;
 		}
 
 		// Construction and assignment operator for rvalue references.
@@ -186,23 +240,23 @@ namespace vtil
 		{
 			// If temporary, copy first.
 			//
-			if ( is_temporary() )
+			if ( is_temporary() ) [[unlikely]]
 			{
-				pointer = ( uint64_t ) object_pool::construct( *get(), 1 );
-				temporary = false;
+				combined_value = ( uint64_t ) object_pool::construct( *get(), 1 );
 			}
 			// If shared, copy if reference count is above 1.
 			//
-			else if ( auto entry = get_entry(); entry && entry->second != 1 )
+			else if ( get_ref( get_entry() ) != 1 ) [[likely]]
 			{
-				pointer = ( uint64_t ) object_pool::construct( *get(), 1 );
-				temporary = false;
-				entry->second--;
+				auto prev = get_entry();
+				combined_value = ( uint64_t ) object_pool::construct( *_value, 1 );
+				if ( dec_ref( prev ) ) [[unlikely]]
+					object_pool::destruct( prev );
 			}
 
 			// Return the current pointer without const-qualifiers.
 			//
-			return ( T* ) pointer;
+			return ( T* ) combined_value;
 		}
 
 		// Simple validity checks.
@@ -235,7 +289,12 @@ namespace vtil
 		// Syntax sugar for ::own() using the + operator.
 		// -- If temporary, return as is.
 		//
-		T* operator+() { return temporary ? ( T* ) pointer : own(); }
+		T* operator+() 
+		{ 
+			if ( is_temporary() ) [[unlikely]]
+				return ( T* ) pointer;
+			return own(); 
+		}
 
 		// Resets the reference to nullptr.
 		//
@@ -244,14 +303,8 @@ namespace vtil
 			// If non-temporary and non-null, decrement reference count, if 
 			// it reaches 0, destroy the object and deallocate.
 			//
-			if ( !temporary )
-			{
-				if ( auto entry = get_entry() )
-				{
-					if ( --entry->second == 0 )
-						object_pool::destruct( entry );
-				}
-			}
+			if ( combined_value && !is_temporary() && dec_ref( get_entry() ) )
+				object_pool::destruct( get_entry() );
 			
 			// Clear combined value and return.
 			//
