@@ -211,14 +211,16 @@ namespace vtil
 		delete block;
 	}
 
-
-	// Returns the number of basic blocks and instructions in the routine.
+	// Provide basic statistics about the complexity of the routine.
 	//
 	size_t routine::num_blocks() const
 	{
 		// Acquire the routine mutex.
 		//
 		std::lock_guard g{ this->mutex }; 
+
+		// Return the number of blocks.
+		//
 		return explored_blocks.size();
 	}
 	size_t routine::num_instructions() const
@@ -234,11 +236,28 @@ namespace vtil
 			n += blk->size();
 		return n;
 	}
+	size_t routine::num_branches() const
+	{
+		// Acquire the routine mutex.
+		//
+		std::lock_guard g{ this->mutex };
+
+		// Sum up paths in every block.
+		//
+		size_t n = 0;
+		for ( auto& [_, blk] : explored_blocks )
+			n += blk->next.size();
+		return n;
+	}
 
 	// Routine structures free all basic blocks they own upon their destruction.
 	//
 	routine::~routine()
 	{
+		// Acquire the routine mutex.
+		//
+		std::lock_guard g{ this->mutex };
+
 		for ( auto [vip, block] : explored_blocks )
 			delete block;
 	}

@@ -218,6 +218,6 @@ namespace vtil
 			if ( auto reason = execute( *it ); reason != vm_exit_reason::none )
 				return { it, reason };
 		}
-		return { it, vm_exit_reason::none };
+		return { it, vm_exit_reason::stream_end };
 	}
 };

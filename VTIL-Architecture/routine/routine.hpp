@@ -179,10 +179,11 @@ namespace vtil
 		template<typename callback, typename iterator_type>
 		void enumerate_bwd( callback fn, const iterator_type& src, const iterator_type& dst = {} ) const;
 
-		// Returns the number of basic blocks and instructions in the routine.
+		// Provide basic statistics about the complexity of the routine.
 		//
 		size_t num_blocks() const;
 		size_t num_instructions() const;
+		size_t num_branches() const;
 
 		// Routine structures free all basic blocks they own upon their destruction.
 		//

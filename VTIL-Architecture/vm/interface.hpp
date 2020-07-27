@@ -36,6 +36,7 @@ namespace vtil
 	enum class vm_exit_reason
 	{
 		none =                0,
+		stream_end =          0,
 		alias_failure =       1,
 		high_arithmetic =     2,
 		unknown_instruction = 3
