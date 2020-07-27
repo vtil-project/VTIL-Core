@@ -129,7 +129,6 @@ namespace vtil
 
 			// Otherwise return default mapping after making sure it's valid.
 			//
-			fassert( _reg != ARM64_REG_INVALID && _reg < ARM64_REG_ENDING );
 			return { T( _reg ), 0, 8 };
 		}
 
