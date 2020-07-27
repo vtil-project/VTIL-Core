@@ -38,9 +38,8 @@ namespace vtil
 	template<typename T>
 	struct detached_queue_key
 	{
-		bool active = false;
-		detached_queue_key* prev;
-		detached_queue_key* next;
+		detached_queue_key* prev = nullptr;
+		detached_queue_key* next = nullptr;
 
 		T* get( member_reference_t<T, detached_queue_key> ref ) { return ptr_at<T>( this, -make_offset( ref ) ); }
 		const T* get( member_reference_t<T, detached_queue_key> ref ) const { return make_mutable( this )->get( std::move( ref ) ); }
@@ -79,18 +78,69 @@ namespace vtil
 			return list_size;
 		}
 
+		// Converts into type with no locks.
+		//
+		auto& nolock() { return ( base_detached_queue<T, false>& ) *this; }
+
 		// Controls the lock.
 		//
 		void lock() const
 		{
-			if constexpr ( atomic )
-				while ( spinlock.test_and_set( std::memory_order_acquire ) )
-					_mm_pause();
+			if constexpr ( !atomic )
+				return;
+
+			while ( spinlock.test_and_set( std::memory_order_acquire ) )
+				_mm_pause();
 		}
 		void unlock() const
 		{
-			if constexpr ( atomic )
-				spinlock.clear( std::memory_order_release );
+			if constexpr ( !atomic )
+				return;
+			
+			spinlock.clear( std::memory_order_release );
+		}
+
+		// Inserts the entire queue into the list.
+		//
+		void emplace_front( base_detached_queue<T, false>& queue )
+		{
+			if ( queue.empty() ) return;
+
+			std::lock_guard _g( *this );
+
+			if ( head )
+			{
+				head->prev = queue.tail;
+				queue.tail->next = tail;
+				head = queue.head;
+			}
+			else
+			{
+				head = queue.head;
+				tail = queue.tail;
+			}
+			list_size += queue.list_size;
+			queue.reset();
+		}
+		void emplace_back( base_detached_queue<T, false>& queue )
+		{
+			if ( queue.empty() ) return;
+
+			std::lock_guard _g( *this );
+
+			if ( tail )
+			{
+				tail->next = queue.head;
+				queue.head->prev = tail;
+				tail = queue.tail;
+			}
+			else
+			{
+				head = queue.head;
+				tail = queue.tail;
+			}
+			list_size += queue.list_size;
+			queue.reset();
 		}
 
 		// Inserts the key into the list.
@@ -101,47 +151,45 @@ namespace vtil
 
 			k->prev = nullptr;
 			k->next = head;
-			k->active = true;
 			if ( head ) head->prev = k;
 			if ( !tail ) tail = k;
 			head = k;
 			list_size++;
 		}
-
-		// Inserts the key into the list.
-		//
 		void emplace_back( key* k )
 		{
 			std::lock_guard _g( *this );
 
 			k->prev = tail;
 			k->next = nullptr;
-			k->active = true;
 			if ( tail ) tail->next = k;
 			if ( !head ) head = k;
 			tail = k;
 			list_size++;
 		}
 
-		// Erases the key from the list, if linked.
+		// Erases the key from the list.
 		//
-		void erase( key* k, bool inherit_lock = false )
+		void erase( key* k )
 		{
-			if ( !k->active ) return;
-
-			if ( !inherit_lock ) lock();
+			std::lock_guard _g( *this );
 
 			if ( head == k ) head = k->next;
+			else if ( k->prev ) k->prev->next = k->next;
+
 			if ( tail == k ) tail = k->prev;
-			if ( k->prev ) k->prev->next = k->next;
-			if ( k->next ) k->next->prev = k->prev;
+			else if ( k->next ) k->next->prev = k->prev;
+
 			k->prev = nullptr;
 			k->next = nullptr;
-			k->active = false;
-			list_size--;
 
-			if ( !inherit_lock ) unlock();
+			list_size--;
 		}
+		void erase_if( key* k ) { if ( validate( k ) ) erase( k ); }
+
+		// Checks if the given key is a valid entry to this list.
+		//
+		bool validate( key* k ) const { return k->prev || k->next || head == k || tail == k; }
 
 		// Resets the list.
 		//
@@ -178,7 +226,7 @@ namespace vtil
 			if ( key* entry = head )
 			{
 				T* value = entry->get( std::move( ref ) );
-				erase( entry, true );
+				nolock().erase( entry );
 				return value;
 			}
 			return nullptr;
@@ -190,7 +238,7 @@ namespace vtil
 			if ( key* entry = tail )
 			{
 				T* value = entry->get( std::move( ref ) );
-				erase( entry, true );
+				nolock().erase( entry );
 				return value;
 			}
 			return nullptr;

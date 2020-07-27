@@ -247,7 +247,7 @@ namespace vtil::symbolic
 		void erase( cache_value* value )
 		{
 			lru_queue.erase( &value->lru_key );
-			spec_queue.erase( &value->spec_key );
+			spec_queue.erase_if( &value->spec_key );
 			map.erase( std::move( value->iterator ) );
 		}
 
@@ -296,7 +296,6 @@ namespace vtil::symbolic
 
 			// If we inserted a new entry:
 			//
-			bool was_matched = false;
 			if ( inserted )
 			{
 				// If there is a partial match:
@@ -329,7 +328,6 @@ namespace vtil::symbolic
 						}, true, false );
 						it->second.result->simplify_hint = true;
 						it->second.is_simplified = true;
-						was_matched = true;
 					}
 					// Otherwise, declare failure.
 					//
@@ -345,10 +343,13 @@ namespace vtil::symbolic
 				//
 				init_entry( it );
 			}
+			else
+			{
+				lru_queue.erase( &it->second.lru_key );
+			}
 
 			// Insert into the tail of use list.
 			//
-			lru_queue.erase( &it->second.lru_key );
 			lru_queue.emplace_back( &it->second.lru_key );
 			return { it->second.result, it->second.is_simplified, !inserted, &it->second };
 		}

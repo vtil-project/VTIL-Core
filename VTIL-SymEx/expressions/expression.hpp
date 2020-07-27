@@ -406,6 +406,10 @@ namespace vtil::symbolic
 		// when set, can be reset by ::simplify().
 		//
 		expression& make_lazy() { is_lazy = true; return *this; }
+
+		// Force the inlining of the destructor.
+		//
+		__forceinline ~expression() {}
 	};
 
 	// Boxed expression solves the aforementioned problem by creating a type that can be 
