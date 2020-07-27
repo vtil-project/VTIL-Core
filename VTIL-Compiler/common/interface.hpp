@@ -31,6 +31,7 @@
 #include <chrono>
 #include <algorithm>
 #include <functional>
+#include <atomic>
 #include <thread>
 #include <future>
 
@@ -46,18 +47,36 @@
 
 namespace vtil::optimizer
 {
+	namespace impl
+	{
+		template<typename T>
+		concept AtomicSummable = requires( std::atomic<T> & y, T x ) { y += x; y = { 0 }; };
+	};
+
 	// Passes every block through the transformer given in parallel, returns the 
 	// number of instances where this transformation was applied.
 	//
 	template<typename T, typename... Tx>
-	static size_t transform_parallel( routine* rtn, T&& fn, Tx&&... args )
+	static auto transform_parallel( routine* rtn, T&& fn, Tx&&... args )
 	{
+		// Determine whether we return any value or not.
+		//
+		using ret_type = decltype( fn( std::declval<basic_block*>(), std::declval<Tx&&>()... ) );
+		using acc_type = std::conditional_t<
+			impl::AtomicSummable<ret_type>, 
+			std::atomic<ret_type>, 
+			/*dummy*/ char
+		>;
+
 		// Declare worker and allocate the final result.
 		//
-		std::atomic<size_t> n = { 0 };
+		acc_type n = { 0 };
 		auto worker = [ & ] ( basic_block* blk )
 		{
-			n += fn( blk, args... );
+			if constexpr ( impl::AtomicSummable<ret_type> ) 
+				n += fn( blk, args... );
+			else
+				fn( blk, args... );
 		};
 
 		// If parallel transformation is disabled, use fallback.
@@ -95,7 +114,8 @@ namespace vtil::optimizer
 
 		// Return final result.
 		//
-		return n;
+		if constexpr( impl::AtomicSummable<ret_type> )
+			return n.load();
 	}
 
 	// Declares a generic pass interface that any optimization pass implements.
