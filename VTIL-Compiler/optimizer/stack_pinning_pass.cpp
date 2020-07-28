@@ -180,30 +180,6 @@ namespace vtil::optimizer
 				}
 			}
 		}
-
-		// If cross block optimization, check if we can merge stacks.
-		//
-		if ( xblock )
-		{
-			bool merge_bwd = !blk->next.empty() && blk->stream.size() && blk->stream.front().sp_offset != 0;
-			for ( auto prev : blk->prev )
-				merge_bwd &= prev->next.size() == 1;
-
-			bool merge_fwd = !blk->next.empty() && blk->sp_offset != 0;
-			for ( auto next : blk->next )
-				merge_fwd &= next->prev.size() == 1;
-
-			if ( merge_fwd )
-			{
-
-			}
-
-
-
-		}
-
-
-
 		return counter;
 	}
 };

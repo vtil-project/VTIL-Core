@@ -7,9 +7,6 @@
     <Filter Include="Miscellaneous">
       <UniqueIdentifier>{fc75d30a-c12b-4902-a7bb-c665c2a9043c}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Instruction Stream">
-      <UniqueIdentifier>{5111b44f-7760-4ccf-9f25-5c375a9480f7}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Includes">
       <UniqueIdentifier>{da55a262-7d21-4ce0-b5ef-c2de31a52d12}</UniqueIdentifier>
     </Filter>
@@ -22,19 +19,22 @@
     <Filter Include="Value Tracing">
       <UniqueIdentifier>{6ba6b482-58aa-46cd-ad58-c0eef36c9333}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Routine">
+      <UniqueIdentifier>{5111b44f-7760-4ccf-9f25-5c375a9480f7}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="arch\operands.hpp">
       <Filter>Architecture</Filter>
     </ClInclude>
     <ClInclude Include="routine\basic_block.hpp">
-      <Filter>Instruction Stream</Filter>
+      <Filter>Routine</Filter>
     </ClInclude>
     <ClInclude Include="routine\instruction.hpp">
-      <Filter>Instruction Stream</Filter>
+      <Filter>Routine</Filter>
     </ClInclude>
     <ClInclude Include="routine\routine.hpp">
-      <Filter>Instruction Stream</Filter>
+      <Filter>Routine</Filter>
     </ClInclude>
     <ClInclude Include="misc\debug.hpp">
       <Filter>Miscellaneous</Filter>
@@ -49,7 +49,7 @@
       <Filter>Architecture</Filter>
     </ClInclude>
     <ClInclude Include="routine\serialization.hpp">
-      <Filter>Instruction Stream</Filter>
+      <Filter>Routine</Filter>
     </ClInclude>
     <ClInclude Include="symex\variable.hpp">
       <Filter>SymEx Integration</Filter>
@@ -82,13 +82,13 @@
       <Filter>SymEx Integration</Filter>
     </ClInclude>
     <ClInclude Include="routine\call_convention.hpp">
-      <Filter>Instruction Stream</Filter>
+      <Filter>Routine</Filter>
     </ClInclude>
     <ClInclude Include="arch\identifier.hpp">
       <Filter>Architecture</Filter>
     </ClInclude>
     <ClInclude Include="routine\routine_helpers.hpp">
-      <Filter>Instruction Stream</Filter>
+      <Filter>Routine</Filter>
     </ClInclude>
     <ClInclude Include="symex\context.hpp">
       <Filter>SymEx Integration</Filter>
@@ -99,16 +99,16 @@
       <Filter>Architecture</Filter>
     </ClCompile>
     <ClCompile Include="routine\basic_block.cpp">
-      <Filter>Instruction Stream</Filter>
+      <Filter>Routine</Filter>
     </ClCompile>
     <ClCompile Include="routine\instruction.cpp">
-      <Filter>Instruction Stream</Filter>
+      <Filter>Routine</Filter>
     </ClCompile>
     <ClCompile Include="routine\serialization.cpp">
-      <Filter>Instruction Stream</Filter>
+      <Filter>Routine</Filter>
     </ClCompile>
     <ClCompile Include="routine\routine.cpp">
-      <Filter>Instruction Stream</Filter>
+      <Filter>Routine</Filter>
     </ClCompile>
     <ClCompile Include="symex\variable.cpp">
       <Filter>SymEx Integration</Filter>

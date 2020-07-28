@@ -34,21 +34,6 @@ namespace vtil::optimizer
 	//
 	size_t isymbolic_rewrite_pass::pass( basic_block* blk, bool xblock )
 	{
-		// Determine the temporary sizes in the block.
-		//
-		std::map<std::pair<uint64_t, uint64_t>, bitcnt_t> temp_sizes;
-		for ( auto& ins : blk->stream )
-		{
-			for ( auto& op : ins.operands )
-			{
-				if ( op.is_register() && op.reg().is_local() )
-				{
-					bitcnt_t& sz = temp_sizes[ { op.reg().flags, op.reg().combined_id } ];
-					sz = std::max( sz, op.reg().bit_count + op.reg().bit_offset );
-				}
-			}
-		}
-
 		// Create an instrumented symbolic virtual machine and hook execution to exit at 
 		// instructions that cannot be executed out-of-order.
 		//

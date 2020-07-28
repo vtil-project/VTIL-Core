@@ -211,7 +211,7 @@ namespace vtil
 	{
 		// Until the iterator points at the end of the block:
 		//
-		for ( ; !it.is_end(); it++ )
+		for ( ; !it.is_end(); ++it )
 		{
 			// If we could not virtualize the instruction, break.
 			//

@@ -33,7 +33,7 @@ namespace vtil
 {
 	// List of reasons that might cause the virtual machine to exit.
 	//
-	enum class vm_exit_reason
+	enum class vm_exit_reason : uint8_t
 	{
 		none =                0,
 		stream_end =          0,
