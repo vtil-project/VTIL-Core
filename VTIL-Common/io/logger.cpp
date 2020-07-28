@@ -38,15 +38,13 @@ namespace vtil::logger
 {
 	// Global logger state.
 	//
-	logger_state_t& logger_state = [ ] () -> auto&
+	logger_state_t::logger_state_t()
 	{
-		static logger_state_t state = {};
 #if _WIN64
 		SetConsoleOutputCP( CP_UTF8 );
-		state.ansi_escape_codes = std::getenv( "GITLAB_CI" ) != nullptr;
+		ansi_escape_codes = std::getenv( "GITLAB_CI" ) != nullptr;
 #endif
-		return state;
-	}();
+	}
 
 	// Changes color where possible.
 	//

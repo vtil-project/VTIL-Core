@@ -88,8 +88,12 @@ namespace vtil::logger
 		// Defaults to false on Windows, unless in a Gitlab CI environment.
 		//
 		bool ansi_escape_codes = true;
+
+		// Constructor initializes logger.
+		//
+		logger_state_t();
 	};
-	extern logger_state_t& logger_state;
+	inline logger_state_t logger_state = {};
 
 	// Changes color where possible.
 	//
