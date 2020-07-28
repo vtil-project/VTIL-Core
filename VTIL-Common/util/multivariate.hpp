@@ -34,6 +34,10 @@
 
 namespace vtil
 {
+	// If context type inherits from this type, the result of [T& T::update( owner* )] will be returned instead of T&.
+	//
+	struct mv_updatable_tag {};
+
 	// Multivariates store multiple types in a non-template type, mainly to be used by
 	// optimizers to store arbitrary per-block / per-instruction data at the respective 
 	// structures directly.
@@ -95,8 +99,8 @@ namespace vtil
 
 		// Getter of the types.
 		//
-		template<typename T, typename M = const multivariate>
-		T& get() const
+		template<typename T>
+		auto& get() const
 		{
 			// Acquire the database lock and check for existance.
 			//
@@ -105,25 +109,18 @@ namespace vtil
 
 			// If not constructed yet:
 			//
-			if ( !var )
-			{
-				// If we have been given an owner type and type accepts a pointer to the owner in
-				// the constructor, construct using the pointer to owner, otherwise, fallback to 
-				// the default constructor of the type.
-				//
-				if constexpr ( !std::is_same_v<owner, void> && 
-							   ( std::is_const_v<M> ? ConstructableWith<T, const owner*> : ConstructableWith<T, owner*> ) )
-					var = T( ptr_at<owner>( ( M* ) this, -make_offset( &owner::context ) ) );
-				else
-					var = T();
-			}
+			if ( !var ) var = T();
 
-			// Return the reference to the type.
+			// Return the appropriate reference.
 			//
-			return var.get<T>();
+			T& ref = var.get<T>();
+			if constexpr ( std::is_base_of_v<mv_updatable_tag, T> )
+				return ref.update( ( owner* ) ptr_at<>( this, -make_offset( &owner::context ) ) );
+			else
+				return ref;
 		}
 		template<typename T>
-		T& get() { return make_const( this )->template get<T, multivariate>(); }
+		auto& get() { return make_const( this )->template get<T>(); }
 
 		// Allows for convinient use of the type in the format of:
 		// - block_cache& cache = multivariate;
