@@ -55,14 +55,20 @@ namespace vtil
 	static constexpr bool is_constexpr( F )   { return true; }
 	static constexpr bool is_constexpr( ... ) { return false; }
 
-	// Commonly used concepts.
+	// Common concepts.
 	//
 	template<typename T>
-	concept Iterable = requires( T v ) { std::begin( v ); std::end( v ); };
-	template<typename T>
 	concept Integral = std::is_integral_v<T>;
+
+	template <class From, class To>
+	concept ConvertibleTo = std::is_convertible_v<From, To>;
 	template<typename T, typename... Args>
 	concept ConstructableWith = requires { T( std::declval<Args>()... ); };
+
+	template<typename T>
+	concept Iterable = requires( T v ) { std::begin( v ); std::end( v ); };
+	template<typename V, typename T>
+	concept TypedIterable = Iterable<T> && requires( T v ) { ConvertibleTo<decltype( *std::begin( v ) ), V&>; };
 
 	// Constructs a static constant given the type and parameters, returns a reference to it.
 	//
@@ -96,58 +102,48 @@ namespace vtil
 	//
 	namespace impl
 	{
-		template<typename T, typename = void> struct make_const   {};
-		template<typename T> struct make_const<T&&, void>   { using type = std::add_const_t<T>&&;   };
+		template<typename T>
+		using decay_ptr = std::conditional_t<std::is_pointer_v<std::remove_cvref_t<T>>, std::remove_cvref_t<T>, T>;
+
+		template<typename T, typename = void> struct make_const {};
 		template<typename T> struct make_const<T&, void>    { using type = std::add_const_t<T>&;    };
 		template<typename T> struct make_const<T*, void>    { using type = std::add_const_t<T>*;    };
 
 		template<typename T, typename = void> struct make_mutable {};
-		template<typename T> struct make_mutable<T&&, void> { using type = std::remove_const_t<T>&&; };
 		template<typename T> struct make_mutable<T&, void>  { using type = std::remove_const_t<T>&;  };
 		template<typename T> struct make_mutable<T*, void>  { using type = std::remove_const_t<T>*;  };
 
 		template<typename T, typename = void> struct is_const_underlying : std::false_type {};
-		template<typename T> struct is_const_underlying<const T&&, void> : std::true_type  {};
 		template<typename T> struct is_const_underlying<const T&, void>  : std::true_type  {};
 		template<typename T> struct is_const_underlying<const T*, void>  : std::true_type  {};
-
-		template<typename B, typename T>
-		struct carry_const
-		{
-			using type = std::conditional_t<
-				is_const_underlying<B>::value,
-				typename make_const<T>::type, 
-				typename make_mutable<T>::type
-			>;
-		};
 	};
 
 	// Checks the const qualifiers of the underlying object.
 	//
-	template<typename T> static constexpr bool is_const_underlying_v = impl::is_const_underlying<T>::value;
-	template<typename T> static constexpr bool is_mutable_underlying_v = !impl::is_const_underlying<T>::value;
+	template<typename T> static constexpr bool is_const_underlying_v = impl::is_const_underlying<impl::decay_ptr<T>>::value;
+	template<typename T> static constexpr bool is_mutable_underlying_v = !impl::is_const_underlying<impl::decay_ptr<T>>::value;
 
 	// Converts from a non-const qualified ref/ptr to a const-qualified ref/ptr.
 	//
-	template<typename T> using make_const_t = typename impl::make_const<T>::type;
+	template<typename T> using make_const_t = typename impl::make_const<impl::decay_ptr<T>>::type;
 	template<typename T> static constexpr make_const_t<T> make_const( T&& x ) noexcept { return ( make_const_t<T> ) x; }
 
 	// Converts from a const qualified ref/ptr to a non-const-qualified ref/ptr.
 	// - Make sure the use is documented, this is very hacky behaviour!
 	//
-	template<typename T> using make_mutable_t = typename impl::make_mutable<T>::type;
+	template<typename T> using make_mutable_t = typename impl::make_mutable<impl::decay_ptr<T>>::type;
 	template<typename T> static constexpr make_mutable_t<T> make_mutable( T&& x ) noexcept { return ( make_mutable_t<T> ) x; }
 
 	// Converts from any ref/ptr to a const/mutable one based on the condition given.
 	//
-	template<bool C, typename T> using make_const_if_t = std::conditional_t<C, make_const_t<T>, make_mutable_t<T>>;
-	template<bool C, typename T> using make_mutable_if_t = std::conditional_t<C, make_mutable_t<T>, make_const_t<T>>;
+	template<bool C, typename T> using make_const_if_t = std::conditional_t<C, make_const_t<T>, T>;
+	template<bool C, typename T> using make_mutable_if_t = std::conditional_t<C, make_mutable_t<T>, T>;
 	template<bool C, typename T> static constexpr make_const_if_t<C, T> make_const_if( T&& value ) noexcept { return ( make_const_if_t<C, T> ) value; }
 	template<bool C, typename T> static constexpr make_mutable_if_t<C, T> make_mutable_if( T&& value ) noexcept { return ( make_mutable_if_t<C, T> ) value; }
 
 	// Carries constant qualifiers of first type into second.
 	//
-	template<typename B, typename T> using carry_const_t = make_const_if_t<is_const_underlying_v<B>, T>;
+	template<typename B, typename T> using carry_const_t = std::conditional_t<is_const_underlying_v<B>, make_const_t<T>, make_mutable_t<T>>;
 	template<typename B, typename T> static constexpr carry_const_t<B, T> carry_const( B&& base, T&& value ) noexcept { return ( carry_const_t<B, T> ) value; }
 
 	// Creates a copy of the given value.
@@ -167,7 +163,7 @@ namespace vtil
 	//
 	template<typename T = void, typename B = void>
 	static auto* ptr_at( B* base, int32_t off ) noexcept { return carry_const( base, ( T* ) ( ( ( uint64_t ) base ) + off ) ); }
-	template<typename T, typename B>
+	template<typename T, typename B = void>
 	static auto& ref_at( B* base, int32_t off ) noexcept { return *ptr_at<T>(base, off); }
 
 	// Member reference helper.

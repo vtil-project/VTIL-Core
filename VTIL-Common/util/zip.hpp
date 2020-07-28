@@ -116,14 +116,8 @@ namespace vtil
 
 			// Equality check against another iterator.
 			//
-			constexpr bool operator==( const iterator& other ) const
-			{ 
-				return index == other.index && &container == &other.container;
-			}
-			constexpr bool operator!=( const iterator& other ) const
-			{ 
-				return index != other.index || &container != &other.container;
-			}
+			constexpr bool operator==( const iterator& other ) const { return index == other.index && &container == &other.container; }
+			constexpr bool operator!=( const iterator& other ) const { return index != other.index || &container != &other.container; }
 			
 			// Equality check against special end iterator.
 			//
