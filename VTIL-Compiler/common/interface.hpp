@@ -50,7 +50,7 @@ namespace vtil::optimizer
 	namespace impl
 	{
 		template<typename T>
-		concept AtomicSummable = requires( std::atomic<T> & y, T x ) { y += x; y = { 0 }; };
+		concept AtomicSummable = requires( std::atomic<size_t>& y, T x ) { y += x; };
 	};
 
 	// Passes every block through the transformer given in parallel, returns the 
@@ -59,18 +59,11 @@ namespace vtil::optimizer
 	template<typename T, typename... Tx>
 	static auto transform_parallel( routine* rtn, T&& fn, Tx&&... args )
 	{
-		// Determine whether we return any value or not.
-		//
 		using ret_type = decltype( fn( std::declval<basic_block*>(), std::declval<Tx&&>()... ) );
-		using acc_type = std::conditional_t<
-			impl::AtomicSummable<ret_type>, 
-			std::atomic<ret_type>, 
-			/*dummy*/ char
-		>;
 
 		// Declare worker and allocate the final result.
 		//
-		acc_type n = { 0 };
+		std::atomic<size_t> n = { 0 };
 		auto worker = [ & ] ( basic_block* blk )
 		{
 			if constexpr ( impl::AtomicSummable<ret_type> ) 
