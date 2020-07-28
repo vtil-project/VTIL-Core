@@ -38,33 +38,30 @@ namespace vtil
 		// Takes an additional visitor compared to original, returns true if it should break from all.
 		//
 		template<typename callback, typename iterator_type, bool fwd, typename visit_callback>
-		static bool enumerate_instructions( callback&& fn, iterator_type it, const iterator_type& dst, visit_callback& visit )
+		static bool enumerate_instructions( callback&& fn, iterator_type it, const iterator_type& dst, const iterator_type& origin, visit_callback& visit, bool first = false )
 		{
-			// If enumerating backwards:
-			//
-			if constexpr ( !fwd )
-			{
-				// If iterator is at destination or is invalid, return.
-				if ( it == dst || !it.is_valid() ) 
-					return false;
-
-				// Skip one.
-				std::advance( it, -1 );
-			}
-
 			// Until we reach the destination:
 			//
 			const std::vector<basic_block*>* links = nullptr;
-			while ( it != dst )
+			while ( it != dst && it.is_valid() )
 			{
-				// If we reached the end of the block, set links and break.
-				// - Forward.
+				// If we reached the beginning of the block, set links and break.
+				// - Backward.
 				//
-				if ( fwd && it.is_end() )
+				if constexpr ( !fwd )
 				{
-					links = &it.container->next;
-					break;
+					if ( it.is_begin() )
+					{
+						links = &it.container->prev;
+						break;
+					}
+					--it;
 				}
+
+				// If we're back to origin and this is not the first call, break.
+				//
+				if ( !first && it == origin )
+					break;
 
 				// Invoke callback, break if requested so.
 				//
@@ -72,18 +69,18 @@ namespace vtil
 				if ( order.should_break )
 					return order.global_break;
 
-				// If we reached the beginning of the block, set links and break.
-				// - Backwards
+				// If we reached the end of the block, set links and break.
+				// - Forward.
 				//
-				if ( !fwd && it.is_begin() )
+				if constexpr ( fwd )
 				{
-					links = &it.container->prev;
-					break;
+					++it;
+					if ( it.is_end() )
+					{
+						links = &it.container->next;
+						break;
+					}
 				}
-
-				// Skip to next iterator.
-				//
-				std::advance( it, fwd ? +1 : -1 );
 			}
 
 			// Recurse.
@@ -100,7 +97,7 @@ namespace vtil
 				if ( links->size() == 1 )
 				{
 					return visit( links->front() )
-						&& enumerate_instructions<callback, iterator_type, fwd>( std::forward<callback>( fn ), make_it( links->front() ), dst, visit );
+						&& enumerate_instructions<callback, iterator_type, fwd>( std::forward<callback>( fn ), make_it( links->front() ), dst, origin, visit );
 				}
 				else
 				{
@@ -115,7 +112,7 @@ namespace vtil
 
 						// Invoke enumerator, propagate value if true.
 						//
-						if ( enumerate_instructions<callback, iterator_type, fwd>( make_copy<callback>( fn ), make_it( blk ), dst, visit ) )
+						if ( enumerate_instructions<callback, iterator_type, fwd>( make_copy<callback>( fn ), make_it( blk ), dst, origin, visit ) )
 							return true;
 					}
 				}
@@ -125,6 +122,8 @@ namespace vtil
 	};
 
 	// Enumerates every instruction in the routine forward/backward, within the boundaries if specified.
+	// - Fwd: [src, dst) || [src, any vexit]
+	// - Bwd: [src, dst) || [src, entry point]
 	//
 	template<typename callback, typename iterator_type>
 	void routine::enumerate( callback fn, const iterator_type& src, const iterator_type& dst ) const
@@ -165,8 +164,10 @@ namespace vtil
 		(
 			std::move( fn ), 
 			src,
-			dst, 
-			visitor
+			dst,
+			src,
+			visitor,
+			true
 		);
 	}
 	template<typename callback, typename iterator_type>
@@ -184,7 +185,7 @@ namespace vtil
 		else
 		{
 			set_allowed = nullptr;
-			set.reserve( src.container->num_blocks() );
+			set.reserve( src.container->owner->num_blocks() );
 		}
 		
 		// Declare visitor and check if we have a path from dst to src if constraint.
@@ -208,8 +209,10 @@ namespace vtil
 		(
 			std::move( fn ), 
 			src, 
-			dst, 
-			visitor
+			dst,
+			src,
+			visitor,
+			true
 		);
 	}
 };
