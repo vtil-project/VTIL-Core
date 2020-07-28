@@ -58,12 +58,12 @@ namespace vtil
 
 			// Number of bits it is expressed in.
 			//
-			bitcnt_t bit_count = 0;
+			bitcnt_t bit_count;
 
 			// Replicate default constructor, skipping the reducable base.
 			//
-			immediate_t() {}
-			immediate_t( uint64_t u64, bitcnt_t bit_count )
+			constexpr immediate_t() : u64( 0 ), bit_count( 0 ) {}
+			constexpr immediate_t( uint64_t u64, bitcnt_t bit_count )
 				: u64( u64 ), bit_count( bit_count ) {}
 
 			// Declare reduction.
@@ -77,33 +77,35 @@ namespace vtil
 
 		// Default constructor / move / copy.
 		//
-		operand()  {}
-		operand( operand&& ) = default;
-		operand( const operand& ) = default;
-		operand& operator=( operand&& ) = default;
-		operand& operator=( const operand& ) = default;
+		constexpr operand()  {}
+		constexpr operand( operand&& ) = default;
+		constexpr operand( const operand& ) = default;
+		constexpr operand& operator=( operand&& ) = default;
+		constexpr operand& operator=( const operand& ) = default;
 
 		// Construct by register descriptor.
 		//		
-		template<typename T, std::enable_if_t<!std::is_same_v<std::remove_cvref_t<T>, operand>, int> = 0>
-		operand( T&& reg ) : descriptor( register_cast<std::remove_cvref_t<T>>{}( reg ) ) {}
+		template<typename T> requires( !Integral<std::decay_t<T>> && !std::is_same_v<std::decay_t<T>, operand> )
+		constexpr operand( T&& reg ) 
+			: descriptor( register_cast<std::decay_t<T>>{}( std::forward<T>( reg ) ) ) {}
 
-		// Construct by immediate followed by the number of bits.
+		// Construct by immediate optionally followed by the number of bits.
 		//
-		template<typename T, std::enable_if_t<std::is_integral_v<T>, int> = 0>
-		operand( T value, bitcnt_t bit_count ) : descriptor( immediate_t{ ( uint64_t ) math::imm_extend( value ), bit_count } ) {}
+		template<Integral T>
+		constexpr operand( T value, bitcnt_t bit_count = sizeof( T ) * 8 ) 
+			: descriptor( immediate_t{ ( uint64_t ) math::imm_extend( value ), bit_count } ) {}
 
 		// Wrappers around std::get.
 		//
-		immediate_t& imm() { return std::get<immediate_t>( descriptor ); }
-		const immediate_t& imm() const { return std::get<immediate_t>( descriptor ); }
-		register_t& reg() { return std::get<register_t>( descriptor ); }
-		const register_t& reg() const { return std::get<register_t>( descriptor ); }
+		constexpr immediate_t& imm() { return std::get<immediate_t>( descriptor ); }
+		constexpr const immediate_t& imm() const { return std::get<immediate_t>( descriptor ); }
+		constexpr register_t& reg() { return std::get<register_t>( descriptor ); }
+		constexpr const register_t& reg() const { return std::get<register_t>( descriptor ); }
 
 		// Getter for the operand size (byte variant rounds up).
 		//
-		size_t size() const { return ( bit_count() + 7 ) / 8; }
-		bitcnt_t bit_count() const { return is_register() ? reg().bit_count : imm().bit_count; }
+		constexpr size_t size() const { return ( bit_count() + 7 ) / 8; }
+		constexpr bitcnt_t bit_count() const { return is_register() ? reg().bit_count : imm().bit_count; }
 
 		// Conversion to human-readable format.
 		//
@@ -111,9 +113,9 @@ namespace vtil
 
 		// Simple helpers to determine the type of operand.
 		//
-		bool is_register() const { return std::holds_alternative<register_t>( descriptor ); }
-		bool is_immediate() const { return std::holds_alternative<immediate_t>( descriptor ) && imm().bit_count != 0; }
-		bool is_valid() const 
+		constexpr bool is_register() const { return std::holds_alternative<register_t>( descriptor ); }
+		constexpr bool is_immediate() const { return std::holds_alternative<immediate_t>( descriptor ) && imm().bit_count != 0; }
+		constexpr bool is_valid() const
 		{ 
 			// If register:
 			//
