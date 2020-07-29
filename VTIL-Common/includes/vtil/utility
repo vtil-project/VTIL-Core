@@ -26,6 +26,7 @@
 #include "../../util/deferred_value.hpp"
 #include "../../util/trilean.hpp"
 #include "../../util/detached_queue.hpp"
+#include "../../util/relaxed_atomics.hpp"
 
 // VTIL namespace should be able to use literals by default without having to include it.
 //

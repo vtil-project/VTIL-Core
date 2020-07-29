@@ -30,6 +30,7 @@
 #include <optional>
 #include <stdint.h>
 #include <array>
+#include <atomic>
 #include "intrinsics.hpp"
 
 namespace vtil
@@ -73,6 +74,11 @@ namespace vtil
 	concept Iterable = requires( T v ) { std::begin( v ); std::end( v ); };
 	template<typename V, typename T>
 	concept TypedIterable = Iterable<T> && requires( T v ) { ConvertibleTo<decltype( *std::begin( v ) ), V&>; };
+
+	template<typename T>
+	concept Lockable = requires( T& x ) { x.lock(); x.unlock(); };
+	template<typename T>
+	concept Atomic = is_specialization_v<std::atomic, T>;
 
 	// Constructs a static constant given the type and parameters, returns a reference to it.
 	//

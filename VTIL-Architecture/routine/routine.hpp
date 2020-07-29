@@ -26,11 +26,11 @@
 // POSSIBILITY OF SUCH DAMAGE.        
 //
 #pragma once
+#include <vtil/utility>
 #include <map>
 #include <mutex>
 #include <type_traits>
 #include <functional>
-#include <vtil/utility>
 #include "../arch/identifier.hpp"
 #include "instruction.hpp"
 #include "call_convention.hpp"
@@ -50,9 +50,15 @@ namespace vtil
 	//
 	struct routine
 	{
+	protected:
+		// This structure cannot be copied without a call to ::clone().
+		//
+		routine( const routine& ) = default;
+		routine& operator=( const routine& ) = default;
+	public:
 		// Mutex guarding the whole structure, more information on thread-safety can be found at basic_block.hpp.
 		//
-		mutable std::recursive_mutex mutex;
+		mutable relaxed<std::recursive_mutex> mutex;
 
 		// Physical architecture routine is bound to.
 		//
@@ -60,12 +66,7 @@ namespace vtil
 
 		// Constructed from architecture identifier.
 		//
-		routine( architecture_identifier arch_id ) : arch_id( arch_id ) {};
-
-		// This structure cannot be copied without a call to ::clone().
-		//
-		routine( const routine& ) = delete;
-		routine& operator=( const routine& ) = delete;
+		routine( architecture_identifier arch_id ) : arch_id( arch_id ) {};;
 
 		// Cache of explored blocks, mapping virtual instruction pointer to the basic block structure.
 		//
@@ -82,7 +83,7 @@ namespace vtil
 
 		// Last local identifier used for an internal register.
 		//
-		std::atomic<uint64_t> last_internal_id = { 0 };
+		relaxed<std::atomic<uint64_t>> last_internal_id = { 0 };
 
 		// Calling convention of the routine. (TODO: Remove hard-coded amd64 ref)
 		//
@@ -98,7 +99,7 @@ namespace vtil
 
 		// Misc. stats.
 		//
-		std::atomic<size_t> local_opt_count = { 0 };
+		relaxed<std::atomic<uint64_t>> local_opt_count = { 0 };
 
 		// Multivariate runtime context.
 		//
@@ -166,6 +167,16 @@ namespace vtil
 		// Flushes the path cache, reserved for internal use.
 		//
 		void flush_paths();
+
+		// Finds a block in the list, get variant will throw if none found.
+		//
+		basic_block* find_block( vip_t vip ) const;
+		basic_block* get_block( vip_t vip ) const;
+
+		// Tries creating a new block bound to this routine.
+		// - Mimics ::emplace, returns an additional bool reporting whether it's found or not.
+		//
+		std::pair<basic_block*, bool> create_block( vip_t vip, basic_block* src = nullptr );
 
 		// Deletes a block, should have no links or links must be nullified (no back-links).
 		//

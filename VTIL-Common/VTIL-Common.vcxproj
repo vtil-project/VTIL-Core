@@ -145,6 +145,7 @@
     <ClInclude Include="util\deferred_value.hpp" />
     <ClInclude Include="util\detached_queue.hpp" />
     <ClInclude Include="util\enumerator.hpp" />
+    <ClInclude Include="util\relaxed_atomics.hpp" />
     <ClInclude Include="util\trilean.hpp" />
     <ClInclude Include="util\type_helpers.hpp" />
     <ClInclude Include="util\profiler.hpp" />

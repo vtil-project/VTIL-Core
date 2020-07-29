@@ -31,6 +31,7 @@
 #include "variant.hpp"
 #include "lt_typeid.hpp"
 #include "type_helpers.hpp"
+#include "relaxed_atomics.hpp"
 
 namespace vtil
 {
@@ -48,36 +49,16 @@ namespace vtil
 	template<typename owner = void>
 	struct multivariate
 	{
-		mutable std::mutex mtx;
+		mutable relaxed<std::mutex> mtx;
 		mutable std::unordered_map<size_t, variant> database;
 
-		// Default constructor.
+		// Default copy/move/construct.
 		//
 		multivariate() = default;
-
-		// Allow copy/move construction/assignment.
-		//
-		multivariate( const multivariate& o )
-		{
-			std::lock_guard _g{ o.mtx };
-			database = o.database;
-		}
-		multivariate( multivariate&& o ) noexcept
-		{
-			database = std::move( o.database );
-		}
-		multivariate& operator=( const multivariate& o )
-		{
-			std::lock_guard _g{ o.mtx }, _g2{ mtx };
-			database = o.database;
-			return *this;
-		}
-		multivariate& operator=( multivariate&& o ) noexcept
-		{
-			std::lock_guard _g{ mtx };
-			database = std::move( o.database );
-			return *this;
-		}
+		multivariate( const multivariate& o ) = default;
+		multivariate( multivariate&& o ) = default;
+		multivariate& operator=( const multivariate& o ) = default;
+		multivariate& operator=( multivariate&& o ) = default;
 
 		// Purges the object of the given type from the store.
 		//
@@ -124,8 +105,6 @@ namespace vtil
 		// - block_cache& cache = multivariate;
 		//
 		template<typename T>
-		operator T&() { return get<T>(); }
-		template<typename T>
-		operator const T&() const { return get<T>(); }
+		operator T&() const { return get<T>(); }
 	};
 };

@@ -175,6 +175,9 @@
     <ClInclude Include="util\detached_queue.hpp">
       <Filter>Utility</Filter>
     </ClInclude>
+    <ClInclude Include="util\relaxed_atomics.hpp">
+      <Filter>Utility</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="io\logger.cpp">

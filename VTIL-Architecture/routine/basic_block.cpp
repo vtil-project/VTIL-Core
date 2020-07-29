@@ -39,17 +39,10 @@ namespace vtil
 		//
 		fassert( entry_vip != invalid_vip );
 
-		// Create a routine and the basic block.
+		// Create a routine and invoke create block.
 		//
 		routine* rtn = new routine{ arch_id };
-		basic_block* blk = new basic_block{ rtn, entry_vip };
-		rtn->explored_blocks.emplace( entry_vip, blk );
-		rtn->entry_point = blk;
-
-		// Append the path and return the block.
-		//
-		blk->owner->explore_path( nullptr, blk );
-		return blk;
+		return rtn->create_block( entry_vip ).first;
 	}
 
 	// Creates a new block connected to this block at the given vip, if already explored returns nullptr,
@@ -65,20 +58,10 @@ namespace vtil
 		//
 		fassert( entry_vip != invalid_vip );
 
-		// Check if the routine has already explored this block, if not 
-		// create a new block and return it.
+		// Invoke create block.
 		//
-		std::lock_guard g{ owner->mutex };
-		auto [it, inserted] = owner->explored_blocks.emplace( entry_vip, nullptr );
-		if ( inserted )
-			it->second = new basic_block( owner, entry_vip );
-
-		// Fix the links, append the path and return the block.
-		//
-		next.emplace_back( it->second );
-		it->second->prev.emplace_back( this );
-		owner->explore_path( this, it->second );
-		return inserted ? it->second : nullptr;
+		auto [blk, inserted] = owner->create_block( entry_vip, this );
+		return inserted ? blk : nullptr;
 	}
 
 	// Queues a stack shift.
