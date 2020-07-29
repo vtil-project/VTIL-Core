@@ -88,9 +88,6 @@
     <ClInclude Include="util\lt_typeid.hpp">
       <Filter>Utility</Filter>
     </ClInclude>
-    <ClInclude Include="util\dynamic_size.hpp">
-      <Filter>Utility</Filter>
-    </ClInclude>
     <ClInclude Include="util\zip.hpp">
       <Filter>Utility</Filter>
     </ClInclude>

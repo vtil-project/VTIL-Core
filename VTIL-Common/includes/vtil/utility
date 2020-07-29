@@ -10,7 +10,6 @@
 #include "../../util/reducable.hpp"
 #include "../../util/stack_container.hpp"
 #include "../../util/variant.hpp"
-#include "../../util/dynamic_size.hpp"
 #include "../../util/zip.hpp"
 #include "../../util/range.hpp"
 #include "../../util/reverse_iterator.hpp"

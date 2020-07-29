@@ -48,6 +48,7 @@ namespace vtil
 	// Type we describe basic block stamps in.
 	//
 	using snapshot_stamp_t = uint64_t;
+	static constexpr snapshot_stamp_t invalid_stamp = ~0;
 
 	// Descriptor for any routine that is being translated.
 	// - Since optimization phase will be done in a single threaded

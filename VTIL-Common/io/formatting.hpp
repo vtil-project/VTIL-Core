@@ -33,7 +33,6 @@
 #include <chrono>
 #include <optional>
 #include "../util/lt_typeid.hpp"
-#include "../util/dynamic_size.hpp"
 #include "../util/type_helpers.hpp"
 
 // [Configuration]

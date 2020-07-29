@@ -76,6 +76,13 @@ namespace vtil
 	concept TypedIterable = Iterable<T> && requires( T v ) { ConvertibleTo<decltype( *std::begin( v ) ), V&>; };
 
 	template<typename T>
+	concept DefaultRandomAccessible = requires( T v ) { make_const( v )[ 0 ]; std::size( v ); };
+	template<typename T>
+	concept CustomRandomAccessible = requires( T v ) { make_const( v )[ 0 ]; v.size(); };
+	template<typename T>
+	concept RandomAccessible = DefaultRandomAccessible<T> || CustomRandomAccessible<T>;
+
+	template<typename T>
 	concept Lockable = requires( T& x ) { x.lock(); x.unlock(); };
 	template<typename T>
 	concept Atomic = is_specialization_v<std::atomic, T>;
@@ -284,4 +291,29 @@ namespace vtil
 	}
 	template<typename T>
 	concept Possessable = !std::is_void_v<decltype( possess_value( std::declval<T&>() ) )>;
+
+	// Gets the size of the given container, 0 if N/A.
+	//
+	template<typename T>
+	static constexpr size_t dynamic_size( T&& o )
+	{
+		if constexpr ( DefaultRandomAccessible<T> )
+			return std::size( o );
+		else if constexpr ( CustomRandomAccessible<T> )
+			return o.size();
+		else if constexpr ( Iterable<T> )
+			return std::distance( std::begin( o ), std::end( o ) );
+		return 0;
+	}
+
+	// Gets the Nth element from the object, void if N/A.
+	//
+	template<typename T>
+	static constexpr decltype( auto ) dynamic_get( T&& o, size_t N ) 
+	{ 
+		if constexpr( RandomAccessible<T> )
+			return o[ N ];
+		else if constexpr ( Iterable<T> )
+			return *std::next( std::begin( o ), N );
+	}
 };
