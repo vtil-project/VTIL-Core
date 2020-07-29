@@ -146,6 +146,11 @@ namespace vtil::format
 	// Converts any given object to a string.
 	//
 	template<typename T>
+	static auto as_string( const T& x );
+	template<typename T>
+	concept StringConvertible = requires( T v ) { !is_specialization_v<type_tag, decltype( as_string( v ) )>; };
+
+	template<typename T>
 	static auto as_string( const T& x )
 	{
 		using base_type = std::decay_t<T>;
@@ -194,23 +199,34 @@ namespace vtil::format
 					return flt2str( x.count() / float( dur.count() ) ) + name;
 			unreachable();
 		}
-		// If optional:
-		//
+		else if constexpr ( std::is_pointer_v<base_type> )
+		{
+			char buffer[ 17 ];
+			snprintf( buffer, 17, "%p", x );
+			return std::string{ buffer };
+		}
+		else if constexpr ( is_specialization_v<std::pair, base_type> )
+		{
+			if constexpr ( StringConvertible<decltype( x.first )> && StringConvertible<decltype( x.second )> )
+			{
+				return "{" + as_string( x.first ) + ", " + as_string( x.second ) + "}";
+			}
+			else return type_tag<T>{};
+		}
 		else if constexpr ( is_specialization_v<std::optional, base_type> )
 		{
-			if constexpr ( !std::is_void_v<decltype( as_string( x.value() ) )> )
+			if constexpr ( StringConvertible<decltype( x.value() )> )
 			{
 				if ( x.has_value() )
 					return as_string( x.value() );
 				else
 					return std::string{ "nullopt" };
 			}
+			else return type_tag<T>{};
 		}
-		// If container:
-		//
 		else if constexpr ( Iterable<T> )
 		{
-			if constexpr ( !std::is_void_v<decltype( as_string( *std::begin( x ) ) )> )
+			if constexpr ( StringConvertible<decltype( *std::begin( x ) )> )
 			{
 				std::string items = {};
 				for ( auto& entry : x )
@@ -218,14 +234,10 @@ namespace vtil::format
 				if ( !items.empty() ) items.resize( items.size() - 2 );
 				return "{" + items + "}";
 			}
+			else return type_tag<T>{};
 		}
-		// void
+		else return type_tag<T>{};
 	}
-
-	// Disjunction of all possible conversions.
-	//
-	template<typename T>
-	concept StringConvertible = requires( T v ) { !std::is_void_v<decltype( as_string( v ) )>; };
 
 	// Used to fix std::(w)string usage in combination with "%(l)s".
 	//
