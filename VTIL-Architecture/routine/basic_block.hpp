@@ -61,14 +61,12 @@ namespace vtil
 		constexpr epoch_t& operator=( epoch_t&& ) = default;
 		constexpr epoch_t& operator=( const epoch_t& ) = default;
 
-		// Increment causes a 128-bit addition with a fast "random".
+		// Increment causes addition with a fast "random".
 		//
 		epoch_t& operator++()
 		{
-			uint64_t lo_0 = timestamp.first;
-			uint64_t lo_1 = ( timestamp.first += ( uint64_t ) &lo_0 );
-			if ( lo_0 > lo_1 ) [[unlikely]]
-				timestamp.second++;
+			timestamp.first += 1 + ( uint64_t ) _AddressOfReturnAddress();
+			timestamp.second++;
 			return *this;
 		}
 		epoch_t operator++( int ) { epoch_t r = *this; ++( *this ); return r; }
