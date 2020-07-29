@@ -113,12 +113,6 @@ namespace vtil
 			base_iterator( const basic_block* block, list_entry* entry )
 				: block( make_mutable( block ) ), entry( entry ) {}
 
-			// Cast from non-const to const iterator.
-			//
-			template<typename = std::enable_if_t<is_const>>
-			base_iterator( const base_iterator<false>& it )
-				: block( it.block ), entry( it.entry ), paths_allowed( it.paths_allowed ), is_path_restricted( it.is_path_restricted ) {}
-
 			// Default copy/move.
 			//
 			base_iterator( base_iterator&& ) = default;
@@ -131,6 +125,10 @@ namespace vtil
 			bool is_end() const   { return !block || !entry; }
 			bool is_begin() const { return !block || entry == block->head; }
 			bool is_valid() const { return !is_end() || !is_begin(); }
+
+			// Decay to const iterator.
+			//
+			operator const base_iterator<true>&() const { return *( const base_iterator<true>* ) this; }
 
 			// Access semantics.
 			//
@@ -284,7 +282,7 @@ namespace vtil
 		// Epoch provided to allow external entities determine if the block is modified or not 
 		// since their last read from it in an easy and fast way.
 		//
-		volatile snapshot_stamp_t epoch = 0;
+		snapshot_stamp_t epoch = 0;
 
 		// Creates a new block bound to a new routine with the given parameters.
 		//
