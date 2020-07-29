@@ -27,30 +27,31 @@
 //
 #pragma once
 
-
 #define ____SW_SX2(x, y) x##y
 #define ____SW_SX1(x, y) ____SW_SX2(x, y)
 
 #ifdef _MSC_VER
-	#define static_warning(condition, message) 				        \
-		static constexpr auto ____SW_SX1(____sw_, __LINE__) = []{   \
-			__pragma( warning( push ) )                             \
-			__pragma( warning( 1:4996 ) )                           \
-			struct [[deprecated( message )]] make_warning {};       \
-			if constexpr ( !( condition ) )                         \
-				make_warning{};                                     \
-			__pragma( warning( pop ) )                              \
-            return 0;                                               \
-		}													
-#else															
-	#define static_warning(condition, message)                      \
-		static constexpr auto ____SW_SX1(____sw_, __LINE__) = []{   \
-			_Pragma("GCC diagnostic push")                          \
-			_Pragma("-Wdeprecated")                                 \
-			struct [[deprecated( message )]] make_warning {};       \
-			if constexpr ( !( condition ) )                         \
-				make_warning{};                                     \
-			_Pragma("GCC diagnostic pop")                           \
-            return 0;                                               \
-		}
+	#define static_warning(condition, message)                          \
+       constexpr auto ____SW_SX1(____sw_, __LINE__) = []{               \
+       	__pragma( warning( push ) )                                     \
+       	__pragma( warning( 1:4996 ) )                                   \
+       	struct [[deprecated( message )]] make_warning {};               \
+       	if constexpr ( !( condition ) )                                 \
+              make_warning{};                                           \
+       	__pragma( warning( pop ) )                                      \
+            return 0;                                                   \
+       }
+#else
+	#define static_warning(condition, message)                          \
+       constexpr auto ____SW_SX1(____sw_, __LINE__) = []{               \
+       	_Pragma("GCC diagnostic push")                                  \
+       	_Pragma("-Wdeprecated")                                         \
+           struct {                                           	        \
+               [[deprecated( message )]] void make_warning() const {}   \
+           } _;                                                         \
+           if constexpr ( !( condition ) )                              \
+              _.make_warning();                                         \
+       	_Pragma("GCC diagnostic pop")                                   \
+            return 0;                                                   \
+       }
 #endif
