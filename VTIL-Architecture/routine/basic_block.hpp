@@ -31,12 +31,24 @@
 #include <vector>
 #include <algorithm>
 #include <iterator>
+#include <vtil/io>
 #include <vtil/utility>
 #include "routine.hpp"
 #include "instruction.hpp"
 
+// [Configuration]
+// Determine the stack alignment for ::pop / ::push wrappers in basic_block.
+//
+#ifndef VTIL_ARCH_POPPUSH_ENFORCED_STACK_ALIGN
+	#define VTIL_ARCH_POPPUSH_ENFORCED_STACK_ALIGN 2
+#endif
+
 namespace vtil
 {
+	// Type we describe basic block stamps in.
+	//
+	using snapshot_stamp_t = uint64_t;
+
 	// Descriptor for any routine that is being translated.
 	// - Since optimization phase will be done in a single threaded
 	//   fashion, this structure contains no mutexes at all.
@@ -52,101 +64,156 @@ namespace vtil
 	//
 	struct basic_block
 	{
-		// Define a range iterator so queries can be used on this structure.
+	protected:
+		// Let routine access internals.
 		//
-		template<typename _container_type, typename _iterator_type>
-		struct riterator_base : _iterator_type
+		friend routine;
+
+		// This container implements a custom std::list with certain features we need:
+		// - 1) Comparison with invalid iterators should not be undefined behavior.
+		// - 2) Iterator type should not abstract the container pointer.
+		// - 3) Iterator operator-> | operator* should return const by default, and similar
+		//      to CoW pointers should make it mutable upon the invokation of operator+,
+		//      this is used to keep track of any changes to the stream so analysis passes
+		//      can auto-invalidate.
+		// - 4) Same goes for insert, delete, emplace_.., etc.
+		//
+		// Linked list entry type.
+		//
+		struct list_entry
 		{
-			using container_type = _container_type;
-			using iterator_type = _iterator_type;
-
-			// Reference to the block.
+			list_entry* prev;
+			list_entry* next;
+			instruction value;
+		};
+	public:
+		// Iterator type.
+		//
+		template<bool is_const>
+		struct base_iterator
+		{
+			// Generic iterator typedefs.
 			//
-			container_type* container = nullptr;
+			using iterator_category = std::bidirectional_iterator_tag;
+			using value_type =        const instruction;
+			using difference_type =   int32_t;
+			using pointer =           value_type*;
+			using reference =         value_type&;
 
-			// Path restriction state.
+			// References to the block and the entry.
 			//
+			make_const_if_t<is_const, basic_block*> block = nullptr;
+			list_entry* entry = nullptr;
 			const path_set* paths_allowed = nullptr;
 			bool is_path_restricted = false;
 
-			// Default constructor and the block-bound constructor.
+			// Basic constructors.
 			//
-			riterator_base() {}
-			riterator_base( container_type* ref, const iterator_type& i ) 
-				: container( ref ), iterator_type( i ) {}
-			template<typename X, typename Y> riterator_base( const riterator_base<X, Y>& o ) 
-				: container( o.container ), iterator_type( Y( o ) ), is_path_restricted( o.is_path_restricted ), paths_allowed( o.paths_allowed ) {}
+			base_iterator() {}
+			base_iterator( const basic_block* block, list_entry* entry )
+				: block( make_mutable( block ) ), entry( entry ) {}
 
-			// Override equality operators to check container first.
+			// Cast from non-const to const iterator.
 			//
-			bool operator!=( const riterator_base& o ) const { return container != o.container || ((const iterator_type&)*this) != o; }
-			bool operator==( const riterator_base& o ) const { return container == o.container && ((const iterator_type&)*this) == o; }
+			template<typename = std::enable_if_t<is_const>>
+			base_iterator( const base_iterator<false>& it )
+				: block( it.block ), entry( it.entry ), paths_allowed( it.paths_allowed ), is_path_restricted( it.is_path_restricted ) {}
 
-			// Simple position/validity checks.
+			// Default copy/move.
 			//
-			bool is_end() const { return !container || ((const iterator_type&)*this)==container->stream.end(); }
-			bool is_begin() const { return !container || ((const iterator_type&)*this)==container->stream.begin(); }
-			bool is_valid() const { return !is_begin() || !is_end(); }
+			base_iterator( base_iterator&& ) = default;
+			base_iterator( const base_iterator& ) = default;
+			base_iterator& operator=( base_iterator&& ) = default;
+			base_iterator& operator=( const base_iterator& ) = default;
+
+			// Position checks.
+			//
+			bool is_end() const   { return !block || !entry; }
+			bool is_begin() const { return !block || entry == block->head; }
+			bool is_valid() const { return !is_end() || !is_begin(); }
+
+			// Access semantics.
+			//
+			reference operator*() const { return entry->value; }
+			pointer operator->() const  { return &entry->value; }
+			auto* operator+() const     
+			{ 
+				if constexpr ( is_const )
+				{
+					return make_const( &entry->value );
+				}
+				else
+				{
+					block->epoch++;
+					return &entry->value;
+				}
+			}
+
+			// Iteration semantics.
+			//
+			base_iterator& operator++() { entry = entry->next; return *this; }
+			base_iterator& operator--() 
+			{ 
+				if ( !entry )
+					entry = block->tail;
+				else if ( !( entry = entry->prev ) )
+					entry = ( list_entry* ) 1;
+				return *this; 
+			}
+			base_iterator operator++( difference_type ) { auto p = *this; ++( *this ); return p; }
+			base_iterator operator--( difference_type ) { auto p = *this; --( *this ); return p; }
 
 			// Restricts the way current iterator can recurse in, making sure
-			// every path leads up-to the container specified (or none).
+			// every path leads up-to the block specified (or none).
 			//
-			riterator_base& restrict_path()
-			{ 
-				paths_allowed = {};
+			base_iterator& restrict_path()
+			{
+				paths_allowed = nullptr;
 				is_path_restricted = true;
 				return *this;
 			}
-			riterator_base& restrict_path( container_type* dst, bool forward )
+			base_iterator& restrict_path( const basic_block* dst, bool fwd )
 			{
-				// Path should not be already restricted.
-				//
-				if ( is_path_restricted )
-					unreachable();
-				
-				// Set as the current allowed paths list.
-				//
-				paths_allowed = forward
-					? &container->owner->get_path( container, dst )
-					: &container->owner->get_path_bwd( container, dst );
-
-				// Declare the current iterator path restricted.
-				//
+				paths_allowed = fwd
+					? &block->owner->get_path( block, dst )
+					: &block->owner->get_path_bwd( block, dst );
 				is_path_restricted = true;
 				return *this;
 			}
 
 			// Clears any path restriction.
 			//
-			riterator_base& clear_restrictions() 
+			base_iterator& clear_restrictions()
 			{
-				is_path_restricted = false;
 				paths_allowed = nullptr;
+				is_path_restricted = false;
 				return *this;
 			}
 
 			// Returns the possible paths the iterator can follow if it reaches it's end.
 			//
-			std::vector<riterator_base> recurse( bool forward ) const
+			std::vector<base_iterator> recurse( bool fwd ) const
 			{
 				// Generate a list of possible iterators to continue from:
 				//
-				std::vector<riterator_base> output;
-				output.reserve( forward ? container->next.size() : container->prev.size() );
-				for ( container_type* dst : ( forward ? container->next : container->prev ) )
+				std::vector<base_iterator> output;
+				for ( basic_block* dst : ( fwd ? block->next : block->prev ) )
 				{
 					// Skip if path is restricted and this path is not allowed.
 					//
-					if ( is_path_restricted && ( !paths_allowed || paths_allowed->find( dst ) == paths_allowed->end() ) )
-						continue;
+					if ( is_path_restricted )
+					{
+						if ( !paths_allowed ) break;
+						else if ( !paths_allowed->contains( dst ) ) continue;
+					}
 
-					// Otherwise create the new iterator, inheriting the path restrictions 
-					// of current iterator, and save it.
-					// 
-					riterator_base new_it = { dst,  forward ? dst->begin() : dst->end() };
-					new_it.paths_allowed = paths_allowed;
-					new_it.is_path_restricted = is_path_restricted;
-					output.emplace_back( std::move( new_it ) );
+					// Otherwise create the new iterator inheriting the path 
+					// restrictions of current iterator, and save it.
+					//
+					auto& it = output.emplace_back();
+					it = fwd ? dst->begin() : dst->end();
+					it.paths_allowed = paths_allowed;
+					it.is_path_restricted = is_path_restricted;
 				}
 				return output;
 			}
@@ -156,103 +223,121 @@ namespace vtil
 			std::string to_string() const
 			{
 				if ( !is_valid() ) return "invalid";
-				if ( is_end() )    return format::str( "end@block#%llx", container->entry_vip );
-				if ( is_begin() )  return format::str( "begin@block%llx",   container->entry_vip );
-				else               return format::str( "#%04d@block%llx",   std::distance( container->begin(), *this ), container->entry_vip );
+				if ( is_end() )    return format::str( "end@Block %llx", block->entry_vip );
+				else               return format::str( "#%d@Block %llx", std::distance( block->begin(), *this ), block->entry_vip );
 			}
 
-			// Make hashable.
+			// Equality checks.
 			//
-			hash_t hash() const { return make_hash( container, is_end() ? nullptr : iterator_type::operator->() ) ; }
+			template<bool C> bool operator!=( const base_iterator<C>& o ) const { return entry != o.entry || block != o.block; }
+			template<bool C> bool operator==( const base_iterator<C>& o ) const { return entry == o.entry && block == o.block; }
+
+			// Non-deterministic hasher.
+			//
+			hash_t hash() const { return make_hash( block, entry ); }
 		};
-		using iterator =       riterator_base<basic_block, std::list<instruction>::iterator>;
-		using const_iterator = riterator_base<const basic_block, std::list<instruction>::const_iterator>;
+
+		// Generic container typedefs.
+		//
+		using value_type =        instruction;
+		using difference_type =   int32_t;
+		using pointer =           const instruction*;
+		using reference =         const instruction&;
+		using iterator =          base_iterator<false>;
+		using const_iterator =    base_iterator<true>;
+		using allocator =         std::allocator<list_entry>;
 
 		// Routine that this basic block belongs to.
 		//
 		routine* owner = nullptr;
-		
-		// Virtual instruction pointer to the first instruction this 
-		// block originated from. Looking up the instruction stream 
-		// will not do the job here in-case of any skipped or 
+
+		// Virtual instruction pointer to the first instruction this block originated 
+		// from. ::front().vip will not do the job here in case of any skipped or 
 		// optimized out instructions.
 		//
 		vip_t entry_vip = invalid_vip;
 
-		// List of all basic blocks that may possibly 
-		// jump to this basic block.
+		// List of all basic blocks that may possibly jump to this basic 
+		// block and basic blocks that we may possibly jump to.
 		//
-		std::vector<basic_block*> prev = {};
+		std::vector<basic_block*> prev = {}, next = {};
 
-		// The offset of current stack pointer from the last 
-		// [MOV SP, <>] if applicable, or the beginning of 
-		// the basic block and the index of the stack instance.
+		// The offset of current stack pointer from the last [MOV SP, <>] if applicable, 
+		// or the beginning of the basic block and the index of the stack instance.
 		//
-		int64_t sp_offset = 0;
 		uint32_t sp_index = 0;
-
-		// List of all basic blocks that this basic
-		// block may possibly jump to.
-		//
-		std::vector<basic_block*> next = {};
-
-		// List of all instructions in the stream. This structure
-		// is represented as a list instead to make all references
-		// to it valid even if an element is appended/removed.
-		//
-		std::list<instruction> stream = {};
+		int64_t sp_offset = 0;
 
 		// Last temporary index used.
 		//
 		uint32_t last_temporary_index = 0;
 
-		// Labels are a simple way to assign the same VIP for multiple 
-		// instructions that will be pushed after the call.
+		// Contains the stack of labels, if it contains any entries, last entry will
+		// be used to replace the vip of any instruction pushed.
 		//
 		std::vector<vip_t> label_stack = {};
-		basic_block* label_begin( vip_t vip );
-		basic_block* label_end();
 
 		// Multivariate runtime context.
 		//
 		multivariate<basic_block> context = {};
 
-		// Wrap the std::list fundamentals.
+		// Epoch provided to allow external entities determine if the block is modified or not 
+		// since their last read from it in an easy and fast way.
 		//
-		auto size() const { return stream.size(); }
-		iterator end() { return { this, stream.end() }; }
-		iterator begin() { return { this, stream.begin() }; }
-		const_iterator end() const { return { this, stream.end() }; }
-		const_iterator begin() const { return { this, stream.begin() }; }
+		volatile snapshot_stamp_t epoch = 0;
 
-		// Drops const qualifier from iterator after asserting iterator
-		// belongs to this basic block.
-		//
-		iterator acquire( const const_iterator& it );
-
-		// Wrap std::list::erase.
-		//
-		iterator erase( const const_iterator& it );
-
-		// Wrap std::list::insert with stack state-keeping.
-		//
-		iterator insert( const const_iterator& it, instruction&& ins );
-
-		// Wrap std::list::push_back.
-		//
-		void push_back( instruction&& ins ) { ( void ) insert( end(), std::move( ins ) ); }
-		void push_back( const instruction& ins ) { ( void ) insert( end(), instruction{ ins } ); }
-
-		// Returns whether or not block is complete, a complete
-		// block ends with a branching instruction.
-		//
-		bool is_complete() const { return !stream.empty() && stream.back().base->is_branching(); }
-		
-		// Constructor does not exist. Should be created either using
-		// ::begin(...) or ->fork(...).
+		// Creates a new block bound to a new routine with the given parameters.
 		//
 		static basic_block* begin( vip_t entry_vip, architecture_identifier arch_id = architecture_amd64 );
+		
+		// Creates a new block connected to this block at the given vip, if already explored returns nullptr,
+		// should still be called if the caller knowns it is explored since this function creates the linkage.
+		//
 		basic_block* fork( vip_t entry_vip );
+
+		// Basic constructor and destructor, should be invoked via ::fork and ::begin, reserved for internal use.
+		//
+		basic_block( routine* owner, vip_t entry_vip ) : owner( owner ), entry_vip( entry_vip ) {}
+		basic_block( const basic_block& o )
+			: owner( o.owner ), entry_vip( o.entry_vip ), next( o.next ), prev( o.prev ),
+			  sp_index( o.sp_index ), sp_offset( o.sp_offset ), last_temporary_index( o.last_temporary_index ),
+			  label_stack( o.label_stack ), epoch( o.epoch + 1 )
+		{
+			assign( o );
+		}
+		~basic_block() 
+		{
+			// Should have either no active links.
+			//
+			for ( auto nxt : next )
+				fassert( std::find( nxt->prev.begin(), nxt->prev.end(), this ) == nxt->prev.end() );
+			for ( auto nxt : prev )
+				fassert( std::find( nxt->next.begin(), nxt->next.end(), this ) == nxt->next.end() );
+
+			// Should not have an entry in explored blocks.
+			//
+			if ( owner )
+				for ( auto& [vip, blk] : owner->explored_blocks )
+					fassert( blk != this );
+
+			// Destroy instruction list.
+			//
+			clear(); 
+		}
+
+		// Begins or ends a VIP label.
+		//
+		basic_block* label_end()              { label_stack.pop_back(); return this; }
+		basic_block* label_begin( vip_t vip ) { label_stack.emplace_back( vip ); return this; }
+
+		// Returns whether or not block is complete, a complete block is defined as
+		// any basic block that ends with a branching instruction.
+		//
+		bool is_complete() const { return !empty() && back().base->is_branching(); }
+
+		// Non-deterministic hashing of the block.
+		//
+		hash_t hash() const { return make_hash( entry_vip, epoch ); }
 
 		// Helpers for the allocation of unique temporary registers.
 		//
@@ -266,80 +351,38 @@ namespace vtil
 			return std::make_tuple( tmp( size_0 ), tmp( size_n )... );
 		}
 
-		// Lazy wrappers for every instruction.
+		// Returns the current snapshot identifier.
 		//
-		template<typename _T>
-		auto prepare_operand( _T&& value )
-		{
-			using T = std::remove_cvref_t<_T>;
+		snapshot_stamp_t stamp() const { return epoch; }
 
-			// If integer, describe as one.
-			//
-			if constexpr ( std::is_integral_v<T> )
-				return operand( value, sizeof( T ) * 8 );
-			// Otherwise try explicitly casting.
-			//
-			else
-				return operand( value );
-		}
+		// Checks if basic block is changed since the given stamp.
+		//
+		bool is_changed( snapshot_stamp_t stamp ) const { return epoch != stamp; }
 
-#define WRAP_LAZY(x)																											                \
-		template<typename... Ts>																								                \
-		basic_block* x ( Ts&&... operands )																						                \
-		{																														                \
-			push_back( instruction{ &ins:: x, std::vector<operand>( { prepare_operand(std::forward<Ts>(operands))... } ) } );			\
-			return this;																										                \
+		// Generate lazy wrappers for every instruction.
+		//
+#define WRAP_LAZY(x)													 \
+		template<typename... Tx>										 \
+		basic_block* x( Tx&&... operands )								 \
+		{																 \
+			emplace_back( &ins:: x, std::forward<Tx>( operands )... );   \
+			return this;												 \
 		}
-		WRAP_LAZY( mov );
-		WRAP_LAZY( movsx );
-		WRAP_LAZY( str );
-		WRAP_LAZY( ldd );
-		WRAP_LAZY( ifs );
-		WRAP_LAZY( neg );
-		WRAP_LAZY( add );
-		WRAP_LAZY( sub );
-		WRAP_LAZY( div );
-		WRAP_LAZY( idiv );
-		WRAP_LAZY( mul );
-		WRAP_LAZY( imul );
-		WRAP_LAZY( mulhi );
-		WRAP_LAZY( imulhi );
-		WRAP_LAZY( rem );
-		WRAP_LAZY( irem );
-		WRAP_LAZY( popcnt );
-		WRAP_LAZY( bsf );
-		WRAP_LAZY( bsr );
-		WRAP_LAZY( bnot );
-		WRAP_LAZY( bshr );
-		WRAP_LAZY( bshl );
-		WRAP_LAZY( bxor );
-		WRAP_LAZY( bor );
-		WRAP_LAZY( band );
-		WRAP_LAZY( bror );
-		WRAP_LAZY( brol );
-		WRAP_LAZY( tg );  
-		WRAP_LAZY( tge ); 
-		WRAP_LAZY( te );  
-		WRAP_LAZY( tne ); 
-		WRAP_LAZY( tle ); 
-		WRAP_LAZY( tl );  
-		WRAP_LAZY( tug ); 
-		WRAP_LAZY( tuge );
-		WRAP_LAZY( tule );
-		WRAP_LAZY( tul ); 
-		WRAP_LAZY( js );
-		WRAP_LAZY( jmp );
-		WRAP_LAZY( vexit );
-		WRAP_LAZY( vemit );
-		WRAP_LAZY( vxcall );
-		WRAP_LAZY( nop );
-		WRAP_LAZY( vpinr );
-		WRAP_LAZY( vpinw );
-		WRAP_LAZY( vpinrm );
-		WRAP_LAZY( vpinwm );
+		WRAP_LAZY( mov );    WRAP_LAZY( movsx );    WRAP_LAZY( str );    WRAP_LAZY( ldd );
+		WRAP_LAZY( ifs );    WRAP_LAZY( neg );      WRAP_LAZY( add );    WRAP_LAZY( sub );
+		WRAP_LAZY( div );    WRAP_LAZY( idiv );     WRAP_LAZY( mul );    WRAP_LAZY( imul );
+		WRAP_LAZY( mulhi );  WRAP_LAZY( imulhi );   WRAP_LAZY( rem );    WRAP_LAZY( irem );
+		WRAP_LAZY( popcnt ); WRAP_LAZY( bsf );      WRAP_LAZY( bsr );    WRAP_LAZY( bnot );   
+		WRAP_LAZY( bshr );   WRAP_LAZY( bshl );     WRAP_LAZY( bxor );   WRAP_LAZY( bor );    
+		WRAP_LAZY( band );   WRAP_LAZY( bror );     WRAP_LAZY( brol );   WRAP_LAZY( tg );     
+		WRAP_LAZY( tge );    WRAP_LAZY( te );       WRAP_LAZY( tne );    WRAP_LAZY( tle );    
+		WRAP_LAZY( tl );     WRAP_LAZY( tug );      WRAP_LAZY( tuge );   WRAP_LAZY( tule );   
+		WRAP_LAZY( tul );    WRAP_LAZY( js );       WRAP_LAZY( jmp );    WRAP_LAZY( vexit );  
+		WRAP_LAZY( vemit );  WRAP_LAZY( vxcall );   WRAP_LAZY( nop );    WRAP_LAZY( vpinr );  
+		WRAP_LAZY( vpinw );  WRAP_LAZY( vpinrm );   WRAP_LAZY( vpinwm );
 #undef WRAP_LAZY
 
-		// Implement fences.
+		// Memory barriers.
 		//
 		basic_block* vsfence() { return vpinrm( UNDEFINED, 0ull ); }
 		basic_block* vlfence() { return vpinwm( UNDEFINED, 0ull ); }
@@ -353,78 +396,121 @@ namespace vtil
 		//
 		basic_block* vemits( const std::string& assembly );
 
-		// Pushes/pops current flags value up the stack queueing 
-		// the shift in stack pointer.
+		// Push / Pop implementation using ::shift_sp and LDD/STR.
 		//
+		basic_block* push( const operand& op );
+		basic_block* pop( const operand& op );
 		basic_block* pushf() { return push( REG_FLAGS ); }
-		basic_block* popf() { return pop( REG_FLAGS ); }
+		basic_block* popf()  { return pop( REG_FLAGS ); }
 
-		// Pushes an operand up the stack queueing the
-		// shift in stack pointer.
+		// Implement the container interface.
 		//
-		template<typename T, size_t stack_alignment = 2>
-		basic_block* push( const T& _op )
+	public:
+		// Instruction list accessors.
+		//
+		bool empty() const               { return instruction_count == 0; }
+		size_t size() const              { return instruction_count; }
+		const instruction& back() const  { dassert( tail ); return tail->value; }
+		const instruction& front() const { dassert( head ); return head->value; }
+		instruction& wback()             { dassert( tail ); epoch++; return tail->value; }
+		instruction& wfront()            { dassert( head ); epoch++; return head->value; }
+		iterator begin()                 { return { this, head }; }
+		iterator end()                   { return { this, nullptr }; }
+		const_iterator begin() const     { return { this, head }; }
+		const_iterator end() const       { return { this, nullptr }; }
+
+		// Instruction insertion.
+		//
+		iterator insert( const const_iterator& pos, const instruction& value )                  { return insert_final( pos, construct_instruction( value ), true ); }
+		iterator push_back( instruction&& value )                                               { return emplace( end(), std::move( value ) ); }
+		iterator push_back( const instruction& value )                                          { return insert( end(), value ); }
+		iterator push_front( instruction&& value )                                              { return emplace( begin(), std::move( value ) ); }
+		iterator push_front( const instruction& value )                                         { return insert( begin(), value ); }
+		template<typename... Tx> iterator emplace( const const_iterator& pos, Tx&&... args )    { return insert_final( pos, construct_instruction( std::forward<Tx>( args )... ), true ); }
+		template<typename... Tx> instruction& emplace_back( Tx&&... args )                      { return make_mutable( *emplace( end(), std::forward<Tx>( args )... ) ); }
+		template<typename... Tx> instruction& emplace_front( Tx&&... args )                     { return make_mutable( *emplace( begin(), std::forward<Tx>( args )... ) ); }
+
+		// Same as above but skips instruction processing.
+		//
+		iterator np_insert( const const_iterator& pos, const instruction& value )               { return insert_final( pos, construct_instruction( value ), false ); }
+		iterator np_push_back( instruction&& value )                                            { return np_emplace( end(), std::move( value ) ); }
+		iterator np_push_back( const instruction& value )                                       { return np_insert( end(), value ); }
+		iterator np_push_front( instruction&& value )                                           { return np_emplace( begin(), std::move( value ) ); }
+		iterator np_push_front( const instruction& value )                                      { return np_insert( begin(), value ); }
+		template<typename... Tx> iterator np_emplace( const const_iterator& pos, Tx&&... args ) { return insert_final( pos, construct_instruction( std::forward<Tx>( args )... ), false ); }
+		template<typename... Tx> instruction& np_emplace_back( Tx&&... args )                   { return make_mutable( *np_emplace( end(), std::forward<Tx>( args )... ) ); }
+		template<typename... Tx> instruction& np_emplace_front( Tx&&... args )                  { return make_mutable( *np_emplace( begin(), std::forward<Tx>( args )... ) ); }
+
+		// Assigns a new series of instructions over the current stream.
+		//
+		template<typename It>
+		basic_block* assign( It begin, const It& end )
 		{
-			operand op = prepare_operand( _op );
-
-			// Handle SP specially since we change the stack pointer
-			// before the instruction begins.
+			// Clear instruction stream and assign each entry.
 			//
-			if ( op.is_register() && op.reg().is_stack_pointer() )
+			clear();
+			while ( begin != end )
 			{
-				auto t0 = tmp( 64 );
-				return mov( t0, op )->push( t0 );
-			}
-
-			// If operand size is not aligned:
-			//
-			if ( size_t misalignment = op.size() % stack_alignment )
-			{
-				// Adjust for misalignment and zero the padding.
+				// Allocate a new entry at the end.
 				//
-				int64_t padding_size = stack_alignment - misalignment;
-				shift_sp( -padding_size );
-				str( REG_SP, sp_offset, operand( 0, math::narrow_cast<bitcnt_t>( padding_size * 8 ) ) );
-			}
+				list_entry* entry = construct_instruction( *begin++ );
+				entry->prev = tail;
+				entry->next = nullptr;
+				tail = entry;
 
-			// Shift and write the operand.
-			//
-			shift_sp( -int64_t( op.size() ) );
-			str( REG_SP, sp_offset, op );
+				// Set head if first entry, else fix links; increment entry count.
+				//
+				if ( !head ) head = entry;
+				else         entry->prev->next = entry;
+				instruction_count++;
+			}
 			return this;
 		}
-
-		// Pops an operand from the stack queueing the
-		// shift in stack pointer.
-		//
-		template<typename T, size_t stack_alignment = 2>
-		basic_block* pop( const T& _op )
-		{
-			operand op = prepare_operand( _op );
-			
-			// Save the pre-shift offset.
-			//
-			int64_t offset = sp_offset;
-
-			// If operand size is not aligned:
-			//
-			if ( size_t misalignment = op.size() % stack_alignment )
-			{
-				// Adjust for misalignment.
-				//
-				shift_sp( stack_alignment - misalignment );
-			}
-
-			// Shift and read to the operand.
-			//
-			shift_sp( op.size() );
-			ldd( op, REG_SP, offset );
-			return this;
+		template<typename T>
+		basic_block* assign( const T& o ) 
+		{ 
+			return assign( std::begin( o ), std::end( o ) ); 
 		}
 
-		// Generates a hash for the block.
+		// Instruction deletion.
 		//
-		hash_t hash() const;
+		iterator erase( const const_iterator& pos );
+		instruction pop_front();
+		instruction pop_back();
+		basic_block* clear();
+
+		// Helper used to drop const-qualifiers of an iterator when we have a mutable 
+		// reference to the block itself.
+		//
+		iterator acquire( const_iterator&& it )             { dassert( it.block == this ); return ( iterator&& ) it; }
+		iterator& acquire( const_iterator& it )             { dassert( it.block == this ); return ( iterator& ) it; }
+		const iterator& acquire( const const_iterator& it ) { dassert( it.block == this ); return ( const iterator& ) it; }
+	
+	protected:
+		// Wrappers for instruction construction and deconstruction.
+		//
+		template<typename... Tx>
+		static list_entry* construct_instruction( Tx&&... args )
+		{
+			list_entry* entry = allocator{}.allocate( 1 );
+			new ( &entry->value ) value_type( std::forward<Tx>( args )... );
+			return entry;
+		}
+		static void destruct_instruction( list_entry* entry )
+		{
+			std::destroy_at( &entry->value );
+			allocator{}.deallocate( entry, 1 );
+		}
+
+		// Head and tail of the instruction list along with the size of it.
+		//
+		list_entry* head = nullptr;
+		list_entry* tail = nullptr;
+		size_t instruction_count = 0;
+
+		// Internally invoked by emplace to insert a new linked list entry to the instruction stream.
+		//
+		iterator insert_final( const const_iterator& pos, list_entry* new_entry, bool process );
 	};
 
 	// Escape basic block namespace for the iterator type 
@@ -432,4 +518,4 @@ namespace vtil
 	//
 	using il_iterator =       basic_block::iterator;
 	using il_const_iterator = basic_block::const_iterator;
-};
+};	

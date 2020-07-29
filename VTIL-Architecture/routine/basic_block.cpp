@@ -31,8 +31,7 @@
 
 namespace vtil
 {
-	// Constructor does not exist. Should be created either using
-	// ::begin(...) or ->fork(...).
+	// Creates a new block bound to a new routine with the given parameters.
 	//
 	basic_block* basic_block::begin( vip_t entry_vip, architecture_identifier arch_id )
 	{
@@ -40,28 +39,24 @@ namespace vtil
 		//
 		fassert( entry_vip != invalid_vip );
 
-		// Create the basic block with depth = 0, identifier = "0"
+		// Create a routine and the basic block.
 		//
-		basic_block* blk = new basic_block;
-		blk->entry_vip = entry_vip;
+		routine* rtn = new routine{ arch_id };
+		basic_block* blk = new basic_block{ rtn, entry_vip };
+		rtn->explored_blocks.emplace( entry_vip, blk );
+		rtn->entry_point = blk;
 
-		// Create the routine and assign this block as the entry-point
-		//
-		blk->owner = new routine{ arch_id };
-		blk->owner->entry_point = blk;
-		blk->owner->explored_blocks[ entry_vip ] = blk;
-
-		// Append the path.
+		// Append the path and return the block.
 		//
 		blk->owner->explore_path( nullptr, blk );
-
-		// Return the block
-		//
 		return blk;
 	}
+
+	// Creates a new block connected to this block at the given vip, if already explored returns nullptr,
+	// should still be called if the caller knowns it is explored since this function creates the linkage.
+	//
 	basic_block* basic_block::fork( vip_t entry_vip )
 	{
-
 		// Block cannot be forked before a branching instruction is hit.
 		//
 		fassert( is_complete() );
@@ -70,161 +65,20 @@ namespace vtil
 		//
 		fassert( entry_vip != invalid_vip );
 
-		// Check if the routine has already explored this block.
+		// Check if the routine has already explored this block, if not 
+		// create a new block and return it.
 		//
-		std::lock_guard g( owner->mutex );
-		basic_block* result = nullptr;
-		basic_block*& entry = owner->explored_blocks[ entry_vip ];
-		if ( !entry )
-		{
-			// If it did not, create a block and assign it.
-			//
-			result = new basic_block;
-			result->owner = owner;
-			result->entry_vip = entry_vip;
-			result->sp_offset = 0;
-			entry = result;
-		}
+		std::lock_guard g{ owner->mutex };
+		auto [it, inserted] = owner->explored_blocks.emplace( entry_vip, nullptr );
+		if ( inserted )
+			it->second = new basic_block( owner, entry_vip );
 
-		// Fix the links and quit the scope holding the lock.
+		// Fix the links, append the path and return the block.
 		//
-		next.push_back( entry );
-		entry->prev.push_back( this );
-
-		// Append the path.
-		//
-		owner->explore_path( this, entry );
-		return result;
-	}
-
-	// Labels are a simple way to assign the same VIP for multiple 
-	// instructions that will be pushed after the call.
-	//
-	basic_block* basic_block::label_begin( vip_t vip )
-	{
-		label_stack.push_back( vip );
-		return this;
-	}
-	basic_block* basic_block::label_end()
-	{
-		label_stack.pop_back();
-		return this;
-	}
-
-	// Drops const qualifier from iterator after asserting iterator
-	// belongs to this basic block.
-	//
-	basic_block::iterator basic_block::acquire( const const_iterator& it )
-	{
-		// If invalid return as is.
-		//
-		if ( !it.is_valid() ) return {};
-		
-		// This is only valid for iterators belonging to current container.
-		//
-		fassert( this == it.container );
-
-		// If end return end.
-		//
-		if ( it.is_end() ) return end();
-
-		// Cast away the qualifier using erase and create a non-const qualified iterator.
-		//
-		return { this, this->stream.erase( it, it ) };
-	}
-
-	// Wrap std::list::erase.
-	//
-	basic_block::iterator basic_block::erase( const const_iterator& it )
-	{
-		return { this, stream.erase( it ) };
-	}
-
-	// Wrap std::list::insert with stack state-keeping.
-	//
-	basic_block::iterator basic_block::insert( const const_iterator& it_const, instruction&& ins )
-	{
-		// Validate instruction.
-		//
-		ins.is_valid( true );
-
-		// Validate registers are of matching architecture.
-		//
-		for ( auto& op : ins.operands )
-		{
-			if ( op.is_register() && op.reg().is_physical() && !op.reg().is_special() )
-				fassert( op.reg().architecture == owner->arch_id );
-		}
-
-		// If label stack is not empty and instruction has an invalid vip, use the last label pushed.
-		//
-		if ( !label_stack.empty() && ins.vip == invalid_vip )
-			ins.vip = label_stack.back();
-
-		// Drop const qualifier of the iterator, since we are in a non-const 
-		// qualified member function, this qualifier is unnecessary.
-		//
-		iterator it = it_const.is_end() ? end() : acquire( it_const );
-
-		// Instructions cannot be appended after a branching instruction was hit.
-		//
-		if ( it.is_end() && !it.is_begin() )
-			fassert( !std::prev( it )->base->is_branching() );
-
-		// If inserting at end, inherit stack properties from the container.
-		//
-		if ( it.is_end() )
-		{
-			ins.sp_offset = sp_offset;
-			ins.sp_index = sp_index;
-		}
-		// If inserting at the beginning, assume clean stack state.
-		//
-		else if ( it.is_begin() )
-		{
-			ins.sp_offset = 0;
-			ins.sp_index = 0;
-		}
-		// If inserting in the middle of the stream:
-		//
-		else
-		{
-			auto prev = std::prev( it );
-
-			// If previous instruction resets stack, use clean state of next index.
-			//
-			if ( prev->sp_reset )
-			{
-				ins.sp_index = prev->sp_index + 1;
-				ins.sp_offset = 0;
-			}
-			// Otherwise inherit the state as is.
-			//
-			else
-			{
-				ins.sp_index = prev->sp_index;
-				ins.sp_offset = prev->sp_offset;
-			}
-		}
-
-		// If instruction writes to SP, reset the queued stack pointer.
-		//
-		for ( auto [op, type] : ins.enum_operands() )
-		{
-			if ( type >= operand_type::write && op.reg().is_stack_pointer() )
-			{
-				shift_sp( -ins.sp_offset, false, it );
-				for ( auto it2 = it; !it2.is_end(); it2++ )
-					it2->sp_index++;
-				sp_index++;
-				ins.sp_reset = true;
-				break;
-			}
-		}
-
-		// Append the instruction to the stream.
-		//
-		return { this, stream.emplace( it, std::move( ins ) ) };
+		next.emplace_back( it->second );
+		it->second->prev.emplace_back( this );
+		owner->explore_path( this, it->second );
+		return inserted ? it->second : nullptr;
 	}
 
 	// Queues a stack shift.
@@ -247,14 +101,14 @@ namespace vtil
 			// Decrement stack index for each instruction afterwards.
 			//
 			for ( auto i = std::next( it ); !i.is_end(); i++ )
-				i->sp_index--;
+				( +i )->sp_index--;
 			sp_index--;
 
 			// Remove the reset flag and merge the offsets.
 			//
-			it->sp_reset = false;
+			( +it )->sp_reset = false;
 			offset += it->sp_offset;
-			it->sp_offset = 0;
+			( +it )->sp_offset = 0;
 		}
 
 		// If an iterator is provided, shift the stack pointer
@@ -265,7 +119,7 @@ namespace vtil
 		{
 			// Shift the stack offset accordingly.
 			//
-			it->sp_offset += offset;
+			( +it )->sp_offset += offset;
 
 			// If memory operation:
 			//
@@ -273,7 +127,7 @@ namespace vtil
 			{
 				// If base is stack pointer, add the offset.
 				//
-				auto [base, off] = it->memory_location();
+				auto [base, off] = ( +it )->memory_location();
 				if ( base.is_stack_pointer() )
 					off += offset;
 			}
@@ -304,10 +158,266 @@ namespace vtil
 		return this;
 	}
 
-	// Generates a hash for the block.
+	// Pushes an operand up the stack queueing the
+	// shift in stack pointer.
 	//
-	hash_t basic_block::hash() const
+	basic_block* basic_block::push( const operand& op )
 	{
-		return make_hash( entry_vip, sp_offset, sp_index, last_temporary_index, stream );
+		// Handle SP specially since we change the stack pointer
+		// before the instruction begins.
+		//
+		if ( op.is_register() && op.reg().is_stack_pointer() )
+		{
+			auto t0 = tmp( 64 );
+			return mov( t0, op )->push( t0 );
+		}
+
+		// If operand size is not aligned:
+		//
+		if ( size_t misalignment = op.size() % VTIL_ARCH_POPPUSH_ENFORCED_STACK_ALIGN )
+		{
+			// Adjust for misalignment and zero the padding.
+			//
+			int64_t padding_size = VTIL_ARCH_POPPUSH_ENFORCED_STACK_ALIGN - misalignment;
+			shift_sp( -padding_size );
+			str( REG_SP, sp_offset, operand( 0, math::narrow_cast<bitcnt_t>( padding_size * 8 ) ) );
+		}
+
+		// Shift and write the operand.
+		//
+		shift_sp( -int64_t( op.size() ) );
+		str( REG_SP, sp_offset, op );
+		return this;
+	}
+
+	// Pops an operand from the stack queueing the
+	// shift in stack pointer.
+	//
+	basic_block* basic_block::pop( const operand& op )
+	{
+		// Save the pre-shift offset.
+		//
+		int64_t offset = sp_offset;
+
+		// If operand size is not aligned:
+		//
+		if ( size_t misalignment = op.size() % VTIL_ARCH_POPPUSH_ENFORCED_STACK_ALIGN )
+		{
+			// Adjust for misalignment.
+			//
+			shift_sp( VTIL_ARCH_POPPUSH_ENFORCED_STACK_ALIGN - misalignment );
+		}
+
+		// Shift and read to the operand.
+		//
+		shift_sp( op.size() );
+		ldd( op, REG_SP, offset );
+		return this;
+	}
+
+	// Instruction deletion.
+	//
+	il_iterator basic_block::erase( const const_iterator& pos )
+	{
+		// Increment epoch to signal modification.
+		//
+		epoch++;
+
+		// If no previous entry, head and possibly also tail:
+		//
+		list_entry* entry = pos.entry;
+		if ( !entry->prev )
+		{
+			// Set head, if valid fix prev link, otherwise fix tail.
+			//
+			if ( head = entry->next )
+				head->prev = nullptr;
+			else
+				tail = nullptr;
+		}
+		// If there is previous, but no next, tail:
+		//
+		else if ( !entry->next )
+		{
+			// Set new tail and fix next link.
+			//
+			tail = entry->prev;
+			tail->next = nullptr;
+		}
+		// Else generic entry, fix links:
+		//
+		else
+		{
+			entry->prev->next = entry->next;
+			entry->next->prev = entry->prev;
+		}
+
+		// Delete the entry and return next.
+		//
+		iterator npos = { this, entry->next };
+		destruct_instruction( entry );
+		instruction_count--;
+		return npos;
+	}
+	basic_block* basic_block::clear()
+	{
+		// Destruct every entry.
+		//
+		for ( auto it = head; it; )
+		{
+			auto next = it->next;
+			destruct_instruction( it );
+			it = next;
+		}
+
+		// Reset the state saved and return self.
+		//
+		head = nullptr;
+		tail = nullptr;
+		epoch = 0;
+		instruction_count = 0;
+		return this;
+	}
+	instruction basic_block::pop_front()
+	{
+		// Save instruction at head and erase it.
+		//
+		dassert( head );
+		instruction result = std::move( head->value );
+		erase( { this, head } );
+		return result;
+	}
+	instruction basic_block::pop_back()
+	{
+		// Save instruction at tail and erase it.
+		//
+		dassert( tail );
+		instruction result = std::move( tail->value );
+		erase( { this, tail } );
+		return result;
+	}
+
+	// Internally invoked by emplace to insert a new linked list entry to the instruction stream.
+	//
+	il_iterator basic_block::insert_final( const const_iterator& pos, list_entry* new_entry, bool process )
+	{
+		// Increment epoch to signal modification.
+		//
+		epoch++;
+
+		// If marked to be processed:
+		//
+		if( process )
+		{
+			// Validate instruction.
+			//
+			auto& ins = new_entry->value;
+			ins.is_valid( true );
+
+			// Validate registers are of matching architecture.
+			//
+			for ( auto& op : ins.operands )
+			{
+				if ( op.is_register() && op.reg().is_physical() && !op.reg().is_special() )
+					fassert( op.reg().architecture == owner->arch_id );
+			}
+
+			// If label stack is not empty and instruction has an invalid vip, use the last label pushed.
+			//
+			if ( !label_stack.empty() && ins.vip == invalid_vip )
+				ins.vip = label_stack.back();
+
+			// Instructions cannot be appended after a branching instruction was hit.
+			//
+			auto& it = acquire( pos );
+			if ( it.is_end() && !it.is_begin() )
+				fassert( !std::prev( it )->base->is_branching() );
+
+			// If inserting at end, inherit stack properties from the container.
+			//
+			if ( it.is_end() )
+			{
+				ins.sp_offset = sp_offset;
+				ins.sp_index = sp_index;
+			}
+			// If inserting at the beginning, assume clean stack state.
+			//
+			else if ( it.is_begin() )
+			{
+				ins.sp_offset = 0;
+				ins.sp_index = 0;
+			}
+			// If inserting in the middle of the stream:
+			//
+			else
+			{
+				// If previous instruction resets stack, use clean state of next index.
+				//
+				auto prev = std::prev( it );
+				if ( prev->sp_reset )
+				{
+					ins.sp_index = prev->sp_index + 1;
+					ins.sp_offset = 0;
+				}
+				// Otherwise inherit the state as is.
+				//
+				else
+				{
+					ins.sp_index = prev->sp_index;
+					ins.sp_offset = prev->sp_offset;
+				}
+			}
+
+			// If instruction writes to SP, reset the queued stack pointer.
+			//
+			for ( auto [op, type] : ins.enum_operands() )
+			{
+				if ( type >= operand_type::write && op.reg().is_stack_pointer() )
+				{
+					shift_sp( -ins.sp_offset, false, it );
+					for ( auto it2 = it; !it2.is_end(); it2++ )
+						( +it2 )->sp_index++;
+					sp_index++;
+					ins.sp_reset = true;
+					break;
+				}
+			}
+		}
+
+		// If iterator has a valid entry:
+		//
+		if ( pos.entry )
+		{
+			// Link before it.
+			//
+			new_entry->prev = pos.entry->prev;
+			new_entry->next = pos.entry;
+			pos.entry->prev = new_entry;
+
+			// Set head/tail if first entry, else fix links.
+			//
+			if ( new_entry->prev ) new_entry->prev->next = new_entry;
+			else                   head = new_entry;
+		}
+		// Otherwise, only entry or end.
+		//
+		else
+		{
+			// Link at the end, set tail.
+			//
+			new_entry->prev = tail;
+			new_entry->next = nullptr;
+			tail = new_entry;
+
+			// Set head if first entry, else fix links.
+			//
+			if ( new_entry->prev ) new_entry->prev->next = new_entry;
+			else                   head = new_entry;
+		}
+
+		// Increment entry count and return new iterator.
+		//
+		instruction_count++;
+		return { this, new_entry };
 	}
 };
