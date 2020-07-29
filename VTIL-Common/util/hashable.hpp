@@ -289,3 +289,17 @@ namespace vtil
 	template<typename T>
 	concept Hashable = requires( T v ) { !std::is_void_v<decltype( hasher<>{}( v ) )>; };
 };
+
+// Redirect from std::hash.
+//
+namespace std
+{
+	template<vtil::CustomHashable T>
+	struct hash<T>
+	{
+		__forceinline size_t operator()( const T& value ) const noexcept
+		{
+			return vtil::hash_t{ value.hash() }.as64();
+		}
+	};
+};

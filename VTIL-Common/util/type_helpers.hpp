@@ -207,7 +207,7 @@ namespace vtil
 	template<typename T>
 	concept CustomResettable = requires( T& v ) { v.reset(); };
 	template<typename T>
-	concept CustomClearable = requires( T& v ) { v.clear(); };
+	concept CustomClearable =  requires( T& v ) { v.clear(); };
 
 	template<typename T>
 	static constexpr auto null_value( T& ref )

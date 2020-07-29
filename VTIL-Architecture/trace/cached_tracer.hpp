@@ -42,7 +42,7 @@ namespace vtil
 	{
         // Define the type of the cache.
         //
-        using cache_type =  std::unordered_map<symbolic::variable, symbolic::expression::reference, hasher<>>;
+        using cache_type =  std::unordered_map<symbolic::variable, symbolic::expression::reference>;
         using cache_entry = cache_type::value_type;
 
         // Declare the lookup map for the cache mapping each variable to the

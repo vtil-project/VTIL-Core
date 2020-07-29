@@ -136,7 +136,7 @@ namespace vtil
 			return;
 		}
 
-		std::unordered_map<symbolic::variable, symbolic::expression::reference, hasher<>> cache;
+		std::unordered_map<symbolic::variable, symbolic::expression::reference> cache;
 		cache.reserve( inout->depth );
 		
 		inout.transform( [ &cache, &fn ] ( symbolic::expression::delegate& exp )

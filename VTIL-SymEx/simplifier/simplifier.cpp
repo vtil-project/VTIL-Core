@@ -61,8 +61,8 @@ namespace vtil::symbolic
 	using static_directive_table_entry =  std::pair<directive::instance,        directive::instance>;
 	using dynamic_directive_table_entry = std::pair<const directive::instance*, const directive::instance*>;
 
-	using dynamic_directive_table =      std::vector<dynamic_directive_table_entry>;
-	using organized_directive_table =    std::array<dynamic_directive_table, ( size_t ) math::operator_id::max>;
+	using dynamic_directive_table =       std::vector<dynamic_directive_table_entry>;
+	using organized_directive_table =     std::array<dynamic_directive_table, ( size_t ) math::operator_id::max>;
 
 	template<typename T>
 	static organized_directive_table build_dynamic_table( const T& container )
@@ -79,7 +79,7 @@ namespace vtil::symbolic
 	static auto& get_pack_descriptors( math::operator_id op ) { static auto tbl = build_dynamic_table( directive::pack_descriptors ); return tbl[ ( size_t ) op ]; }
 	static auto& get_join_descriptors( math::operator_id op ) { static auto tbl = build_dynamic_table( directive::join_descriptors ); return tbl[ ( size_t ) op ]; }
 	static auto& get_unpack_descriptors( math::operator_id op ) { static auto tbl = build_dynamic_table( directive::unpack_descriptors ); return tbl[ ( size_t ) op ]; }
-	static auto& get_boolean_simplifiers( math::operator_id op ) { static auto boolean_simplifiers = directive::build_boolean_simplifiers(); static auto tbl = build_dynamic_table( boolean_simplifiers ); return tbl[ ( size_t ) op ]; }
+	static auto& get_boolean_simplifiers( math::operator_id op ) { static auto tbl = build_dynamic_table( directive::build_boolean_simplifiers() ); return tbl[ ( size_t ) op ]; }
 	static auto& get_universal_simplifiers( math::operator_id op ) { static auto tbl = build_dynamic_table( directive::universal_simplifiers ); return tbl[ ( size_t ) op ]; }
 
 	// Simplifier cache and its accessors.
@@ -106,8 +106,7 @@ namespace vtil::symbolic
 			inline static thread_local sigscan_result* sigscan = nullptr;
 			inline static thread_local bool match_ptr = false;
 
-			bool operator()( const expression::reference& a,
-							 const expression::reference& b ) const noexcept 
+			bool operator()( const expression::reference& a, const expression::reference& b ) const noexcept 
 			{ 
 				// If pointer matching:
 				//

@@ -38,7 +38,7 @@ namespace vtil::optimizer
 	struct stack_propagation_pass : pass_interface<>
 	{
 		std::shared_mutex mtx;
-		std::unordered_map<symbolic::variable, register_desc, hasher<>> revive_list;
+		std::unordered_map<symbolic::variable, register_desc> revive_list;
 		size_t pass( basic_block* blk, bool xblock = false ) override;
 	};
 };

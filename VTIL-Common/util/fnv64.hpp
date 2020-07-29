@@ -55,7 +55,7 @@ namespace vtil
 		// Appends the given array of bytes into the hash value.
 		//
 		template<typename T>
-		__forceinline void add_bytes( const T& data )
+		void add_bytes( const T& data )
 		{
 			const uint8_t* bytes = ( const uint8_t* ) &data;
 
