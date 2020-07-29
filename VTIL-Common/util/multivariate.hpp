@@ -35,7 +35,13 @@
 
 namespace vtil
 {
-	// If context type inherits from this type, the result of [T& T::update( owner* )] will be returned instead of T&.
+	namespace impl
+	{
+		template<typename C, typename T>
+		concept HasContext = requires( T v, C* p ) { p = &v.context; };
+	};
+
+	// If context type inherits from this type, the result of [T& T::update( const owner* )] will be returned instead of T&.
 	//
 	struct mv_updatable_tag {};
 
@@ -43,10 +49,7 @@ namespace vtil
 	// optimizers to store arbitrary per-block / per-instruction data at the respective 
 	// structures directly.
 	//
-	// - Should pass self as template type and be named "::context" if we are expected to pass 
-	//   owner in the constructor to the type.
-	//
-	template<typename owner = void>
+	template<typename owner>
 	struct multivariate
 	{
 		mutable relaxed<std::mutex> mtx;
@@ -81,7 +84,7 @@ namespace vtil
 		// Getter of the types.
 		//
 		template<typename T>
-		auto& get() const
+		T& get() const
 		{
 			// Acquire the database lock and check for existance.
 			//
@@ -92,11 +95,11 @@ namespace vtil
 			//
 			if ( !var ) var = T();
 
-			// Return the appropriate reference.
+			// Return the reference.
 			//
 			T& ref = var.get<T>();
-			if constexpr ( std::is_base_of_v<mv_updatable_tag, T> )
-				return ref.update( ( owner* ) ptr_at<>( this, -make_offset( &owner::context ) ) );
+			if constexpr ( std::is_base_of_v<mv_updatable_tag, T> && impl::HasContext<multivariate<owner>, owner> )
+				return ref.update( ptr_at<owner>( this, -make_offset( &owner::context ) ) );
 			else
 				return ref;
 		}
@@ -105,6 +108,6 @@ namespace vtil
 		// - block_cache& cache = multivariate;
 		//
 		template<typename T>
-		operator T&() const { return get<T>(); }
+		operator T&() const { return get<std::remove_const_t<T>>(); }
 	};
 };
