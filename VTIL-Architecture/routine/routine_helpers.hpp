@@ -151,6 +151,8 @@ namespace vtil
 			//
 			if ( set_allowed && !set_allowed->contains( blk ) )
 				return false;
+			if ( src.is_path_restricted && ( !src.paths_allowed || !src.paths_allowed->contains( blk ) ) )
+				return false;
 
 			// Should not be in path-set.
 			//
@@ -195,6 +197,8 @@ namespace vtil
 			// Should be in allowed list if relevant.
 			//
 			if ( set_allowed && !set_allowed->contains( blk ) )
+				return false;
+			if ( src.is_path_restricted && ( !src.paths_allowed || !src.paths_allowed->contains( blk ) ) )
 				return false;
 
 			// Should not be in path-set.
