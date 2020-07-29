@@ -35,6 +35,7 @@
     #include <emmintrin.h>
     #define unreachable() __builtin_unreachable()
     #define __forceinline __attribute__((always_inline))
+    #define _AddressOfReturnAddress() ((void*)__builtin_frame_address(0))
 
     // Declare _?mul128
     //

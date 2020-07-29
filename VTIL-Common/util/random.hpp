@@ -30,6 +30,7 @@
 #include <stdint.h>
 #include <type_traits>
 #include <array>
+#include "type_helpers.hpp"
 
 namespace vtil
 {
@@ -103,9 +104,23 @@ namespace vtil
 		fassert( list.size() != 0 );
 		return *( list.begin() + make_random<size_t>( 0, list.size() - 1 ) );
 	}
+	template<Iterable T>
+	static decltype( auto ) pick_randomi( T&& source )
+	{
+		auto size = dynamic_size( source );
+		fassert( size != 0 );
+		return dynamic_get( source, make_random<size_t>( 0, size - 1 ) );
+	}
 	template<size_t offset = 0, typename... Tx>
 	static constexpr auto pick_crandom( Tx&&... args )
 	{
 		return std::get<make_crandom( offset ) % sizeof...( args )>( std::tuple<Tx&&...>{ std::forward<Tx>( args )... } );
+	}
+	template<size_t offset = 0, Iterable T>
+	static constexpr decltype( auto ) pick_crandomi( T& source )
+	{
+		auto size = dynamic_size( source );
+		fassert( size != 0 );
+		return dynamic_get( source, make_crandom( offset ) % size );
 	}
 };
