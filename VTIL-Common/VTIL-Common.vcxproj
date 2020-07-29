@@ -133,7 +133,6 @@
     <ClInclude Include="includes\vtil\io" />
     <ClInclude Include="includes\vtil\math" />
     <ClInclude Include="includes\vtil\amd64" />
-    <ClInclude Include="includes\vtil\query" />
     <ClInclude Include="includes\vtil\utility" />
     <ClInclude Include="io\asserts.hpp" />
     <ClInclude Include="io\formatting.hpp" />
@@ -141,12 +140,6 @@
     <ClInclude Include="math\bitwise.hpp" />
     <ClInclude Include="math\operable.hpp" />
     <ClInclude Include="math\operators.hpp" />
-    <ClInclude Include="query\fixed_iterator.hpp" />
-    <ClInclude Include="query\query_descriptor.hpp" />
-    <ClInclude Include="query\range_iterator.hpp" />
-    <ClInclude Include="query\range_iterator_contract.hpp" />
-    <ClInclude Include="query\recursive_view.hpp" />
-    <ClInclude Include="query\view.hpp" />
     <ClInclude Include="util\bitmap.hpp" />
     <ClInclude Include="util\constexpr_random.hpp" />
     <ClInclude Include="util\copy_on_write.hpp" />

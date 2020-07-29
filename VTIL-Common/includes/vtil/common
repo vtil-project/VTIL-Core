@@ -2,6 +2,5 @@
 #include <vtil/io>
 #include <vtil/amd64>
 #include <vtil/utility>
-#include <vtil/query>
 #include <vtil/math>
 #include <vtil/formats>

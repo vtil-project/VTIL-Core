@@ -14,9 +14,6 @@
     <Filter Include="Utility">
       <UniqueIdentifier>{226c5e44-6592-44d0-adb0-31369963cb86}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Queries">
-      <UniqueIdentifier>{91e43426-e8a8-4753-8d61-374c3c62f081}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Formats">
       <UniqueIdentifier>{7f12883a-3282-4d93-b13f-879b436bfd64}</UniqueIdentifier>
     </Filter>
@@ -63,27 +60,6 @@
     </ClInclude>
     <ClInclude Include="includes\vtil\utility">
       <Filter>Includes</Filter>
-    </ClInclude>
-    <ClInclude Include="query\range_iterator.hpp">
-      <Filter>Queries</Filter>
-    </ClInclude>
-    <ClInclude Include="query\query_descriptor.hpp">
-      <Filter>Queries</Filter>
-    </ClInclude>
-    <ClInclude Include="query\range_iterator_contract.hpp">
-      <Filter>Queries</Filter>
-    </ClInclude>
-    <ClInclude Include="query\view.hpp">
-      <Filter>Queries</Filter>
-    </ClInclude>
-    <ClInclude Include="query\recursive_view.hpp">
-      <Filter>Queries</Filter>
-    </ClInclude>
-    <ClInclude Include="includes\vtil\query">
-      <Filter>Includes</Filter>
-    </ClInclude>
-    <ClInclude Include="query\fixed_iterator.hpp">
-      <Filter>Queries</Filter>
     </ClInclude>
     <ClInclude Include="util\copy_on_write.hpp">
       <Filter>Utility</Filter>

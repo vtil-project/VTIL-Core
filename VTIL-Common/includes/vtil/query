@@ -1,7 +1,0 @@
-#pragma once
-#include "../../query/range_iterator_contract.hpp"
-#include "../../query/range_iterator.hpp"
-#include "../../query/query_descriptor.hpp"
-#include "../../query/view.hpp"
-#include "../../query/recursive_view.hpp"
-#include "../../query/fixed_iterator.hpp"
