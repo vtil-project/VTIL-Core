@@ -54,13 +54,6 @@ namespace vtil
 		std::pair<uint64_t, uint64_t> timestamp;
 		constexpr epoch_t( uint64_t a, uint64_t b ) : timestamp( a, b ) {}
 
-		// Default copy/move.
-		//
-		constexpr epoch_t( epoch_t&& ) = default;
-		constexpr epoch_t( const epoch_t& ) = default;
-		constexpr epoch_t& operator=( epoch_t&& ) = default;
-		constexpr epoch_t& operator=( const epoch_t& ) = default;
-
 		// Increment causes addition with a fast "random".
 		//
 		epoch_t& operator++()
