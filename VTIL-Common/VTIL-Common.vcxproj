@@ -141,7 +141,6 @@
     <ClInclude Include="math\operable.hpp" />
     <ClInclude Include="math\operators.hpp" />
     <ClInclude Include="util\bitmap.hpp" />
-    <ClInclude Include="util\constexpr_random.hpp" />
     <ClInclude Include="util\copy_on_write.hpp" />
     <ClInclude Include="util\deferred_value.hpp" />
     <ClInclude Include="util\detached_queue.hpp" />

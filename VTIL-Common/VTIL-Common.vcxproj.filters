@@ -94,9 +94,6 @@
     <ClInclude Include="util\zip.hpp">
       <Filter>Utility</Filter>
     </ClInclude>
-    <ClInclude Include="util\constexpr_random.hpp">
-      <Filter>Utility</Filter>
-    </ClInclude>
     <ClInclude Include="util\range.hpp">
       <Filter>Utility</Filter>
     </ClInclude>

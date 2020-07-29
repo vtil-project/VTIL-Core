@@ -29,43 +29,83 @@
 #include <random>
 #include <stdint.h>
 #include <type_traits>
+#include <array>
 
 namespace vtil
 {
-	// Declare a random engine state per thread.
-	//
 	namespace impl
 	{
+		// Declare the constexpr random seed.
+		//
+		static constexpr uint64_t crandom_default_seed = ([]()
+		{
+			uint64_t value = 0xa0d82d3adc00b109;
+			for ( char c : __TIME__ )
+				value = ( value ^ c ) * 0x100000001B3;
+			return value;
+		} )();
+
+		// Linear congruential generator using the constants from Numerical Recipes.
+		//
+		static constexpr uint64_t lce_64( uint64_t& value )
+		{
+			return ( value = 1664525 * value + 1013904223 );
+		}
+
+		// Declare a random engine state per thread.
+		//
 		static thread_local std::default_random_engine local_rng( std::random_device{}() );
 	};
 
-	// Simple wrapper around std::random with uniform distribution.
+	// Generates a single random number.
 	//
 	template<typename T>
 	static T make_random( T min = std::numeric_limits<T>::min(), T max = std::numeric_limits<T>::max() )
 	{
 		return std::uniform_int_distribution<T>{min, max}( impl::local_rng );
 	}
-	
-	// Same as above but in vectorized format.
+	static constexpr uint64_t make_crandom( size_t offset = 0 )
+	{
+		uint64_t value = impl::crandom_default_seed;
+		while ( offset-- != 0 ) impl::lce_64( value );
+		return impl::lce_64( value );
+	}
+
+	// Generates an array of random numbers.
 	//
 	template<typename T, size_t... I>
 	static std::array<T, sizeof...( I )> make_random_n( T min, T max, std::index_sequence<I...> )
 	{
 		return { ( I, make_random<T>( min ,max ) )... };
 	}
+	template<size_t... I>
+	static constexpr std::array<uint64_t, sizeof...( I )> make_crandom_n( size_t offset, std::index_sequence<I...> )
+	{
+		uint64_t value = offset ? make_crandom( offset - 1 ) : impl::crandom_default_seed;
+		return { impl::lce_64( ( I, value ) )... };
+	}
 	template<typename T, size_t N>
 	static auto make_random_n( T min = std::numeric_limits<T>::min(), T max = std::numeric_limits<T>::max() )
 	{
 		return make_random_n<T>( min, max, std::make_index_sequence<N>{} );
 	}
+	template<size_t N>
+	static constexpr auto make_crandom_n( size_t offset = 0 )
+	{
+		return make_crandom_n( offset, std::make_index_sequence<N>{} );
+	}
 
-	// Picks a random item from the initializer list.
+	// Picks a random item from the initializer list / argument pack.
 	//
 	template<typename T>
-	static T pick_random( std::initializer_list<T> list )
+	static auto pick_random( std::initializer_list<T> list )
 	{
 		fassert( list.size() != 0 );
 		return *( list.begin() + make_random<size_t>( 0, list.size() - 1 ) );
+	}
+	template<size_t offset = 0, typename... Tx>
+	static constexpr auto pick_crandom( Tx&&... args )
+	{
+		return std::get<make_crandom( offset ) % sizeof...( args )>( std::tuple<Tx&&...>{ std::forward<Tx>( args )... } );
 	}
 };
