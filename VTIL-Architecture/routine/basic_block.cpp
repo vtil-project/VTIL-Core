@@ -257,7 +257,7 @@ namespace vtil
 		//
 		head = nullptr;
 		tail = nullptr;
-		epoch = 0;
+		epoch++;
 		instruction_count = 0;
 		return this;
 	}

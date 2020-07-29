@@ -45,10 +45,45 @@
 
 namespace vtil
 {
-	// Type we describe basic block stamps in.
+	// Type we describe basic block timestamps in.
 	//
-	using snapshot_stamp_t = uint64_t;
-	static constexpr snapshot_stamp_t invalid_stamp = ~0;
+	struct epoch_t
+	{
+		// 128-bit timestamp.
+		//
+		std::pair<uint64_t, uint64_t> timestamp;
+		constexpr epoch_t( uint64_t a, uint64_t b ) : timestamp( a, b ) {}
+
+		// Default copy/move.
+		//
+		constexpr epoch_t( epoch_t&& ) = default;
+		constexpr epoch_t( const epoch_t& ) = default;
+		constexpr epoch_t& operator=( epoch_t&& ) = default;
+		constexpr epoch_t& operator=( const epoch_t& ) = default;
+
+		// Increment causes a 128-bit addition with a fast "random".
+		//
+		epoch_t& operator++()
+		{
+			uint64_t lo_0 = timestamp.first;
+			uint64_t lo_1 = ( timestamp.first += ( uint64_t ) &lo_0 );
+			if ( lo_0 > lo_1 ) [[unlikely]]
+				timestamp.second++;
+			return *this;
+		}
+		epoch_t operator++( int ) { epoch_t r = *this; ++( *this ); return r; }
+
+		// String conversion.
+		//
+		std::string to_string() const { return format::str( "%p%p", timestamp.first, timestamp.second ); }
+		
+		// Basic comparison.
+		//
+		constexpr bool operator==( const epoch_t& o ) const { return timestamp == o.timestamp; }
+		constexpr bool operator!=( const epoch_t& o ) const { return timestamp != o.timestamp; }
+		constexpr bool operator< ( const epoch_t& o ) const { return timestamp < o.timestamp; }
+	};
+	static constexpr epoch_t invalid_epoch = { 0xFFFFFFFFFFFFFFFF, 0xFFFFFFFFFFFFFFFF };
 
 	// Descriptor for any routine that is being translated.
 	// - Since optimization phase will be done in a single threaded
@@ -97,7 +132,7 @@ namespace vtil
 			//
 			using iterator_category = std::bidirectional_iterator_tag;
 			using value_type =        const instruction;
-			using difference_type =   int32_t;
+			using difference_type =   int64_t;
 			using pointer =           value_type*;
 			using reference =         value_type&;
 
@@ -159,8 +194,8 @@ namespace vtil
 					entry = ( list_entry* ) 1;
 				return *this; 
 			}
-			base_iterator operator++( difference_type ) { auto p = *this; ++( *this ); return p; }
-			base_iterator operator--( difference_type ) { auto p = *this; --( *this ); return p; }
+			base_iterator operator++( int ) { auto p = *this; ++( *this ); return p; }
+			base_iterator operator--( int ) { auto p = *this; --( *this ); return p; }
 
 			// Restricts the way current iterator can recurse in, making sure
 			// every path leads up-to the block specified (or none).
@@ -239,7 +274,7 @@ namespace vtil
 		// Generic container typedefs.
 		//
 		using value_type =        instruction;
-		using difference_type =   int32_t;
+		using difference_type =   int64_t;
 		using pointer =           const instruction*;
 		using reference =         const instruction&;
 		using iterator =          base_iterator<false>;
@@ -283,7 +318,7 @@ namespace vtil
 		// Epoch provided to allow external entities determine if the block is modified or not 
 		// since their last read from it in an easy and fast way.
 		//
-		snapshot_stamp_t epoch = 0;
+		epoch_t epoch;
 
 		// Creates a new block bound to a new routine with the given parameters.
 		//
@@ -296,11 +331,12 @@ namespace vtil
 
 		// Basic constructor and destructor, should be invoked via ::fork and ::begin, reserved for internal use.
 		//
-		basic_block( routine* owner, vip_t entry_vip ) : owner( owner ), entry_vip( entry_vip ) {}
+		basic_block( routine* owner, vip_t entry_vip ) 
+			: owner( owner ), entry_vip( entry_vip ), epoch{ make_random<uint64_t>(), make_random<uint64_t>() } {}
 		basic_block( const basic_block& o )
 			: owner( o.owner ), entry_vip( o.entry_vip ), next( o.next ), prev( o.prev ),
 			  sp_index( o.sp_index ), sp_offset( o.sp_offset ), last_temporary_index( o.last_temporary_index ),
-			  label_stack( o.label_stack ), epoch( o.epoch + 1 )
+			  label_stack( o.label_stack ), epoch( o.epoch )
 		{
 			assign( o );
 		}
@@ -336,7 +372,7 @@ namespace vtil
 
 		// Non-deterministic hashing of the block.
 		//
-		hash_t hash() const { return make_hash( entry_vip, epoch ); }
+		hash_t hash() const { return make_hash( entry_vip, epoch.timestamp, this ); }
 
 		// Helpers for the allocation of unique temporary registers.
 		//
@@ -350,13 +386,9 @@ namespace vtil
 			return std::make_tuple( tmp( size_0 ), tmp( size_n )... );
 		}
 
-		// Returns the current snapshot identifier.
+		// Checks if basic block is changed since the given epoch.
 		//
-		snapshot_stamp_t stamp() const { return epoch; }
-
-		// Checks if basic block is changed since the given stamp.
-		//
-		bool is_changed( snapshot_stamp_t stamp ) const { return epoch != stamp; }
+		bool is_changed( const epoch_t& o ) const { return epoch != o; }
 
 		// Generate lazy wrappers for every instruction.
 		//
