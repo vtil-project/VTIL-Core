@@ -55,7 +55,7 @@ namespace vtil
 			// Default constructor.
 			//
 			iterator( value_type at, value_type limit = 0 ) :
-				at( at ), value_type( limit ) {}
+				at( at ), limit( limit ) {}
 
 			// Support bidirectional iteration.
 			//
