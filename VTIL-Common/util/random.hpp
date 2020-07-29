@@ -62,7 +62,7 @@ namespace vtil
 	template<typename T>
 	static T make_random( T min = std::numeric_limits<T>::min(), T max = std::numeric_limits<T>::max() )
 	{
-		return std::uniform_int_distribution<T>{min, max}( impl::local_rng );
+		return std::uniform_int_distribution<T>{ min, max }( impl::local_rng );
 	}
 	static constexpr uint64_t make_crandom( size_t offset = 0 )
 	{
