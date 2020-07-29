@@ -36,6 +36,7 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
         # NOTE: bad practice, technically you should specify this in your CMake invocation
         target_compile_options(${PROJECT_NAME} PUBLIC -stdlib=libc++)
         target_link_options(${PROJECT_NAME} PUBLIC -stdlib=libc++)
+        target_compile_options(${PROJECT_NAME} PUBLIC -Wunknown-attributes)
     endif()
 
     # GCC-only flags
