@@ -74,7 +74,7 @@ namespace vtil
 		serialize( out, in->sp_offset );
 		serialize( out, in->sp_index );
 		serialize( out, in->last_temporary_index );
-		serialize( out, in->stream );
+		serialize( out, *in );
 
 		// Write the entry VIP of each block reference instead of the pointer. 
 		//
@@ -90,12 +90,15 @@ namespace vtil
 	{
 		// Create a new block, read basic properties and bind to the owner
 		//
-		blk = new basic_block;
-		deserialize( in, blk->entry_vip );
+		vip_t vip;
+		deserialize( in, vip );
+		blk = new basic_block( rtn, vip );
 		deserialize( in, blk->sp_offset );
 		deserialize( in, blk->sp_index );
 		deserialize( in, blk->last_temporary_index );
-		deserialize( in, blk->stream );
+		std::vector<instruction> list;
+		deserialize( in, list );
+		blk->assign( list.begin(), list.end() );
 		blk->owner = rtn;
 		blk->owner->explored_blocks[ blk->entry_vip ] = blk;
 

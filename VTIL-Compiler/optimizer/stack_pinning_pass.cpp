@@ -26,7 +26,6 @@
 // POSSIBILITY OF SUCH DAMAGE.        
 //
 #include "stack_pinning_pass.hpp"
-#include <vtil/query>
 #include <numeric>
 
 namespace vtil::optimizer
@@ -37,22 +36,18 @@ namespace vtil::optimizer
 	{
 		size_t counter = 0;
 		cached_tracer ctrace = {};
-		
-		// => Begin a foward iterating query.
+
+		// For each instruction:
 		//
-		query::create( blk->begin(), +1 )
+		for ( auto it = blk->begin(); !it.is_end(); it++ )
+		{
+			// Skip volatile instructions.
+			//
+			if ( it->is_volatile() ) continue;
 
-			// >> Skip volatile instructions.
-			.where( [ ] ( instruction& ins ) { return !ins.is_volatile(); } )
-		
-			// | Filter to instructions that changes stack instances.
-			.where( [ ] ( instruction& ins ) { return ins.sp_reset; } )
-
-			// := Project back to iterator type.
-			.unproject()
-
-			// @ For each:
-			.for_each( [ & ] ( const il_iterator& it )
+			// Filter to instructions that changes stack instances.
+			//
+			if ( it->sp_reset )
 			{
 				// Calculate the difference between current virtual stack pointer 
 				// and the next stack pointer instance.
@@ -66,8 +61,8 @@ namespace vtil::optimizer
 				{
 					// Replace with a stack shift.
 					//
-					it->base = &ins::nop;
-					it->operands = {};
+					( +it )->base = &ins::nop;
+					( +it )->operands = {};
 					blk->shift_sp( *shift_offset, true, it );
 
 					// Flush tracer cache.
@@ -79,7 +74,8 @@ namespace vtil::optimizer
 					it->is_valid( true );
 					counter++;
 				}
-			} );
+			}
+		}
 
 		// If block is complete:
 		//
@@ -148,16 +144,16 @@ namespace vtil::optimizer
 						auto tmp = blk->tmp( 64 );
 						auto mov = blk->insert( it, { &ins::mov, { tmp, REG_SP } } );
 						auto sub = blk->insert( it, { &ins::sub, { tmp, make_imm<int64_t>( sp_offset - it->sp_offset ) } } );
-						mov->sp_offset = sp_offset;
-						sub->sp_offset = sp_offset;
-						it->sp_offset = sp_offset;
+						( +mov )->sp_offset = sp_offset;
+						( +sub )->sp_offset = sp_offset;
+						( +it )->sp_offset = sp_offset;
 
 						// Replace every read.
 						//
 						for ( size_t index : read_sp )
 						{
-							it->operands[ index ].reg().combined_id = tmp.combined_id;
-							it->operands[ index ].reg().flags = tmp.flags;
+							( +it )->operands[ index ].reg().combined_id = tmp.combined_id;
+							( +it )->operands[ index ].reg().flags = tmp.flags;
 						}
 						
 						// Continue iteration.
@@ -170,7 +166,7 @@ namespace vtil::optimizer
 					// Replace stack pointer offset and continue.
 					//
 					if ( it->sp_offset != sp_offset )
-						it->sp_offset = sp_offset, counter++;
+						( +it )->sp_offset = sp_offset, counter++;
 				}
 				else
 				{

@@ -192,9 +192,9 @@ namespace vtil::optimizer
 				{
 					operand cc_op = op_cc.get();
 					cc_op.reg().bit_count = 1;
-
-					branch->base = &ins::js;
-					branch->operands = {
+					
+					( +branch )->base = &ins::js;
+					( +branch )->operands = {
 						cc_op,
 						dsts[ 0 ].get(),
 						dsts[ 1 ].get()
@@ -212,7 +212,7 @@ namespace vtil::optimizer
 			 branch->operands[ 0 ].is_register() )
 		{
 
-			branch->operands[ 0 ] = { *branch_info.destinations[ 0 ]->get<vip_t>(), 64 };
+			( +branch )->operands[ 0 ] = { *branch_info.destinations[ 0 ]->get<vip_t>(), 64 };
 			cnt++;
 		}
 

@@ -41,7 +41,7 @@ namespace vtil::symbolic
 		{
 			auto& var = exp.uid.get<variable>();
 			if ( var.at.is_valid() )
-				return var.at.container;
+				return var.at.block;
 		}
 
 		// Otherwise try each child.
@@ -113,8 +113,8 @@ namespace vtil::symbolic
 
 							// Determine all paths and path restrict the iterator.
 							//
-							auto& pathset_1 = o1->owner->get_path_bwd( var.at.container, o1 );
-							auto& pathset_2 = o1->owner->get_path_bwd( var.at.container, o2 );
+							auto& pathset_1 = o1->owner->get_path_bwd( var.at.block, o1 );
+							auto& pathset_2 = o1->owner->get_path_bwd( var.at.block, o2 );
 							var.at.is_path_restricted = true;
 
 							// If only one of the paths are valid for backwards iteration:
@@ -272,7 +272,7 @@ namespace vtil::symbolic
 		{
 			// Get calling convention.
 			//
-			call_convention cc = it.container->owner->get_cconv( it->vip );
+			call_convention cc = it.block->owner->get_cconv( it->vip );
 
 			// If variable is a register:
 			//
@@ -299,7 +299,7 @@ namespace vtil::symbolic
 				{
 					// If retval register, indicate read from:
 					//
-					for ( const register_desc& retval : it.container->owner->routine_convention.retval_registers )
+					for ( const register_desc& retval : it.block->owner->routine_convention.retval_registers )
 					{
 						if ( retval.overlaps( reg ) )
 						{
@@ -315,7 +315,7 @@ namespace vtil::symbolic
 
 					// If volatile register, indicate discarded:
 					//
-					for ( const register_desc& retval : it.container->owner->routine_convention.volatile_registers )
+					for ( const register_desc& retval : it.block->owner->routine_convention.volatile_registers )
 					{
 						if ( retval.overlaps( reg ) )
 						{
@@ -406,13 +406,13 @@ namespace vtil::symbolic
 
 				// If vmexit, declared trashed if below or at the shadow space:
 				//
-				if ( it->base == &ins::vexit ? it.container->owner->routine_convention.purge_stack : cc.purge_stack )
+				if ( it->base == &ins::vexit ? it.block->owner->routine_convention.purge_stack : cc.purge_stack )
 				{
 					// Determine the limit of the stack memory owned by this routine.
 					//
 					expression limit = 
 						tracer->trace( { it, REG_SP } ) + 
-						it.container->sp_offset + 
+						it.block->sp_offset + 
 						cc.shadow_space;
 
 					// Calculate the displacement, if constant below 0, declare trashed.
@@ -591,13 +591,13 @@ namespace vtil::symbolic
 
 		// Append the block identifier.
 		//
-		base = format::str( "%s#0x%llx", base, at.container->entry_vip );
+		base = format::str( "%s#0x%llx", base, at.block->entry_vip );
 
 		// Append the stream index and return.
 		//
 		if ( at.is_begin() )    return base + "?";
 		else if ( at.is_end() ) return base + "*";
-		else                    return base + "." + std::to_string( std::distance( at.container->begin(), at ) );
+		else                    return base + "." + std::to_string( std::distance( at.block->begin(), at ) );
 	}
 
 	// Packs all the variables in the expression where it'd be optimal.

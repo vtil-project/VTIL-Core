@@ -208,7 +208,7 @@ namespace vtil
 					warning(
 						"Local variable %s is used before value assignment (Block %x).\n",
 						var,
-						var.at.container->entry_vip
+						var.at.block->entry_vip
 					);
 				}
 
@@ -265,8 +265,8 @@ namespace vtil
 
             // If we are tracing the value of RSP, add the stack pointer delta between blocks.
             //
-            if ( var.is_register() && var.reg().is_stack_pointer() && it.container->sp_offset )
-                var_traced = var_traced + it.container->sp_offset;
+            if ( var.is_register() && var.reg().is_stack_pointer() && it.block->sp_offset )
+                var_traced = var_traced + it.block->sp_offset;
 			return var_traced;
 		} );
 
@@ -322,17 +322,17 @@ namespace vtil
 
 				// For each path:
 				//
-				bool potential_loop = true;// it_list.size() > 1 || it_list[ 0 ].container == lookup.at.container; // TODO: Fix
+				bool potential_loop = true;// it_list.size() > 1 || it_list[ 0 ].block == lookup.at.block; // TODO: Fix
 				for ( auto& it : it_list )
 				{
 					// If we've taken this path more than twice, skip it.
 					//
-					if ( !potential_loop || prev_link.count( lookup.at.container, it.container ) >= 2 )
+					if ( !potential_loop || prev_link.count( lookup.at.block, it.block ) >= 2 )
 					{
 #if VTIL_OPT_TRACE_VERBOSE
 						// Log skipping of path.
 						//
-						log<CON_CYN>( "Path [%llx->%llx] is not taken as it's n-looping.\n", lookup.at.container->entry_vip, it.container->entry_vip );
+						log<CON_CYN>( "Path [%llx->%llx] is not taken as it's n-looping.\n", lookup.at.block->entry_vip, it.block->entry_vip );
 #endif
 						continue;
 					}
@@ -340,7 +340,7 @@ namespace vtil
 #if VTIL_OPT_TRACE_VERBOSE
 					// Log tracing of path.
 					//
-					log<CON_YLW>( "Taking path [%llx->%llx]\n", lookup.at.container->entry_vip, it.container->entry_vip );
+					log<CON_YLW>( "Taking path [%llx->%llx]\n", lookup.at.block->entry_vip, it.block->entry_vip );
 #endif
 					// Propagate each variable onto to the destination block, if total fail, skip path.
 					//
@@ -349,7 +349,7 @@ namespace vtil
 						exp,
 						it,
 						tracer,
-						potential_loop ? path_entry{ .prev = &prev_link, .src = lookup.at.container, .dst = it.container } : prev_link,
+						potential_loop ? path_entry{ .prev = &prev_link, .src = lookup.at.block, .dst = it.block } : prev_link,
 						limit
 					);
 					if ( total_fail )

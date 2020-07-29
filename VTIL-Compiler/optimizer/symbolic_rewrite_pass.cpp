@@ -68,9 +68,8 @@ namespace vtil::optimizer
 
 		// Allocate a temporary block.
 		//
-		basic_block temporary_block;
+		basic_block temporary_block = { blk->owner, blk->entry_vip };
 		temporary_block.last_temporary_index = blk->last_temporary_index;
-		temporary_block.owner = blk->owner;
 
 		for ( il_const_iterator it = blk->begin(); !it.is_end(); )
 		{
@@ -149,7 +148,7 @@ namespace vtil::optimizer
 						register_desc ks = k;
 						ks.bit_offset += i;
 						ks.bit_count = 1;
-						instruction_buffer.push_back( { &ins::mov, { ks, translator << sv } } );
+						instruction_buffer.emplace_back( &ins::mov, ks, translator << sv );
 					}
 					continue;
 				}
@@ -164,7 +163,7 @@ namespace vtil::optimizer
 
 				// Buffer a mov instruction.
 				//
-				instruction_buffer.push_back( { &ins::mov, { k, translator << v } } );
+				instruction_buffer.emplace_back( &ins::mov, k, translator << v );
 			}
 
 			// For each memory state:
@@ -208,11 +207,10 @@ namespace vtil::optimizer
 				{
 					// Buffer a str $sp, c, value.
 					//
-					instruction_buffer.push_back(
-					{
+					instruction_buffer.emplace_back(
 						&ins::str,
-						{ REG_SP, make_imm<int64_t>( *displacement ), translator << v }
-					} );
+						REG_SP, make_imm<int64_t>( *displacement ), translator << v
+					);
 				}
 				else
 				{
@@ -243,31 +241,30 @@ namespace vtil::optimizer
 					if ( base.is_immediate() )
 					{
 						operand tmp = temporary_block.tmp( base.bit_count() );
-						instruction_buffer.push_back( { &ins::mov, { tmp, base } } );
+						instruction_buffer.emplace_back( &ins::mov, tmp, base );
 						base = tmp;
 					}
 
 					// Buffer a str <ptr>, 0, value.
 					//
-					instruction_buffer.push_back(
-					{
+					instruction_buffer.emplace_back(
 						&ins::str,
-						{ base, make_imm( offset ), translator << v }
-					} );
+						base, make_imm( offset ), translator << v
+					);
 				}
 			}
 
 			// Emit entire buffer.
 			//
 			for ( auto& ins : instruction_buffer )
-				temporary_block.push_back( std::move( ins ) );
+				temporary_block.emplace_back( std::move( ins ) );
 
 			// If halting instruction is not at the end of the block, add to temporary block
 			// and continue from the next instruction.
 			//
 			if ( !limit.is_end() )
 			{
-				temporary_block.stream.emplace_back( *limit );
+				temporary_block.np_emplace_back( *limit );
 				it = std::next( limit );
 				temporary_block.sp_index = it.is_end() ? blk->sp_index : it->sp_index;
 			}
@@ -290,16 +287,16 @@ namespace vtil::optimizer
 
 		// Skip rewriting if we produced larger code.
 		//
-		int64_t opt_count = blk->stream.size() - temporary_block.stream.size();
+		int64_t opt_count = blk->size() - temporary_block.size();
 		if ( opt_count <= 0 )
 		{
 			if ( !force ) return 0;
 			opt_count = 0;
 		}
 
-		// Acquire a unique lock and rewrite the stream. 
+		// Rewrite the stream. 
 		//
-		blk->stream = temporary_block.stream;
+		blk->assign( temporary_block );
 		blk->last_temporary_index = temporary_block.last_temporary_index;
 		return opt_count;
 	}

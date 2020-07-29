@@ -45,10 +45,10 @@ namespace vtil::symbolic
 	//
 	inline const il_const_iterator free_form_iterator = [ ] ()
 	{
-		// Create a dummy invalid block with an invalid instruction and reference it.
+		// Create a dummy block with a nop and reference it.
 		//
-		static basic_block dummy_block{ .stream = { instruction{} } };
-		return dummy_block.begin();
+		static basic_block dummy_block{ nullptr, 0 };
+		return dummy_block.emplace( dummy_block.begin(), &ins::nop );
 	}();
 
 	// Structure describing how an instruction accesses a variable.
@@ -189,7 +189,7 @@ namespace vtil::symbolic
 
 		// Declare reduction.
 		//
-		REDUCE_TO( at.container, at.is_end() ? nullptr : at.operator->(), descriptor, is_branch_dependant );
+		REDUCE_TO( at.block, at.entry, descriptor, is_branch_dependant );
 
 		// Packs all the variables in the expression where it'd be optimal.
 		//

@@ -26,7 +26,6 @@
 // POSSIBILITY OF SUCH DAMAGE.        
 //
 #include "stack_propagation_pass.hpp"
-#include <vtil/query>
 #include "../common/auxiliaries.hpp"
 
 namespace vtil::optimizer
@@ -88,21 +87,17 @@ namespace vtil::optimizer
 		std::vector<std::tuple<il_iterator, const instruction_desc*, operand>> ins_swap_buffer;
 		std::vector<std::tuple<il_iterator, const instruction_desc*, symbolic::variable>> ins_revive_swap_buffer;
 
-		// => Begin a foward iterating query.
+		// For each instruction:
 		//
-		query::create( blk->begin(), +1 )
+		for ( auto it = blk->begin(); !it.is_end(); it++ )
+		{
+			// Skip volatile instructions.
+			//
+			if ( it->is_volatile() ) continue;
 
-			// >> Skip volatile instructions.
-			.where( [ ] ( instruction& ins ) { return !ins.is_volatile(); } )
-		
-			// | Filter to LDD instructions referencing stack:
-			.where( [ ] ( instruction& ins ) { return ins.base == &ins::ldd && ins.memory_location().first.is_stack_pointer(); } )
-
-			// := Project back to iterator type.
-			.unproject()
-		
-			// @ For each:
-			.for_each( [ & ] ( const il_iterator& it )
+			// Filter to LDD instructions referencing stack:
+			//
+			if ( it->base == &ins::ldd && it->memory_location().first.is_stack_pointer() )
 			{
 				auto resize_and_pack = [ & ] ( symbolic::expression::reference& exp )
 				{
@@ -143,7 +138,7 @@ namespace vtil::optimizer
 					//
 					else
 					{
-						return;
+						continue;
 					}
 				}
 
@@ -160,12 +155,12 @@ namespace vtil::optimizer
 				else
 				{
 					fassert( exp->is_variable() );
-				
+
 					// Skip if not a register or branch dependant.
 					//
 					symbolic::variable rvar = exp->uid.get<symbolic::variable>();
 					if ( rvar.is_branch_dependant || !rvar.is_register() )
-						return;
+						continue;
 
 					// If value is not alive, try hijacking the value declaration.
 					//
@@ -178,12 +173,12 @@ namespace vtil::optimizer
 							// If begin (begin&&end == invalid), fail.
 							//
 							if ( rvar.at.is_begin() )
-								return;
+								continue;
 
 							// Try determining the path to current block.
 							//
 							il_const_iterator it_rstr = rvar.at;
-							it_rstr.restrict_path( it.container, true );
+							it_rstr.restrict_path( it.block, true );
 							std::vector<il_const_iterator> next = it_rstr.recurse( true );
 
 							// If single direction possible, replace iterator, otherwise fail.
@@ -191,7 +186,7 @@ namespace vtil::optimizer
 							if ( next.size() == 1 )
 								rvar.bind( next[ 0 ] );
 							else
-								return;
+								continue;
 						}
 
 						// Push to swap buffer.
@@ -205,8 +200,8 @@ namespace vtil::optimizer
 						ins_swap_buffer.emplace_back( it, new_instruction, operand{ rvar.reg() } );
 					}
 				}
-			});
-
+			}
+		}
 
 		// Acquire lock and swap all instructions at once.
 		//
@@ -215,13 +210,13 @@ namespace vtil::optimizer
 
 		for ( auto [it, ins, op] : ins_swap_buffer )
 		{
-			it->base = ins;
-			it->operands = { it->operands[ 0 ], op };
+			( +it )->base = ins;
+			( +it )->operands = { it->operands[ 0 ], op };
 			it->is_valid( true );
 		}
 		for ( auto [it, ins, var] : ins_revive_swap_buffer )
 		{
-			it->base = ins;
+			( +it )->base = ins;
 
 			register_desc rev;
 			if ( auto i2 = xblock ? revive_list.find( var ) : revive_list.end(); i2 != revive_list.end() )
@@ -229,7 +224,7 @@ namespace vtil::optimizer
 			else
 				rev = aux::revive_register( var, it );
 
-			it->operands = { it->operands[ 0 ], rev };
+			( +it )->operands = { it->operands[ 0 ], rev };
 			it->is_valid( true );
 		}
 		return ins_swap_buffer.size() + ins_revive_swap_buffer.size();

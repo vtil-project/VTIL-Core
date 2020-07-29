@@ -26,7 +26,6 @@
 // POSSIBILITY OF SUCH DAMAGE.        
 //
 #include "dead_code_elimination_pass.hpp"
-#include <vtil/query>
 #include <vtil/utility>
 #include "../common/auxiliaries.hpp"
 
@@ -52,7 +51,7 @@ namespace vtil::optimizer
 	{
 		size_t counter = 0;
 
-		if ( blk->stream.empty() )
+		if ( blk->empty() )
 			return 0;
 
 		auto [rbegin, rend] = reverse_iterators( *blk );
@@ -101,8 +100,8 @@ namespace vtil::optimizer
 			//
 			if ( !used )
 			{
-				it->base = &ins::nop;
-				it->operands = {};
+				( +it )->base = &ins::nop;
+				( +it )->operands = {};
 				counter++;
 			}
 		}
@@ -115,7 +114,7 @@ namespace vtil::optimizer
 
 		// Remove all nops.
 		//
-		for ( auto it = blk->begin(); it != blk->end(); )
+		for ( auto it = blk->begin(); !it.is_end(); )
 		{
 			if ( !it->is_volatile() && it->base == &ins::nop )
 				it = blk->erase( it );

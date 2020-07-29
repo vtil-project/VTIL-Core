@@ -374,8 +374,6 @@ namespace vtil
 				return { register_physical | register_flags,         0, size * 8, offset * 8            };
 			else
 				return { register_physical, ( uint64_t ) base, size * 8, offset * 8, architecture_arm64 };
-			
-			
 		}
 	};
 

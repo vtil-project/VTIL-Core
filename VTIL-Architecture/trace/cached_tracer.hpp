@@ -96,7 +96,7 @@ namespace vtil
         {
             for ( auto it = cache.begin(); it != cache.end(); )
             {
-                if ( it->first.at.container == blk )
+                if ( it->first.at.block == blk )
                     it = cache.erase( it );
                 else
                     it++;

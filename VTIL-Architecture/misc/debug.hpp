@@ -106,7 +106,7 @@ namespace vtil::debug
 		using namespace vtil::logger;
 		scope_padding _p( 4 );
 
-		bool blk_visited = visited ? visited->find( blk ) != visited->end() : false;
+		bool blk_visited = visited ? visited->contains( blk ) : false;
 
 		auto end_with_bool = [ ] ( bool b )
 		{
@@ -132,7 +132,7 @@ namespace vtil::debug
 		//
 		int ins_idx = 0;
 		bool no_disasm = false;
-		for ( auto it = blk->begin(); it != blk->end(); it++, ins_idx++ )
+		for ( auto it = blk->begin(); !it.is_end(); ++it, ins_idx++ )
 		{
 			// If vemit, try to disassmble if not done already.
 			//
@@ -141,7 +141,7 @@ namespace vtil::debug
 				if ( !no_disasm )
 				{
 					std::vector<uint8_t> bytes;
-					for ( auto it2 = it; it2 != blk->end(); it2++ )
+					for ( auto it2 = it; !it2.is_end(); it2++ )
 					{
 						if ( it2->base->name != "vemit" )
 							break;
@@ -151,7 +151,7 @@ namespace vtil::debug
 
 					if ( bytes.size() )
 					{
-						if ( it.container->owner->arch_id == architecture_amd64 )
+						if ( it.block->owner->arch_id == architecture_amd64 )
 						{
 							auto dasm = amd64::disasm( bytes.data(), it->vip == invalid_vip ? 0 : it->vip, bytes.size() );
 							for ( auto& ins : dasm )

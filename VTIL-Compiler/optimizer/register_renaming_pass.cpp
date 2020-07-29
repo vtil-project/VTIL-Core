@@ -28,7 +28,6 @@
 #include "register_renaming_pass.hpp"
 #include <vtil/symex>
 #include <algorithm>
-#include <vtil/query>
 #include "../common/auxiliaries.hpp"
 
 namespace vtil::optimizer
@@ -70,129 +69,112 @@ namespace vtil::optimizer
 			// Path restrict iterator if not cross-block.
 			//
 			if( !xblock ) it.restrict_path();
-
-			// Allocate fail and value mask.
+			
+			// Iterate backwards:
 			//
-			bool failed = false;
-			uint64_t mask = math::fill( it->operands[ 1 ].reg().bit_count );
-
-			const auto fail = [ & ] ()
+			std::unordered_set<il_iterator, hasher<>> pending, results;
+			auto fail = [ & ] () { pending.insert( {} ); return enumerator::obreak_r; };
+			it.block->owner->enumerate_bwd( [ &, mask = math::fill( it->operands[ 1 ].reg().bit_count ), lpending = il_iterator{} ]( const il_iterator& i ) mutable
 			{
-				failed = true;
-				query::rlocal( mask ) = 0;
-				return true;
-			};
+				// Clear pending if relevant.
+				//
+				if ( lpending.is_valid() )
+					pending.erase( possess_value( lpending ) );
 
-			// => Begin backwards recursive query:
-			//
-			auto res = query::create_recursive( it, -1 )
-				// @ Bind the mask to recursive path.
-				.bind( mask )
-				// := Unproject to iterator form.
-				.unproject()
-				// >> Skip until value is overwritten.
-				.where( [ & ] ( const il_iterator& i ) 
-				{
-					// If we're at a branch, validate is_used again.
-					//
-					if ( i->base->is_branching() && i.container->next.size() != 1 )
-						if ( aux::is_used( src.bind( i ), xblock, &tracer ) )
-							return fail();
-
-					// If it does not access source, skip.
-					//
-					if ( auto details = src.accessed_by( i, nullptr ) )
-					{
-						// If unknown access, fail.
-						//
-						if ( details.is_unknown() )
-							return fail();
-
-						// If out-of-bounds access, fail.
-						//
-						if ( details.bit_offset < 0 || ( details.bit_count + details.bit_offset ) > it->operands[ 1 ].reg().bit_count )
-							return fail();
-
-						// If source is being overwritten, clear the mask.
-						//
-						if ( details.write && !details.read )
-							query::rlocal( mask ) &= ~math::fill( details.bit_count, details.bit_offset );
-
-						// If source is being accessed by a volatile instruction, fail.
-						//
-						if ( i->is_volatile() )
-							return fail();
-					}
-
-					// If destination is used by the instruction, fail.
-					// Can be ignored if mask is cleared.
-					//
-					if ( dst.accessed_by( i, nullptr ) && query::rlocal( mask ) )
+				// If we're at a branch, validate is_used again.
+				//
+				if ( i->base->is_branching() && i.block->next.size() != 1 )
+					if ( aux::is_used( src.bind( i ), xblock, &tracer ) )
 						return fail();
 
-					// Skip if mask is not cleared.
+				// If it does not access source, skip.
+				//
+				if ( auto details = src.accessed_by( i, nullptr ) )
+				{
+					// If unknown access, fail.
 					//
-					if ( query::rlocal( mask ) )
-						return false;
+					if ( details.is_unknown() )
+						return fail();
 
-					// If dst is used after this point, fail.
+					// If out-of-bounds access, fail.
 					//
-					return aux::is_used( dst.bind( i ), xblock, nullptr ) ? fail() : true;
-				} )
-				.first();
+					if ( details.bit_offset < 0 || ( details.bit_count + details.bit_offset ) > it->operands[ 1 ].reg().bit_count )
+						return fail();
 
-			// If query failed or returned cross-block iterator for local register, skip.
+					// If source is being overwritten, clear the mask.
+					//
+					if ( details.write && !details.read )
+						mask &= ~math::fill( details.bit_count, details.bit_offset );
+
+					// If source is being accessed by a volatile instruction, fail.
+					//
+					if ( i->is_volatile() )
+						return fail();
+				}
+
+				// If destination is used by the instruction, fail.
+				// Can be ignored if mask is cleared.
+				//
+				if ( dst.accessed_by( i, nullptr ) && mask )
+					return fail();
+
+				// Skip if mask is not cleared.
+				//
+				if ( mask )
+				{
+					// If at begin, add to pending.
+					//
+					pending.insert( i );
+					lpending = i;
+					return enumerator::ocontinue;
+				}
+
+				// If dst is used after this point, fail.
+				//
+				results.insert( i );
+				return aux::is_used( dst.bind( i ), xblock, nullptr ) ? fail() : enumerator::obreak;
+			}, dst.reg().is_local() ? it.restrict_path() : it );
+
+			// If query failed, skip.
 			//
-			if ( failed || ( dst.reg().is_local() && res.paths.size() ) )
+			if ( !pending.empty() || results.empty() )
 				continue;
 
-			// If results counts are as expected:
+			// For each edge node:
 			//
-			if ( res.count_paths() == res.flatten( true ).result.size() && !res.result.empty() )
+			for ( il_iterator it_begin : results )
 			{
-				// For each edge node:
+				// Restrict iterator path and iterate forward.
 				//
-				for ( auto& it_begin : res.result )
+				it_begin.restrict_path( it.block, true );
+				it.block->owner->enumerate( [ & ] ( const il_iterator& it )
 				{
-					// Restrict iterator paths.
+					// Iterate each operand:
 					//
-					it_begin.clear_restrictions();
-					it_begin.restrict_path( it.container, true );
+					for ( auto& op : ( +it )->operands )
+					{
+						// Skip if not register or not overlapping with source.
+						//
+						if ( !op.is_register() ) continue;
+						auto& reg = op.reg();
+						if ( !reg.overlaps( src.reg() ) ) continue;
 
-					// => Begin forwards recursive query:
-					//
-					query::create_recursive( it_begin, +1 )
-						// >> Iterate until the origin instruction is hit.
-						.until( it )
-						// @ For each instruction:
-						.for_each( [ & ] ( instruction& ins )
-						{
-							// Iterate each operand:
-							//
-							for ( auto& op : ins.operands )
-							{
-								// Skip if not register or not overlapping with source.
-								//
-								if ( !op.is_register() ) continue;
-								auto& reg = op.reg();
-								if ( !reg.overlaps( src.reg() ) ) continue;
+						// Swap with destination register.
+						//
+						reg.combined_id = dst.reg().combined_id;
+						reg.flags = dst.reg().flags;
+						reg.bit_offset += dst.reg().bit_offset - src.reg().bit_offset;
+					}
+					( +it )->is_valid( true );
 
-								// Swap with destination register.
-								//
-								reg.combined_id = dst.reg().combined_id;
-								reg.flags = dst.reg().flags;
-								reg.bit_offset += dst.reg().bit_offset - src.reg().bit_offset;
-							}
-							ins.is_valid( true );
-						} );
+				}, it_begin, it );
 
-					// Nop the origin instruction.
-					//
-					it->base = &ins::nop;
-					it->operands = {};
-					cnt++;
-					tracer.flush();
-				}
+				// Nop the origin instruction.
+				//
+				( +it )->base = &ins::nop;
+				( +it )->operands = {};
+				cnt++;
+				tracer.flush();
 			}
 		}
 

@@ -26,7 +26,6 @@
 // POSSIBILITY OF SUCH DAMAGE.        
 //
 #include "mov_propagation_pass.hpp"
-#include <vtil/query>
 #include "../common/auxiliaries.hpp"
 
 namespace vtil::optimizer
@@ -108,7 +107,7 @@ namespace vtil::optimizer
 
 		// Iterate each instruction:
 		//
-		for ( auto it = blk->begin(); it != blk->end(); it++ )
+		for ( auto it = blk->begin(); !it.is_end(); it++ )
 		{
 			// Skip if volatile.
 			//
@@ -117,7 +116,7 @@ namespace vtil::optimizer
 
 			// Enumerate each operand:
 			//
-			for ( auto [op, type] : it->enum_operands() )
+			for ( auto [op, type] : ( +it )->enum_operands() )
 			{
 				// Skip if being written to or if immediate.
 				//

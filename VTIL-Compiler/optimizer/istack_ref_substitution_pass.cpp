@@ -26,7 +26,6 @@
 // POSSIBILITY OF SUCH DAMAGE.        
 //
 #include "istack_ref_substitution_pass.hpp"
-#include <vtil/query>
 
 namespace vtil::optimizer 
 {
@@ -37,21 +36,17 @@ namespace vtil::optimizer
 		size_t counter = 0;
 		cached_tracer ctrace = {};
 
-		// => Begin a foward iterating query.
+		// For each instruction:
 		//
-		query::create( blk->begin(), + 1 )
+		for ( auto it = blk->begin(); !it.is_end(); it++ )
+		{
+			// Skip volatile instructions.
+			//
+			if ( it->is_volatile() ) continue;
 
-			// >> Skip volatile instructions.
-			.where( [ ] ( instruction& ins ) { return !ins.is_volatile(); } )
-
-			// | Filter to instructions that operate with non-sp based pointers.
-			.where( [ ] ( instruction& ins ) { return ins.base->accesses_memory() && !ins.memory_location().first.is_stack_pointer(); } )
-
-			// := Project back to iterator type.
-			.unproject()
-
-			// @ For each:
-			.for_each( [ & ] ( const il_iterator& it )
+			// Filter to instructions that operate with non-sp based pointers.
+			//
+			if ( it->base->accesses_memory() && !it->memory_location().first.is_stack_pointer() )
 			{
 				// Try to simplify pointer to SP + C.
 				//
@@ -61,15 +56,16 @@ namespace vtil::optimizer
 				//
 				if ( auto stack_offset = delta.get<int64_t>() )
 				{
-					it->operands[ it->base->memory_operand_index ] = { REG_SP };
-					it->operands[ it->base->memory_operand_index + 1 ].imm().i64 += *stack_offset;
+					( +it )->operands[ it->base->memory_operand_index ] = { REG_SP };
+					( +it )->operands[ it->base->memory_operand_index + 1 ].imm().i64 += *stack_offset;
 
 					// Validate modification and increment counter.
 					//
 					it->is_valid( true );
 					counter++;
 				}
-			} );
+			}
+		}
 		return counter;
 	}
 }

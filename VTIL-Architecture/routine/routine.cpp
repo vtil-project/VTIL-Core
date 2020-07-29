@@ -155,13 +155,6 @@ namespace vtil
 		//
 		std::lock_guard g{ this->mutex };
 
-		// Assert that links are nullified.
-		//
-		for ( auto nxt : block->next )
-			fassert( std::find( nxt->prev.begin(), nxt->prev.end(), block ) == nxt->prev.end() );
-		for ( auto nxt : block->prev )
-			fassert( std::find( nxt->next.begin(), nxt->next.end(), block ) == nxt->next.end() );
-
 		// Enumerate both forwards and backwards caches.
 		//
 		for ( auto& cache : path_cache )
@@ -258,26 +251,25 @@ namespace vtil
 		//
 		std::lock_guard g{ this->mutex };
 
-		for ( auto [vip, block] : explored_blocks )
-			delete block;
+		for ( auto& [vip, block] : explored_blocks )
+		{
+			block->next.clear();
+			block->prev.clear();
+			delete std::exchange( block, nullptr );
+		}
 	}
 
 	// Clones the routine and it's every block.
 	//
 	routine* routine::clone() const
 	{
-		routine* copy = new routine{ this->arch_id };
-
 		// Acquire the routine mutex.
 		//
 		std::lock_guard g{ this->mutex };
 
-		// Copy the context data.
-		//
-		copy->context = this->context;
-
 		// Copy calling conventions.
 		//
+		routine* copy = new routine{ this->arch_id };
 		copy->routine_convention = this->routine_convention;
 		copy->subroutine_convention = this->subroutine_convention;
 		copy->spec_subroutine_conventions = this->spec_subroutine_conventions;

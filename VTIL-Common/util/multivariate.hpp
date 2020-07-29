@@ -119,8 +119,6 @@ namespace vtil
 			else
 				return ref;
 		}
-		template<typename T>
-		auto& get() { return make_const( this )->template get<T>(); }
 
 		// Allows for convinient use of the type in the format of:
 		// - block_cache& cache = multivariate;

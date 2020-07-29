@@ -52,7 +52,7 @@ namespace vtil
 				{
 					if ( it.is_begin() )
 					{
-						links = &it.container->prev;
+						links = &it.block->prev;
 						break;
 					}
 					--it;
@@ -77,7 +77,7 @@ namespace vtil
 					++it;
 					if ( it.is_end() )
 					{
-						links = &it.container->next;
+						links = &it.block->next;
 						break;
 					}
 				}
@@ -134,13 +134,13 @@ namespace vtil
 		const path_set* set_allowed;
 		if ( dst.is_valid() )
 		{
-			set_allowed = &src.container->owner->get_path( src.container, dst.container );
+			set_allowed = &src.block->owner->get_path( src.block, dst.block );
 			set.reserve( set_allowed->size() );
 		}
 		else
 		{
 			set_allowed = nullptr;
-			set.reserve( src.container->owner->num_blocks() );
+			set.reserve( src.block->owner->num_blocks() );
 		}
 
 		// Declare visitor and check if we have a path from dst to src if constraint.
@@ -179,13 +179,13 @@ namespace vtil
 		const path_set* set_allowed;
 		if ( dst.is_valid() )
 		{
-			set_allowed = &src.container->owner->get_path_bwd( src.container, dst.container );
+			set_allowed = &src.block->owner->get_path_bwd( src.block, dst.block );
 			set.reserve( set_allowed->size() );
 		}
 		else
 		{
 			set_allowed = nullptr;
-			set.reserve( src.container->owner->num_blocks() );
+			set.reserve( src.block->owner->num_blocks() );
 		}
 		
 		// Declare visitor and check if we have a path from dst to src if constraint.

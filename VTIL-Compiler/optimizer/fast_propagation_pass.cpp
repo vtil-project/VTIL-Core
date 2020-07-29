@@ -27,7 +27,6 @@
 //
 #include "fast_propagation_pass.hpp"
 #include "fast_dead_code_elimination_pass.hpp"
-#include <vtil/query>
 #include "../common/auxiliaries.hpp"
 
 namespace vtil::optimizer
@@ -39,7 +38,7 @@ namespace vtil::optimizer
 		std::unordered_map<register_id, operand> reg_cache;
 		for ( auto it = blk->begin(); !it.is_end(); )
 		{
-			auto& ins = *it;
+			auto& ins = *+it;
 			++it;
 
 			// Check register reads and propagate if necessary.
@@ -135,7 +134,7 @@ namespace vtil::optimizer
 		std::unordered_map<register_id, std::unordered_map<int64_t, std::vector<store_descriptor>>> aligned_mem_cache;
 		for ( auto it = blk->begin(); !it.is_end(); )
 		{
-			auto& ins = *it;
+			auto& ins = *+it;
 			++it;
 
 			// If this instruction writes to memory, check for alignment and set cache.

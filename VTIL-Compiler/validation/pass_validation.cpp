@@ -290,11 +290,11 @@ namespace vtil::optimizer::validation
 			{
 				// If we have a single continue destination (VXCALL), fix iterator and the stack, continue.
 				//
-				size_t num_continue_dst = lim.container->next.size();
+				size_t num_continue_dst = lim.block->next.size();
 				if ( num_continue_dst == 1 )
 				{
-					it = lim.container->next[ 0 ]->begin();
-					vm.write_register( REG_SP, vm.read_register( REG_SP ) + lim.container->sp_offset );
+					it = lim.block->next[ 0 ]->begin();
+					vm.write_register( REG_SP, vm.read_register( REG_SP ) + lim.block->sp_offset );
 					continue;
 				}
 				// If we've reached the end of the routine (VEXIT), signal success if all actions are complete, or fail.
@@ -339,7 +339,7 @@ namespace vtil::optimizer::validation
 				// Fix iterator and the stack, continue.
 				//
 				it = eit->second->begin();
-				vm.write_register( REG_SP, vm.read_register( REG_SP ) + lim.container->sp_offset );
+				vm.write_register( REG_SP, vm.read_register( REG_SP ) + lim.block->sp_offset );
 				continue;
 			}
 
