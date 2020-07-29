@@ -205,10 +205,11 @@ namespace vtil::optimizer::aux
 
 		// Invoke the enumerator.
 		//
+		auto it = var.at;
+		if ( is_restricted ) it.restrict_path();
 		var.at.block->owner->enumerate(
 			enumerator,
-			var.at,
-			rec ? il_const_iterator{} : var.at.block->end()
+			it
 		);
 
 		// If found an instruction reading the value, indicate so.
