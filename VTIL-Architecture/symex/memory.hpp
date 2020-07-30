@@ -67,13 +67,15 @@ namespace vtil::symbolic
 		size_t size() const { return value_map.size(); }
 		void reset() { value_map.clear(); }
 
-		// Checks if the symbolic memory contains any writes to the given memory region.
-		//
-		trilean contains( const pointer& ptr, bitcnt_t size ) const;
+		// Returns the mask of known/unknown bits of the given region, if alias failure occurs returns nullopt.
+		// 
+		std::optional<uint64_t> known_mask( const pointer& ptr, bitcnt_t size ) const;
+		std::optional<uint64_t> unknown_mask( const pointer& ptr, bitcnt_t size ) const;
 
 		// Reads N bits from the given pointer, returns null reference if alias failure occurs.
+		// - Will output the mask of bits contained in the state into contains if it does not fail.
 		//
-		expression::reference read( const pointer& ptr, bitcnt_t size, const il_const_iterator& reference_iterator = symbolic::free_form_iterator ) const;
+		expression::reference read( const pointer& ptr, bitcnt_t size, const il_const_iterator& reference_iterator = symbolic::free_form_iterator, uint64_t* contains = nullptr ) const;
 
 		// Writes the given value to the pointer, returns null reference if alias failure occurs.
 		//

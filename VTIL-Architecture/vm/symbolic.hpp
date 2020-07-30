@@ -66,7 +66,7 @@ namespace vtil
 		//
 		symbolic::expression::reference read_memory( const symbolic::expression::reference& pointer, size_t byte_count ) override
 		{
-			return memory_state.read( pointer, math::narrow_cast< bitcnt_t >( byte_count * 8 ), reference_iterator );
+			return memory_state.read( pointer, math::narrow_cast<bitcnt_t>( byte_count * 8 ), reference_iterator );
 		}
 		
 		// Writes the given expression to the memory.

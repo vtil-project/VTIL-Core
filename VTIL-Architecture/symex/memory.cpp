@@ -30,15 +30,22 @@
 
 namespace vtil::symbolic
 {
-	// Checks if the symbolic memory contains any writes to the given memory region.
+	// Returns the mask of known/unknown bits of the given region, if alias failure occurs returns nullopt.
 	//
-	trilean memory::contains( const pointer& ptr, bitcnt_t size ) const
+	std::optional<uint64_t> memory::known_mask( const pointer& ptr, bitcnt_t size ) const
 	{
-		uint64_t mask_value = math::fill( size );
+		if ( auto value = unknown_mask( ptr, size ) )
+			return math::fill( size ) & ~*value;
+		else
+			return std::nullopt;
+	}
+	std::optional<uint64_t> memory::unknown_mask( const pointer& ptr, bitcnt_t size ) const
+	{
+		uint64_t mask_pending = math::fill( size );
 
 		// For each entry, iterating backwards:
 		//
-		for ( auto it = value_map.rbegin(); it != value_map.rend(); it++ )
+		for ( auto it = value_map.rbegin(); it != value_map.rend() && mask_pending; it++ )
 		{
 			// If pointer cannot overlap lookup, skip.
 			//
@@ -49,25 +56,25 @@ namespace vtil::symbolic
 			//
 			std::optional byte_distance = it->first - ptr;
 			if ( !byte_distance )
-				return trilean::unknown;
+				return std::nullopt;
 
-			// Calculate relative mask, return true if overlapping.
+			// Calculate relative mask, clear pending mask.
 			//
-			bitcnt_t bit_distance = math::narrow_cast< bitcnt_t >( *byte_distance * 8 );
+			bitcnt_t bit_distance = math::narrow_cast<bitcnt_t>( *byte_distance * 8 );
 			uint64_t relative_mask = math::fill( it->second.size(), bit_distance );
-			if ( relative_mask & mask_value )
-				return true;
+			mask_pending &= ~relative_mask;
 		}
-
-		// None found, return false.
-		//
-		return false;
+		return mask_pending;
 	}
 
 	// Reads N bits from the given pointer, returns null reference if alias failure occurs.
+	// - Will output the mask of bits contained in the state into contains if it does not fail.
 	//
-	expression::reference memory::read( const pointer& ptr, bitcnt_t size, const il_const_iterator& reference_iterator ) const
+	expression::reference memory::read( const pointer& ptr, bitcnt_t size, const il_const_iterator& reference_iterator, uint64_t* contains ) const
 	{
+		uint64_t tmp;
+		if ( !contains ) contains = &tmp;
+
 		uint64_t mask_pending = math::fill( size );
 		stack_vector<std::pair<bitcnt_t, expression::reference>, 8> merge_list;
 
@@ -111,7 +118,8 @@ namespace vtil::symbolic
 
 		// If no overlapping keys found, return default.
 		//
-		if ( merge_list.empty() )
+		*contains = math::fill( size ) & ~mask_pending;
+		if ( !*contains )
 			return MEMORY( reference_iterator )( ptr, size );
 
 		// Declare common bit selector.

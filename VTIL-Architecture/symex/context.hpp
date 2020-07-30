@@ -65,13 +65,15 @@ namespace vtil::symbolic
 		size_t size() const { return value_map.size(); }
 		void reset() { value_map.clear(); }
 
-		// Checks if the symbolic context contains any writes to the given region described by the register desc.
+		// Returns the absolute mask of known/unknown bits of the given register.
 		//
-		bool contains( const register_desc& desc ) const;
+		uint64_t known_mask( const register_desc& desc ) const;
+		uint64_t unknown_mask( const register_desc& desc ) const;
 
 		// Reads the value of the given region described by the register desc.
+		// - Will output the mask of bits contained in the state into contains.
 		//
-		expression::reference read( const register_desc& desc, const il_const_iterator& reference_iterator = symbolic::free_form_iterator ) const;
+		expression::reference read( const register_desc& desc, const il_const_iterator& reference_iterator = symbolic::free_form_iterator, uint64_t* contains = nullptr ) const;
 
 		// Writes the given value to the region described by the register desc.
 		//

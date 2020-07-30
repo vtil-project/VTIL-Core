@@ -30,9 +30,9 @@
 
 namespace vtil::symbolic
 {
-	// Checks if the symbolic context contains any writes to the given region described by the register desc.
+	// Returns the absolute mask of known/unknown bits of the given register.
 	//
-	bool context::contains( const register_desc& desc ) const
+	uint64_t context::known_mask( const register_desc& desc ) const
 	{
 		// If identifier is not in the store, return false.
 		//
@@ -42,27 +42,35 @@ namespace vtil::symbolic
 
 		// Enumerate each bit set within (size+offset, 0]:
 		//
-		bool found = false;
+		uint64_t known_mask = 0;
 		math::bit_enum( it->second.bitmap & math::fill( desc.bit_count + desc.bit_offset ), [ & ] ( bitcnt_t i )
 		{
-			// If value extends into the region, declare found.
+			// If value extends into the region, declare found, set known mask.
 			//
 			const expression::reference& value = it->second.linear_store[ i ];
 			if ( ( value.size() + i ) > desc.bit_offset )
-				found = true;
+				known_mask |= math::fill( value.size(), i );
 		} );
-		return found;
+		return known_mask & desc.get_mask();
+	}
+	uint64_t context::unknown_mask( const register_desc& desc ) const
+	{
+		return desc.get_mask() & ~known_mask( desc );
 	}
 
 	// Reads the value of the given region described by the register desc.
+	//  - Will output the mask of bits contained in the state into contains.
 	//
-	expression::reference context::read( const register_desc& desc, const il_const_iterator& reference_iterator ) const
+	expression::reference context::read( const register_desc& desc, const il_const_iterator& reference_iterator, uint64_t* contains ) const
 	{
+		uint64_t tmp;
+		if ( !contains ) contains = &tmp;
+
 		// If identifier is not in the store, return default.
 		//
 		auto it = value_map.find( desc );
 		if ( it == value_map.end() )
-			return CTX( reference_iterator )[ desc ];
+			return *contains = 0, CTX( reference_iterator )[ desc ];
 
 		// Allocate storage for result and create masks.
 		//
@@ -99,7 +107,8 @@ namespace vtil::symbolic
 
 		// If no bits set in known mask, return default.
 		//
-		if ( !known_mask )
+		*contains = known_mask & read_mask;
+		if ( !*contains )
 			return CTX( reference_iterator )[ desc ];
 
 		// If all bits set in known mask, return as is.
