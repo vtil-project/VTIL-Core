@@ -47,34 +47,8 @@ namespace vtil
 {
 	// Type we describe basic block timestamps in.
 	//
-	struct epoch_t
-	{
-		// 128-bit timestamp.
-		//
-		std::pair<uint64_t, uint64_t> timestamp;
-		constexpr epoch_t( uint64_t a, uint64_t b ) : timestamp( a, b ) {}
-
-		// Increment causes addition with a fast "random".
-		//
-		epoch_t& operator++()
-		{
-			timestamp.first += 1 + ( uint64_t ) _AddressOfReturnAddress();
-			timestamp.second++;
-			return *this;
-		}
-		epoch_t operator++( int ) { epoch_t r = *this; ++( *this ); return r; }
-
-		// String conversion.
-		//
-		std::string to_string() const { return format::str( "%p%p", timestamp.first, timestamp.second ); }
-		
-		// Basic comparison.
-		//
-		constexpr bool operator==( const epoch_t& o ) const { return timestamp == o.timestamp; }
-		constexpr bool operator!=( const epoch_t& o ) const { return timestamp != o.timestamp; }
-		constexpr bool operator< ( const epoch_t& o ) const { return timestamp < o.timestamp; }
-	};
-	static constexpr epoch_t invalid_epoch = { 0xFFFFFFFFFFFFFFFF, 0xFFFFFFFFFFFFFFFF };
+	using epoch_t = uint64_t;
+	static constexpr epoch_t invalid_epoch = ~0;
 
 	// Descriptor for any routine that is being translated.
 	// - Since optimization phase will be done in a single threaded
@@ -323,7 +297,7 @@ namespace vtil
 		// Basic constructor and destructor, should be invoked via ::fork and ::begin, reserved for internal use.
 		//
 		basic_block( routine* owner, vip_t entry_vip ) 
-			: owner( owner ), entry_vip( entry_vip ), epoch{ make_random<uint64_t>(), make_random<uint64_t>() } {}
+			: owner( owner ), entry_vip( entry_vip ), epoch( make_random<uint64_t>() ) {}
 		basic_block( const basic_block& o )
 			: owner( o.owner ), entry_vip( o.entry_vip ), next( o.next ), prev( o.prev ),
 			  sp_index( o.sp_index ), sp_offset( o.sp_offset ), last_temporary_index( o.last_temporary_index ),
@@ -363,7 +337,7 @@ namespace vtil
 
 		// Non-deterministic hashing of the block.
 		//
-		hash_t hash() const { return make_hash( entry_vip, epoch.timestamp, this ); }
+		hash_t hash() const { return make_hash( entry_vip, epoch, this ); }
 
 		// Helpers for the allocation of unique temporary registers.
 		//
@@ -376,10 +350,6 @@ namespace vtil
 		{
 			return std::make_tuple( tmp( size_0 ), tmp( size_n )... );
 		}
-
-		// Checks if basic block is changed since the given epoch.
-		//
-		bool is_changed( const epoch_t& o ) const { return epoch != o; }
 
 		// Generate lazy wrappers for every instruction.
 		//

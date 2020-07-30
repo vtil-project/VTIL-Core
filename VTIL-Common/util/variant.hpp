@@ -36,18 +36,12 @@
 // [Configuration]
 // Determine whether we should use safe variants or not.
 //
-#if defined(_DEBUG) && not defined(VTIL_VARIANT_SAFE)
-	#if defined(_CPPRTTI)
-		#define VTIL_VARIANT_SAFE	_CPPRTTI
-	#elif defined(__GXX_RTTI)
-		#define VTIL_VARIANT_SAFE	__GXX_RTTI
-	#elif defined(__has_feature)
-		#define VTIL_VARIANT_SAFE	__has_feature(cxx_rtti)
+#ifndef VTIL_VARIANT_SAFE
+	#if defined(_DEBUG)
+		#define VTIL_VARIANT_SAFE	HAS_RTTI
 	#else
 		#define VTIL_VARIANT_SAFE	0
 	#endif
-#elif defined(VTIL_VARIANT_SAFE) && VTIL_VARIANT_SAFE
-	#error Debug mode binaries cannot use RTTI based variant safety checks.
 #endif
 
 // [Configuration]

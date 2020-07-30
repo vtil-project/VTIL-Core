@@ -28,6 +28,7 @@
 #pragma once
 #include <type_traits>
 #include <stdint.h>
+#include "intrinsics.hpp"
 
 namespace vtil
 {
@@ -41,6 +42,7 @@ namespace vtil
 		//
 		static size_t calculate()
 		{
+#ifndef HAS_RTTI
 			if constexpr ( !std::is_same_v<T, void> )
 			{
 				// Calculate the distance between the reference point of this type
@@ -51,6 +53,9 @@ namespace vtil
 				return ( size_t ) ( ( 0x47C63F4156E0EA7F ^ reloc_delta ) * ( sizeof( T ) + reloc_delta | 3 ) );
 			}
 			return ( size_t ) -1;
+#else
+			return typeid( T ).hash_code();
+#endif
 		}
 	public:
 		// Stores the computed hash at process initialization time.

@@ -50,18 +50,6 @@
 	#define VTIL_FMT_DEFINED
 #endif
 
-// Determine RTTI support.
-//
-#if defined(_CPPRTTI)
-	#define HAS_RTTI	_CPPRTTI
-#elif defined(__GXX_RTTI)
-	#define HAS_RTTI	__GXX_RTTI
-#elif defined(__has_feature)
-	#define HAS_RTTI	__has_feature(cxx_rtti)
-#else
-	#define HAS_RTTI	0
-#endif
-
 namespace vtil::format
 {
 	namespace impl
@@ -71,9 +59,9 @@ namespace vtil::format
 		template<typename T>
 		static T* buffer_string( std::basic_string<T>&& value )
 		{
-			static thread_local std::basic_string<T> ring_buffer[ 16 ];
-			static thread_local int index = 0;
-
+			static thread_local size_t index = 0;
+			static thread_local std::basic_string<T> ring_buffer[ 32 ];
+			
 			auto& ref = ring_buffer[ index ];
 			ref = std::move( value );
 			index = ++index % std::size( ring_buffer );
@@ -82,7 +70,7 @@ namespace vtil::format
 
 		// Fixes the type name to be more friendly.
 		//
-		static std::string fix_type_name( std::string&& in )
+		static std::string fix_type_name( std::string in )
 		{
 			static constexpr const char* remove_list[] = {
 				"struct ",
@@ -94,11 +82,10 @@ namespace vtil::format
 			{
 				if ( in.starts_with( str ) )
 					return fix_type_name( in.substr( strlen( str ) ) );
+
 				for ( size_t i = 0; i < in.size(); i++ )
-				{
 					if ( in[ i ] == '<' && in.substr( i + 1 ).starts_with( str ) )
 						in = in.substr( 0, i + 1 ) + in.substr( i + 1 + strlen( str ) );
-				}
 			}
 			return in;
 		}

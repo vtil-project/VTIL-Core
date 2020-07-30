@@ -28,6 +28,19 @@
 #pragma once
 #include <stdint.h>
 
+// Determine RTTI support.
+//
+#if defined(_CPPRTTI)
+	#define HAS_RTTI	_CPPRTTI
+#elif defined(__GXX_RTTI)
+	#define HAS_RTTI	__GXX_RTTI
+#elif defined(__has_feature)
+	#define HAS_RTTI	__has_feature(cxx_rtti)
+#else
+	#define HAS_RTTI	0
+#endif
+
+
 #ifdef _MSC_VER
     #include <intrin.h>
     #define unreachable() __assume(0)

@@ -79,9 +79,9 @@ namespace vtil
 			else
 				copy_fn( src, *this );
 
-			// If debug mode, inherit type name.
+			// If safe, inherit type name.
 			//
-#ifdef _DEBUG
+#if VTIL_VARIANT_SAFE
 			__typeid_name = src.__typeid_name;
 #endif
 		}
@@ -146,9 +146,9 @@ namespace vtil
 		copy_fn = src.copy_fn;
 		destroy_fn = src.destroy_fn;
 
-		// If debug mode, inherit type name.
+		// If safe, inherit type name.
 		//
-#ifdef _DEBUG
+#if VTIL_VARIANT_SAFE
 		__typeid_name = src.__typeid_name;
 #endif
 

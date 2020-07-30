@@ -66,7 +66,19 @@ namespace vtil
 
 		// Constructed from architecture identifier.
 		//
-		routine( architecture_identifier arch_id ) : arch_id( arch_id ) {};;
+		routine( architecture_identifier arch_id ) 
+			: arch_id( arch_id ) 
+		{
+			switch ( arch_id )
+			{
+				case architecture_arm64:   routine_convention =    arm64::default_call_convention;
+				                           subroutine_convention = arm64::default_call_convention; break;
+				case architecture_amd64:   routine_convention =    amd64::default_call_convention;
+				                           subroutine_convention = amd64::default_call_convention; break;
+				case architecture_virtual: routine_convention =    { .purge_stack = true };
+				                           subroutine_convention = { .purge_stack = true }; break;
+			}
+		};
 
 		// Cache of explored blocks, mapping virtual instruction pointer to the basic block structure.
 		//
@@ -83,23 +95,23 @@ namespace vtil
 
 		// Last local identifier used for an internal register.
 		//
-		relaxed<std::atomic<uint64_t>> last_internal_id = { 0 };
+		relaxed_atomic<uint64_t> last_internal_id = { 0 };
 
-		// Calling convention of the routine. (TODO: Remove hard-coded amd64 ref)
+		// Calling convention of the routine.
 		//
-		call_convention routine_convention = amd64::default_call_convention;
+		call_convention routine_convention;
 
-		// Calling convention of a non-specialized VXCALL. (TODO: Remove hard-coded amd64 ref)
+		// Calling convention of a non-specialized VXCALL.
 		//
-		call_convention subroutine_convention = amd64::default_call_convention;
+		call_convention subroutine_convention;
 
 		// Convention of specialized calls, maps the vip of the VXCALL instruction onto the convention used.
 		//
-		std::map<vip_t, call_convention> spec_subroutine_conventions;
+		std::unordered_map<vip_t, call_convention> spec_subroutine_conventions;
 
 		// Misc. stats.
 		//
-		relaxed<std::atomic<uint64_t>> local_opt_count = { 0 };
+		relaxed_atomic<uint64_t> local_opt_count = { 0 };
 
 		// Multivariate runtime context.
 		//
