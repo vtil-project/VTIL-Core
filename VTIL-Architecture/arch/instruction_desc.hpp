@@ -148,8 +148,5 @@ namespace vtil
         // Declare reduction and basic comparison against std::string.
         //
         REDUCE_TO( name );
-        bool operator!=( const std::string& o ) const { return name != o; }
-        bool operator==( const std::string& o ) const { return name == o; }
-        bool operator<( const std::string& o ) const { return name < o; }
     };
 };

@@ -30,6 +30,8 @@
 #include <optional>
 #include <stdint.h>
 #include <array>
+#include <tuple>
+#include <string_view>
 #include <atomic>
 #include "intrinsics.hpp"
 
@@ -43,7 +45,40 @@ namespace vtil
 	// Constant tag.
 	//
 	template<auto v>
-	using constant_tag = std::integral_constant<decltype( v ), v>;
+	struct constant_tag
+	{
+		static constexpr auto value = v;
+
+		template<auto Q = v>
+		static constexpr std::string_view name()
+		{
+			std::string_view sig = FUNCTION_NAME;
+			auto [begin, delta, end] = std::tuple{
+#if defined(_MSC_VER)
+				"<", +1, ">"
+#else
+				"Q", +4, "];"
+#endif
+			};
+
+			// Find the beginning of the name.
+			//
+			auto f = sig.find_last_of( begin );
+			if ( f == std::string::npos )
+				return "";
+			f += delta;
+
+			// Find the end of the string.
+			//
+			auto l = sig.find_first_of( end, f );
+			if ( l == std::string::npos )
+				return "";
+
+			// Return the value.
+			//
+			return sig.substr( f, l - f );
+		}
+	};
 	
 	// Check for specialization.
 	//
@@ -72,7 +107,18 @@ namespace vtil
 	template<typename T>
 	concept Enum = std::is_enum_v<T>;
 
-	template <class From, class To>
+	template<typename T>
+	concept TriviallyCopyable = std::is_trivially_copyable_v<T>;
+	template<typename From, typename To>
+	concept TriviallyAssignable = std::is_trivially_assignable_v<From, To>;
+	template<typename T>
+	concept TriviallyConstructable = std::is_trivially_constructible_v<T>;
+	template<typename T>
+	concept TriviallyDefaultConstructable = std::is_trivially_default_constructible_v<T>;
+	template<typename T>
+	concept TriviallyDestructable = std::is_trivially_destructible_v<T>;
+
+	template <typename From, typename To>
 	concept ConvertibleTo = std::is_convertible_v<From, To>;
 	template<typename T, typename... Args>
 	concept Constructable = requires { T( std::declval<Args>()... ); };
@@ -196,6 +242,13 @@ namespace vtil
 	//
 	template<typename C, typename M>
 	using member_reference_t = M C::*;
+
+	// Function pointer helpers.
+	//
+	template<typename C, typename R, typename... A>
+	using static_function_t = R(*)(A...);
+	template<typename C, typename R, typename... A>
+	using member_function_t = R(C::*)(A...);
 
 	// Implement helpers for basic series creation.
 	//
@@ -345,4 +398,21 @@ namespace vtil
 		else if constexpr ( Iterable<T> )
 			return *std::next( std::begin( o ), N );
 	}
+
+	// Bitcasting.
+	//
+	template<TriviallyCopyable To, TriviallyCopyable From> 
+	requires( sizeof( To ) == sizeof( From ) )
+	static constexpr To bit_cast( const From& src ) noexcept
+	{
+#if HAS_BIT_CAST
+		return __builtin_bit_cast( To, src );
+#else
+		if ( !std::is_constant_evaluated() || std::is_same_v<From, To> )
+			return ( const To& ) src;
+		unreachable();
+#endif
+	}
+	template<typename T>
+	concept Bitcastable = requires( T x ) { bit_cast<std::array<char, sizeof( T )>, T >( x ); };
 };

@@ -44,6 +44,12 @@
 // Reduction macro.
 //
 #define REDUCE_TO( ... )                                              \
+    template<bool> constexpr auto cxreduce() {                        \
+        return vtil::reference_as_tuple( __VA_ARGS__ );               \
+    }                                                                 \
+    template<bool> constexpr auto cxreduce() const {                  \
+        return vtil::reference_as_tuple( __VA_ARGS__ );               \
+    }                                                                 \
     auto reduce() {                                                   \
         return vtil::reference_as_tuple( __VA_ARGS__ );               \
     }                                                                 \
@@ -67,11 +73,6 @@
 #pragma warning(disable: 4305)
 namespace vtil
 {
-    // Forward declaration for optional reference type.
-    //
-    template<typename T>
-    struct optional_reference;
-
     namespace impl
     {
         // Applies type modifier over each element in pair/tuple.
@@ -82,24 +83,8 @@ namespace vtil
         struct apply_each<F, std::pair<T...>> { using type = std::pair<F<T>...>; };
         template<template<typename> typename F, typename... T>
         struct apply_each<F, std::tuple<T...>> { using type = std::tuple<F<T>...>; };
-
         template<template<typename> typename F, typename T>
         using apply_each_t = typename apply_each<F, T>::type;
-
-        // Appends a deep const qualifier to each referenced type.
-        //
-        template<typename T>
-        using add_dconst_t = typename std::conditional_t
-            <std::is_reference_v<T>,
-            std::add_lvalue_reference_t<std::add_const_t<std::remove_reference_t<T>>>,
-            std::add_const_t<T>>;
-
-        // Checks if type is optional_reference<T>.
-        //
-        template <typename T> struct is_optional_reference : std::false_type {};
-        template <typename T> struct is_optional_reference<optional_reference<T>> : std::true_type {};
-        template <typename T>
-        static constexpr bool is_optional_reference_v = is_optional_reference<std::remove_cvref_t<T>>::value;
     };
 
     // Mask of requested reducable auto declarations.
@@ -123,6 +108,8 @@ namespace vtil
 
     template<typename T>
     static constexpr bool is_reducable_v = std::is_base_of_v<reducable_tag_t, T>;
+    template<typename T>
+    concept Reducable = is_reducable_v<T>;
 
     // The main definition of the helper:
     //
@@ -134,45 +121,33 @@ namespace vtil
         // due to the type not being defined yet, however we can proxy it.
         //
         template<typename Tx>
-        __forceinline static auto reduce_proxy( Tx& p ) { return p.reduce(); }
-
-        template<typename Tx, typename F = decltype( std::declval<Tx>().reduce() )>
-        __forceinline static auto reduce_proxy( const Tx& p )
-        {
-            return ( typename impl::apply_each_t<impl::add_dconst_t, F> ) reduce_proxy( ( Tx& ) p );
+        __forceinline static constexpr auto reduce_proxy( Tx& p ) 
+        { 
+            if ( std::is_constant_evaluated() )
+                return p.template cxreduce<true>();
+            else
+                return p.reduce(); 
         }
-
-        // Only the base type can construct/copy/move this type.
-        //
-        constexpr reducable() = default;
-        constexpr reducable( reducable&& ) = default;
-        constexpr reducable( const reducable& ) = default;
-        constexpr reducable& operator=( reducable&& ) = default;
-        constexpr reducable& operator=( const reducable& ) = default;
 
     public:
         // Define basic comparison operators using std::tuple.
         //
         template<std::enable_if_t<flags&reducable_equ, int> = 0>
-        __forceinline auto operator==( const T& other ) const { return &other == this || reduce_proxy( ( T& ) *this ) == reduce_proxy( other ); }
+        __forceinline constexpr auto operator==( const T& other ) const { return &other == this || reduce_proxy( ( T& ) *this ) == reduce_proxy( other ); }
         template<std::enable_if_t<flags&reducable_nequ, int> = 0>
-        __forceinline auto operator!=( const T& other ) const { return &other != this && reduce_proxy( ( T& ) *this ) != reduce_proxy( other ); }
+        __forceinline constexpr auto operator!=( const T& other ) const { return &other != this && reduce_proxy( ( T& ) *this ) != reduce_proxy( other ); }
         template<std::enable_if_t<flags&reducable_leq, int> = 0>
-        __forceinline auto operator<=( const T& other ) const { return &other == this || reduce_proxy( ( T& ) *this ) <= reduce_proxy( other ); }
+        __forceinline constexpr auto operator<=( const T& other ) const { return &other == this || reduce_proxy( ( T& ) *this ) <= reduce_proxy( other ); }
         template<std::enable_if_t<flags&reducable_greq, int> = 0>
-        __forceinline auto operator>=( const T& other ) const { return &other == this || reduce_proxy( ( T& ) *this ) >= reduce_proxy( other ); }
+        __forceinline constexpr auto operator>=( const T& other ) const { return &other == this || reduce_proxy( ( T& ) *this ) >= reduce_proxy( other ); }
         template<std::enable_if_t<flags&reducable_less, int> = 0>
-        __forceinline auto operator< ( const T& other ) const { return &other != this && reduce_proxy( ( T& ) *this ) <  reduce_proxy( other ); }
+        __forceinline constexpr auto operator< ( const T& other ) const { return &other != this && reduce_proxy( ( T& ) *this ) <  reduce_proxy( other ); }
         template<std::enable_if_t<flags&reducable_greater, int> = 0>
-        __forceinline auto operator> ( const T& other ) const { return &other != this && reduce_proxy( ( T& ) *this ) >  reduce_proxy( other ); }
-
-        // Define the [const T::reduce()] for the base type just for convinience.
-        //
-        __forceinline auto reduce() const { return reduce_proxy( ( const T& ) *this ); }
+        __forceinline constexpr auto operator> ( const T& other ) const { return &other != this && reduce_proxy( ( T& ) *this ) >  reduce_proxy( other ); }
 
         // Define VTIL hash using a simple VTIL tuple hasher.
         //
-        __forceinline hash_t hash() const { return make_hash( reduce() ); }
+        __forceinline constexpr hash_t hash() const { return make_hash( reduce_proxy( ( const T& ) *this ) ); }
     };
 
     // Helper used to create reduced tuples.

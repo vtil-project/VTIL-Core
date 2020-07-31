@@ -50,20 +50,28 @@ namespace vtil
 
 		// Construct a new hash from an optional seed of 64-bit value.
 		//
-		fnv64_hash_t( value_t seed64 = default_seed ) { value[ 0 ] = seed64; }
+		constexpr fnv64_hash_t( value_t seed64 = default_seed ) noexcept
+			: value{ seed64 } {}
 
 		// Appends the given array of bytes into the hash value.
 		//
 		template<typename T>
-		void add_bytes( const T& data )
+		constexpr void add_bytes( const T& data ) noexcept
 		{
-			const uint8_t* bytes = ( const uint8_t* ) &data;
+			using array_t = std::array<uint8_t, sizeof( T )>;
 
-			for ( size_t i = 0; i != sizeof( T ); i++ )
+			if ( std::is_constant_evaluated() && !std::is_same_v<array_t, T> )
 			{
-				// Apply XOR over the low byte.
+				if constexpr ( Bitcastable<T> )
+					return add_bytes( bit_cast<array_t>( data ) );
+				unreachable();
+			}
+
+			for ( uint8_t byte : ( const array_t& ) data )
+			{
+				// Apply XOR over the byte.
 				//
-				value[ 0 ] ^= bytes[ i ];
+				value[ 0 ] ^= byte;
 
 				// Calculate [value * prime].
 				//
@@ -73,8 +81,8 @@ namespace vtil
 
 		// Implicit conversion to 64-bit values.
 		//
-		uint64_t as64() const { return value[ 0 ]; }
-		operator uint64_t() const { return as64(); }
+		constexpr uint64_t as64() const noexcept { return value[ 0 ]; }
+		constexpr operator uint64_t() const noexcept { return as64(); }
 
 		// Conversion to human-readable format.
 		//
@@ -85,9 +93,9 @@ namespace vtil
 
 		// Basic comparison operators.
 		//
-		bool operator<( const fnv64_hash_t& o ) const  { return memcmp( value, o.value, sizeof( value ) ) < 0; }
-		bool operator==( const fnv64_hash_t& o ) const { return memcmp( value, o.value, sizeof( value ) ) == 0; }
-		bool operator!=( const fnv64_hash_t& o ) const { return memcmp( value, o.value, sizeof( value ) ) != 0; }
+		constexpr bool operator<( const fnv64_hash_t& o ) const noexcept { return value[ 0 ] < o.value[ 0 ]; }
+		constexpr bool operator==( const fnv64_hash_t& o ) const noexcept { return value[ 0 ] == o.value[ 0 ]; }
+		constexpr bool operator!=( const fnv64_hash_t& o ) const noexcept { return value[ 0 ] != o.value[ 0 ]; }
 	};
 };
 

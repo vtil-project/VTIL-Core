@@ -327,7 +327,7 @@ namespace vtil
 
 		// Declare reduction.
 		//
-		REDUCE_TO( bit_count, combined_id, flags, bit_offset );
+		REDUCE_TO( bit_count, ( architecture << 56 ) | local_id, flags, bit_offset );
 	};
 
 	// Should be overriden by the user to describe conversion of the

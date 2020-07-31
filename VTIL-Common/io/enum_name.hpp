@@ -52,36 +52,10 @@ namespace vtil
 		template<T Q>
 		static constexpr std::pair<std::string_view, bool> generate()
 		{
-			std::string_view sig = FUNCTION_NAME;
-			auto [begin, delta, end] = std::tuple{
-#if defined(_MSC_VER)
-				"<", +1, ">"
-#else
-				"Q", +4, "];"
-#endif
-			};
-
-			// Find the beginning of the name.
-			//
-			auto f = sig.find_last_of( begin );
-			if ( f == std::string::npos ) 
+			std::string_view name = constant_tag<Q>::name();
+			if ( name[ 0 ] == '(' || uint8_t( name[ 0 ] - '0' ) <= 9 )
 				return { "", false };
-			f += delta;
-			
-			// Validate the found value is a valid enum.
-			//
-			if ( sig[ f ] == '(' || uint8_t( sig[ f ] - '0' ) <= 9 )
-				return { "", false };
-
-			// Find the end of the string.
-			//
-			auto l = sig.find_first_of( end, f );
-			if ( l == std::string::npos ) 
-				return { "", false };
-
-			// Return the value.
-			//
-			return { sig.substr( f, l - f ), true };
+			return { name, true };
 		}
 
 		// String conversion at runtime.

@@ -33,33 +33,21 @@
 #include "type_helpers.hpp"
 #include "lt_typeid.hpp"
 #include "../io/formatting.hpp"
-
-// [Configuration]
-// Determine the size of vtil::hash_t.
-//
-#ifndef VTIL_HASH_SIZE
-	#define VTIL_HASH_SIZE 64
-#endif
-
-// Include the hash header file for the hash type we use
-// and redirect the definition of hash_t to it.
-//
-#if VTIL_HASH_SIZE == 128
-	#include "fnv128.hpp"
-	namespace vtil { using hash_t = vtil::fnv128_hash_t; };
-#elif VTIL_HASH_SIZE == 64
-	#include "fnv64.hpp"
-	namespace vtil { using hash_t = vtil::fnv64_hash_t; };
-#else
-	#error FNV-1 Algorithm is not defined for the given bit count.
-#endif
+#include "fnv64.hpp"
 
 namespace vtil
 {
+	// Declare hash type.
+	//
+	#define VTIL_HASH_SIZE 64
+	using hash_t = vtil::fnv64_hash_t;
+
 	// VTIL hashable types implement [hash_t T::hash() const];
 	//
 	template<typename T>
 	concept CustomHashable = requires( T v ) { v.hash(); };
+	template<typename T>
+	concept CxprReducable = requires( T v ) { v.template cxreduce<true>(); };
 
 	// Checks if std::hash is specialized to hash the type.
 	//
@@ -97,28 +85,20 @@ namespace vtil
 
 	// Used to combine two hashes of arbitrary size.
 	//
-	__forceinline static hash_t combine_hash( hash_t a, const hash_t& b )
+	__forceinline static constexpr hash_t combine_hash( hash_t a, const hash_t& b )
 	{
-		static constexpr auto rotl64 = [ ] ( uint64_t x, int r )
+		constexpr auto rotl64 = [ ] ( uint64_t x, int r )
 		{
 			return ( x << r ) | ( x >> ( 64 - r ) );
 		};
-		static constexpr size_t N = VTIL_HASH_SIZE / 64;
-		for ( size_t i = 0; i != N; i++ )
-		{
-			a.value[ i ] = rotl64( a.value[ i ] + b.value[ i ], 21 );
-			a.value[ i ] -= b.value[ i ] ^ impl::hash_combination_keys[ a.value[ 0 ] & 63 ];
-		}
+		a.value[ 0 ] = rotl64( a.value[ 0 ] + b.value[ 0 ], 21 );
+		a.value[ 0 ] -= b.value[ 0 ] ^ impl::hash_combination_keys[ a.value[ 0 ] & 63 ];
 		return a;
 	}
-	__forceinline static hash_t combine_unordered_hash( hash_t a, const hash_t& b )
+	__forceinline static constexpr hash_t combine_unordered_hash( hash_t a, const hash_t& b )
 	{
-		static constexpr size_t N = VTIL_HASH_SIZE / 64;
-		for ( size_t i = 0; i < N; i++ )
-		{
-			a.value[ i ] += b.value[ i ];
-			a.value[ i ] -= impl::hash_combination_keys[ i ];
-		}
+		a.value[ 0 ] += b.value[ 0 ];
+		a.value[ 0 ] -= impl::hash_combination_keys[ 0 ];
 		return a;
 	}
 
@@ -127,13 +107,21 @@ namespace vtil
 	template<typename T = hasher_proxy_t>
 	struct hasher
 	{
-		auto operator()( const T& value ) const noexcept
+		constexpr auto operator()( const T& value ) const noexcept
 		{
 			// If object is hashable via ::hash(), use as is.
 			//
 			if constexpr ( CustomHashable<const T&> )
 			{
-				return hash_t{ value.hash() };
+				if ( !std::is_constant_evaluated() || is_constexpr( [ &value ] () { value.hash(); } ) )
+				{
+					return hash_t{ value.hash() };
+				}
+				else if constexpr ( CxprReducable<T> )
+				{
+					auto tuple = value.template cxreduce<true>();
+					return hasher<decltype( tuple )>{}( std::move( tuple ) );
+				}
 			}
 			// If STL container or array, hash each element and add container information.
 			//
@@ -175,19 +163,16 @@ namespace vtil
 			}
 			// Throw assert fail.
 			//
-			else
-			{
-				unreachable();
-			}
+			unreachable();
 		}
 	};
 
 	// Vararg hasher wrapper that should be used to create hashes from N values.
 	//
 	template<typename T>
-	__forceinline static hash_t make_hash( const T& value ) { return hasher<T>{}( value ); }
+	__forceinline static constexpr hash_t make_hash( const T& value ) { return hasher<T>{}( value ); }
 	template<typename C, typename... T>
-	__forceinline static hash_t make_hash( const C& current, T&&... rest )
+	__forceinline static constexpr hash_t make_hash( const C& current, T&&... rest )
 	{
 		return combine_hash( 
 			make_hash( std::forward<T>( rest )... ), 
@@ -198,9 +183,9 @@ namespace vtil
 	// Vararg hasher wrapper that should be used to create hashes from N values, explicitly ignoring the order.
 	//
 	template<typename T>
-	__forceinline static hash_t make_unordered_hash( const T& value ) { return hasher<T>{}( value ); }
+	__forceinline static constexpr hash_t make_unordered_hash( const T& value ) { return hasher<T>{}( value ); }
 	template<typename C, typename... T>
-	__forceinline static hash_t make_unordered_hash( const C& current, T&&... rest )
+	__forceinline static constexpr hash_t make_unordered_hash( const C& current, T&&... rest )
 	{
 		return combine_unordered_hash(
 			make_unordered_hash( std::forward<T>( rest )... ),
@@ -213,7 +198,7 @@ namespace vtil
 	template<typename T>
 	struct hasher<std::optional<T>>
 	{
-		__forceinline hash_t operator()( const std::optional<T>& value ) const noexcept
+		__forceinline constexpr hash_t operator()( const std::optional<T>& value ) const noexcept
 		{
 			if ( value ) return make_hash( *value );
 			else         return lt_typeid_v<T>;
@@ -225,7 +210,7 @@ namespace vtil
 	template<typename... T>
 	struct hasher<std::variant<T...>>
 	{
-		__forceinline hash_t operator()( const std::variant<T...>& value ) const noexcept
+		__forceinline constexpr hash_t operator()( const std::variant<T...>& value ) const noexcept
 		{
 			hash_t res = std::visit( [ ] ( auto&& arg ) { return make_hash( arg ); }, value );
 			res.add_bytes( value.index() );
@@ -238,7 +223,7 @@ namespace vtil
 	template<typename A, typename B>
 	struct hasher<std::pair<A, B>>
 	{
-		__forceinline hash_t operator()( const std::pair<A, B>& obj ) const noexcept
+		__forceinline constexpr hash_t operator()( const std::pair<A, B>& obj ) const noexcept
 		{
 			return make_hash( obj.first, obj.second );
 		}
@@ -250,12 +235,12 @@ namespace vtil
 	struct hasher<std::tuple<Tx...>>
 	{
 		template<typename T, size_t... I>
-		__forceinline auto hash_all( const T& obj, std::index_sequence<I...> ) const noexcept
+		__forceinline constexpr auto hash_all( const T& obj, std::index_sequence<I...> ) const noexcept
 		{
 			return make_hash( std::get<I>( obj )... );
 		}
 
-		__forceinline hash_t operator()( const std::tuple<Tx...>& obj ) const noexcept
+		__forceinline constexpr hash_t operator()( const std::tuple<Tx...>& obj ) const noexcept
 		{
 			return hash_all( obj, std::index_sequence_for<Tx...>{} );
 		}
@@ -267,7 +252,7 @@ namespace vtil
 	struct hasher<hasher_proxy_t>
 	{
 		template<typename T>
-		__forceinline size_t operator()( const T& obj ) const noexcept
+		__forceinline constexpr size_t operator()( const T& obj ) const noexcept
 		{
 			return ( size_t ) make_hash( obj ).as64();
 		}
@@ -286,7 +271,7 @@ namespace std
 	template<vtil::CustomHashable T>
 	struct hash<T>
 	{
-		__forceinline size_t operator()( const T& value ) const noexcept
+		__forceinline constexpr size_t operator()( const T& value ) const noexcept
 		{
 			return vtil::hash_t{ value.hash() }.as64();
 		}

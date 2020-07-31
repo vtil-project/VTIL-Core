@@ -76,9 +76,6 @@
     <ClInclude Include="util\fnv64.hpp">
       <Filter>Utility</Filter>
     </ClInclude>
-    <ClInclude Include="util\fnv128.hpp">
-      <Filter>Utility</Filter>
-    </ClInclude>
     <ClInclude Include="util\reducable.hpp">
       <Filter>Utility</Filter>
     </ClInclude>

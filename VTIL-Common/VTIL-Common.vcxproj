@@ -156,7 +156,6 @@
     <ClInclude Include="util\multivariate.hpp" />
     <ClInclude Include="util\conditional_lock.hpp" />
     <ClInclude Include="util\lt_typeid.hpp" />
-    <ClInclude Include="util\fnv128.hpp" />
     <ClInclude Include="util\fnv64.hpp" />
     <ClInclude Include="util\hashable.hpp" />
     <ClInclude Include="util\intrinsics.hpp" />
