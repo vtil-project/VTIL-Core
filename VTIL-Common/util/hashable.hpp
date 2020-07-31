@@ -51,7 +51,7 @@
 	#include "fnv64.hpp"
 	namespace vtil { using hash_t = vtil::fnv64_hash_t; };
 #else
-	#error FNV-1 Algorithm for the FNV algorithm is not defined for the given bit count.
+	#error FNV-1 Algorithm is not defined for the given bit count.
 #endif
 
 namespace vtil
@@ -103,30 +103,19 @@ namespace vtil
 		{
 			return ( x << r ) | ( x >> ( 64 - r ) );
 		};
-
-		static constexpr int N = VTIL_HASH_SIZE / 64;
-
-		for ( int i = 0; i < N; i++ )
+		static constexpr size_t N = VTIL_HASH_SIZE / 64;
+		for ( size_t i = 0; i != N; i++ )
 		{
-			// Key rotating A is decided by the element of B on 
-			// the opposite index and vice versa.
-			//
-			uint8_t ka = ( i + b.value[ N - i - 1 ] ) & 0x3F;
-			uint8_t kb = ( N - i - 1 + a.value[ i ] ) & 0x3F;
-
-			// Rotate both hashes, add together and combine with the combination key.
-			//
-			a.value[ i ] = ( rotl64( a.value[ i ], ka ) + rotl64( b.value[ i ], kb ) ) ^ impl::hash_combination_keys[ ka ];
+			a.value[ i ] = rotl64( a.value[ i ] + b.value[ i ], 21 );
+			a.value[ i ] -= b.value[ i ] ^ impl::hash_combination_keys[ a.value[ 0 ] & 63 ];
 		}
 		return a;
 	}
 	__forceinline static hash_t combine_unordered_hash( hash_t a, const hash_t& b )
 	{
-		static constexpr int N = VTIL_HASH_SIZE / 64;
-		for ( int i = 0; i < N; i++ )
+		static constexpr size_t N = VTIL_HASH_SIZE / 64;
+		for ( size_t i = 0; i < N; i++ )
 		{
-			// We can only do position-independent arithmetic.
-			//
 			a.value[ i ] += b.value[ i ];
 			a.value[ i ] -= impl::hash_combination_keys[ i ];
 		}
@@ -170,12 +159,6 @@ namespace vtil
 				uint64_t identifier = ( ( uint64_t ) value ) & ( ( 1ull << 48 ) - 1 );
 				return hash_t{ ( identifier << 16 ) ^ ( identifier ) };
 			}
-			// If hashable using std::hash<>, redirect.
-			//
-			else if constexpr ( StdHashable<T> )
-			{
-				return hash_t{ std::hash<T>{}( value ) };
-			}
 			// If trivial type, hash each byte.
 			//
 			else if constexpr ( std::is_trivial_v<T> )
@@ -183,6 +166,12 @@ namespace vtil
 				hash_t hash = {};
 				hash.add_bytes( value );
 				return hash;
+			}
+			// If hashable using std::hash<>, redirect.
+			//
+			else if constexpr ( StdHashable<T> )
+			{
+				return hash_t{ std::hash<T>{}( value ) };
 			}
 			// Throw assert fail.
 			//
