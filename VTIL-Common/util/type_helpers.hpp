@@ -39,6 +39,11 @@ namespace vtil
 	//
 	template<typename T>
 	struct type_tag { using type = T; };
+
+	// Constant tag.
+	//
+	template<auto v>
+	using constant_tag = std::integral_constant<decltype( v ), v>;
 	
 	// Check for specialization.
 	//
@@ -64,6 +69,8 @@ namespace vtil
 	concept Integral = std::is_integral_v<T>;
 	template<typename T>
 	concept Trivial = std::is_trivial_v<T>;
+	template<typename T>
+	concept Enum = std::is_enum_v<T>;
 
 	template <class From, class To>
 	concept ConvertibleTo = std::is_convertible_v<From, To>;
@@ -215,6 +222,11 @@ namespace vtil
 	static constexpr auto make_visitor_series( T&& f )
 	{
 		return impl::make_visitor_series<decltype( N ), Tr, T>( std::forward<T>( f ), std::make_integer_sequence<decltype( N ), N>{} );
+	}
+	template<auto N, typename T>
+	static constexpr auto make_constant_series( T&& f )
+	{
+		return make_visitor_series<N, constant_tag, T>( std::forward<T>( f ) );
 	}
 
 	// Resets the value of the object referenced.

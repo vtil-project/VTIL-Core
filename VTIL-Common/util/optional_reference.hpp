@@ -28,8 +28,6 @@
 #pragma once
 #include <type_traits>
 #include <optional>
-#include "hashable.hpp"
-#include "reducable.hpp"
 
 namespace vtil
 {
@@ -99,8 +97,8 @@ namespace vtil
 
 		// Decay to reference, if no value held UB.
 		//
-		constexpr operator T& () { dassert( has_value() ); return *( T* ) pointer; }
-		constexpr operator const T& () const { dassert( has_value() ); return *( T* ) pointer; }
+		constexpr operator T& () { return *( T* ) pointer; }
+		constexpr operator const T& () const { return *( T* ) pointer; }
 	};
 	template<typename T>
 	using optional_creference = optional_reference<const T>;
@@ -120,22 +118,8 @@ namespace vtil
 	}
 };
 
-// Overload hashers for vtil::optional_reference<>.
+// Overload hasher for vtil::optional_reference<>.
 //
-namespace vtil
-{
-	// Same implementation as vtil::hasher<std::optional<T>>.
-	//
-	template<typename T>
-	struct hasher<optional_reference<T>>
-	{
-		hash_t operator()( const optional_reference<T>& value ) const noexcept
-		{
-			if ( value ) return make_hash( *value );
-			else         return lt_typeid_v<T>;
-		}
-	};
-};
 namespace std
 {
 	// Same implementation as std::hash<std::optional<T>>.

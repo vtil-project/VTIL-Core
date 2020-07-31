@@ -44,11 +44,13 @@
 #ifdef _MSC_VER
     #include <intrin.h>
     #define unreachable() __assume(0)
+    #define FUNCTION_NAME __FUNCSIG__
 #else
     #include <emmintrin.h>
     #define unreachable() __builtin_unreachable()
     #define __forceinline __attribute__((always_inline))
     #define _AddressOfReturnAddress() ((void*)__builtin_frame_address(0))
+    #define FUNCTION_NAME __PRETTY_FUNCTION__
 
     // Declare _?mul128
     //

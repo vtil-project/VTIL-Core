@@ -2,3 +2,4 @@
 #include "../../io/asserts.hpp"
 #include "../../io/formatting.hpp"
 #include "../../io/logger.hpp"
+#include "../../io/enum_name.hpp"

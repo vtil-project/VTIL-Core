@@ -34,6 +34,7 @@
 #include <optional>
 #include "../util/lt_typeid.hpp"
 #include "../util/type_helpers.hpp"
+#include "enum_name.hpp"
 
 // [Configuration]
 // Determine the way we format the instructions.
@@ -145,6 +146,10 @@ namespace vtil::format
 		if constexpr ( CustomStringConvertible<T> )
 		{
 			return x.to_string();
+		}
+		else if constexpr ( Enum<T> )
+		{
+			return enum_name{ x }.to_string();
 		}
 		else if constexpr ( StdStringConvertible<T> )
 		{

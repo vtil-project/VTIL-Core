@@ -135,6 +135,7 @@
     <ClInclude Include="includes\vtil\amd64" />
     <ClInclude Include="includes\vtil\utility" />
     <ClInclude Include="io\asserts.hpp" />
+    <ClInclude Include="io\enum_name.hpp" />
     <ClInclude Include="io\formatting.hpp" />
     <ClInclude Include="io\logger.hpp" />
     <ClInclude Include="math\bitwise.hpp" />
