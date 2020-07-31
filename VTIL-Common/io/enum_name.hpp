@@ -49,14 +49,39 @@ namespace vtil
 		
 		// Generates the name for the given enum.
 		//
-		template<T v>
+		template<T Q>
 		static constexpr std::pair<std::string_view, bool> generate()
 		{
 			std::string_view sig = FUNCTION_NAME;
-			if ( auto f = sig.find_last_of( '<' ); f != std::string::npos )
-				if ( auto l = sig.find_first_of( '>', ++f ); l != std::string::npos )
-					return { sig.substr( f, l - f ), sig[ f ] != '(' };
-			return { "", false };
+			auto [begin, delta, end] = std::tuple{
+#if defined(_MSC_VER)
+				"<", +1, ">"
+#else
+				"Q", +4, "];"
+#endif
+			};
+
+			// Find the beginning of the name.
+			//
+			auto f = sig.find_last_of( begin );
+			if ( f == std::string::npos ) 
+				return { "", false };
+			f += delta;
+			
+			// Validate the found value is a valid enum.
+			//
+			if ( sig[ f ] == '(' || uint8_t( sig[ f ] - '0' ) <= 9 )
+				return { "", false };
+
+			// Find the end of the string.
+			//
+			auto l = sig.find_first_of( end, f );
+			if ( l == std::string::npos ) 
+				return { "", false };
+
+			// Return the value.
+			//
+			return { sig.substr( f, l - f ), true };
 		}
 
 		// String conversion at runtime.
@@ -91,7 +116,7 @@ namespace vtil
 						if ( auto& [str, valid] = flag_series[ i ]; valid ) 
 							name += std::string{ str.begin(), str.end() } + "|";
 						else                           
-							return std::to_string( value );
+							return std::to_string( ( value_type ) v );
 					}
 				}
 				if ( !name.empty() ) return name.substr( 0, name.length() - 1 );
@@ -109,6 +134,4 @@ namespace vtil
 		const std::string& to_string() const& { return name; }
 		operator const std::string&()  const& { return name; }
 	};
-	template<Enum T>
-	enum_name( T )->enum_name<T>;
 };
