@@ -204,13 +204,28 @@ namespace vtil
 		template<typename Ti, typename T, Ti... I>
 		static constexpr auto make_expanded_series( T&& f, std::integer_sequence<Ti, I...> )
 		{
-			return std::array{ f( I )... };
+			if constexpr ( std::is_void_v<decltype( f( 0 ) )> )
+				( ( f( I ) ), ... );
+			else
+				return std::array{ f( I )... };
 		}
 
 		template<typename Ti, template<auto> typename Tr, typename T, Ti... I>
 		static constexpr auto make_visitor_series( T&& f, std::integer_sequence<Ti, I...> )
 		{
-			return std::array{ f( type_tag<Tr<I>>{} )... };
+			if constexpr ( std::is_void_v<decltype( f( type_tag<Tr<0>>{} ) )> )
+				( ( f( type_tag<Tr<I>>{} ) ), ... );
+			else
+				return std::array{ f( type_tag<Tr<I>>{} )... };
+		}
+
+		template<typename Ti, typename T, Ti... I>
+		static constexpr auto make_constant_series( T&& f, std::integer_sequence<Ti, I...> )
+		{
+			if constexpr ( std::is_void_v<decltype( f( constant_tag<0>{} ) )> )
+				( ( f( constant_tag<I>{} ) ), ... );
+			else
+				return std::array{ f( constant_tag<I>{} )... };
 		}
 	};
 	template<auto N, typename T>
@@ -226,7 +241,7 @@ namespace vtil
 	template<auto N, typename T>
 	static constexpr auto make_constant_series( T&& f )
 	{
-		return make_visitor_series<N, constant_tag, T>( std::forward<T>( f ) );
+		return impl::make_constant_series<decltype( N )>( std::forward<T>( f ), std::make_integer_sequence<decltype( N ), N>{} );
 	}
 
 	// Resets the value of the object referenced.

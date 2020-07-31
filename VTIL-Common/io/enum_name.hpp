@@ -70,7 +70,7 @@ namespace vtil
 			if ( min_value <= value && value < max_value )
 			{
 				static constexpr auto linear_series = make_constant_series<iteration_limit>(
-					[ ] ( auto tag ) { return generate<T( decltype( tag )::type::value + min_value )>(); }
+					[ ] ( auto tag ) { return generate<T( decltype( tag )::value + min_value )>(); }
 				);
 				auto& [str, valid] = linear_series[ value ];
 				if ( valid ) return std::string{ str.begin(), str.end() };
@@ -80,7 +80,7 @@ namespace vtil
 			if constexpr ( !is_signed )
 			{
 				static constexpr auto flag_series = make_constant_series<sizeof( value_type ) * 8>(
-					[ ] ( auto tag ) { return generate<T( 1ull << decltype( tag )::type::value )>(); }
+					[ ] ( auto tag ) { return generate<T( 1ull << decltype( tag )::value )>(); }
 				);
 
 				std::string name;

@@ -205,6 +205,33 @@ namespace vtil::format
 			}
 			else return type_tag<T>{};
 		}
+		else if constexpr ( is_specialization_v<std::tuple, base_type> )
+		{
+			constexpr bool is_tuple_str_cvtable = [ ] ()
+			{
+				bool cvtable = true;
+				if constexpr ( std::tuple_size_v<base_type> > 0 )
+				{
+					make_constant_series<std::tuple_size_v<base_type>>( [ & ] ( auto tag )
+					{
+						if constexpr ( !StringConvertible<std::tuple_element_t<decltype( tag )::value, base_type>> )
+							cvtable = false;
+					} );
+				}
+				return cvtable;
+			}();
+
+			if constexpr ( std::tuple_size_v<base_type> == 0 )
+				return "{}";
+			else if constexpr ( is_tuple_str_cvtable )
+			{
+				std::string res = std::apply( [ ] ( auto&&... args ) {
+					return ( ( as_string( args ) + ", " ) + ... );
+				}, x );
+				return "{" + res.substr(0, res.length() - 2) + "}";
+			}
+			else return type_tag<T>{};
+		}
 		else if constexpr ( is_specialization_v<std::optional, base_type> )
 		{
 			if constexpr ( StringConvertible<decltype( x.value() )> )
