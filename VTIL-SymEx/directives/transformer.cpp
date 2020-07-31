@@ -164,7 +164,9 @@ namespace vtil::symbolic
 				// Translate left hand side, if failed to do so or is not equal to [true], fail.
 				//
 				auto condition_status = translate( sym, dir->lhs, 0, max_depth );
-				if ( !condition_status || !condition_status.simplify()->get().value_or( false ) )
+				if ( !condition_status ||
+					 condition_status->xvalues() != std::array{ 1ull, 1ull, 1ull, 1ull } ||
+					 !condition_status.simplify()->get().value_or( false ) )
 				{
 #if VTIL_SYMEX_SIMPLIFY_VERBOSE
 					log<CON_RED>( "Rejected %s, condition (%s) not met.\n", *dir->rhs, *dir->lhs );
