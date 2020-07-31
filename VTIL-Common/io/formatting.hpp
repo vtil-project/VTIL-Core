@@ -80,7 +80,7 @@ namespace vtil::format
 #ifdef __GNUG__
 			int status;
 			char* demangled_name = abi::__cxa_demangle( in.data(), nullptr, nullptr, &status );
-			in = { demangled_name };
+			in = demangled_name;
 			free( demangled_name );
 #endif
 			
@@ -160,7 +160,7 @@ namespace vtil::format
 		}
 		else if constexpr ( Enum<T> )
 		{
-			return enum_name{ x }.to_string();
+			return enum_name<T>::resolve( x );
 		}
 		else if constexpr ( StdStringConvertible<T> )
 		{
