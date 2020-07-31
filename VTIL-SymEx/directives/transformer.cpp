@@ -27,6 +27,7 @@
 //
 #include "transformer.hpp"
 #include <vtil/utility>
+#include <cstring>
 #include "../simplifier/simplifier.hpp"
 
 namespace vtil::symbolic
@@ -161,11 +162,13 @@ namespace vtil::symbolic
 			}
 			case directive_op_desc::iff:
 			{
+				static constexpr auto expected = make_expanded_series<VTIL_SYMEX_XVAL_KEYS>( [ ] ( auto ) { return 1ull; } );
+
 				// Translate left hand side, if failed to do so or is not equal to [true], fail.
 				//
 				auto condition_status = translate( sym, dir->lhs, 0, max_depth );
 				if ( !condition_status ||
-					 condition_status->xvalues() != std::array{ 1ull, 1ull, 1ull, 1ull } ||
+					 memcmp( condition_status->xvalues().data(), expected.data(), expected.size() * sizeof( expected[ 0 ] ) ) ||
 					 !condition_status.simplify()->get().value_or( false ) )
 				{
 #if VTIL_SYMEX_SIMPLIFY_VERBOSE
