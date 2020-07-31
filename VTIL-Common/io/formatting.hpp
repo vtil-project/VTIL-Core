@@ -36,6 +36,10 @@
 #include "../util/type_helpers.hpp"
 #include "enum_name.hpp"
 
+#ifdef __GNUG__
+	#include <cxxabi.h>
+#endif
+
 // [Configuration]
 // Determine the way we format the instructions.
 //
@@ -73,20 +77,27 @@ namespace vtil::format
 		//
 		static std::string fix_type_name( std::string in )
 		{
-			static constexpr const char* remove_list[] = {
+#ifdef __GNUG__
+			int status;
+			char* demangled_name = abi::__cxa_demangle( in.data(), nullptr, nullptr, &status );
+			in = { demangled_name };
+			free( demangled_name );
+#endif
+			
+			static const std::string remove_list[] = {
 				"struct ",
 				"class ",
 				"enum ",
 				"vtil::"
 			};
-			for ( const char* str : remove_list )
+			for ( auto& str : remove_list )
 			{
 				if ( in.starts_with( str ) )
-					return fix_type_name( in.substr( strlen( str ) ) );
+					return fix_type_name( in.substr( str.length() ) );
 
 				for ( size_t i = 0; i < in.size(); i++ )
 					if ( in[ i ] == '<' && in.substr( i + 1 ).starts_with( str ) )
-						in = in.substr( 0, i + 1 ) + in.substr( i + 1 + strlen( str ) );
+						in = in.substr( 0, i + 1 ) + in.substr( i + 1 + str.length() );
 			}
 			return in;
 		}
@@ -103,7 +114,7 @@ namespace vtil::format
 	static std::string static_type_name()
 	{
 #if HAS_RTTI
-		static std::string res = impl::fix_type_name( typeid( T ).name() );
+		static const std::string res = impl::fix_type_name( typeid( T ).name() );
 		return res;
 #else
 		char buf[ 32 ];
