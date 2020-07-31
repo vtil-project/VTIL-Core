@@ -28,10 +28,11 @@
 #pragma once
 #include <iterator>
 #include <limits>
+#include "type_helpers.hpp"
 
 namespace vtil
 {
-	template<typename T = size_t>
+	template<Integral T = size_t>
 	struct numeric_range
 	{
 		// Declare the iterator type.
@@ -87,8 +88,12 @@ namespace vtil
 
 		// Beginning and the end of the range.
 		//
-		T min_value = std::numeric_limits<T>::min();
-		T max_value = std::numeric_limits<T>::max();
+		T min_value;
+		T max_value;
+
+		constexpr numeric_range( T min_value = std::numeric_limits<T>::min(),
+					             T max_value = std::numeric_limits<T>::max() ) 
+			: min_value( min_value ), max_value( max_value ) {}
 
 		// Generic container helpers.
 		//
@@ -97,6 +102,8 @@ namespace vtil
 		constexpr iterator_end_tag_t end() const { return {}; }
 		constexpr T operator[]( size_t n ) const { return min_value + n; }
 	};
+	template<Integral T> numeric_range( T a )      -> numeric_range<T>;
+	template<Integral T> numeric_range( T a, T b ) -> numeric_range<T>;
 
 	// Simple range creation wrapper.
 	//
