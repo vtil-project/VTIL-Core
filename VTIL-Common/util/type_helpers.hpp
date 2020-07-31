@@ -62,6 +62,8 @@ namespace vtil
 	//
 	template<typename T>
 	concept Integral = std::is_integral_v<T>;
+	template<typename T>
+	concept Trivial = std::is_trivial_v<T>;
 
 	template <class From, class To>
 	concept ConvertibleTo = std::is_convertible_v<From, To>;

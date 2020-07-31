@@ -61,7 +61,7 @@ namespace vtil::math
         // Default constructor and the constructor for constant values.
         //
         constexpr operable() = default;
-        template<typename T = uint64_t, std::enable_if_t<std::is_integral_v<T>, int> = 0>
+        template<Integral T>
         constexpr operable( T value, bitcnt_t bit_count = sizeof( T ) * 8 ) : value( uint64_t( value ), bit_count ) {}
 
         // Gets the value represented, and nullopt if value has unknown bits.
@@ -128,8 +128,8 @@ namespace vtil::math
 
     // Operable concepts.
     //
-    template<typename T> concept CustomOperable = is_custom_operable_v<strip_operable_t<T>>;
-    template<typename T> concept Operable =       is_operable_v<strip_operable_t<T>>;
+    template<typename T> concept CustomOperable =     is_custom_operable_v<strip_operable_t<T>>;
+    template<typename T> concept Operable =           is_operable_v<strip_operable_t<T>>;
 
     // Returns the result of the cross-operation between two types, void if not cross-operable.
     //
@@ -174,6 +174,13 @@ namespace vtil::math
         }
         return op;
     }
+
+    // Declare a common building point for operables so that they can be hooked on demand.
+    //
+    template<typename R, Operable T1, Operable T2>
+    __forceinline static constexpr R make_operable( T1&& a, math::operator_id op, T2&& b ) { return R{ std::forward<T1>( a ), op, std::forward<T2>( b ) }; }
+    template<typename R, Operable T1>
+    __forceinline static constexpr R make_operable( math::operator_id op, T1&& a ) { return R{ op, std::forward<T1>( a ) }; }
 };
 
 #undef __max // Seriously stdlib?
@@ -182,8 +189,8 @@ namespace vtil::math
 // Evaluation operations with operable types.
 //
 #define DEFINE_EVAL(...)					    															                        \
-template<vtil::math::Operable T1, vtil::math::Operable T2 = int, typename result_t = typename vtil::math::xop_result<T1, T2>::type>	\
-static constexpr result_t __VA_ARGS__
+template<vtil::math::Operable T1, vtil::math::Operable T2 = int, typename R = typename vtil::math::xop_result<T1, T2>::type>	\
+static constexpr R __VA_ARGS__
 
 // Assignment operations with operable types.
 // - Result type is not used but left there to assert cross-operableness as an enable_if.
@@ -192,50 +199,50 @@ static constexpr result_t __VA_ARGS__
 template<vtil::math::CustomOperable T1, vtil::math::Operable T2 = int, typename = typename vtil::math::xop_result<T1, T2>::type>    \
 static constexpr T1& assn_op ( T1& op, T2&& param ) { return ( op = eval_op ( std::move( op ), std::forward<T2>( param ) ) ); }                
 
-DEFINE_EVAL( operator~( T1&& a )                { return { vtil::math::operator_id::bitwise_not, std::forward<T1>( a ) }; }                                                                );
-DEFINE_EVAL( operator&( T1&& a, T2&& b )        { return { std::forward<T1>( a ), vtil::math::operator_id::bitwise_and, std::forward<T2>( b ) }; }                                         );
-DEFINE_EVAL( operator|( T1&& a, T2&& b )        { return { std::forward<T1>( a ), vtil::math::operator_id::bitwise_or, std::forward<T2>( b ) }; }                                          );
-DEFINE_EVAL( operator^( T1&& a, T2&& b )        { return { std::forward<T1>( a ), vtil::math::operator_id::bitwise_xor, std::forward<T2>( b ) }; }                                         );
-DEFINE_EVAL( operator>>( T1&& a, T2&& b )       { return { std::forward<T1>( a ), vtil::math::operator_id::shift_right, std::forward<T2>( b ) }; }                                         );
-DEFINE_EVAL( operator<<( T1&& a, T2&& b )       { return { std::forward<T1>( a ), vtil::math::operator_id::shift_left, std::forward<T2>( b ) }; }                                          );
-DEFINE_EVAL( __rotr( T1&& a, T2&& b )           { return { std::forward<T1>( a ), vtil::math::operator_id::rotate_right, std::forward<T2>( b ) }; }                                        );
-DEFINE_EVAL( __rotl( T1&& a, T2&& b )           { return { std::forward<T1>( a ), vtil::math::operator_id::rotate_left, std::forward<T2>( b ) }; }                                         );
-DEFINE_EVAL( operator-( T1&& a )                { return { vtil::math::operator_id::negate, std::forward<T1>( a ) }; }                                                                     );
-DEFINE_EVAL( operator+( T1&& a, T2&& b )        { return { std::forward<T1>( a ), vtil::math::operator_id::add, std::forward<T2>( b ) }; }                                                 );
-DEFINE_EVAL( operator-( T1&& a, T2&& b )        { return { std::forward<T1>( a ), vtil::math::operator_id::subtract, std::forward<T2>( b ) }; }                                            );
-DEFINE_EVAL( mulhi( T1&& a, T2&& b )            { return { std::forward<T1>( a ), vtil::math::operator_hint_sign<T1,T2>(vtil::math::operator_id::multiply_high), std::forward<T2>( b ) }; });
-DEFINE_EVAL( operator*( T1&& a, T2&& b )        { return { std::forward<T1>( a ), vtil::math::operator_hint_sign<T1,T2>(vtil::math::operator_id::multiply), std::forward<T2>( b ) }; }     );
-DEFINE_EVAL( operator/( T1&& a, T2&& b )        { return { std::forward<T1>( a ), vtil::math::operator_hint_sign<T1,T2>(vtil::math::operator_id::divide), std::forward<T2>( b ) }; }       );
-DEFINE_EVAL( operator%( T1&& a, T2&& b )        { return { std::forward<T1>( a ), vtil::math::operator_hint_sign<T1,T2>(vtil::math::operator_id::remainder), std::forward<T2>( b ) }; }    );
-DEFINE_EVAL( umulhi( T1&& a, T2&& b )           { return { std::forward<T1>( a ), vtil::math::operator_id::umultiply_high, std::forward<T2>( b ) }; }                                      );
-DEFINE_EVAL( umul( T1&& a, T2&& b )             { return { std::forward<T1>( a ), vtil::math::operator_id::umultiply, std::forward<T2>( b ) }; }                                           );
-DEFINE_EVAL( udiv( T1&& a, T2&& b )             { return { std::forward<T1>( a ), vtil::math::operator_id::udivide, std::forward<T2>( b ) }; }                                             );
-DEFINE_EVAL( urem( T1&& a, T2&& b )             { return { std::forward<T1>( a ), vtil::math::operator_id::uremainder, std::forward<T2>( b ) }; }                                          );
-DEFINE_EVAL( __ucast( T1&& a, T2&& b )          { return { std::forward<T1>( a ), vtil::math::operator_id::ucast, std::forward<T2>( b ) }; }                                               );
-DEFINE_EVAL( __cast( T1&& a, T2&& b )           { return { std::forward<T1>( a ), vtil::math::operator_id::cast, std::forward<T2>( b ) }; }                                                );
-DEFINE_EVAL( __popcnt( T1&& a )                 { return { vtil::math::operator_id::popcnt, std::forward<T1>( a ) }; }                                                                     );
-DEFINE_EVAL( __bsf( T1&& a )                    { return { vtil::math::operator_id::bitscan_fwd, std::forward<T1>( a ) }; }                                                                );
-DEFINE_EVAL( __bsr( T1&& a )                    { return { vtil::math::operator_id::bitscan_rev, std::forward<T1>( a ) }; }                                                                );
-DEFINE_EVAL( __bt( T1&& a, T2&& b )             { return { std::forward<T1>( a ), vtil::math::operator_id::bit_test, std::forward<T2>( b ) }; }                                            );
-DEFINE_EVAL( __mask( T1&& a )                   { return { vtil::math::operator_id::mask, std::forward<T1>( a ) }; }                                                                       );
-DEFINE_EVAL( __bcnt( T1&& a )                   { return { vtil::math::operator_id::bit_count, std::forward<T1>( a ) }; }                                                                  );
-DEFINE_EVAL( __if( T1&& a, T2&& b )             { return { std::forward<T1>( a ), vtil::math::operator_id::value_if, std::forward<T2>( b ) }; }                                            );
-DEFINE_EVAL( __max( T1&& a, T2&& b )            { return { std::forward<T1>( a ), vtil::math::operator_hint_sign<T1,T2>(vtil::math::operator_id::max_value), std::forward<T2>( b ) }; }    );
-DEFINE_EVAL( __min( T1&& a, T2&& b )            { return { std::forward<T1>( a ), vtil::math::operator_hint_sign<T1,T2>(vtil::math::operator_id::min_value), std::forward<T2>( b ) }; }    );
-DEFINE_EVAL( __umax( T1&& a, T2&& b )           { return { std::forward<T1>( a ), vtil::math::operator_id::umax_value, std::forward<T2>( b ) }; }                                          );
-DEFINE_EVAL( __umin( T1&& a, T2&& b )           { return { std::forward<T1>( a ), vtil::math::operator_id::umin_value, std::forward<T2>( b ) }; }                                          );
-DEFINE_EVAL( operator>( T1&& a, T2&& b )        { return { std::forward<T1>( a ), vtil::math::operator_hint_sign<T1,T2>(vtil::math::operator_id::greater), std::forward<T2>( b ) }; }      );
-DEFINE_EVAL( operator>=( T1&& a, T2&& b )       { return { std::forward<T1>( a ), vtil::math::operator_hint_sign<T1,T2>(vtil::math::operator_id::greater_eq), std::forward<T2>( b ) }; }   );
-DEFINE_EVAL( operator==( T1&& a, T2&& b )       { return { std::forward<T1>( a ), vtil::math::operator_hint_sign<T1,T2>(vtil::math::operator_id::equal), std::forward<T2>( b ) }; }        );
-DEFINE_EVAL( operator!=( T1&& a, T2&& b )       { return { std::forward<T1>( a ), vtil::math::operator_hint_sign<T1,T2>(vtil::math::operator_id::not_equal), std::forward<T2>( b ) }; }    );
-DEFINE_EVAL( operator<=( T1&& a, T2&& b )       { return { std::forward<T1>( a ), vtil::math::operator_hint_sign<T1,T2>(vtil::math::operator_id::less_eq), std::forward<T2>( b ) }; }      );
-DEFINE_EVAL( operator<( T1&& a, T2&& b )        { return { std::forward<T1>( a ), vtil::math::operator_hint_sign<T1,T2>(vtil::math::operator_id::less), std::forward<T2>( b ) }; }         );
-DEFINE_EVAL( __ugreat( T1&& a, T2&& b )         { return { std::forward<T1>( a ), vtil::math::operator_id::ugreater, std::forward<T2>( b ) }; }                                            );
-DEFINE_EVAL( __ugreat_eq( T1&& a, T2&& b )      { return { std::forward<T1>( a ), vtil::math::operator_id::ugreater_eq, std::forward<T2>( b ) }; }                                         );
-DEFINE_EVAL( __uequal( T1&& a, T2&& b )         { return { std::forward<T1>( a ), vtil::math::operator_id::uequal, std::forward<T2>( b ) }; }                                              );
-DEFINE_EVAL( __unot_equal( T1&& a, T2&& b )     { return { std::forward<T1>( a ), vtil::math::operator_id::unot_equal, std::forward<T2>( b ) }; }                                          );
-DEFINE_EVAL( __uless_eq( T1&& a, T2&& b )       { return { std::forward<T1>( a ), vtil::math::operator_id::uless_eq, std::forward<T2>( b ) }; }                                            );
-DEFINE_EVAL( __uless( T1&& a, T2&& b )          { return { std::forward<T1>( a ), vtil::math::operator_id::uless, std::forward<T2>( b ) }; }                                               );
+DEFINE_EVAL( operator~( T1&& a )                { return vtil::math::make_operable<R>( vtil::math::operator_id::bitwise_not, std::forward<T1>( a ) ); }                                                                );
+DEFINE_EVAL( operator&( T1&& a, T2&& b )        { return vtil::math::make_operable<R>( std::forward<T1>( a ), vtil::math::operator_id::bitwise_and, std::forward<T2>( b ) ); }                                         );
+DEFINE_EVAL( operator|( T1&& a, T2&& b )        { return vtil::math::make_operable<R>( std::forward<T1>( a ), vtil::math::operator_id::bitwise_or, std::forward<T2>( b ) ); }                                          );
+DEFINE_EVAL( operator^( T1&& a, T2&& b )        { return vtil::math::make_operable<R>( std::forward<T1>( a ), vtil::math::operator_id::bitwise_xor, std::forward<T2>( b ) ); }                                         );
+DEFINE_EVAL( operator>>( T1&& a, T2&& b )       { return vtil::math::make_operable<R>( std::forward<T1>( a ), vtil::math::operator_id::shift_right, std::forward<T2>( b ) ); }                                         );
+DEFINE_EVAL( operator<<( T1&& a, T2&& b )       { return vtil::math::make_operable<R>( std::forward<T1>( a ), vtil::math::operator_id::shift_left, std::forward<T2>( b ) ); }                                          );
+DEFINE_EVAL( __rotr( T1&& a, T2&& b )           { return vtil::math::make_operable<R>( std::forward<T1>( a ), vtil::math::operator_id::rotate_right, std::forward<T2>( b ) ); }                                        );
+DEFINE_EVAL( __rotl( T1&& a, T2&& b )           { return vtil::math::make_operable<R>( std::forward<T1>( a ), vtil::math::operator_id::rotate_left, std::forward<T2>( b ) ); }                                         );
+DEFINE_EVAL( operator-( T1&& a )                { return vtil::math::make_operable<R>( vtil::math::operator_id::negate, std::forward<T1>( a ) ); }                                                                     );
+DEFINE_EVAL( operator+( T1&& a, T2&& b )        { return vtil::math::make_operable<R>( std::forward<T1>( a ), vtil::math::operator_id::add, std::forward<T2>( b ) ); }                                                 );
+DEFINE_EVAL( operator-( T1&& a, T2&& b )        { return vtil::math::make_operable<R>( std::forward<T1>( a ), vtil::math::operator_id::subtract, std::forward<T2>( b ) ); }                                            );
+DEFINE_EVAL( mulhi( T1&& a, T2&& b )            { return vtil::math::make_operable<R>( std::forward<T1>( a ), vtil::math::operator_hint_sign<T1,T2>(vtil::math::operator_id::multiply_high), std::forward<T2>( b ) ); });
+DEFINE_EVAL( operator*( T1&& a, T2&& b )        { return vtil::math::make_operable<R>( std::forward<T1>( a ), vtil::math::operator_hint_sign<T1,T2>(vtil::math::operator_id::multiply), std::forward<T2>( b ) ); }     );
+DEFINE_EVAL( operator/( T1&& a, T2&& b )        { return vtil::math::make_operable<R>( std::forward<T1>( a ), vtil::math::operator_hint_sign<T1,T2>(vtil::math::operator_id::divide), std::forward<T2>( b ) ); }       );
+DEFINE_EVAL( operator%( T1&& a, T2&& b )        { return vtil::math::make_operable<R>( std::forward<T1>( a ), vtil::math::operator_hint_sign<T1,T2>(vtil::math::operator_id::remainder), std::forward<T2>( b ) ); }    );
+DEFINE_EVAL( umulhi( T1&& a, T2&& b )           { return vtil::math::make_operable<R>( std::forward<T1>( a ), vtil::math::operator_id::umultiply_high, std::forward<T2>( b ) ); }                                      );
+DEFINE_EVAL( umul( T1&& a, T2&& b )             { return vtil::math::make_operable<R>( std::forward<T1>( a ), vtil::math::operator_id::umultiply, std::forward<T2>( b ) ); }                                           );
+DEFINE_EVAL( udiv( T1&& a, T2&& b )             { return vtil::math::make_operable<R>( std::forward<T1>( a ), vtil::math::operator_id::udivide, std::forward<T2>( b ) ); }                                             );
+DEFINE_EVAL( urem( T1&& a, T2&& b )             { return vtil::math::make_operable<R>( std::forward<T1>( a ), vtil::math::operator_id::uremainder, std::forward<T2>( b ) ); }                                          );
+DEFINE_EVAL( __ucast( T1&& a, T2&& b )          { return vtil::math::make_operable<R>( std::forward<T1>( a ), vtil::math::operator_id::ucast, std::forward<T2>( b ) ); }                                               );
+DEFINE_EVAL( __cast( T1&& a, T2&& b )           { return vtil::math::make_operable<R>( std::forward<T1>( a ), vtil::math::operator_id::cast, std::forward<T2>( b ) ); }                                                );
+DEFINE_EVAL( __popcnt( T1&& a )                 { return vtil::math::make_operable<R>( vtil::math::operator_id::popcnt, std::forward<T1>( a ) ); }                                                                     );
+DEFINE_EVAL( __bsf( T1&& a )                    { return vtil::math::make_operable<R>( vtil::math::operator_id::bitscan_fwd, std::forward<T1>( a ) ); }                                                                );
+DEFINE_EVAL( __bsr( T1&& a )                    { return vtil::math::make_operable<R>( vtil::math::operator_id::bitscan_rev, std::forward<T1>( a ) ); }                                                                );
+DEFINE_EVAL( __bt( T1&& a, T2&& b )             { return vtil::math::make_operable<R>( std::forward<T1>( a ), vtil::math::operator_id::bit_test, std::forward<T2>( b ) ); }                                            );
+DEFINE_EVAL( __mask( T1&& a )                   { return vtil::math::make_operable<R>( vtil::math::operator_id::mask, std::forward<T1>( a ) ); }                                                                       );
+DEFINE_EVAL( __bcnt( T1&& a )                   { return vtil::math::make_operable<R>( vtil::math::operator_id::bit_count, std::forward<T1>( a ) ); }                                                                  );
+DEFINE_EVAL( __if( T1&& a, T2&& b )             { return vtil::math::make_operable<R>( std::forward<T1>( a ), vtil::math::operator_id::value_if, std::forward<T2>( b ) ); }                                            );
+DEFINE_EVAL( __max( T1&& a, T2&& b )            { return vtil::math::make_operable<R>( std::forward<T1>( a ), vtil::math::operator_hint_sign<T1,T2>(vtil::math::operator_id::max_value), std::forward<T2>( b ) ); }    );
+DEFINE_EVAL( __min( T1&& a, T2&& b )            { return vtil::math::make_operable<R>( std::forward<T1>( a ), vtil::math::operator_hint_sign<T1,T2>(vtil::math::operator_id::min_value), std::forward<T2>( b ) ); }    );
+DEFINE_EVAL( __umax( T1&& a, T2&& b )           { return vtil::math::make_operable<R>( std::forward<T1>( a ), vtil::math::operator_id::umax_value, std::forward<T2>( b ) ); }                                          );
+DEFINE_EVAL( __umin( T1&& a, T2&& b )           { return vtil::math::make_operable<R>( std::forward<T1>( a ), vtil::math::operator_id::umin_value, std::forward<T2>( b ) ); }                                          );
+DEFINE_EVAL( operator>( T1&& a, T2&& b )        { return vtil::math::make_operable<R>( std::forward<T1>( a ), vtil::math::operator_hint_sign<T1,T2>(vtil::math::operator_id::greater), std::forward<T2>( b ) ); }      );
+DEFINE_EVAL( operator>=( T1&& a, T2&& b )       { return vtil::math::make_operable<R>( std::forward<T1>( a ), vtil::math::operator_hint_sign<T1,T2>(vtil::math::operator_id::greater_eq), std::forward<T2>( b ) ); }   );
+DEFINE_EVAL( operator==( T1&& a, T2&& b )       { return vtil::math::make_operable<R>( std::forward<T1>( a ), vtil::math::operator_hint_sign<T1,T2>(vtil::math::operator_id::equal), std::forward<T2>( b ) ); }        );
+DEFINE_EVAL( operator!=( T1&& a, T2&& b )       { return vtil::math::make_operable<R>( std::forward<T1>( a ), vtil::math::operator_hint_sign<T1,T2>(vtil::math::operator_id::not_equal), std::forward<T2>( b ) ); }    );
+DEFINE_EVAL( operator<=( T1&& a, T2&& b )       { return vtil::math::make_operable<R>( std::forward<T1>( a ), vtil::math::operator_hint_sign<T1,T2>(vtil::math::operator_id::less_eq), std::forward<T2>( b ) ); }      );
+DEFINE_EVAL( operator<( T1&& a, T2&& b )        { return vtil::math::make_operable<R>( std::forward<T1>( a ), vtil::math::operator_hint_sign<T1,T2>(vtil::math::operator_id::less), std::forward<T2>( b ) ); }         );
+DEFINE_EVAL( __ugreat( T1&& a, T2&& b )         { return vtil::math::make_operable<R>( std::forward<T1>( a ), vtil::math::operator_id::ugreater, std::forward<T2>( b ) ); }                                            );
+DEFINE_EVAL( __ugreat_eq( T1&& a, T2&& b )      { return vtil::math::make_operable<R>( std::forward<T1>( a ), vtil::math::operator_id::ugreater_eq, std::forward<T2>( b ) ); }                                         );
+DEFINE_EVAL( __uequal( T1&& a, T2&& b )         { return vtil::math::make_operable<R>( std::forward<T1>( a ), vtil::math::operator_id::uequal, std::forward<T2>( b ) ); }                                              );
+DEFINE_EVAL( __unot_equal( T1&& a, T2&& b )     { return vtil::math::make_operable<R>( std::forward<T1>( a ), vtil::math::operator_id::unot_equal, std::forward<T2>( b ) ); }                                          );
+DEFINE_EVAL( __uless_eq( T1&& a, T2&& b )       { return vtil::math::make_operable<R>( std::forward<T1>( a ), vtil::math::operator_id::uless_eq, std::forward<T2>( b ) ); }                                            );
+DEFINE_EVAL( __uless( T1&& a, T2&& b )          { return vtil::math::make_operable<R>( std::forward<T1>( a ), vtil::math::operator_id::uless, std::forward<T2>( b ) ); }                                               );
 DEFINE_ASGN( operator>>=, operator>> );
 DEFINE_ASGN( operator<<=, operator<< );
 DEFINE_ASGN( operator+=,  operator+ );

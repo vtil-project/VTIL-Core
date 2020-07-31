@@ -89,7 +89,7 @@ namespace vtil::symbolic
 
 		// Construct from any other type.
 		//
-		template<typename T, typename hasher_t = hasher<>,
+		template<typename T, typename hasher_t = std::hash<T>,
 			// Must not be an array or [const unique_identifier&].
 			std::enable_if_t<!std::is_same_v<T, unique_identifier> && !std::extent_v<T>, int> = 0>
 			unique_identifier( const T& v, std::string&& name = "" )

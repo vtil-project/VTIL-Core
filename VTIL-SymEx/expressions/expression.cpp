@@ -630,7 +630,7 @@ namespace vtil::symbolic
 
 			// Append depth, size, and operator information to the hash.
 			//
-			hash_value = make_hash( hash_value, op, depth, uint8_t( value.size() ) );
+			hash_value = combine_hash( hash_value, make_hash( op, depth, uint8_t( value.size() ) ) );
 
 			// Punish for mixing bitwise and arithmetic operators.
 			//
@@ -734,7 +734,7 @@ namespace vtil::symbolic
 
 		// If not in debug mode, assume equivalence after total hash reaches 384 bits.
 		//
-		static constexpr size_t max_depth = 384 / VTIL_HASH_SIZE;
+		static constexpr size_t max_depth = 256 / VTIL_HASH_SIZE;
 #ifndef _DEBUG
 		if constexpr ( depth == max_depth ) 
 			return true;

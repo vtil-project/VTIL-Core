@@ -113,7 +113,6 @@ namespace vtil
         reducable_greq =     1 << 3,
         reducable_less =     1 << 4,
         reducable_greater =  1 << 5,
-        reducable_hash =     1 << 6,
         reducable_all =      0xFF,
     };
 
@@ -167,14 +166,13 @@ namespace vtil
         template<std::enable_if_t<flags&reducable_greater, int> = 0>
         __forceinline auto operator> ( const T& other ) const { return &other != this && reduce_proxy( ( T& ) *this ) >  reduce_proxy( other ); }
 
-        // Define VTIL hash using a simple VTIL tuple hasher.
-        //
-        template<std::enable_if_t<flags&reducable_hash, int> = 0>
-        __forceinline hash_t hash() const { return make_hash( reduce_proxy( ( const T& ) *this ) ); }
-
         // Define the [const T::reduce()] for the base type just for convinience.
         //
         __forceinline auto reduce() const { return reduce_proxy( ( const T& ) *this ); }
+
+        // Define VTIL hash using a simple VTIL tuple hasher.
+        //
+        __forceinline hash_t hash() const { return make_hash( reduce() ); }
     };
 
     // Helper used to create reduced tuples.

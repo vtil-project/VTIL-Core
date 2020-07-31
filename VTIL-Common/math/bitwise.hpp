@@ -269,7 +269,7 @@ namespace vtil::math
     //
     namespace impl
     {
-        // For all N except 0 and 1:
+        // For all N except 0 / 1 / 64:
         //
         template<auto N>
         struct integer_resizer

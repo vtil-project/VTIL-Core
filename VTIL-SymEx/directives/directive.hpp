@@ -216,9 +216,8 @@ namespace vtil::symbolic::directive
 
         // Variable constructor.
         //
-        template<typename T = uint64_t, std::enable_if_t<std::is_integral_v<T>, int> = 0>
-        instance( T v ) : 
-            operable( int64_t( v ) ), num_nodes( 1 )
+        template<Integral T = uint64_t>
+        instance( T v, bitcnt_t _discarded_bit_count = 0 ) : operable( ( int64_t ) v , 64 ), num_nodes( 1 )
         {
             for ( auto [out, idx] : zip( signatures, iindices ) )
                 out = { make_copy( value ).resize( math::narrow_cast<bitcnt_t>( idx + 1 ) ) };
