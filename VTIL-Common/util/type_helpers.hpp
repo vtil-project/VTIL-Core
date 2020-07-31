@@ -32,6 +32,7 @@
 #include <array>
 #include <tuple>
 #include <string_view>
+#include <string>
 #include <atomic>
 #include "intrinsics.hpp"
 
@@ -45,28 +46,28 @@ namespace vtil
 	// Constant tag.
 	//
 	template<auto v>
-	struct constant_tag
+	struct const_tag
 	{
 		static constexpr auto value = v;
 
-		template<auto Q = v>
+		template<auto vvvv__identifier__vvvv = v>
 		static constexpr std::string_view name()
 		{
 			std::string_view sig = FUNCTION_NAME;
 			auto [begin, delta, end] = std::tuple{
 #if defined(_MSC_VER)
-				"<", +1, ">"
+				std::string_view{ "<" },                      0,  ">"
 #else
-				"Q", +4, "];"
+				std::string_view{ "vvvv__identifier__vvvv" }, +3, "];"
 #endif
 			};
 
 			// Find the beginning of the name.
 			//
-			auto f = sig.find_last_of( begin );
-			if ( f == std::string::npos )
-				return "";
-			f += delta;
+			size_t f = sig.size();
+			while( sig.substr( --f, begin.size() ).compare( begin ) != 0 )
+				if( f == 0 ) return "";
+			f += begin.size() + delta;
 
 			// Find the end of the string.
 			//
@@ -275,10 +276,10 @@ namespace vtil
 		template<typename Ti, typename T, Ti... I>
 		static constexpr auto make_constant_series( T&& f, std::integer_sequence<Ti, I...> )
 		{
-			if constexpr ( std::is_void_v<decltype( f( constant_tag<0>{} ) )> )
-				( ( f( constant_tag<I>{} ) ), ... );
+			if constexpr ( std::is_void_v<decltype( f( const_tag<0>{} ) )> )
+				( ( f( const_tag<I>{} ) ), ... );
 			else
-				return std::array{ f( constant_tag<I>{} )... };
+				return std::array{ f( const_tag<I>{} )... };
 		}
 	};
 	template<auto N, typename T>
