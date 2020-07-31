@@ -127,9 +127,9 @@ namespace vtil::symbolic
 
 		// Write hash.
 		//
-		hash_value = make_hash( 
-			( uint8_t ) op,
-			is_commutative ? combine_unordered_hash( lhs.hash(), rhs.hash() ) : combine_hash( lhs.hash(), rhs.hash() ) 
+		hash_value = combine_hash( 
+			is_commutative ? combine_unordered_hash( lhs.hash(), rhs.hash() ) : combine_hash( lhs.hash(), rhs.hash() ),
+			( uint8_t ) op
 		);
 	}
 
