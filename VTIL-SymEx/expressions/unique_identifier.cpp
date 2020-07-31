@@ -46,19 +46,18 @@ namespace vtil::symbolic
 	//
 	bool unique_identifier::operator==( const unique_identifier& o ) const
 	{
+		// If hash mismatch, return false.
+		//
+		if ( hash_value != o.hash_value ) return false;
+
 		// Check for null.
 		//
 		if ( !value ) return !o.value;
 		if ( !o.value ) return false;
 
-		// If hash mismatch, return false.
-		//
-		if ( hash_value != o.hash_value )
-			return false;
-
 		// Assert internal equivalance.
 		//
-		return compare_value ? compare_value( *this, o ) == 0 : true;
+		return compare_value( *this, o ) == 0;
 	}
 	bool unique_identifier::operator<( const unique_identifier& o ) const
 	{
@@ -67,13 +66,13 @@ namespace vtil::symbolic
 		if ( !value ) return o.value;
 		if ( !o.value ) return false;
 
-		// Compare by hash first.
+		// Compare by hash.
 		//
 		if ( hash_value != o.hash_value )
 			return hash_value < o.hash_value;
 
 		// Compare internals if equivalent hash.
 		//
-		return compare_value ? compare_value( *this, o ) < 0 : false;
+		return compare_value( *this, o ) < 0;
 	}
 };

@@ -41,10 +41,10 @@
 	#define	VTIL_SYMEX_SELFGEN_SIGMATCH_DEPTH_LIM   3
 #endif
 #ifndef VTIL_SYMEX_LRU_CACHE_SIZE
-	#define VTIL_SYMEX_LRU_CACHE_SIZE               65536
+	#define VTIL_SYMEX_LRU_CACHE_SIZE               0x40000
 #endif
 #ifndef VTIL_SYMEX_LRU_PRUNE_COEFF
-	#define VTIL_SYMEX_LRU_PRUNE_COEFF              0.333
+	#define VTIL_SYMEX_LRU_PRUNE_COEFF              0.5
 #endif
 namespace vtil::symbolic
 {
@@ -75,12 +75,12 @@ namespace vtil::symbolic
 		return table;
 	};
 
-	static auto& get_boolean_joiners( math::operator_id op ) { static auto tbl = build_dynamic_table( directive::boolean_joiners ); return tbl[ ( size_t ) op ]; }
-	static auto& get_pack_descriptors( math::operator_id op ) { static auto tbl = build_dynamic_table( directive::pack_descriptors ); return tbl[ ( size_t ) op ]; }
-	static auto& get_join_descriptors( math::operator_id op ) { static auto tbl = build_dynamic_table( directive::join_descriptors ); return tbl[ ( size_t ) op ]; }
-	static auto& get_unpack_descriptors( math::operator_id op ) { static auto tbl = build_dynamic_table( directive::unpack_descriptors ); return tbl[ ( size_t ) op ]; }
-	static auto& get_boolean_simplifiers( math::operator_id op ) { static auto tbl = build_dynamic_table( directive::build_boolean_simplifiers() ); return tbl[ ( size_t ) op ]; }
-	static auto& get_universal_simplifiers( math::operator_id op ) { static auto tbl = build_dynamic_table( directive::universal_simplifiers ); return tbl[ ( size_t ) op ]; }
+	static auto& get_boolean_joiners( math::operator_id op )       { static const auto tbl = build_dynamic_table( directive::boolean_joiners );             return tbl[ ( size_t ) op ]; }
+	static auto& get_pack_descriptors( math::operator_id op )      { static const auto tbl = build_dynamic_table( directive::pack_descriptors );            return tbl[ ( size_t ) op ]; }
+	static auto& get_join_descriptors( math::operator_id op )      { static const auto tbl = build_dynamic_table( directive::join_descriptors );            return tbl[ ( size_t ) op ]; }
+	static auto& get_unpack_descriptors( math::operator_id op )    { static const auto tbl = build_dynamic_table( directive::unpack_descriptors );          return tbl[ ( size_t ) op ]; }
+	static auto& get_boolean_simplifiers( math::operator_id op )   { static const auto tbl = build_dynamic_table( directive::build_boolean_simplifiers() ); return tbl[ ( size_t ) op ]; }
+	static auto& get_universal_simplifiers( math::operator_id op ) { static const auto tbl = build_dynamic_table( directive::universal_simplifiers );       return tbl[ ( size_t ) op ]; }
 
 	// Simplifier cache and its accessors.
 	//
@@ -91,6 +91,7 @@ namespace vtil::symbolic
 
 		// Declare custom hash / equivalence checks hijacking the hash map iteration.
 		//
+		struct cache_value;
 		struct signature_hasher
 		{
 			size_t operator()( const expression::reference& ref ) const noexcept { return ref->signature.hash(); }
@@ -100,19 +101,13 @@ namespace vtil::symbolic
 			struct sigscan_result
 			{
 				const expression::reference& key;
-				expression::weak_reference match;
+				cache_value* match = nullptr;
 				expression::uid_relation_table table;
 			};
 			inline static thread_local sigscan_result* sigscan = nullptr;
-			inline static thread_local bool match_ptr = false;
 
 			bool operator()( const expression::reference& a, const expression::reference& b ) const noexcept 
 			{ 
-				// If pointer matching:
-				//
-				if ( match_ptr )
-					return a == b;
-
 				// If identical expressions, return true.
 				//
 				if ( a.is_identical( *b ) )
@@ -124,22 +119,22 @@ namespace vtil::symbolic
 				{
 					// Find out which argument is "this", if failed return false.
 					//
-					expression::weak_reference self, other;
-					if ( a == sigscan->key )       self = a, other = b;
-					else if ( b == sigscan->key )  self = b, other = a;
-					else                           return false;
+					auto self = &a, other = &b;
+					if ( a.pointer != sigscan->key.pointer )
+						std::swap( self, other );
 
 					// If other's past depth limit:
 					//
-					if ( other->depth > VTIL_SYMEX_SELFGEN_SIGMATCH_DEPTH_LIM )
+					if ( ( *other )->depth > VTIL_SYMEX_SELFGEN_SIGMATCH_DEPTH_LIM )
 					{
-						// If matching signature, save the match.
+						// If matching signature, save the match, steal full value from the reference to the key.
 						//
-						if ( auto vec = other->match_to( *self ) )
+						if ( auto vec = ( *other )->match_to( **self ) )
 						{
-							sigscan->match = other;
 							sigscan->table = std::move( *vec );
-
+							using kv_pair = std::pair<const expression::reference, cache_value>;
+							sigscan->match = &( ( kv_pair* ) other )->second;
+							
 							// Clear the request.
 							//
 							sigscan = nullptr;
@@ -152,7 +147,6 @@ namespace vtil::symbolic
 
 		// Cache entry and map type.
 		//
-		struct cache_value;
 		using cache_map = std::unordered_map<expression::reference, cache_value, signature_hasher, cache_scanner>;
 		struct cache_value
 		{
@@ -305,26 +299,23 @@ namespace vtil::symbolic
 			{
 				// If there is a partial match:
 				//
-				if ( sig_search.match )
+				if ( auto base = sig_search.match )
 				{
-					// Find the entry in map, matching only by the pointer and reset inserted flag.
+					// Reset inserted flag.
 					//
-					cache_scanner::match_ptr = true;
-					auto base = map.find( sig_search.match.make_shared() );
-					cache_scanner::match_ptr = false;
 					inserted = false;
 
 					// If simplified, transform according to the UID table.
 					//
-					if ( base->second.is_simplified )
+					if ( base->is_simplified )
 					{
-						it->second.result = make_const( base->second.result ).transform( [ &sig_search ] ( expression::delegate& exp )
+						it->second.result = make_const( base->result ).transform( [ &sig_search ] ( expression::delegate& exp )
 						{
 							if ( !exp->is_variable() )
 								return;
 							for ( auto& [a, b] : sig_search.table )
 							{
-								if ( exp->uid == a->uid && a->uid != b->uid )
+								if ( exp->is_identical( *a ) )
 								{
 									exp = b.make_shared();
 									break;
@@ -341,7 +332,9 @@ namespace vtil::symbolic
 						it->second.is_simplified = false;
 					}
 
-					erase( &base->second );
+					// Erase the previous entry.
+					//
+					erase( base );
 				}
 
 				// Initialize it.
@@ -503,7 +496,7 @@ namespace vtil::symbolic
 	// Attempts to simplify the expression given, returns whether the simplification
 	// succeeded or not.
 	//
-	bool simplify_expression( expression::reference& exp, bool pretty, int64_t max_depth, bool unpack )
+	static bool simplify_expression_i( expression::reference& exp, bool pretty, int64_t max_depth, bool unpack )
 	{
 		using namespace logger;
 
@@ -685,7 +678,7 @@ namespace vtil::symbolic
 
 		// Enumerate each universal simplifier:
 		//
-		for ( auto [dir_src, dir_dst] : get_universal_simplifiers( exp->op ) )
+		for ( auto& [dir_src, dir_dst] : get_universal_simplifiers( exp->op ) )
 		{
 			// If we can transform the expression by the directive set:
 			//
@@ -712,7 +705,7 @@ namespace vtil::symbolic
 		{
 			// Enumerate each universal simplifier:
 			//
-			for ( auto [dir_src, dir_dst] : get_boolean_simplifiers( exp->op ) )
+			for ( auto& [dir_src, dir_dst] : get_boolean_simplifiers( exp->op ) )
 			{
 				// If we can transform the expression by the directive set:
 				//
@@ -781,7 +774,7 @@ namespace vtil::symbolic
 
 		// Enumerate each join descriptor:
 		//
-		for ( auto [dir_src, dir_dst] : get_join_descriptors( exp->op ) )
+		for ( auto& [dir_src, dir_dst] : get_join_descriptors( exp->op ) )
 		{
 			// If we can transform the expression by the directive set:
 			//
@@ -809,7 +802,7 @@ namespace vtil::symbolic
 		{
 			// Enumerate each join descriptor:
 			//
-			for ( auto [dir_src, dir_dst] : get_boolean_joiners( exp->op ) )
+			for ( auto& [dir_src, dir_dst] : get_boolean_joiners( exp->op ) )
 			{
 				// If we can transform the expression by the directive set:
 				//
@@ -838,7 +831,7 @@ namespace vtil::symbolic
 		{
 			// Enumerate each unpack descriptor:
 			//
-			for ( auto [dir_src, dir_dst] : get_unpack_descriptors( exp->op ) )
+			for ( auto& [dir_src, dir_dst] : get_unpack_descriptors( exp->op ) )
 			{
 				// If we can transform the expression by the directive set:
 				//
@@ -872,5 +865,20 @@ namespace vtil::symbolic
 		log( "= %s\n\n", *exp );
 #endif
 		return false;
+	}
+
+	// Simple routine wrapping real simplification to instrument it for any reason when needed.
+	//
+	bool simplify_expression( expression::reference& exp, bool pretty, int64_t max_depth, bool unpack )
+	{
+		/*expression::reference def = exp;
+		auto [result, t] = profile( [ & ] ()
+		{
+			return simplify_expression_i( exp, pretty, max_depth, unpack );
+		} );
+
+		if ( t > 500ms )
+			logger::log( "%s took %s\n", def, t );*/
+		return simplify_expression_i( exp, pretty, max_depth, unpack );
 	}
 };
