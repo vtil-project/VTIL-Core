@@ -34,15 +34,15 @@ namespace vtil
 	// Times the callable given and returns pair [result, duration] if it has 
 	// a return value or just [duration].
 	//
-	template<typename T>
-	static auto profile( T&& f )
+	template<typename T, typename... Tx>
+	static auto profile( T&& f, Tx&&... args )
 	{
-		using result_t = decltype( std::declval<T>()() );
+		using result_t = decltype( std::declval<T>()( std::forward<Tx>( args )... ) );
 
 		if constexpr ( std::is_same_v<result_t, void> )
 		{
 			auto t0 = std::chrono::steady_clock::now();
-			f();
+			f( std::forward<Tx>( args )... );
 			auto t1 = std::chrono::steady_clock::now();
 			return t1 - t0;
 		}
@@ -58,11 +58,12 @@ namespace vtil
 
 	// Same as ::profile but ignores the return value and runs N times.
 	//
-	template<typename T>
-	static auto profile_n( T&& f, size_t n )
+	template<size_t N, typename T, typename... Tx>
+	static auto profile_n( T&& f, Tx&&... args )
 	{
 		auto t0 = std::chrono::steady_clock::now();
-		while( n-- != 0 ) f();
+		for ( size_t i = 0; i != N; i++ ) 
+			f( args... ); // Not forwarded since we can't move N times.
 		auto t1 = std::chrono::steady_clock::now();
 		return t1 - t0;
 	}
