@@ -339,7 +339,7 @@ namespace vtil
 	// move constructor does not exist, e.g. a trivial type, will assign default value after moving from it.
 	//
 	template<typename T>
-	[[nodiscard]] static constexpr decltype(auto) possess_value( T& v )
+	[[nodiscard]] static constexpr T possess_value( T& v )
 	{
 		// If trivial type, use exchange (likely to generate single XCHG).
 		//
@@ -350,21 +350,15 @@ namespace vtil
 		// If trivially move constructable, std::move will not invalidate the target so invoke 
 		// move and invalidate manually here.
 		//
-		else if constexpr ( std::is_trivially_move_constructible_v<T> )
+		else if constexpr ( std::is_move_constructible_v<T> && Nullable<T> )
 		{
 			T value{ std::move( v ) };
 			null_value( v );
 			return value;
 		}
-		// If it has a user-defined move constructor, redirect to move.
-		//
-		else if constexpr ( std::is_move_constructible_v<T> )
-		{
-			return std::move( v );
-		}
 		// If there is a copy constructor, copy it and then reset.
 		//
-		else if constexpr ( std::is_copy_constructible_v<T> )
+		else if constexpr ( std::is_copy_constructible_v<T> && Nullable<T> )
 		{
 			T value{ v };
 			null_value( v );

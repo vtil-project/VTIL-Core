@@ -30,6 +30,7 @@
 #include <mutex>
 #include "intrinsics.hpp"
 #include "type_helpers.hpp"
+#include "relaxed_atomics.hpp"
 
 namespace vtil
 {
@@ -57,7 +58,7 @@ namespace vtil
 
 		// Spinlock protecting the list.
 		//
-		mutable std::atomic_flag spinlock = ATOMIC_FLAG_INIT;
+		mutable relaxed_atomic<bool> spinlock = { false };
 
 		// Head, tail and size tracking the list.
 		//
@@ -88,8 +89,7 @@ namespace vtil
 		{
 			if constexpr ( !atomic )
 				return;
-
-			while ( spinlock.test_and_set( std::memory_order_acquire ) )
+			while ( spinlock.exchange( true, std::memory_order_acquire ) != false )
 				_mm_pause();
 		}
 		void unlock() const
@@ -97,7 +97,7 @@ namespace vtil
 			if constexpr ( !atomic )
 				return;
 			
-			spinlock.clear( std::memory_order_release );
+			spinlock.store( false, std::memory_order_release );
 		}
 
 		// Inserts the entire queue into the list.
