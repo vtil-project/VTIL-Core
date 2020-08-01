@@ -34,6 +34,7 @@
 #include <atomic>
 #include <thread>
 #include <future>
+#include <vtil/symex>
 
 // [Configuration]
 // Determine whether or not to use parallel transformations and thread pooling.
@@ -51,6 +52,13 @@ namespace vtil::optimizer
 	{
 		template<typename T>
 		concept AtomicSummable = requires( std::atomic<size_t>& y, T x ) { y += x; };
+
+		struct saved_cache 
+		{ 
+			symbolic::simplifier_state_ptr state = nullptr; 
+			saved_cache() { }
+			saved_cache( const saved_cache& o ) { fassert( !o.state ); }
+		};
 	};
 
 	// Passes every block through the transformer given in parallel, returns the 
@@ -66,10 +74,23 @@ namespace vtil::optimizer
 		std::atomic<size_t> n = { 0 };
 		auto worker = [ & ] ( basic_block* blk )
 		{
+			// If there's a valid cache saved, swap.
+			//
+			impl::saved_cache& cache = blk->context;
+			symbolic::simplifier_state_ptr pcache = nullptr;
+			if ( cache.state )
+				pcache = symbolic::swap_simplifier_state( std::move( cache.state ) );
+
+			// Execute.
+			//
 			if constexpr ( impl::AtomicSummable<ret_type> ) 
 				n += fn( blk, args... );
 			else
 				fn( blk, args... );
+
+			// Save current cache into the block.
+			//
+			cache.state = symbolic::swap_simplifier_state( std::move( pcache ) );
 		};
 
 		// If parallel transformation is disabled, use fallback.
