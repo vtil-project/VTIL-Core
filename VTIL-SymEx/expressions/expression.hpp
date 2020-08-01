@@ -332,7 +332,7 @@ namespace vtil::symbolic
 		// Returns whether the given expression is matching the current instance, if so returns
 		// the UID relation table, otherwise returns nullopt.
 		//
-		std::optional<uid_relation_table> match_to( const expression& other ) const;
+		std::optional<uid_relation_table> match_to( const expression& other, bool same_depth ) const;
 
 		// Calculates the x values.
 		//
