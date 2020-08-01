@@ -123,7 +123,8 @@ namespace vtil::symbolic
 					// Skip if not improving the result.
 					//
 					int64_t sdiff = ( *self )->depth - ( *other )->depth;
-					if ( sdiff < 0 )
+					//if ( sdiff < 0 )
+					if( sdiff != 0  )
 						return false;
 					if ( sigscan->match && sdiff > sigscan->diff )
 						return false;
@@ -139,12 +140,13 @@ namespace vtil::symbolic
 					{
 						// If matching signature, save the match, steal full value from the reference to the key.
 						//
-						if ( auto vec = ( *other )->match_to( **self, false ) )
+						if ( auto vec = ( *other )->match_to( **self, /*false*/ true ) )
 						{
 							sigscan->table = std::move( *vec );
 							using kv_pair = std::pair<const expression::reference, cache_value>;
 							sigscan->match = &( ( kv_pair* ) other )->second;
 							sigscan->diff = sdiff;
+							sigscan = nullptr;
 						}
 					}
 					return false;
