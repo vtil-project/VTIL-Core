@@ -707,7 +707,6 @@ namespace vtil::symbolic
 
 	// Returns whether the given expression is identical to the current instance.
 	//
-	template<size_t depth = 1>
 	static bool is_identical_impl( const expression& self, const expression& other )
 	{
 		if ( &self == &other ) return true;
@@ -726,22 +725,12 @@ namespace vtil::symbolic
 #endif
 			return false;
 		};
+		constexpr auto cmp = is_identical_impl;
 
 		// If hash/size mismatches, return false without checking anything.
 		//
 		if ( self.hash() != other.hash() || self.size() != other.size() )
 			return false;
-
-		// If not in debug mode, assume equivalence after total hash reaches 384 bits.
-		//
-		static constexpr size_t max_depth = 256 / VTIL_HASH_SIZE;
-#ifndef _DEBUG
-		if constexpr ( depth == max_depth ) 
-			return true;
-		constexpr auto cmp = is_identical_impl<depth == max_depth ? max_depth : ( depth + 1 )>;
-#else
-		constexpr auto cmp = is_identical_impl<depth>;
-#endif
 
 		// If variable, check if the identifiers match.
 		//
@@ -773,7 +762,7 @@ namespace vtil::symbolic
 		//
 		return ( desc.is_commutative && cmp( *self.lhs, *other.rhs ) && cmp( *self.rhs, *other.lhs ) ) || report_hash_collision();
 	}
-	bool expression::is_identical( const expression& other ) const { return is_identical_impl<>( *this, other ); }
+	bool expression::is_identical( const expression& other ) const { return is_identical_impl( *this, other ); }
 
 	// Returns whether the given expression is equivalent to the current instance.
 	//
