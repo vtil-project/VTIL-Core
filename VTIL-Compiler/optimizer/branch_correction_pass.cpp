@@ -267,7 +267,7 @@ namespace vtil::optimizer
 
 			// Purge simplifier cache and return counter.
 			//
-			symbolic::purge_simplifier_cache();
+			symbolic::purge_simplifier_state();
 			return cnt;
 		}
 		return 0;

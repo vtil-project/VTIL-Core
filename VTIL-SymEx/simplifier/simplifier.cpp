@@ -82,9 +82,9 @@ namespace vtil::symbolic
 	static auto& get_boolean_simplifiers( math::operator_id op )   { static const auto tbl = build_dynamic_table( directive::build_boolean_simplifiers() ); return tbl[ ( size_t ) op ]; }
 	static auto& get_universal_simplifiers( math::operator_id op ) { static const auto tbl = build_dynamic_table( directive::universal_simplifiers );       return tbl[ ( size_t ) op ]; }
 
-	// Simplifier cache and its accessors.
+	// Thread local simplifier state.
 	//
-	struct local_simplification_cache
+	struct simplifier_state
 	{
 		static constexpr size_t max_cache_entries = VTIL_SYMEX_LRU_CACHE_SIZE;
 		static constexpr size_t cache_prune_count = ( size_t ) ( max_cache_entries * VTIL_SYMEX_LRU_PRUNE_COEFF );
@@ -103,17 +103,14 @@ namespace vtil::symbolic
 				const expression::reference& key;
 				cache_value* match = nullptr;
 				expression::uid_relation_table table;
+
+				size_t diff = 0;
 			};
 			inline static thread_local sigscan_result* sigscan = nullptr;
 
 			bool operator()( const expression::reference& a, const expression::reference& b ) const noexcept 
 			{ 
-				// If identical expressions, return true.
-				//
-				if ( a.is_identical( *b ) )
-					return true;
-
-				// If there's a pending signature matching request:
+				// If there's a signature matching request:
 				//
 				if ( sigscan )
 				{
@@ -123,25 +120,41 @@ namespace vtil::symbolic
 					if ( a.pointer != sigscan->key.pointer )
 						std::swap( self, other );
 
+					// Skip if not improving the result.
+					//
+					int64_t sdiff = ( *self )->depth - ( *other )->depth;
+					if ( sdiff < 0 )
+						return false;
+					if ( sigscan->match && sdiff > sigscan->diff )
+						return false;
+
+					// Redirect to is identical if they're the same depth:
+					//
+					if ( sdiff == 0 && a.is_identical( *b ) )
+						return true;
+
 					// If other's past depth limit:
 					//
 					if ( ( *other )->depth > VTIL_SYMEX_SELFGEN_SIGMATCH_DEPTH_LIM )
 					{
 						// If matching signature, save the match, steal full value from the reference to the key.
 						//
-						if ( auto vec = ( *other )->match_to( **self ) )
+						if ( auto vec = ( *other )->match_to( **self, false ) )
 						{
 							sigscan->table = std::move( *vec );
 							using kv_pair = std::pair<const expression::reference, cache_value>;
 							sigscan->match = &( ( kv_pair* ) other )->second;
-							
-							// Clear the request.
-							//
-							sigscan = nullptr;
+							sigscan->diff = sdiff;
 						}
 					}
+					return false;
 				}
-				return false;
+				// If not sigscanning, check if identical.
+				//
+				else
+				{
+					return a.is_identical( *b );
+				}
 			}
 		};
 
@@ -163,18 +176,6 @@ namespace vtil::symbolic
 			queue_key lru_key = {};
 			queue_key spec_key = {};
 			cache_map::const_iterator iterator = {};
-		};
-
-		// References a cache value until its destruction.
-		//
-		struct scope_reference
-		{
-			int32_t& lock_count;
-
-			scope_reference( cache_value* value ) : lock_count( ++value->lock_count ) {}
-			scope_reference( scope_reference&& o ) = delete;
-			scope_reference( const scope_reference& a ) = delete;
-			~scope_reference() { lock_count--; }
 		};
 
 		// Whether we're executing speculatively or not.
@@ -231,7 +232,8 @@ namespace vtil::symbolic
 			{
 				auto next = it->next;
 				cache_value* value = it->get( &cache_value::spec_key );
-				dassert( value->lock_count <= 0 );
+				fassert( value->lock_count <= 0 );
+
 				if ( value->is_simplified )
 					spec_queue.erase( it );
 				else
@@ -245,6 +247,7 @@ namespace vtil::symbolic
 		//
 		void erase( cache_value* value )
 		{
+			fassert( value->lock_count == 0 );
 			lru_queue.erase( &value->lru_key );
 			spec_queue.erase_if( &value->spec_key );
 			map.erase( std::move( value->iterator ) );
@@ -265,31 +268,58 @@ namespace vtil::symbolic
 
 			// If we reached max entries, prune:
 			//
-			if ( lru_queue.size() == max_cache_entries )
+			if ( lru_queue.size() == ( max_cache_entries - 1 ) )
 			{
 				for ( auto it = lru_queue.head; it && ( lru_queue.size() + cache_prune_count ) > max_cache_entries; )
 				{
 					auto next = it->next;
-
 					// Erase if not locked:
 					//
 					cache_value* value = it->get( &cache_value::lru_key );
 					if ( value->lock_count <= 0 )
 						erase( value );
-
 					it = next;
 				}
 			}
 		}
 
-		// Looks up the cache for the expression, returns [<result>, <simplified?>, <exists?>, <LRU lock>].
+		// References to cache from the active scope.
 		//
-		std::tuple<expression::reference&, bool&, bool, scope_reference> lookup( const expression::reference& exp )
+		struct scope_reference
+		{
+			using queue_key = typename detached_queue<scope_reference>::key;
+
+			detached_queue<scope_reference>& queue;
+			cache_value* value;
+			queue_key key;
+			
+			scope_reference( detached_queue<scope_reference>& queue, cache_value* value )
+				: queue( queue ), value( value ) { ++value->lock_count; queue.emplace_back( &key ); }
+			~scope_reference() { queue.erase( &key ); fassert( --value->lock_count >= 0 ); }
+
+			scope_reference( scope_reference&& o ) = delete;
+			scope_reference( const scope_reference& o ) = delete;
+			scope_reference& operator=( scope_reference&& o ) = delete;
+			scope_reference& operator=( const scope_reference& o ) = delete;
+		};
+		detached_queue<scope_reference> scope;
+		
+		// Maximum allowed depth, once reached will reset to 0 to make all calls recursively fail.
+		//
+		uint64_t max_depth = ~0;
+
+		// Looks up the cache for the expression, returns [<result>, <simplified?>, <exists?>, <entry>].
+		//
+		std::tuple<expression::reference&, bool&, bool, cache_value*> lookup( const expression::reference& exp )
 		{
 			// Signal signature matcher.
 			//
 			cache_scanner::sigscan_result sig_search = { exp };
 			cache_scanner::sigscan = exp->depth > VTIL_SYMEX_SELFGEN_SIGMATCH_DEPTH_LIM ? &sig_search : nullptr;
+
+			// Make sure we don't rehash and then emplace/find.
+			//
+			fassert( ( map.max_load_factor() * map.bucket_count() ) >= ( map.size() + 1 ) );
 			auto [it, inserted] = map.emplace( exp, make_default<cache_value>() );
 			cache_scanner::sigscan = nullptr;
 
@@ -332,9 +362,17 @@ namespace vtil::symbolic
 						it->second.is_simplified = false;
 					}
 
-					// Erase the previous entry.
+					// Erase or at least de-prioritize the previous entry.
 					//
-					erase( base );
+					if ( base->lock_count <= 0 )
+					{
+						erase( base );
+					}
+					else
+					{
+						lru_queue.erase( &base->lru_key );
+						lru_queue.emplace_front( &base->lru_key );
+					}
 				}
 
 				// Initialize it.
@@ -352,8 +390,13 @@ namespace vtil::symbolic
 			return { it->second.result, it->second.is_simplified, !inserted, &it->second };
 		}
 	};
-	static thread_local local_simplification_cache local_cache;
-	void purge_simplifier_cache() { local_cache.reset(); }
+	static thread_local simplifier_state_ptr local_state = simplifier_state_allocator{}();
+	void purge_simplifier_state() { local_state->reset(); }
+	simplifier_state_ptr swap_simplifier_state( simplifier_state_ptr p ) { return std::exchange( local_state, p ? std::move( p ) : simplifier_state_allocator{}( ) ); }
+
+	void simplifier_state_deleter::operator()( simplifier_state* p ) const noexcept { delete p; }
+	simplifier_state_ptr simplifier_state_allocator::operator()() const noexcept    { return { new simplifier_state, simplifier_state_deleter{} }; }
+
 
 	// Attempts to prettify the expression given.
 	//
@@ -377,7 +420,7 @@ namespace vtil::symbolic
 			if ( prettify_expression( *op_ptr ) )
 			{
 				pexp->update( false );
-				simplify_expression( exp, true, -1, false );
+				simplify_expression( exp, true, false );
 				return true;
 			}
 		}
@@ -392,7 +435,7 @@ namespace vtil::symbolic
 		{
 			// If we can transform the expression by the directive set:
 			//
-			if ( auto exp_new = transform( exp, dir_src, dir_dst, -1 ) )
+			if ( auto exp_new = transform( exp, dir_src, dir_dst ) )
 			{
 #if VTIL_SYMEX_SIMPLIFY_VERBOSE
 				log<CON_PRP>( "[Pack] %s => %s\n", *dir_src, *dir_dst );
@@ -496,12 +539,18 @@ namespace vtil::symbolic
 	// Attempts to simplify the expression given, returns whether the simplification
 	// succeeded or not.
 	//
-	static bool simplify_expression_i( expression::reference& exp, bool pretty, int64_t max_depth, bool unpack )
+	static bool simplify_expression_i( expression::reference& exp, bool pretty, bool unpack )
 	{
+		auto& lstate = *local_state;
 		using namespace logger;
 
-		if ( max_depth == 0 )
-			throw join_depth_exception{};
+		// If we've reached the maximum depth, recursively fail.
+		//
+		if ( lstate.scope.size() >= lstate.max_depth )
+		{
+			lstate.max_depth = 0;
+			return false;
+		}
 
 		// Clear lazy if not done.
 		//
@@ -526,7 +575,7 @@ namespace vtil::symbolic
 		//
 		if ( exp->value.is_known() )
 		{
-			exp = expression{ exp->value.known_one(), exp->value.size() };
+			*+exp = expression{ exp->value.known_one(), exp->value.size() };
 #if VTIL_SYMEX_SIMPLIFY_VERBOSE
 			log<CON_CYN>( "= %s [By evaluation]\n", *exp );
 #endif
@@ -544,8 +593,8 @@ namespace vtil::symbolic
 
 		// Lookup the expression in the cache.
 		//
-		auto& lcache = local_cache;
-		auto [cache_entry, success_flag, found, _lock] = lcache.lookup( exp );
+		auto [cache_entry, success_flag, found, entry] = lstate.lookup( exp );
+		simplifier_state::scope_reference _g{ lstate.scope, entry };
 
 		// If we resolved a valid cache entry:
 		//
@@ -575,7 +624,7 @@ namespace vtil::symbolic
 			// Simplify left hand side with the exact same arguments.
 			//
 			expression::reference exp_new = exp->lhs;
-			bool simplified = simplify_expression( exp_new, pretty, max_depth - 1, unpack );
+			bool simplified = simplify_expression( exp_new, pretty, unpack );
 			bitcnt_t new_size = math::narrow_cast<bitcnt_t>( *exp->rhs->get() );
 
 			// Invoke resize with failure on explicit cast:
@@ -617,7 +666,7 @@ namespace vtil::symbolic
 		{
 			// Recurse, and indicate success.
 			//
-			simplify_expression( exp, pretty, max_depth - 1 );
+			simplify_expression( exp, pretty );
 			exp->simplify_hint = true;
 			cache_entry = exp;
 			success_flag = true;
@@ -636,7 +685,7 @@ namespace vtil::symbolic
 			// If we could simplify the operand:
 			//
 			expression::reference op_ref = *op_ptr;
-			if ( simplify_expression( op_ref, false, max_depth - 1 ) )
+			if ( simplify_expression( op_ref, false ) )
 			{
 				// Own the reference and relocate the pointer.
 				//
@@ -649,7 +698,7 @@ namespace vtil::symbolic
 
 				// Recurse, and indicate success.
 				//
-				simplify_expression( exp, pretty, max_depth - 1 );
+				simplify_expression( exp, pretty );
 				exp->simplify_hint = true;
 				cache_entry = exp;
 				success_flag = true;
@@ -682,7 +731,7 @@ namespace vtil::symbolic
 		{
 			// If we can transform the expression by the directive set:
 			//
-			if ( auto exp_new = transform( exp, dir_src, dir_dst, max_depth ) )
+			if ( auto exp_new = transform( exp, dir_src, dir_dst ) )
 			{
 #if VTIL_SYMEX_SIMPLIFY_VERBOSE
 				log<CON_GRN>( "[Simplify] %s => %s\n", *dir_src, *dir_dst );
@@ -690,7 +739,7 @@ namespace vtil::symbolic
 #endif
 				// Recurse, set the hint and return the simplified instance.
 				//
-				simplify_expression( exp_new, pretty, max_depth );
+				simplify_expression( exp_new, pretty );
 				exp_new->simplify_hint = true;
 				cache_entry = exp_new;
 				if( success_flag = !exp->is_identical( *exp_new ) )
@@ -709,7 +758,7 @@ namespace vtil::symbolic
 			{
 				// If we can transform the expression by the directive set:
 				//
-				if ( auto exp_new = transform( exp, dir_src, dir_dst, max_depth ) )
+				if ( auto exp_new = transform( exp, dir_src, dir_dst ) )
 				{
 #if VTIL_SYMEX_SIMPLIFY_VERBOSE
 					log<CON_GRN>( "[Simplify] %s => %s\n", *dir_src, *dir_dst );
@@ -717,7 +766,7 @@ namespace vtil::symbolic
 #endif
 					// Recurse, set the hint and return the simplified instance.
 					//
-					simplify_expression( exp_new, pretty, max_depth );
+					simplify_expression( exp_new, pretty );
 					exp_new->simplify_hint = true;
 					cache_entry = exp_new;
 					if ( success_flag = !exp->is_identical( *exp_new ) )
@@ -729,9 +778,9 @@ namespace vtil::symbolic
 
 		// Declare the filter.
 		//
-		auto filter = [ &, max_depth ] ( auto& exp_new )
+		auto filter = [ & ] ( auto& exp_new )
 		{
-			if ( max_depth < 0 )
+			if ( !lstate.is_speculative )
 			{
 				// If complexity was reduced already, pass.
 				//
@@ -741,20 +790,27 @@ namespace vtil::symbolic
 				// Try simplifying with maximum depth set as expression's
 				// depth times two and pass if complexity was reduced.
 				//
-				try
-				{
-					lcache.begin_speculative();
-					simplify_expression( exp_new, false, exp_new->depth * 2 );
-					lcache.join_speculative();
-					return exp_new->complexity < exp->complexity;
-				}
+				auto pscope = lstate.scope;
+				lstate.max_depth = pscope.size() + exp_new->depth * 2;
+				lstate.begin_speculative();
+				simplify_expression( exp_new, false );
+
 				// If maximum depth was reached, revert any changes to the cache
 				// and fail the join directive.
 				//
-				catch ( join_depth_exception& )
+				if ( lstate.max_depth == 0 )
 				{
-					lcache.trash_speculative();
+					lstate.trash_speculative();
+					lstate.scope = pscope;
+					lstate.scope.tail->next = nullptr;
+					lstate.max_depth = ~0;
 					return false;
+				}
+				else
+				{
+					lstate.join_speculative();
+					lstate.max_depth = ~0;
+					return exp_new->complexity < exp->complexity;
 				}
 			}
 			else
@@ -767,7 +823,7 @@ namespace vtil::symbolic
 				// Attempt simplifying with maximum depth decremented by one,
 				// fail if complexity was not reduced.
 				//
-				simplify_expression( exp_new, false, max_depth - 1 );
+				simplify_expression( exp_new, false );
 				return exp_new->complexity < exp->complexity;
 			}
 		};
@@ -778,7 +834,7 @@ namespace vtil::symbolic
 		{
 			// If we can transform the expression by the directive set:
 			//
-			if ( auto exp_new = transform( exp, dir_src, dir_dst, max_depth, filter ) )
+			if ( auto exp_new = transform( exp, dir_src, dir_dst, filter ) )
 			{
 #if VTIL_SYMEX_SIMPLIFY_VERBOSE
 				log<CON_GRN>( "[Join] %s => %s\n", *dir_src, *dir_dst );
@@ -787,7 +843,7 @@ namespace vtil::symbolic
 #endif
 				// Recurse, set the hint and return the simplified instance.
 				//
-				simplify_expression( exp_new, pretty, max_depth - 1 );
+				simplify_expression( exp_new, pretty );
 				exp_new->simplify_hint = true;
 				cache_entry = exp_new;
 				if ( success_flag = !exp->is_identical( *exp_new ) )
@@ -806,7 +862,7 @@ namespace vtil::symbolic
 			{
 				// If we can transform the expression by the directive set:
 				//
-				if ( auto exp_new = transform( exp, dir_src, dir_dst, max_depth, filter ) )
+				if ( auto exp_new = transform( exp, dir_src, dir_dst, filter ) )
 				{
 #if VTIL_SYMEX_SIMPLIFY_VERBOSE
 					log<CON_GRN>( "[Join] %s => %s\n", *dir_src, *dir_dst );
@@ -815,7 +871,7 @@ namespace vtil::symbolic
 #endif
 					// Recurse, set the hint and return the simplified instance.
 					//
-					simplify_expression( exp_new, pretty, max_depth - 1 );
+					simplify_expression( exp_new, pretty );
 					exp_new->simplify_hint = true;
 					cache_entry = exp_new;
 					if ( success_flag = !exp->is_identical( *exp_new ) )
@@ -835,8 +891,8 @@ namespace vtil::symbolic
 			{
 				// If we can transform the expression by the directive set:
 				//
-				if ( auto exp_new = transform( exp, dir_src, dir_dst, max_depth,
-					 [ & ] ( auto& exp_new ) { simplify_expression( exp_new, true, max_depth - 1 ); return exp_new->complexity < exp->complexity; } ) )
+				if ( auto exp_new = transform( exp, dir_src, dir_dst,
+					 [ & ] ( auto& exp_new ) { simplify_expression( exp_new, true ); return exp_new->complexity < exp->complexity; } ) )
 				{
 #if VTIL_SYMEX_SIMPLIFY_VERBOSE
 					log<CON_YLW>( "[Unpack] %s => %s\n", *dir_src, *dir_dst );
@@ -869,16 +925,8 @@ namespace vtil::symbolic
 
 	// Simple routine wrapping real simplification to instrument it for any reason when needed.
 	//
-	bool simplify_expression( expression::reference& exp, bool pretty, int64_t max_depth, bool unpack )
+	bool simplify_expression( expression::reference& exp, bool pretty, bool unpack )
 	{
-		/*expression::reference def = exp;
-		auto [result, t] = profile( [ & ] ()
-		{
-			return simplify_expression_i( exp, pretty, max_depth, unpack );
-		} );
-
-		if ( t > 500ms )
-			logger::log( "%s took %s\n", def, t );*/
-		return simplify_expression_i( exp, pretty, max_depth, unpack );
+		return simplify_expression_i( exp, pretty, unpack );
 	}
 };

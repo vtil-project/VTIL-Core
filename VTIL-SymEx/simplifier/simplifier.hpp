@@ -28,6 +28,7 @@
 #pragma once
 #include <iterator>
 #include <unordered_map>
+#include <memory>
 #include "../expressions/expression.hpp"
 
 // [Configuration]
@@ -39,12 +40,30 @@
 
 namespace vtil::symbolic
 {
+	struct simplifier_state;
+	struct simplifier_state_deleter
+	{
+		constexpr simplifier_state_deleter() noexcept = default;
+		void operator()( simplifier_state* p ) const noexcept;
+	};
+	using simplifier_state_ptr = std::unique_ptr<simplifier_state, simplifier_state_deleter>;
+
+	struct simplifier_state_allocator
+	{
+		constexpr simplifier_state_allocator() noexcept = default;
+		simplifier_state_ptr operator()() const noexcept;
+	};
+
 	// Attempts to simplify the expression given, returns whether the simplification
 	// succeeded or not.
 	//
-	bool simplify_expression( expression::reference& exp, bool pretty = false, int64_t max_depth = -1, bool unpack = true );
+	bool simplify_expression( expression::reference& exp, bool pretty = false, bool unpack = true );
 
 	// Purges the current thread's simplifier cache.
 	//
-	void purge_simplifier_cache();
+	void purge_simplifier_state();
+
+	// Swaps the current thread's simplifier cache.
+	//
+	simplifier_state_ptr swap_simplifier_state( simplifier_state_ptr p = nullptr );
 };

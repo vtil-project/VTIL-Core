@@ -283,7 +283,7 @@ namespace vtil::optimizer
 		// Purge simplifier cache since block iterators are now invalidated 
 		// making the cache also invalid.
 		//
-		symbolic::purge_simplifier_cache();
+		symbolic::purge_simplifier_state();
 
 		// Skip rewriting if we produced larger code.
 		//

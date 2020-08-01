@@ -110,7 +110,7 @@ namespace vtil::optimizer
 		//
 		ctrace.flush( blk );
 		if ( counter != 0 )
-			symbolic::purge_simplifier_cache();
+			symbolic::purge_simplifier_state();
 
 		// Remove all nops.
 		//

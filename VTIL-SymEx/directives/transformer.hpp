@@ -37,8 +37,7 @@ namespace vtil::symbolic
 	//
 	expression::reference translate( const directive::symbol_table_t& sym,
                                      const directive::instance* dir,
-                                     bitcnt_t bit_cnt,
-                                     int64_t max_depth );
+                                     bitcnt_t bit_cnt );
 
 	// Attempts to transform the expression in form A to form B as indicated by the directives, 
 	// and returns the first instance that matches query.
@@ -46,7 +45,6 @@ namespace vtil::symbolic
 	template<typename... Tx>
 	static expression::reference transform( expression::weak_reference exp,
                                             const directive::instance* from, const directive::instance* to,
-                                            int64_t max_depth,
 											Tx&&... filters )
 	{
 		using namespace logger;
@@ -79,7 +77,7 @@ namespace vtil::symbolic
 
 			// If we could translate the directive:
 			//
-			if ( auto exp_new = translate( match, to, exp->size(), max_depth ) )
+			if ( auto exp_new = translate( match, to, exp->size() ) )
 			{
 				// If it passes through the filter:
 				//
