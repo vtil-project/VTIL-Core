@@ -843,7 +843,10 @@ namespace vtil::symbolic
 
 		// Check if properties match.
 		//
-		if ( a->signature != b->signature || ( same_depth && a->depth != b->depth ) || a->size() != b->size() )
+		if ( ( same_depth ? a->signature != b->signature : b->signature.can_match( a->signature ) ) || 
+			 ( same_depth ? a->depth != b->depth : a->depth > b->depth ) ||
+			 a->op != b->op ||
+			 a->size() != b->size() )
 			return false;
 
 		// If variable:
