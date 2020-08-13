@@ -95,7 +95,7 @@ namespace vtil
 
 	// Checks if the given lambda can be evaluated in compile time.
 	//
-	template<typename F, std::enable_if_t<F{}(), int> = 0>
+	template<typename F, std::enable_if_t<(F{}(), true), int> = 0>
 	static constexpr bool is_constexpr( F )   { return true; }
 	static constexpr bool is_constexpr( ... ) { return false; }
 
