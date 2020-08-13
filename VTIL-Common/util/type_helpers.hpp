@@ -258,7 +258,7 @@ namespace vtil
 		template<typename Ti, typename T, Ti... I>
 		static constexpr auto make_expanded_series( T&& f, std::integer_sequence<Ti, I...> )
 		{
-			if constexpr ( std::is_void_v<decltype( f( 0 ) )> )
+			if constexpr ( std::is_void_v<decltype( f( (Ti)0 ) )> )
 				( ( f( I ) ), ... );
 			else
 				return std::array{ f( I )... };
@@ -267,7 +267,7 @@ namespace vtil
 		template<typename Ti, template<auto> typename Tr, typename T, Ti... I>
 		static constexpr auto make_visitor_series( T&& f, std::integer_sequence<Ti, I...> )
 		{
-			if constexpr ( std::is_void_v<decltype( f( type_tag<Tr<0>>{} ) )> )
+			if constexpr ( std::is_void_v<decltype( f( type_tag<Tr<(Ti)0>>{} ) )> )
 				( ( f( type_tag<Tr<I>>{} ) ), ... );
 			else
 				return std::array{ f( type_tag<Tr<I>>{} )... };
@@ -276,7 +276,7 @@ namespace vtil
 		template<typename Ti, typename T, Ti... I>
 		static constexpr auto make_constant_series( T&& f, std::integer_sequence<Ti, I...> )
 		{
-			if constexpr ( std::is_void_v<decltype( f( const_tag<0>{} ) )> )
+			if constexpr ( std::is_void_v<decltype( f( const_tag<(Ti)0>{} ) )> )
 				( ( f( const_tag<I>{} ) ), ... );
 			else
 				return std::array{ f( const_tag<I>{} )... };
