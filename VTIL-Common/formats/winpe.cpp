@@ -552,7 +552,7 @@ namespace vtil
 		//
 		auto scn_header = nt_headers->get_section( index );
 		return {
-			.name = { scn_header->name, scn_header->name + ( scn_header->name[ LEN_SECTION_NAME - 1 ] ? strlen( scn_header->name ) : LEN_SECTION_NAME ) },
+			.name = { scn_header->name, scn_header->name + ( scn_header->name[ LEN_SECTION_NAME - 1 ] ? LEN_SECTION_NAME : strlen( scn_header->name ) ) },
 			.valid = true,
 			.read = ( bool ) scn_header->characteristics.mem_read,
 			.write = ( bool ) scn_header->characteristics.mem_write,
