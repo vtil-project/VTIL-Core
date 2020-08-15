@@ -116,8 +116,8 @@ namespace vtil
 
 		// Decay to weak identifier.
 		//
-		constexpr weak_id weaken() const { return { flags, combined_id }; }
-		constexpr operator weak_id() const { return weaken(); }
+		weak_id weaken() const { return { flags, combined_id }; }
+		operator weak_id() const { return weaken(); }
 
 		// Flags of the current register, as described in "enum register_flag".
 		//
