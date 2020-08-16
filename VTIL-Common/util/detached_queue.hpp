@@ -39,7 +39,7 @@ namespace vtil
 	template<typename T>
 	struct detached_queue_key
 	{
-		static constexpr detached_queue_key* invalid_value = ( detached_queue_key* ) 0xffffffffffffffff;
+		static const detached_queue_key* invalid_value = ( detached_queue_key* ) 0xffffffffffffffff;
 		detached_queue_key* prev = invalid_value;
 		detached_queue_key* next = nullptr;
 
