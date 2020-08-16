@@ -103,8 +103,7 @@ namespace vtil::symbolic
 				const expression::reference& key;
 				cache_value* match = nullptr;
 				expression::uid_relation_table table;
-
-				size_t diff = 0;
+				int64_t diff = 0;
 			};
 			inline static thread_local sigscan_result* sigscan = nullptr;
 
@@ -251,7 +250,8 @@ namespace vtil::symbolic
 		{
 			fassert( value->lock_count == 0 );
 			lru_queue.erase( &value->lru_key );
-			spec_queue.erase_if( &value->spec_key );
+			if( value->spec_key.is_valid() )
+				spec_queue.erase( &value->spec_key );
 			map.erase( std::move( value->iterator ) );
 		}
 
