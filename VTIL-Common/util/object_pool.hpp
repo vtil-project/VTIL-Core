@@ -262,7 +262,7 @@ namespace vtil
 		static bucket_entry* get_bucket( size_t idx )
 		{
 			static const size_t length = VTIL_OBJECT_POOL_BUCKETS;
-			static bucket_entry* entries =  new bucket_entry[ VTIL_OBJECT_POOL_BUCKETS ];
+			static bucket_entry* entries =  new bucket_entry[ length ];
 			return entries + ( idx % length );
 		}
 

@@ -212,7 +212,7 @@ namespace vtil
 
 			if ( key* entry = head )
 			{
-				T* value = entry->get( std::move( ref ) );
+				T* value = entry->get( ref );
 				nolock().erase( entry );
 				return value;
 			}
@@ -224,7 +224,7 @@ namespace vtil
 
 			if ( key* entry = tail )
 			{
-				T* value = entry->get( std::move( ref ) );
+				T* value = entry->get( ref );
 				nolock().erase( entry );
 				return value;
 			}
