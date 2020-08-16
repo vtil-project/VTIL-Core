@@ -31,15 +31,17 @@
 #include <atomic>
 #include <algorithm>
 #include <cstring>
+#include <thread>
 #include "detached_queue.hpp"
-#include "thread_identifier.hpp"
+#include "relaxed_atomics.hpp"
 #include "type_helpers.hpp"
 
 // [Configuration]
 // Determine the number of buckets, initial size, growth settings and the local buffer length.
+//  - If local buffer length is zero, will dispatch to bucket directly.
 //
 #ifndef VTIL_OBJECT_POOL_BUCKETS
-	#define	VTIL_OBJECT_POOL_BUCKETS           24
+	#define	VTIL_OBJECT_POOL_BUCKETS           std::thread::hardware_concurrency()
 #endif
 #ifndef VTIL_OBJECT_POOL_INITIAL_SIZE
 	#define VTIL_OBJECT_POOL_INITIAL_SIZE      ( 1ull   * 1024 * 1024 )
@@ -51,7 +53,7 @@
 	#define VTIL_OBJECT_POOL_GROWTH_FACTOR     4
 #endif
 #ifndef VTIL_OBJECT_POOL_LOCAL_BUFFER_LEN
-	#define VTIL_OBJECT_POOL_LOCAL_BUFFER_LEN  128
+	#define VTIL_OBJECT_POOL_LOCAL_BUFFER_LEN  512
 #endif
 namespace vtil
 {
@@ -85,7 +87,7 @@ namespace vtil
 			// Key for free queue.
 			//
 			detached_queue_key<object_entry> free_queue_key;
-
+			
 			// Decay into object pointer.
 			//
 			T* decay() { return ( T* ) &raw_data[ 0 ]; }
@@ -146,28 +148,18 @@ namespace vtil
 
 			// Allocation and deallocation.
 			//
-			template<bool locked>
 			T* allocate()
 			{
 				static_assert( sizeof( object_entry ) < VTIL_OBJECT_POOL_INITIAL_SIZE, "Objects cannot be larger than initial size." );
 
 				// Enter pool allocation loop:
 				//
-				auto& free_queue_u = free_queue.nolock();
 				while ( true )
 				{
-					// Acquire free queue mutex.
+					// Pop entry from free queue, if non null:
 					//
-					if constexpr ( locked ) free_queue.lock();
-
-					// Pop entry from free queue, if non null:.
-					//
-					if ( object_entry* entry = free_queue_u.pop_back( &object_entry::free_queue_key ) )
+					if ( object_entry* entry = free_queue.pop_front( &object_entry::free_queue_key ) )
 					{
-						// Release free queue mutex.
-						//
-						if constexpr ( locked ) free_queue.unlock();
-
 						// If it's destruction was deferred, do so now.
 						//
 						if ( entry->deferred_destruction )
@@ -178,17 +170,13 @@ namespace vtil
 						return entry->decay();
 					}
 
-					// Release free queue mutex.
-					//
-					if constexpr ( locked ) free_queue.unlock();
-
 					// Acquire pool list mutex.
 					//
 					std::lock_guard _gp{ pool_list_mutex };
 
 					// If free queue has any entries, try again.
 					//
-					if ( !free_queue.empty() )
+					if ( free_queue.size() )
 						continue;
 
 					// Determine new pool's size (raw size is merely an approximation).
@@ -220,35 +208,23 @@ namespace vtil
 							}
 						};
 					}
-					auto* head = &new_pool->objects[ 1 ];
-					auto* tail = &new_pool->objects[ object_count - 1 ];
-					head->free_queue_key.prev = nullptr;
-					tail->free_queue_key.next = nullptr;
+
+					// Form the partial list.
+					//
+					detached_queue<object_entry> tmp;
+					tmp.head = &new_pool->objects[ 1 ].free_queue_key;
+					tmp.tail = &new_pool->objects[ object_count - 1 ].free_queue_key;
+					tmp.tail->next = nullptr;
+					tmp.head->prev = nullptr;
+					tmp.list_size = object_count - 1;
 				
 					// Insert into pools list.
 					//
 					pools.emplace_back( &new_pool->pool_queue_key );
 
-					// Acquire free queue mutex and manually link.
+					// Merge into free queue.
 					//
-					if constexpr ( locked ) free_queue.lock();
-
-					if ( free_queue.tail )
-					{
-						free_queue.tail->next = &head->free_queue_key;
-						head->free_queue_key.prev = free_queue.tail;
-						free_queue.tail = &tail->free_queue_key;
-					}
-					else
-					{
-						free_queue.head = &head->free_queue_key;
-						free_queue.tail = &tail->free_queue_key;
-					}
-					free_queue.list_size += object_count - 1;
-
-					// Release free queue mutex.
-					//
-					if constexpr ( locked ) free_queue.unlock();
+					free_queue.emplace_back( tmp );
 
 					// Return the allocated address.
 					//
@@ -256,18 +232,12 @@ namespace vtil
 				}
 			}
 
-			template<bool locked>
 			void deallocate( T* pointer )
 			{
-				auto& free_queue_u = free_queue.nolock();
-
 				// Resolve object entry, and emplace it into the free queue.
 				//
 				object_entry* entry = object_entry::resolve( pointer );
-
-				if constexpr ( locked ) free_queue.lock();
-				free_queue_u.emplace_back( &entry->free_queue_key );
-				if constexpr ( locked ) free_queue.unlock();
+				free_queue.emplace_back( &entry->free_queue_key );
 
 				// Re-evaluate pool distributions.
 				//
@@ -284,11 +254,17 @@ namespace vtil
 
 		// Atomic counter responsible of the grouping of threads => buckets.
 		//
-		inline static std::atomic<size_t> counter = { 0 };
+		inline static std::atomic<uint32_t> counter = { 0 };
 		
 		// Global list of buckets.
 		//
-		inline static bucket_entry buckets[ VTIL_OBJECT_POOL_BUCKETS ] = {};
+		inline static const size_t bucket_count = VTIL_OBJECT_POOL_BUCKETS;
+		static bucket_entry* get_bucket( size_t idx )
+		{
+			static const size_t length = VTIL_OBJECT_POOL_BUCKETS;
+			static bucket_entry* entries =  new bucket_entry[ VTIL_OBJECT_POOL_BUCKETS ];
+			return entries + ( idx % length );
+		}
 
 		// Local proxy that buffers all commands to avoid spinning.
 		//
@@ -300,12 +276,17 @@ namespace vtil
 
 			// Current bucket entry, distributed at thread initialization.
 			//
-			bucket_entry* bucket = &buckets[ counter++ % VTIL_OBJECT_POOL_BUCKETS ];
+			bucket_entry* bucket = get_bucket( counter++ );
 
 			// Allocate / deallocate proxies.
 			//
 			T* allocate()
 			{
+				// Handle no-buffering case.
+				//
+				if constexpr( VTIL_OBJECT_POOL_LOCAL_BUFFER_LEN == 0 )
+					return bucket->allocate();
+
 				// If we've buffered any freed memory regions:
 				//
 				if ( object_entry* entry = secondary_free_queue.pop_back( &object_entry::free_queue_key ) )
@@ -322,10 +303,15 @@ namespace vtil
 
 				// Dispatch to bucket.
 				//
-				return bucket->template allocate<true>();
+				return bucket->allocate();
 			}
 			void deallocate( T* pointer )
 			{
+				// Handle no-buffering case.
+				//
+				if constexpr ( VTIL_OBJECT_POOL_LOCAL_BUFFER_LEN == 0 )
+					return bucket->deallocate( pointer );
+
 				// Insert into free queue.
 				//
 				secondary_free_queue.emplace_back( &object_entry::resolve( pointer )->free_queue_key );
@@ -343,7 +329,7 @@ namespace vtil
 			//
 			~local_proxy()
 			{
-				if ( !secondary_free_queue.empty() )
+				if ( secondary_free_queue.size() )
 				{
 					bucket->free_queue.emplace_back( secondary_free_queue );
 					bucket->evaluate_pools();
