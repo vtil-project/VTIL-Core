@@ -36,9 +36,7 @@ namespace vtil::symbolic
 
 	// Translates the given directive into an expression (of size given) using the symbol table.
 	//
-	expression::reference translate( const symbol_table_t& sym,
-									 const instance* dir,
-									 bitcnt_t bit_cnt )
+	expression::reference translate( const symbol_table_t& sym, const instance* dir, bitcnt_t bit_cnt )
 	{
 		using namespace logger;
 #if VTIL_SYMEX_SIMPLIFY_VERBOSE
@@ -82,11 +80,21 @@ namespace vtil::symbolic
 				//
 				else if ( dir->lhs )
 				{
-					auto lhs = translate( sym, dir->lhs, bit_cnt );
-					if ( !lhs )	return {};
-					auto rhs = translate( sym, dir->rhs, bit_cnt );
-					if ( !rhs ) return {};
-					return expression::make( lhs, dir->op, rhs );
+					expression::reference lhs, rhs;
+
+					std::array tx = {
+						std::pair( &lhs, dir->lhs.ptr ),
+						std::pair( &rhs, dir->rhs.ptr )
+					};
+					
+					if ( tx[ 1 ].second->priority > tx[ 0 ].second->priority )
+						std::swap( tx[ 0 ], tx[ 1 ] );
+
+					for( auto& [out, dir] : tx )
+						if ( !( *out = translate( sym, dir, bit_cnt ) ) )
+							return {};
+
+					return expression::make( std::move( lhs ), dir->op, std::move( rhs ) );
 				}
 				// If operation is unary:
 				//
@@ -94,7 +102,7 @@ namespace vtil::symbolic
 				{
 					auto rhs = translate( sym, dir->rhs, bit_cnt );
 					if ( !rhs ) return {};
-					return expression::make( dir->op, rhs );
+					return expression::make( dir->op, std::move( rhs ) );
 				}
 			}
 			unreachable();

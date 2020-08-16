@@ -192,6 +192,10 @@ namespace vtil::symbolic::directive
         matching_type mtype = match_any;
         int lookup_index = 0;
 
+        // Priority hint for transformer.
+        //
+        size_t priority = 0;
+
         // The operation we're matching and the operands.
         //
         math::operator_id op = math::operator_id::invalid;
@@ -232,6 +236,13 @@ namespace vtil::symbolic::directive
         {
             for ( auto [out, rhs] : zip( signatures, e1.signatures ) )
                 out = { op, rhs };
+
+            if ( op == ( math::operator_id ) directive_op_desc::simplify )
+                priority = num_nodes;
+            else if ( op == ( math::operator_id )  directive_op_desc::try_simplify )
+                priority = 0;
+            else
+                priority = rhs->priority;
         }
 
         // Constructor for directive representing the result of a binary operator.
@@ -241,6 +252,11 @@ namespace vtil::symbolic::directive
         {
             for ( auto [lhs, out, rhs] : zip( e1.signatures, signatures, e2.signatures ) )
                 out = { lhs, op, rhs };
+
+            if ( op == ( math::operator_id ) directive_op_desc::iff )
+                priority = num_nodes;
+            else
+                priority = std::max( lhs->priority, rhs->priority );
         }
 
         // Enumerates each unique variable.
