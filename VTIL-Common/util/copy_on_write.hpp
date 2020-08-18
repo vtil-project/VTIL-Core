@@ -352,6 +352,7 @@ namespace vtil
 		// Default null constructor.
 		//
 		constexpr weak_reference() : combined_value( 0 ) {}
+		constexpr weak_reference( std::nullptr_t ) : combined_value( 0 ) {}
 		
 		// Reference borrowing constructor/assignment.
 		//

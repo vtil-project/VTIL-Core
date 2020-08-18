@@ -456,7 +456,7 @@ namespace vtil::symbolic
 
 	// Checks if the expression can be interpreted as a vector-boolean expression.
 	//
-	static std::pair<bool, expression::reference> match_boolean_expression( const expression::reference& exp )
+	static std::pair<bool, expression::weak_reference> match_boolean_expression( const expression::reference& exp )
 	{
 		switch ( exp->op )
 		{
@@ -485,11 +485,11 @@ namespace vtil::symbolic
 				auto [m2, p2] = match_boolean_expression( exp->rhs );
 				if ( !m2 ) return { false, nullptr };
 
-				if ( !p2 ) return { true, std::move( p1 ) };
-				if ( !p1 ) return { true, std::move( p2 ) };
+				if ( !p2 ) return { true, p1 };
+				if ( !p1 ) return { true, p2 };
 
 				if ( p1->uid == p2->uid )
-					return { true, std::move( p1 ) };
+					return { true, p1 };
 				else
 					return { false, nullptr };
 			}
@@ -523,10 +523,10 @@ namespace vtil::symbolic
 
 		// Apply each mask if not no-op.
 		//
-		expression::reference&    exp_new = uid_base;
-		if ( and_mask != ~0ull )  exp_new = exp_new & expression{ and_mask, exp->size() };
-		if ( xor_mask )           exp_new = exp_new ^ expression{ xor_mask, exp->size() };
-		if ( or_mask )            exp_new = exp_new | expression{ or_mask,  exp->size() };
+		expression::reference exp_new = uid_base.make_shared();
+		if ( and_mask != ~0ull )  exp_new &= expression{ and_mask, exp->size() };
+		if ( xor_mask )           exp_new ^= expression{ xor_mask, exp->size() };
+		if ( or_mask )            exp_new |= expression{ or_mask,  exp->size() };
 
 		// If complexity was higher or equal, fail.
 		//
