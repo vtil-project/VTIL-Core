@@ -31,24 +31,15 @@
 #include <stdint.h>
 #include <cstring>
 #include <optional>
+#include "type_helpers.hpp"
 #include "../io/asserts.hpp"
-
-// [Configuration]
-// Determine whether we should use safe variants or not.
-//
-#ifndef VTIL_VARIANT_SAFE
-	#if defined(_DEBUG)
-		#define VTIL_VARIANT_SAFE	HAS_RTTI
-	#else
-		#define VTIL_VARIANT_SAFE	0
-	#endif
-#endif
+#include "../io/logger.hpp"
 
 // [Configuration]
 // Determine the maximum size of types we should inline.
 //
 #ifndef VTIL_VARIANT_INLINE_LIMIT
-	#define VTIL_VARIANT_INLINE_LIMIT 0x90
+	#define VTIL_VARIANT_INLINE_LIMIT 0x70
 #endif
 
 namespace vtil
@@ -56,8 +47,17 @@ namespace vtil
 	// Variant can be used to store values of any type in a fast way.
 	//
 	#pragma pack(push, 1)
-	struct variant
+	struct alignas( 8 ) variant
 	{
+		enum class generic_action
+		{
+			copy_assign,
+			copy_construct,
+			move_assign,
+			move_construct,
+			destruct
+		};
+
 		// Value is either stored in the [char inl[]] as an inline object,
 		// or in [void* ext] as an external pointer.
 		//
@@ -67,45 +67,83 @@ namespace vtil
 			void* ext;
 		};
 
+		// Function pointer handling traits of the type.
+		//
+		void( *actor )( variant* self, const variant* other, generic_action action );
+
 		// Set if object is inlined:
 		//
-		uint8_t is_inline : 1;
+		bool is_inline;
 
-		// Set if object has a trivial copy constructor.
-		//
-		uint8_t is_trivial_copy : 1;
-
-		// Details of copy constructor:
-		//
-		union
+		template<typename T>
+		static void generic_actor( variant* self, const variant* other, generic_action action )
 		{
-			// If trivial, size and the alignment of the object.
-			//
-			struct
+			switch ( action )
 			{
-				uint64_t copy_size : 32;
-				uint64_t copy_align : 32;
-			};
+				// Assignment.
+				//
+				case generic_action::move_assign:
+					if constexpr ( std::is_move_assignable_v<T> )
+					{
+						self->get<T>() = std::move( make_mutable( other )->get<T>() );
+						break;
+					}
+					else if constexpr ( std::is_move_constructible_v<T> )
+					{
+						T* p = &self->get<T>();
+						std::destroy_at( p );
+						new ( p ) T( std::move( make_mutable( other )->get<T>() ) );
+						break;
+					}
+					[[fallthrough]];
+				case generic_action::copy_assign:
+					if constexpr ( std::is_copy_assignable_v<T> )
+					{
+						self->get<T>() = other->get<T>();
+						break;
+					}
+					else if constexpr ( std::is_copy_constructible_v<T> )
+					{
+						T* p = &self->get<T>();
+						std::destroy_at( p );
+						new ( p ) T( other->get<T>() );
+						break;
+					}
+					unreachable();
 
-			// Otherwise pointer to helper.
-			//
-			void( *copy_fn )( const variant&, variant& );
-		};
+				// Construction.
+				//
+				case generic_action::move_construct:
+					if constexpr ( std::is_move_constructible_v<T> )
+					{
+						new ( self->allocate( sizeof( T ) ) ) T( std::move( make_mutable( other )->get<T>() ) );
+						break;
+					}
+				[[fallthrough]];
+				case generic_action::copy_construct:
+					if constexpr ( std::is_copy_constructible_v<T> )
+					{
+						new ( self->allocate( sizeof( T ) ) ) T( other->get<T>() );
+						break;
+					}
+					unreachable();
+				
+				// Destruction.
+				//
+				case generic_action::destruct:
+					std::destroy_at( &self->get<T>() );
+					break;
 
-		// Destructor callback.
-		//
-		void( *destroy_fn )( variant& );
-
-		// If debug mode, currently assigned typeid's name or undefined if RTTI is disabled.
-		//
-#ifdef _DEBUG
-		const char* __typeid_name;
-#endif
+				// Invalid.
+				//
+				default: unreachable();
+			}
+		}
 
 		// Null constructors.
 		//
-		variant() : copy_fn( nullptr ) {};
-		variant( std::nullopt_t ) : copy_fn( nullptr ) {};
+		variant() : actor( nullptr ) {};
+		variant( std::nullopt_t ) : actor( nullptr ) {};
 
 		// Constructs variant from any type that is not variant, nullptr_t or nullopt_t.
 		//
@@ -116,44 +154,15 @@ namespace vtil
 		variant( arg_type&& value )
 		{
 			using T = std::remove_cvref_t<arg_type>;
+			static_assert( alignof( T ) <= 8, "Object aligned over max alignment." );
 
-			// Invoke copy constructor on allocated space.
+			// Invoke constructor on allocated space.
 			//
-			T* out = new ( allocate( sizeof( T ), alignof( T ) ) ) T( std::forward<arg_type>( value ) );
+			T* out = new ( allocate( sizeof( T ) ) ) T( std::forward<arg_type>( value ) );
 
-			// Assign destructor if not trivially destructible.
+			// Assign generic actor.
 			//
-			if constexpr ( !std::is_trivially_destructible_v<T> )
-				destroy_fn = [ ] ( variant& v ) { v.get<T>().~T(); };
-			// Otherwise null the destroy callback.
-			//
-			else
-				destroy_fn = nullptr;
-
-			// Assign copy constructor if not trivially copyable.
-			//
-			if constexpr ( !std::is_trivially_copyable_v<T> )
-			{
-				copy_fn = [ ] ( const variant& src, variant& dst )
-				{
-					new ( dst.allocate( sizeof( T ), alignof( T ) ) ) T( src.get<T>() );
-				};
-				is_trivial_copy = false;
-			}
-			// Otherwise indicate trivial copy.
-			//
-			else
-			{
-				copy_size = sizeof( T );
-				copy_align = alignof( T );
-				is_trivial_copy = true;
-			}
-
-			// If safe mode, assign type name.
-			//
-#if VTIL_VARIANT_SAFE
-			__typeid_name = typeid( T ).name();
-#endif
+			actor = &generic_actor<T>;
 		};
 
 		// Copy/move constructors.
@@ -161,51 +170,51 @@ namespace vtil
 		variant( const variant& src );
 		variant( variant&& vo );
 
-		// Assignment by move/copy both reset current value and redirect to constructor.
+		// Assignment operators.
 		//
-		variant& operator=( variant&& vo ) noexcept { reset(); return *new ( this ) variant( std::move( vo ) ); }
-		variant& operator=( const variant& o ) { reset(); return *new ( this ) variant( o ); }
+		variant& operator=( variant&& vo );
+		variant& operator=( const variant& o );
 
-		// Variant does not have a value if the copy field is null.
+		// Variant does not have a value if the actor is null.
 		//
-		bool has_value() const { return copy_fn != nullptr; }
+		bool has_value() const { return actor != nullptr; }
 		operator bool() const { return has_value(); }
 
 		// Gets the address of the object with the given properties.
-		// - Will throw assert failure if the variant is empty.
 		//
-		uint64_t get_address( size_t size, size_t align ) const;
+		uint64_t get_address() const
+		{
+			return is_inline ? ( uint64_t ) &inl[ 0 ] : ( uint64_t ) ext;
+		}
 
 		// Allocates the space for an object of the given properties and returns the pointer.
 		//
-		void* allocate( size_t size, size_t align );
+		void* allocate( size_t size );
 
 		// Simple wrappers around get_address.
 		// - Will throw assert failure if the variant is empty.
 		//
 		template<typename T>
 		T& get() 
-		{ 
-			// If safe mode, validate type name (We can compare pointers as it's a unique pointer in .rdata)
+		{
+			// Validate type equivalence and existance.
 			//
-#if VTIL_VARIANT_SAFE
-			fassert( __typeid_name == typeid( T ).name() );
-#endif
+			fassert( actor == generic_actor<T> );
+
 			// Calculate the address and return a reference.
 			//
-			return *( T* ) get_address( sizeof( T ), alignof( T ) ); 
+			return *( T* ) get_address(); 
 		}
 		template<typename T>
 		const T& get() const 
 		{
-			// If safe mode, validate type name (We can compare pointers as it's a unique pointer in .rdata)
+			// Validate type equivalence and existance.
 			//
-#if VTIL_VARIANT_SAFE
-			fassert( __typeid_name == typeid( T ).name() );
-#endif
+			fassert( actor == generic_actor<T> );
+
 			// Calculate the address and return a const qualified reference.
 			//
-			return *( const T* ) get_address( sizeof( T ), alignof( T ) ); 
+			return *( const T* ) get_address(); 
 		}
 
 		// Cast to optional.

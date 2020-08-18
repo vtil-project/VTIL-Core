@@ -30,31 +30,6 @@
 
 namespace vtil
 {
-	// Calculates the address of an inline object within the region [begin-end]
-	// with the given size and alignment properties.
-	//
-	template<bool get>
-	static uint64_t calc_inline_address( const void* begin, const void* end, size_t size, size_t align )
-	{
-		// Calculate inline boundaries. 
-		//
-		uint64_t ptr = ( uint64_t ) begin;
-		uint64_t ptr_lim = ( uint64_t ) end;
-
-		// Align as required.
-		//
-		uint64_t align_mask = align - 1;
-		uint64_t ptr_a = ( ptr + align_mask ) & ~align_mask;
-
-		// Skip overflow check if getter.
-		//
-		if constexpr ( get ) return ptr_a;
-
-		// If overflows, return null, else return the aligned address.
-		//
-		return ( ptr_a + size ) <= ptr_lim ? ptr_a : 0;
-	}
-	
 	// Copy constructor.
 	//
 	variant::variant( const variant& src )
@@ -63,134 +38,145 @@ namespace vtil
 		//
 		if ( src.has_value() )
 		{
-			// Inherit the copy/destruction traits from source.
+			// Inherit the type traits from source.
 			//
-			is_trivial_copy = src.is_trivial_copy;
-			copy_fn = src.copy_fn;
-			destroy_fn = src.destroy_fn;
+			actor = src.actor;
 
-			// If source is trivially copyable, invoke memcpy.
+			// Invoke copy construction.
 			//
-			if ( src.is_trivial_copy )
-				memcpy( allocate( copy_size, copy_align ), ( const void* ) src.get_address( copy_size, copy_align ), copy_size );
-
-			// Otherwise invoke the  copy constructor
-			//
-			else
-				copy_fn( src, *this );
-
-			// If safe, inherit type name.
-			//
-#if VTIL_VARIANT_SAFE
-			__typeid_name = src.__typeid_name;
-#endif
+			actor( this, &src, generic_action::copy_construct );
 		}
-		// If source is null, set to null and skip copying.
+		// If source is null, set null.
 		//
 		else
 		{
-			copy_fn = nullptr;
+			actor = nullptr;
 		}
 	}
+
 	// Move constructor.
 	//
 	variant::variant( variant&& src )
 	{
-		// If source has no value, simply create a null variant.
+		// If source is storing a value:
 		//
-		if ( !src.has_value() )
+		if ( src.has_value() )
 		{
-			copy_fn = nullptr;
-			return;
-		}
+			// Inherit the type traits from source.
+			//
+			actor = src.actor;
 
-		// If target stores inline value:
-		//
-		if ( src.is_inline )
-		{
-			// If type is trivially copyable:
+			// If target stores an external pointer:
 			//
-			if ( src.is_trivial_copy )
+			if( !src.is_inline )
 			{
-				// Copy the stored inline value by bytes.
+				// Steal the stored external pointer.
 				//
-				memcpy( allocate( src.copy_size, src.copy_align ), ( const void* ) src.get_address( src.copy_size, src.copy_align ), src.copy_size );
+				is_inline = false;
+				ext = src.ext;
+
+				// Mark the source object as null.
+				//
+				src.actor = nullptr;
 			}
-			// If type is not trivially copyable:
-			//
 			else
 			{
-				// Redirect to the copy constructor.
+				// Invoke move construction.
 				//
-				new ( this ) variant( ( const variant& ) src );
-
-				// Free the object stored in source.
-				//
-				src.reset();
-				return;
+				actor( this, &src, generic_action::move_construct );
 			}
 		}
-		// If target stores an external pointer:
+		// If source is null, set null.
 		//
 		else
 		{
-			// Steal the stored external pointer.
-			//
-			is_inline = false;
-			ext = src.ext;
+			actor = nullptr;
+		}
+	}
+
+	// Move assignment.
+	//
+	variant& variant::operator=( variant&& vo )
+	{ 
+		// If target is null, reset self.
+		//
+		if ( !vo.has_value() )
+		{
+			reset();
+			return *this;
 		}
 
-		// Inherit the inline/copy/destruction traits from source.
+		// If target stores an external pointer or null:
 		//
-		is_trivial_copy = src.is_trivial_copy;
-		copy_fn = src.copy_fn;
-		destroy_fn = src.destroy_fn;
+		if ( !vo.is_inline )
+		{
+			// Swap with current and return.
+			//
+			using btype = std::array<uint8_t, sizeof( variant )>;
+			std::swap( ( btype& ) *this, ( btype& ) vo );
+			return *this;
+		}
 
-		// If safe, inherit type name.
+		// If same type, invoke assingment.
 		//
-#if VTIL_VARIANT_SAFE
-		__typeid_name = src.__typeid_name;
-#endif
+		if ( actor == vo.actor )
+		{
+			actor( this, &vo, generic_action::move_assign );
+			return *this;
+		}
 
-		// Mark the source object as freed.
+		// Otherwise, reset and construct again.
 		//
-		src.copy_fn = nullptr;
+		reset(); 
+		return *new ( this ) variant( std::move( vo ) ); 
 	}
-	// Gets the address of the object with the given properties.
-	// - Will throw assert failure if the variant is empty.
-	//
-	uint64_t variant::get_address( size_t size, size_t align ) const
-	{
-		fassert( has_value() );
 
-		// If object is inline, calculate the inline address, otherwise return the external pointer.
+	// Copy assignment.
+	//
+	variant& variant::operator=( const variant& o )
+	{ 
+		// If target is null, reset self.
 		//
-		return is_inline ? calc_inline_address<true>( inl, std::end( inl ), size, align ) : ( uint64_t ) ext;
+		if ( !o.has_value() )
+		{
+			reset();
+			return *this;
+		}
+
+		// If same type, invoke assingment.
+		//
+		if ( actor == o.actor )
+		{
+			actor( this, &o, generic_action::copy_assign );
+			return *this;
+		}
+
+		// Otherwise, reset and construct again.
+		//
+		reset();
+		return *new ( this ) variant( o );
 	}
 
 	// Allocates the space for an object of the given properties and returns the pointer.
 	//
-	void* variant::allocate( size_t size, size_t align )
+	void* variant::allocate( size_t size )
 	{
 		// Calculate the inline address, if successful reference the inline object.
 		//
-		if ( uint64_t inline_adr = calc_inline_address<false>( inl, std::end( inl ), size, align ) )
+		if ( size <= VTIL_VARIANT_INLINE_LIMIT )
 		{
 			is_inline = true;
-			return ( void* ) inline_adr;
+			return ( void* ) &inl[ 0 ];
 		}
-		// Invoke aligned malloc.
+		// Invoke malloc.
 		//
 		else
 		{
 			is_inline = false;
-#ifdef _WIN64
-			return ext = _aligned_malloc( size, align );
-#else
-			return ext = aligned_alloc( align, size );
-#endif
+			return ext = malloc( size );
 		}
 	}
+
 	// Deletes the currently stored variant.
 	//
 	void variant::reset()
@@ -199,24 +185,18 @@ namespace vtil
 		//
 		if ( has_value() )
 		{
-			// If there is a destructor callback, invoke it.
+			// Invoke destruction.
 			//
-			if ( destroy_fn ) destroy_fn( *this );
+			actor( this, nullptr, generic_action::destruct );
 
-			// If object was not inlined, invoke aligned free.
+			// If object was not inlined, invoke free.
 			//
 			if ( !is_inline )
-			{
-#ifdef _WIN64
-				_aligned_free( ext );
-#else
 				free( ext );
-#endif
-			}
 
-			// Null copy function to indicate null value.
+			// Null actor to indicate null value.
 			//
-			copy_fn = nullptr;
+			actor = nullptr;
 		}
 	}
 };
