@@ -31,7 +31,7 @@
 #include <stdint.h>
 #include <cstring>
 #include <optional>
-#include "type_helpers.hpp"
+#include "vtype_traits.hpp"
 #include "../io/asserts.hpp"
 #include "../io/logger.hpp"
 
@@ -49,15 +49,6 @@ namespace vtil
 	#pragma pack(push, 1)
 	struct alignas( 8 ) variant
 	{
-		enum class generic_action
-		{
-			copy_assign,
-			copy_construct,
-			move_assign,
-			move_construct,
-			destruct
-		};
-
 		// Value is either stored in the [char inl[]] as an inline object,
 		// or in [void* ext] as an external pointer.
 		//
@@ -67,83 +58,18 @@ namespace vtil
 			void* ext;
 		};
 
-		// Function pointer handling traits of the type.
+		// Virtual traits.
 		//
-		void( *actor )( variant* self, const variant* other, generic_action action );
+		const vtype_traits_t* traits;
 
 		// Set if object is inlined:
 		//
 		bool is_inline;
 
-		template<typename T>
-		static void generic_actor( variant* self, const variant* other, generic_action action )
-		{
-			switch ( action )
-			{
-				// Assignment.
-				//
-				case generic_action::move_assign:
-					if constexpr ( std::is_move_assignable_v<T> )
-					{
-						self->get<T>() = std::move( make_mutable( other )->get<T>() );
-						break;
-					}
-					else if constexpr ( std::is_move_constructible_v<T> )
-					{
-						T* p = &self->get<T>();
-						std::destroy_at( p );
-						new ( p ) T( std::move( make_mutable( other )->get<T>() ) );
-						break;
-					}
-					[[fallthrough]];
-				case generic_action::copy_assign:
-					if constexpr ( std::is_copy_assignable_v<T> )
-					{
-						self->get<T>() = other->get<T>();
-						break;
-					}
-					else if constexpr ( std::is_copy_constructible_v<T> )
-					{
-						T* p = &self->get<T>();
-						std::destroy_at( p );
-						new ( p ) T( other->get<T>() );
-						break;
-					}
-					unreachable();
-
-				// Construction.
-				//
-				case generic_action::move_construct:
-					if constexpr ( std::is_move_constructible_v<T> )
-					{
-						new ( self->allocate( sizeof( T ) ) ) T( std::move( make_mutable( other )->get<T>() ) );
-						break;
-					}
-				[[fallthrough]];
-				case generic_action::copy_construct:
-					if constexpr ( std::is_copy_constructible_v<T> )
-					{
-						new ( self->allocate( sizeof( T ) ) ) T( other->get<T>() );
-						break;
-					}
-					unreachable();
-				
-				// Destruction.
-				//
-				case generic_action::destruct:
-					std::destroy_at( &self->get<T>() );
-					break;
-
-				// Invalid.
-				//
-				default: unreachable();
-			}
-		}
-
 		// Null constructors.
 		//
-		variant() : actor( nullptr ) {};
-		variant( std::nullopt_t ) : actor( nullptr ) {};
+		variant() : traits( nullptr ) {};
+		variant( std::nullopt_t ) : traits( nullptr ) {};
 
 		// Constructs variant from any type that is not variant, nullptr_t or nullopt_t.
 		//
@@ -162,7 +88,7 @@ namespace vtil
 
 			// Assign generic actor.
 			//
-			actor = &generic_actor<T>;
+			traits = vtype_traits_v<T>;
 		};
 
 		// Copy/move constructors.
@@ -175,17 +101,15 @@ namespace vtil
 		variant& operator=( variant&& vo );
 		variant& operator=( const variant& o );
 
-		// Variant does not have a value if the actor is null.
+		// Variant does not have a value if the traits are null.
 		//
-		bool has_value() const { return actor != nullptr; }
+		bool has_value() const { return traits != nullptr; }
 		operator bool() const { return has_value(); }
 
 		// Gets the address of the object with the given properties.
 		//
-		uint64_t get_address() const
-		{
-			return is_inline ? ( uint64_t ) &inl[ 0 ] : ( uint64_t ) ext;
-		}
+		void* get_address() { return is_inline ? ( void* ) &inl[ 0 ] : ( void* ) ext; }
+		const void* get_address() const { return make_mutable( this )->get_address(); }
 
 		// Allocates the space for an object of the given properties and returns the pointer.
 		//
@@ -199,7 +123,7 @@ namespace vtil
 		{
 			// Validate type equivalence and existance.
 			//
-			fassert( actor == generic_actor<T> );
+			fassert( traits == vtype_traits_v<T> );
 
 			// Calculate the address and return a reference.
 			//
@@ -210,7 +134,7 @@ namespace vtil
 		{
 			// Validate type equivalence and existance.
 			//
-			fassert( actor == generic_actor<T> );
+			fassert( traits == vtype_traits_v<T> );
 
 			// Calculate the address and return a const qualified reference.
 			//

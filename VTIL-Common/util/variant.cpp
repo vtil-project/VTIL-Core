@@ -40,17 +40,17 @@ namespace vtil
 		{
 			// Inherit the type traits from source.
 			//
-			actor = src.actor;
+			traits = src.traits;
 
 			// Invoke copy construction.
 			//
-			actor( this, &src, generic_action::copy_construct );
+			traits->copy_construct( allocate( traits->size ), src.get_address() );
 		}
 		// If source is null, set null.
 		//
 		else
 		{
-			actor = nullptr;
+			traits = nullptr;
 		}
 	}
 
@@ -64,7 +64,7 @@ namespace vtil
 		{
 			// Inherit the type traits from source.
 			//
-			actor = src.actor;
+			traits = src.traits;
 
 			// If target stores an external pointer:
 			//
@@ -77,20 +77,20 @@ namespace vtil
 
 				// Mark the source object as null.
 				//
-				src.actor = nullptr;
+				src.traits = nullptr;
 			}
 			else
 			{
 				// Invoke move construction.
 				//
-				actor( this, &src, generic_action::move_construct );
+				traits->move_construct( allocate( traits->size ), src.get_address() );
 			}
 		}
 		// If source is null, set null.
 		//
 		else
 		{
-			actor = nullptr;
+			traits = nullptr;
 		}
 	}
 
@@ -112,16 +112,15 @@ namespace vtil
 		{
 			// Swap with current and return.
 			//
-			using btype = std::array<uint8_t, sizeof( variant )>;
-			std::swap( ( btype& ) *this, ( btype& ) vo );
+			std::swap( as_bytes( *this ), as_bytes( vo ) );
 			return *this;
 		}
 
-		// If same type, invoke assingment.
+		// If same type, invoke assignment.
 		//
-		if ( actor == vo.actor )
+		if ( traits == vo.traits )
 		{
-			actor( this, &vo, generic_action::move_assign );
+			traits->move_assign( get_address(), vo.get_address() );
 			return *this;
 		}
 
@@ -143,11 +142,11 @@ namespace vtil
 			return *this;
 		}
 
-		// If same type, invoke assingment.
+		// If same type, invoke assignment.
 		//
-		if ( actor == o.actor )
+		if ( traits == o.traits )
 		{
-			actor( this, &o, generic_action::copy_assign );
+			traits->copy_assign( get_address(), o.get_address() );
 			return *this;
 		}
 
@@ -187,16 +186,16 @@ namespace vtil
 		{
 			// Invoke destruction.
 			//
-			actor( this, nullptr, generic_action::destruct );
+			traits->destruct( get_address() );
 
 			// If object was not inlined, invoke free.
 			//
 			if ( !is_inline )
 				free( ext );
 
-			// Null actor to indicate null value.
+			// Null traits to indicate null value.
 			//
-			actor = nullptr;
+			traits = nullptr;
 		}
 	}
 };
