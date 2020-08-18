@@ -175,6 +175,9 @@
     <ClInclude Include="io\enum_name.hpp">
       <Filter>I/O</Filter>
     </ClInclude>
+    <ClInclude Include="util\vtype_traits.hpp">
+      <Filter>Utility</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="io\logger.cpp">

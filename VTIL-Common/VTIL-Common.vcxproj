@@ -166,6 +166,7 @@
     <ClInclude Include="util\reducable.hpp" />
     <ClInclude Include="util\reverse_iterator.hpp" />
     <ClInclude Include="util\stack_container.hpp" />
+    <ClInclude Include="util\vtype_traits.hpp" />
     <ClInclude Include="util\zip.hpp" />
     <ClInclude Include="util\variant.hpp" />
   </ItemGroup>

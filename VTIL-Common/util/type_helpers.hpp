@@ -403,11 +403,17 @@ namespace vtil
 #if HAS_BIT_CAST
 		return __builtin_bit_cast( To, src );
 #else
-		if ( !std::is_constant_evaluated() || std::is_same_v<From, To> )
+		if ( !std::is_constant_evaluated() )
 			return ( const To& ) src;
-		unreachable();
 #endif
+		unreachable();
 	}
 	template<typename T>
 	concept Bitcastable = requires( T x ) { bit_cast<std::array<char, sizeof( T )>, T >( x ); };
+
+	template<typename T>
+	static auto& as_bytes( T& src )
+	{
+		return carry_const( src, ( std::array<char, sizeof( T )>& ) src );
+	}
 };
