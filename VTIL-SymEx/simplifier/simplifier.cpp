@@ -91,11 +91,35 @@ namespace vtil::symbolic
 
 		// Declare custom hash / equivalence checks hijacking the hash map iteration.
 		//
-		struct cache_value;
+		struct cache_value
+		{
+			// Partial decleration of the map, hasher and equality check should not change iterator type.
+			//
+			using cache_map_pdecl = typename std::unordered_map<expression::reference, cache_value>;
+			
+			// Type of the queue key.
+			//
+			using queue_key = typename detached_queue<cache_value>::key;
+
+
+			// Entry itself:
+			//
+			expression::reference result = {};
+			bool is_simplified = false;
+
+			// Implementation details:
+			//
+			int32_t lock_count = 0;
+			queue_key lru_key = {};
+			queue_key spec_key = {};
+			cache_map_pdecl::const_iterator iterator = {};
+		};
+
 		struct signature_hasher
 		{
 			size_t operator()( const expression::reference& ref ) const noexcept { return ref->signature.hash(); }
 		};
+
 		struct cache_scanner
 		{
 			struct sigscan_result
@@ -162,22 +186,6 @@ namespace vtil::symbolic
 		// Cache entry and map type.
 		//
 		using cache_map = std::unordered_map<expression::reference, cache_value, signature_hasher, cache_scanner>;
-		struct cache_value
-		{
-			using queue_key = typename detached_queue<cache_value>::key;
-
-			// Entry itself:
-			//
-			expression::reference result = {};
-			bool is_simplified = false;
-
-			// Implementation details:
-			//
-			int32_t lock_count = 0;
-			queue_key lru_key = {};
-			queue_key spec_key = {};
-			cache_map::const_iterator iterator = {};
-		};
 
 		// Whether we're executing speculatively or not.
 		//
