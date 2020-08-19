@@ -93,11 +93,6 @@ namespace vtil::symbolic
 		//
 		struct cache_value
 		{
-			// Partial decleration of the map, hasher and equality check should not change iterator type.
-			//
-			using cache_map_pdecl = typename std::unordered_map<expression::reference, cache_value>;
-			using cache_map_entry = typename cache_value::cache_map_pdecl::value_type;
-
 			// Type of the queue key.
 			//
 			using queue_key = typename detached_queue<cache_value>::key;
@@ -113,8 +108,24 @@ namespace vtil::symbolic
 			int32_t lock_count = 0;
 			queue_key lru_key = {};
 			queue_key spec_key = {};
-			cache_map_pdecl::const_iterator iterator = {};
+
+			// Stores a type erased iterator since we don't know the map type yet, only
+			// an issue with libstdc++ but oh well.
+			// - Ref: https://github.com/vtil-project/VTIL-Core/issues/41
+			//
+			std::unordered_map<uint64_t, uint64_t>::const_iterator _iterator = {};
+			
+			template<typename map_type>
+			auto& iterator()
+			{
+				using iterator_type = typename map_type::const_iterator;
+				static_assert( sizeof( iterator_type ) == sizeof( _iterator ), "Iterator sizes mismatch." );
+				return ( iterator_type& ) _iterator;
+			}
+			template<typename map_type>
+			const auto& iterator() const { return make_mutable( this )->template iterator<map_type>(); }
 		};
+
 
 		struct signature_hasher
 		{
@@ -167,7 +178,8 @@ namespace vtil::symbolic
 						if ( auto vec = ( *other )->match_to( **self, /*false*/ true ) )
 						{
 							sigscan->table = std::move( *vec );
-							sigscan->match = &( ( cache_value::cache_map_entry* ) other )->second;
+							using kv_pair = std::pair<const expression::reference, cache_value>;
+							sigscan->match = &( ( kv_pair* ) other )->second;
 							sigscan->diff = sdiff;
 							sigscan = nullptr;
 						}
@@ -260,7 +272,7 @@ namespace vtil::symbolic
 			lru_queue.erase( &value->lru_key );
 			if( value->spec_key.is_valid() )
 				spec_queue.erase( &value->spec_key );
-			map.erase( std::move( value->iterator ) );
+			map.erase( std::move( value->template iterator<cache_map>() ) );
 		}
 
 		// Initializes a new entry in the map.
@@ -269,7 +281,7 @@ namespace vtil::symbolic
 		{
 			// Save the iterator.
 			//
-			entry_it->second.iterator = entry_it;
+			entry_it->second.template iterator<cache_map>() = entry_it;
 
 			// If simplifying speculatively, link to tail.
 			//
