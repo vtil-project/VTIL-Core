@@ -96,7 +96,8 @@ namespace vtil::symbolic
 			// Partial decleration of the map, hasher and equality check should not change iterator type.
 			//
 			using cache_map_pdecl = typename std::unordered_map<expression::reference, cache_value>;
-			
+			using cache_map_entry = typename cache_value::cache_map_pdecl::value_type;
+
 			// Type of the queue key.
 			//
 			using queue_key = typename detached_queue<cache_value>::key;
@@ -166,8 +167,7 @@ namespace vtil::symbolic
 						if ( auto vec = ( *other )->match_to( **self, /*false*/ true ) )
 						{
 							sigscan->table = std::move( *vec );
-							using kv_pair = std::pair<const expression::reference, cache_value>;
-							sigscan->match = &( ( kv_pair* ) other )->second;
+							sigscan->match = &( ( cache_value::cache_map_entry* ) other )->second;
 							sigscan->diff = sdiff;
 							sigscan = nullptr;
 						}
