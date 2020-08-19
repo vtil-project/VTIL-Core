@@ -474,9 +474,9 @@ namespace vtil
 		// Helper used to drop const-qualifiers of an iterator when we have a mutable 
 		// reference to the block itself.
 		//
-		iterator acquire( const_iterator&& it )             { dassert( it.block == this ); return ( iterator&& ) it; }
-		iterator& acquire( const_iterator& it )             { dassert( it.block == this ); return ( iterator& ) it; }
-		const iterator& acquire( const const_iterator& it ) { dassert( it.block == this ); return ( const iterator& ) it; }
+		iterator acquire( const_iterator&& it )             { dassert( !it.block || it.block == this ); return ( iterator&& ) it; }
+		iterator& acquire( const_iterator& it )             { dassert( !it.block || it.block == this ); return ( iterator& ) it; }
+		const iterator& acquire( const const_iterator& it ) { dassert( !it.block || it.block == this ); return ( const iterator& ) it; }
 	
 	protected:
 		// Wrappers for instruction construction and deconstruction.
