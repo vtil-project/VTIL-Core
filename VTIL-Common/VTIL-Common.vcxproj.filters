@@ -178,6 +178,9 @@
     <ClInclude Include="util\vtype_traits.hpp">
       <Filter>Utility</Filter>
     </ClInclude>
+    <ClInclude Include="util\function_view.hpp">
+      <Filter>Utility</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="io\logger.cpp">

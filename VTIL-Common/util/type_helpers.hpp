@@ -119,17 +119,22 @@ namespace vtil
 	template<typename T>
 	concept TriviallyDestructable = std::is_trivially_destructible_v<T>;
 
+	template<typename A, typename B>
+	concept Same = std::is_same_v<A, B>;
 	template <typename From, typename To>
-	concept ConvertibleTo = std::is_convertible_v<From, To>;
+	concept Convertible = std::is_convertible_v<From, To>;
 	template<typename T, typename... Args>
 	concept Constructable = requires { T( std::declval<Args>()... ); };
 	template<typename T, typename X>
 	concept Assignable = requires( T r, X v ) { r = v; };
 
+	template<typename T, typename Ret, typename... Args>
+	concept Invocable = requires( T&& x, Args&&... args ) { Convertible<decltype( x( std::forward<Args>( args )... ) ), Ret>; };
+
 	template<typename T>
 	concept Iterable = requires( T v ) { std::begin( v ); std::end( v ); };
 	template<typename V, typename T>
-	concept TypedIterable = Iterable<T> && requires( T v ) { ConvertibleTo<decltype( *std::begin( v ) ), V&>; };
+	concept TypedIterable = Iterable<T> && requires( T v ) { Convertible<decltype( *std::begin( v ) ), V&>; };
 
 	template<typename T>
 	concept DefaultRandomAccessible = requires( T v ) { make_const( v )[ 0 ]; std::size( v ); };
