@@ -32,14 +32,14 @@ namespace vtil::symbolic
 {
 	// Returns the mask of known/unknown bits of the given region, if alias failure occurs returns nullopt.
 	//
-	std::optional<uint64_t> memory::known_mask( const pointer& ptr, bitcnt_t size ) const
+	std::optional<uint64_t> memory::known_mask( const pointer& ptr, bitcnt_t size, fn_calc_distance distance ) const
 	{
-		if ( auto value = unknown_mask( ptr, size ) )
+		if ( auto value = unknown_mask( ptr, size, distance ) )
 			return math::fill( size ) & ~*value;
 		else
 			return std::nullopt;
 	}
-	std::optional<uint64_t> memory::unknown_mask( const pointer& ptr, bitcnt_t size ) const
+	std::optional<uint64_t> memory::unknown_mask( const pointer& ptr, bitcnt_t size, fn_calc_distance distance ) const
 	{
 		uint64_t mask_pending = math::fill( size );
 
@@ -47,21 +47,21 @@ namespace vtil::symbolic
 		//
 		for ( auto it = value_map.rbegin(); it != value_map.rend() && mask_pending; it++ )
 		{
+			auto bit_distance = distance( it->first, ptr );
+
 			// If pointer cannot overlap lookup, skip.
 			//
-			if ( !it->first.can_overlap( ptr ) )
+			if ( bit_distance.is_null() )
 				continue;
 
-			// Calculate displacement, if unknown return unknown.
+			// If unknown:
 			//
-			std::optional byte_distance = it->first - ptr;
-			if ( !byte_distance )
+			if ( bit_distance.is_unknown() )
 				return std::nullopt;
 
 			// Calculate relative mask, clear pending mask.
 			//
-			bitcnt_t bit_distance = math::narrow_cast<bitcnt_t>( *byte_distance * 8 );
-			uint64_t relative_mask = math::fill( it->second.size(), bit_distance );
+			uint64_t relative_mask = math::fill( it->second.size(), *bit_distance );
 			mask_pending &= ~relative_mask;
 		}
 		return mask_pending;
@@ -70,7 +70,7 @@ namespace vtil::symbolic
 	// Reads N bits from the given pointer, returns null reference if alias failure occurs.
 	// - Will output the mask of bits contained in the state into contains if it does not fail.
 	//
-	expression::reference memory::read( const pointer& ptr, bitcnt_t size, const il_const_iterator& reference_iterator, uint64_t* contains ) const
+	expression::reference memory::read( const pointer& ptr, bitcnt_t size, const il_const_iterator& reference_iterator, uint64_t* contains, fn_calc_distance distance ) const
 	{
 		uint64_t tmp;
 		if ( !contains ) contains = &tmp;
@@ -82,15 +82,16 @@ namespace vtil::symbolic
 		//
 		for ( auto it = value_map.rbegin(); it != value_map.rend() && mask_pending; it++ )
 		{
+			auto bit_distance = distance( it->first, ptr );
+
 			// If pointer cannot overlap lookup, skip.
 			//
-			if ( !it->first.can_overlap( ptr ) )
+			if ( bit_distance.is_null() )
 				continue;
 
-			// Calculate displacement, if unknown:
+			// If unknown:
 			//
-			std::optional byte_distance = it->first - ptr;
-			if ( !byte_distance )
+			if ( bit_distance.is_unknown() )
 			{
 				// If not relaxed aliasing, indicate alias failure by returning null.
 				//
@@ -105,14 +106,13 @@ namespace vtil::symbolic
 
 			// Calculate relative mask, skip if not overlapping.
 			//
-			bitcnt_t bit_distance = math::narrow_cast<bitcnt_t>( *byte_distance * 8 );
-			uint64_t relative_mask = math::fill( it->second.size(), bit_distance );
+			uint64_t relative_mask = math::fill( it->second.size(), *bit_distance );
 			if ( !( relative_mask & mask_pending ) )
 				continue;
 
 			// Add into merge list, clear the mask.
 			//
-			merge_list.emplace_back( bit_distance, it->second );
+			merge_list.emplace_back( *bit_distance, it->second );
 			mask_pending &= ~relative_mask;
 		}
 
@@ -124,39 +124,30 @@ namespace vtil::symbolic
 
 		// Declare common bit selector.
 		//
-		constexpr auto select = [ ] ( symbolic::expression::reference& value, bitcnt_t size, bitcnt_t offset )
+		constexpr auto select = [ ] ( expression::reference& value, bitcnt_t size, bitcnt_t offset )
 		{
 			if ( offset < 0 )      value >>= -offset, value.resize( size );
 			else if ( offset > 0 ) value.resize( size ) <<= offset;
 			else                   value.resize( size );
-		};
-
-		// If single overlapping key with no pending bits, return as is.
-		//
-		if ( !mask_pending && merge_list.size() == 1 )
-		{
-			auto&& [dst, value] = std::move( merge_list[ 0 ] );
-			select( value, size, dst );
 			return value;
-		}
+		};
 
 		// Merge all in a single expression and return.
 		//
-		expression::reference result = mask_pending
-			? MEMORY( reference_iterator )( ptr, size )
-			: expression{ 0, size };
+		expression::reference result;
+		if ( mask_pending )
+			result = MEMORY( reference_iterator )( ptr, size ) & expression { mask_pending, size };
+		else
+			result = select( merge_list.back().second, size, merge_list.back().first ), merge_list.pop_back();
 
 		for ( auto& [dst, value] : merge_list )
-		{
-			select( value, size, dst );
-			result |= std::move( value );
-		}
+			result |= std::move( select( value, size, dst ) );
 		return result;
 	}
 
 	// Writes the given value to the pointer, returns null reference if alias failure occurs.
 	//
-	optional_reference<expression::reference> memory::write( const pointer& ptr, deferred_value<expression::reference> value, bitcnt_t size )
+	optional_reference<expression::reference> memory::write( const pointer& ptr, deferred_value<expression::reference> value, bitcnt_t size, fn_calc_distance distance )
 	{
 		uint64_t mask_pending = math::fill( size );
 		stack_vector<std::pair<bitcnt_t, store_type::iterator>, 8> acquisition_list;
@@ -165,15 +156,16 @@ namespace vtil::symbolic
 		//
 		for ( auto it = value_map.rbegin(); it != value_map.rend() && mask_pending; it++ )
 		{
+			auto bit_distance = distance( it->first, ptr );
+
 			// If pointer cannot overlap lookup, skip.
 			//
-			if ( !it->first.can_overlap( ptr ) )
+			if ( bit_distance.is_null() )
 				continue;
 
-			// Calculate displacement, if unknown:
+			// If unknown:
 			//
-			std::optional byte_distance = it->first - ptr;
-			if ( !byte_distance )
+			if ( bit_distance.is_unknown() )
 			{
 				// If not relaxed aliasing, indicate alias failure by returning null.
 				//
@@ -188,14 +180,13 @@ namespace vtil::symbolic
 
 			// Calculate relative mask, skip if not overlapping.
 			//
-			bitcnt_t bit_distance = math::narrow_cast<bitcnt_t>( *byte_distance * 8 );
-			uint64_t relative_mask = math::fill( it->second.size(), bit_distance );
+			uint64_t relative_mask = math::fill( it->second.size(), *bit_distance );
 			if ( !( relative_mask & mask_pending ) )
 				continue;
 
 			// Add into acquisition list, clear the mask.
 			//
-			acquisition_list.emplace_back( bit_distance, std::prev( it.base() ) );
+			acquisition_list.emplace_back( *bit_distance, std::prev( it.base() ) );
 			mask_pending &= ~relative_mask;
 		}
 

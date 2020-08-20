@@ -81,7 +81,7 @@ namespace vtil
 		// instruction is valid according to the instruction descriptor.
 		//
 		instruction() {}
-		template<typename... Tx> requires( ( ConvertibleTo<Tx&&, operand> && ... )  )
+		template<typename... Tx> requires( ( Convertible<Tx&&, operand> && ... )  )
 		instruction( const instruction_desc* base, Tx&&... operands ) 
 			: base( base ), operands( { operand( std::forward<Tx>( operands ) )... } ) { is_valid( true ); }
 		instruction( const instruction_desc* base, std::initializer_list<operand> operands ) 

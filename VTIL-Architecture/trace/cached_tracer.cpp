@@ -57,7 +57,7 @@ namespace vtil
 
 		// Declare a predicate for the search of the variable in the cache.
 		//
-		std::function<bool( const cache_entry& )> predicate;
+		function_view<bool( const cache_entry& )> predicate;
 
 		// If memory variable:
 		//

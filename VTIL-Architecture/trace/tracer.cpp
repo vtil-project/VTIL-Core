@@ -56,21 +56,31 @@ namespace vtil
 	// Given a partial tracer, this routine will determine the full value of the variable
 	// at the given position where a partial write was found.
 	//
-	template<typename T>
-	static symbolic::expression::reference resolve_partial( const symbolic::access_details& access, bitcnt_t bit_count, const T& ptracer )
+	static symbolic::expression::reference resolve_partial( const symbolic::variable& origin, 
+															const symbolic::access_details& access, 
+															function_view<symbolic::expression::reference( const symbolic::variable& )> ptracer )
 	{
 		using namespace logger;
 
+		auto select = [ & ] ( bitcnt_t bit_offset, bitcnt_t bit_count ) -> symbolic::variable
+		{
+			if ( origin.is_register() )
+				return { origin.at, origin.reg().select( bit_count, origin.reg().bit_offset + bit_offset ) };
+			else
+				return { origin.at, { origin.mem().base + ( bit_offset / 8 ), bit_count } };
+		};
+		bitcnt_t bit_count = origin.bit_count();
+
 		// Fetch the result of this operation.
 		//
-		auto base = ptracer( access.bit_offset, access.bit_count );
+		auto base = ptracer( select( access.bit_offset, access.bit_count ) );
 
 		// Trace a low part if we have to.
 		//
 		if ( access.bit_offset > 0 )
 		{
 			bitcnt_t low_bcnt = access.bit_offset;
-			auto res = ptracer( 0, low_bcnt );
+			auto res = ptracer( select( 0, low_bcnt ) );
 #if VTIL_OPT_TRACE_VERBOSE
 			// Log the low and middle bits.
 			//
@@ -104,7 +114,7 @@ namespace vtil
 		if ( bit_count > ( access.bit_offset + access.bit_count ) )
 		{
 			bitcnt_t high_bnct = bit_count - ( access.bit_offset + access.bit_count );
-			auto res = ptracer( access.bit_offset + access.bit_count, high_bnct );
+			auto res = ptracer( select( access.bit_offset + access.bit_count, high_bnct ) );
 #if VTIL_OPT_TRACE_VERBOSE
 			// Log the high bits.
 			//
@@ -125,7 +135,7 @@ namespace vtil
 
 	// Applies transformation per each unique variable in the expression.
 	//
-	static void transform_variables( symbolic::expression::reference& inout, const std::function<symbolic::expression::reference(const symbolic::variable&)>& fn )
+	static void transform_variables( symbolic::expression::reference& inout, function_view<symbolic::expression::reference(const symbolic::variable&)> fn )
 	{
 		// Take fast path if single variable.
 		//
@@ -468,32 +478,8 @@ namespace vtil
 		{
 			// Redirect to partial resolver.
 			//
-			if ( lookup.is_register() )
-			{
-				return resolve_partial( details, result_bcnt, [ &, &reg = lookup.reg(), it = std::next( it ) ]( bitcnt_t bit_offset, bitcnt_t bit_count )
-				{
-					symbolic::variable::register_t tmp = {
-						reg.flags,
-						reg.local_id,
-						bit_count,
-						reg.bit_offset + bit_offset,
-						reg.architecture
-					};
-					return tracer::trace( { it, tmp } );
-				} );
-			}
-			else
-			{
-				return resolve_partial( details, result_bcnt, [ &, &mem = lookup.mem(), it = std::next( it ) ]( bitcnt_t bit_offset, bitcnt_t bit_count )
-				{
-					fassert( !( ( bit_offset | bit_count ) & 7 ) );
-					symbolic::variable::memory_t tmp = {
-						mem.decay() + bit_offset / 8,
-						bit_count
-					};
-					return tracer::trace( { it, tmp } );
-				} );
-			}
+			symbolic::variable origin = { std::next( it ), lookup.descriptor };
+			return resolve_partial( origin, details, [ & ] ( const symbolic::variable& var ) { return tracer::trace( std::move( var ) ); } );
 		}
 
 		// Create a lambda virtual machine and allocate a temporary result.

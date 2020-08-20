@@ -40,6 +40,20 @@ namespace vtil::symbolic
 		//
 		using store_entry =              std::pair<pointer, expression::reference>;
 		using store_type =               std::list<store_entry>;
+		using fn_calc_distance =         function_view<uncertain<bitcnt_t>( const pointer&, const pointer& )>;
+
+		static uncertain<bitcnt_t> bit_distance( const pointer& p1, const pointer& p2 )
+		{
+			// If pointer cannot overlap lookup, skip.
+			//
+			if ( !p1.can_overlap( p2 ) )
+				return uncertain_t::null;
+
+			// Calculate displacement and return.
+			//
+			std::optional byte_distance = p1 - p2;
+			return byte_distance ? uncertain{ math::narrow_cast<bitcnt_t>( *byte_distance * 8 ) } : uncertain_t::unknown;
+		}
 
 		// The memory state.
 		//
@@ -69,17 +83,17 @@ namespace vtil::symbolic
 
 		// Returns the mask of known/unknown bits of the given region, if alias failure occurs returns nullopt.
 		// 
-		std::optional<uint64_t> known_mask( const pointer& ptr, bitcnt_t size ) const;
-		std::optional<uint64_t> unknown_mask( const pointer& ptr, bitcnt_t size ) const;
+		std::optional<uint64_t> known_mask( const pointer& ptr, bitcnt_t size, fn_calc_distance distance = bit_distance ) const;
+		std::optional<uint64_t> unknown_mask( const pointer& ptr, bitcnt_t size, fn_calc_distance distance = bit_distance ) const;
 
 		// Reads N bits from the given pointer, returns null reference if alias failure occurs.
 		// - Will output the mask of bits contained in the state into contains if it does not fail.
 		//
-		expression::reference read( const pointer& ptr, bitcnt_t size, const il_const_iterator& reference_iterator = symbolic::free_form_iterator, uint64_t* contains = nullptr ) const;
+		expression::reference read( const pointer& ptr, bitcnt_t size, const il_const_iterator& reference_iterator = symbolic::free_form_iterator, uint64_t* contains = nullptr, fn_calc_distance distance = bit_distance ) const;
 
 		// Writes the given value to the pointer, returns null reference if alias failure occurs.
 		//
-		optional_reference<expression::reference> write( const pointer& ptr, deferred_value<expression::reference> value, bitcnt_t size );
-		optional_reference<expression::reference> write( const pointer& ptr, expression::reference value ) { return write( ptr, value, value.size() ); }
+		optional_reference<expression::reference> write( const pointer& ptr, deferred_value<expression::reference> value, bitcnt_t size, fn_calc_distance distance = bit_distance );
+		optional_reference<expression::reference> write( const pointer& ptr, expression::reference value, fn_calc_distance distance = bit_distance ) { return write( ptr, value, value.size(), std::move( distance ) ); }
 	};
 };

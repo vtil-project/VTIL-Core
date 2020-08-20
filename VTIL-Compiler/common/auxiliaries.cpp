@@ -356,7 +356,7 @@ namespace vtil::optimizer::aux
 				{
 					bool confirmed = false;
 
-					const std::function<void( const symbolic::expression& )> explore_cc_space = [ & ] ( const symbolic::expression& exp )
+					const function_view<void( const symbolic::expression& )> explore_cc_space = [ & ] ( const symbolic::expression& exp )
 					{
 						if ( exp.op == math::operator_id::value_if )
 						{
@@ -374,7 +374,7 @@ namespace vtil::optimizer::aux
 						}
 					};
 
-					const std::function<void( symbolic::expression::delegate& )> transform_cc = [ & ] ( symbolic::expression::delegate& exp )
+					const function_view<void( symbolic::expression::delegate& )> transform_cc = [ & ] ( symbolic::expression::delegate& exp )
 					{
 						if ( exp->op == math::operator_id::value_if )
 						{
