@@ -45,7 +45,7 @@ namespace vtil
 
         //  -- Data/Memory instructions
         //
-        //    MOV        Reg,    Reg/Imm                                     | OP1 = OP2
+        //    MOV        Reg,    Reg/Imm                                     | OP1 = ZX(OP2)
         //    MOVSX      Reg,    Reg/Imm                                     | OP1 = SX(OP2)
         //    STR        Reg,    Imm,      Reg/Imm                           | [OP1+OP2] <= OP3
         //    LDD        Reg,    Reg,      Imm                               | OP1 <= [OP2+OP3]
@@ -163,20 +163,24 @@ namespace vtil
         //    -- Special instructions
         //
         //    NOP                                                           | Placeholder
-        //    VEMIT      Imm                                                | Emits the opcode as is to the final instruction stream.
+        //    SFENCE                                                        | Assumes all memory is read from
+        //    LFENCE                                                        | Assumes all memory is written to
+        //    VEMIT      Imm                                                | Emits the opcode as is to the final instruction stream
         //    VPINR      Reg                                                | Pins the register for read
         //    VPINW      Reg                                                | Pins the register for write
-        //    VPINRM     Reg,    Imm                                        | Pins the qword @ memory location for read   [ UD? can be used as a wildcard for all public memory effectively rendering it an SFENCE. ]
-        //    VPINWM     Reg,    Imm                                        | Pins the qword @ memory location for write  [ UD? can be used as a wildcard for all public memory effectively rendering it an LFENCE. ]
+        //    VPINRM     Reg,    Imm,        Imm                            | Pins the memory location for read, with size = OP3
+        //    VPINWM     Reg,    Imm,        Imm                            | Pins the memory location for write, with size = OP3
         //
         /*------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
         /*                                          [Name]        [Operands...]                                     [ASizeOp]   [Volatile]  [Operator]               [BranchOps] [MemOps]     */
         inline const instruction_desc nop =        { "nop",       {                                             },  0,          false,      {},                      {},         {}           };
+        inline const instruction_desc sfence =     { "sfence",    {                                             },  0,          true,       {},                      {},         {}           };
+        inline const instruction_desc lfence =     { "lfence",    {                                             },  0,          true,       {},                      {},         {}           };
         inline const instruction_desc vemit =      { "vemit",     { o::read_imm                                 },  1,          true,       {},                      {},         {}           };
         inline const instruction_desc vpinr =      { "vpinr",     { o::read_reg                                 },  1,          true,       {},                      {},         {}           };
         inline const instruction_desc vpinw =      { "vpinw",     { o::write                                    },  1,          true,       {},                      {},         {}           };
-        inline const instruction_desc vpinrm =     { "vpinrm",    { o::read_reg,   o::read_imm,                 },  0,          true,       {},                      {},         { 1, false } };
-        inline const instruction_desc vpinwm =     { "vpinwm",    { o::read_reg,   o::read_imm                  },  0,          true,       {},                      {},         { 1, true }  };
+        inline const instruction_desc vpinrm =     { "vpinrm",    { o::read_reg,   o::read_imm,     o::read_imm },  -3,         true,       {},                      {},         { 1, false } };
+        inline const instruction_desc vpinwm =     { "vpinwm",    { o::read_reg,   o::read_imm,     o::read_imm },  -3,         true,       {},                      {},         { 1, true }  };
         /*------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
     };
 
@@ -190,8 +194,8 @@ namespace vtil
             &ins::mulhi, &ins::imulhi, &ins::div, &ins::idiv, &ins::rem, &ins::irem, &ins::popcnt, &ins::bsf, &ins::bsr,
             &ins::bnot, &ins::bshr, &ins::bshl,&ins::bxor, &ins::bor, &ins::band, &ins::bror, &ins::brol, &ins::tg,
             &ins::tge, &ins::te, &ins::tne, &ins::tle, &ins::tl, &ins::tug, &ins::tuge, &ins::tule, &ins::tul, &ins::js,
-            &ins::jmp, &ins::vexit, &ins::vxcall, &ins::nop, &ins::vemit, &ins::vpinr, &ins::vpinw, &ins::vpinrm,
-            &ins::vpinwm
+            &ins::jmp, &ins::vexit, &ins::vxcall, &ins::nop, &ins::sfence, &ins::lfence, &ins::vemit, &ins::vpinr, &ins::vpinw, 
+            &ins::vpinrm, &ins::vpinwm
         };
         return instruction_list;
     }

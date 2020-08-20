@@ -51,6 +51,11 @@ namespace vtil
 			cvalidate( base->operand_types[ i ] != operand_type::read_reg || operands[ i ].is_register() );
 			cvalidate( base->operand_types[ i ] <  operand_type::write || operands[ i ].is_register() );
 		}
+		
+		// Validate variable access size.
+		//
+		if ( base->vaccess_size_index < 0 )
+			cvalidate( operands[ ( -base->vaccess_size_index ) - 1 ].is_immediate() );
 
 		// Validate memory operands.
 		//

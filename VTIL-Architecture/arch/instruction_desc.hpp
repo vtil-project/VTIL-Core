@@ -82,9 +82,10 @@ namespace vtil
         std::vector<operand_type> operand_types;
 
         // Index of the operand that determines the instruction's 
-        // access size property.
+        // access size property. If positive, bitcount of the operand,
+        // if negative the immediate stored inside the operand.
         //
-        int access_size_index = 0;
+        int vaccess_size_index = 0;
 
         // Whether the instruction is volatile or not meaning it
         // should not be discarded even if it is no-op or dead.

@@ -38,7 +38,7 @@ namespace vtil
 										math::operator_id symbolic_operator,
 										std::vector<int> branch_operands, 
 										const std::pair<int, bool>& memory_operands ) :
-		name( name ), operand_types( operand_types ), access_size_index( access_size_index - 1 ),
+		name( name ), operand_types( operand_types ), vaccess_size_index( access_size_index ),
 		is_volatile( is_volatile ), symbolic_operator( symbolic_operator ),
 		memory_operand_index( memory_operands.first - 1 ), memory_write( memory_operands.second )
 	{
@@ -46,10 +46,15 @@ namespace vtil
 
 		// Validate all operand indices.
 		//
-		fassert( access_size_index == 0 || abs( access_size_index ) <= operand_count() );
+		fassert( vaccess_size_index == 0 || abs( vaccess_size_index ) <= operand_count() );
 		fassert( memory_operands.first == 0 || abs( memory_operands.first ) <= operand_count() );
 		for ( int op : branch_operands )
 			fassert( op != 0 && abs( op ) <= operand_count() );
+
+		// Validate variable access size.
+		//
+		if ( vaccess_size_index < 0 )
+			fassert( operand_types[ ( -vaccess_size_index ) - 1 ] == operand_type::read_imm );
 
 		// Process branch operands.
 		//
