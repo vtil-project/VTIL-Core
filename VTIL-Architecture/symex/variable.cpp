@@ -230,9 +230,7 @@ namespace vtil::symbolic
 
 			// If instruction accesses memory:
 			//
-			if ( it->base->accesses_memory() && 
-				 ( cwrite && it->base->memory_write ) &&
-				 ( cread && !it->base->memory_write ) )
+			if ( it->base->accesses_memory() && ( it->base->memory_write ? cwrite : cread ) )
 			{
 				// Generate an expression for the pointer.
 				//
