@@ -52,7 +52,7 @@ namespace vtil
 
 		// Construct from any functor.
 		//
-		template<typename F> requires Invocable<F, Ret, Args...> && !Same<std::decay_t<F>, function_view>
+		template<typename F> requires ( Invocable<F, Ret, Args...> && ( !Same<std::decay_t<F>, function_view> ) )
 		function_view( F& functor )
 		{
 			obj = &functor;
@@ -64,7 +64,7 @@ namespace vtil
 		}
 		
 		// Unsafe for storage.
-		template<typename F> requires Invocable<F, Ret, Args...> && !Same<std::decay_t<F>, function_view>
+		template<typename F> requires ( Invocable<F, Ret, Args...> && ( !Same<std::decay_t<F>, function_view> ) )
 		function_view( F&& functor ) : function_view( functor ) {}
 
 		// Default copy/move.
