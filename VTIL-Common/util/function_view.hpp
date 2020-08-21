@@ -63,6 +63,7 @@ namespace vtil
 			const_invocable = Invocable<std::add_const_t<std::decay_t<F>>, Ret, Args...>;
 		}
 		
+		// Unsafe for storage.
 		template<typename F> requires Invocable<F, Ret, Args...> && !Same<std::decay_t<F>, function_view>
 		function_view( F&& functor ) : function_view( functor ) {}
 

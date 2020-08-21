@@ -152,10 +152,9 @@ namespace vtil::symbolic
 				}
 			}
 
-			// If pointer does not strictly overlap and cross-block and tracer 
-			// is given, try again after cross-tracing.
+			// If cross-block and tracer is given, try again after cross-tracing.
 			//
-			if ( xblock && tracer && !p1.can_overlap_s( p2 ) )
+			if ( xblock && tracer )
 			{
 				pointer p1r = { tracer->rtrace_exp( p1.base ) };
 				pointer p2r = { tracer->rtrace_exp( p2.base ) };
