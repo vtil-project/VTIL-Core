@@ -55,7 +55,7 @@ namespace vtil
 		template<typename F> requires ( Invocable<F, Ret, Args...> && ( !Same<std::decay_t<F>, function_view> ) )
 		function_view( F& functor )
 		{
-			obj = std::addressof( functor );
+			obj = ( void* ) &functor;
 			fn = [ ] ( void* obj, Args... args ) -> Ret
 			{
 				return ( *( F* ) obj )( std::forward<Args>( args )... );
