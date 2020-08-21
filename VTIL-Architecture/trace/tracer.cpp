@@ -332,12 +332,18 @@ namespace vtil
 
 				// For each path:
 				//
-				bool potential_loop = true;// it_list.size() > 1 || it_list[ 0 ].block == lookup.at.block; // TODO: Fix
+				bool potential_loop = false;
+
+				// Determine whether this block can be the entry/exit to a loop.
+				//
+				for ( auto& it : it_list )
+					potential_loop |= it.block->owner->has_path( it.block, lookup.at.block );
+
 				for ( auto& it : it_list )
 				{
 					// If we've taken this path more than twice, skip it.
 					//
-					if ( !potential_loop || prev_link.count( lookup.at.block, it.block ) >= 2 )
+					if ( potential_loop && prev_link.count( lookup.at.block, it.block ) >= 2 )
 					{
 #if VTIL_OPT_TRACE_VERBOSE
 						// Log skipping of path.
