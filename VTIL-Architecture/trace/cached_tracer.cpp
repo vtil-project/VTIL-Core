@@ -55,52 +55,6 @@ namespace vtil
 			return result;
 		}
 
-		// Declare a predicate for the search of the variable in the cache.
-		//
-		function_view<bool( const cache_entry& )> predicate;
-
-		// If memory variable:
-		//
-		if ( lookup.is_memory() )
-		{
-			predicate = [ & ] ( const cache_entry& pair )
-			{
-				// Key must be of memory type at the same position.
-				//
-				if ( !pair.first.is_memory() ) return false;
-				if ( pair.first.at != lookup.at ) return false;
-
-				// Must be the same pointer and have a larger or equal size.
-				//
-				auto& self = lookup.mem();
-				auto& other = pair.first.mem();
-				return self.decay()->equals( *other.decay() ) &&
-					   self.bit_count >= other.bit_count;
-			};
-		}
-		// If register variable:
-		//
-		else
-		{
-			fassert( lookup.is_register() );
-			predicate = [ & ] ( const cache_entry& pair )
-			{
-				// Key must be of memory type at the same position.
-				//
-				if ( !pair.first.is_register() ) return false;
-				if ( pair.first.at != lookup.at ) return false;
-
-				// Must be the same register and have a larger or equal size.
-				//
-				auto& self = lookup.reg();
-				auto& other = pair.first.reg();
-				return self.flags == other.flags &&
-					self.combined_id == other.combined_id &&
-					self.bit_offset == other.bit_offset &&
-					self.bit_count >= other.bit_count;
-			};
-		}
-
 		// Try lookup the exact variable in the map in a fast manner.
 		//
 		std::shared_lock lock{ mtx };
@@ -142,6 +96,39 @@ namespace vtil
 #endif
 			return result;
 		}
+
+		// Declare a predicate for the search of the variable in the cache.
+		//
+		auto predicate = [ & ] ( const cache_entry& pair )
+		{
+			// Key must be of same type at the same position.
+			//
+			if ( pair.first.is_register() != lookup.is_register() || 
+				 pair.first.at != lookup.at ) 
+				return false;
+
+			if ( lookup.is_memory() )
+			{
+				// Must be the same pointer and have a larger or equal size.
+				//
+				auto& self = lookup.mem();
+				auto& other = pair.first.mem();
+				return self.bit_count >= other.bit_count && 
+					self.decay()->equals( *other.decay() );
+			}
+			else
+			{
+				// Must be the same register and have a larger or equal size.
+				//
+				auto& self = lookup.reg();
+				auto& other = pair.first.reg();
+				return self.flags == other.flags &&
+					self.combined_id == other.combined_id &&
+					self.bit_offset == other.bit_offset &&
+					self.bit_count >= other.bit_count;
+			}
+		};
+
 
 		// Search the map, if we find a matching entry shrink and use as the result.
 		//
