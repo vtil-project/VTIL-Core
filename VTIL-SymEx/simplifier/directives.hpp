@@ -294,9 +294,8 @@ namespace vtil::symbolic::directive
 
         // XOR:
         //
-        //{ A^(B&C),                                            s(~(B&!(A&C)))&s(A|(B&C)) }, 
-        //{ A^(B&C),                                            s(A|(B&C))&s(~(B&!(A&C))) },
-        //{ A^(B|C),                                            s(B|!(A|C))&s(~(A&(B|C))) },
+        { A^(B&C),                                            s(~(B&!(A&C)))&s(A|(B&C)) },
+        { A^(B|C),                                            s(!(A|C)|B)&s(~(A&(B|C))) },
         { A^(B^C),                                            B^!(A^C) },
         { A^(B<<U),                                           !(!(A>>U)^B)<<U|s(A&((1<<U)-1)) },
         { A^(B>>U),                                           !(!(A<<U)^B)>>U|s(A&(~((-1<<U)>>U))) },
