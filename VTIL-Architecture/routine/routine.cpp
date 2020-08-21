@@ -55,7 +55,7 @@ namespace vtil
 	}
 	bool routine::has_path_bwd( const basic_block* src, const basic_block* dst ) const
 	{
-		return get_path( src, dst ).size() != 0;
+		return get_path_bwd( src, dst ).size() != 0;
 	}
 
 	// Checks whether the block is in a loop.
