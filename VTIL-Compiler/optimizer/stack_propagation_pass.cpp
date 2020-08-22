@@ -175,16 +175,31 @@ namespace vtil::optimizer
 							if ( rvar.at.is_begin() )
 								continue;
 
-							// Try determining the path to current block.
-							//
+							// Try determining the path to current block. If single direction 
+							// possible, replace iterator, otherwise fail.
+							// 
 							il_const_iterator it_rstr = rvar.at;
 							it_rstr.restrict_path( it.block, true );
-							std::vector<il_const_iterator> next = it_rstr.recurse( true );
+
+							il_const_iterator it_next = {};
+							it_rstr.enum_paths( true, [ & ] ( const il_const_iterator& iter )
+							{
+								if ( it_next.is_valid() )
+								{
+									it_next = iter;
+									return enumerator::ocontinue;
+								}
+								else
+								{
+									it_next = {};
+									return enumerator::obreak;
+								}
+							} );
 
 							// If single direction possible, replace iterator, otherwise fail.
 							//
-							if ( next.size() == 1 )
-								rvar.bind( next[ 0 ] );
+							if ( it_next.is_valid() )
+								rvar.bind( it_next );
 							else
 								continue;
 						}

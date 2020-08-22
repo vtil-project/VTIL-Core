@@ -189,13 +189,11 @@ namespace vtil
 				return *this;
 			}
 
-			// Returns the possible paths the iterator can follow if it reaches it's end.
+			// Enumerates the possible paths the iterator can follow if it reaches it's end.
 			//
-			std::vector<base_iterator> recurse( bool fwd ) const
+			template<typename T>
+			void enum_paths( bool fwd, T&& fn ) const
 			{
-				// Generate a list of possible iterators to continue from:
-				//
-				std::vector<base_iterator> output;
 				for ( basic_block* dst : ( fwd ? block->next : block->prev ) )
 				{
 					// Skip if path is restricted and this path is not allowed.
@@ -207,14 +205,15 @@ namespace vtil
 					}
 
 					// Otherwise create the new iterator inheriting the path 
-					// restrictions of current iterator, and save it.
+					// restrictions of current iterator, and invoke enumerator.
 					//
-					auto& it = output.emplace_back();
+					base_iterator it;
 					it = fwd ? dst->begin() : dst->end();
 					it.paths_allowed = paths_allowed;
 					it.is_path_restricted = is_path_restricted;
+					if ( enumerator::invoke( fn, it ).should_break )
+						return;
 				}
-				return output;
 			}
 
 			// Conversion to string.
