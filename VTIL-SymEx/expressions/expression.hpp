@@ -336,7 +336,77 @@ namespace vtil::symbolic
 
 		// Calculates the x values.
 		//
-		std::array<uint64_t, VTIL_SYMEX_XVAL_KEYS> xvalues() const;
+		template<size_t N = VTIL_SYMEX_XVAL_KEYS>
+		std::array<uint64_t, N> xvalues() const
+		{
+			std::array<uint64_t, N> result;
+		
+			// If binary operation:
+			//
+			if ( lhs )
+			{
+				// Determine rhs mask.
+				//
+				uint64_t rhs_mask;
+				switch ( op )
+				{
+					case math::operator_id::shift_right:
+					case math::operator_id::shift_left:
+					case math::operator_id::rotate_right:
+					case math::operator_id::rotate_left:
+					case math::operator_id::bit_test:     rhs_mask = rhs->is_variable() 
+																	   ? lhs->size() - 1 : ~0ull; break;
+					default:                              rhs_mask = ~0ull;                       break;
+				}
+
+				// Evalute based on lhs's and rhs's xvalues.
+				//
+				auto xlhs = lhs->template xvalues<N>();
+				auto xrhs = rhs->template xvalues<N>();
+				for ( auto [out, vlhs, vrhs] : zip( result, xlhs, xrhs ) )
+					out = math::evaluate( op, lhs->size(), vlhs, rhs->size(), vrhs & rhs_mask ).first;
+			}
+			// If unary operation:
+			//
+			else if( rhs )
+			{
+				// Evalute based on rhs's xvalues.
+				//
+				auto xrhs = rhs->template xvalues<N>();
+				for ( auto [out, vrhs] : zip( result, xrhs ) )
+					out = math::evaluate( op, 0, 0, rhs->size(), vrhs ).first;
+			}
+			// If constant:
+			//
+			else if ( is_constant() )
+			{
+				// All x values are equivalent to the actual value.
+				//
+				result.fill( *value.get() );
+			}
+			// If variable:
+			//
+			else if ( is_variable() )
+			{
+				static constexpr auto keys = make_crandom_n<N>();
+
+				// Generate x values based on the hash.
+				//
+				for ( auto [out, key, idx] : zip( result, keys, iindices ) )
+				{
+					if ( idx != 0 )
+						out = ( hash_value ^ key ) & value.value_mask();
+					else
+						out = ( hash_value & 64 ) & value.value_mask();
+				}
+			}
+			else
+			{
+				unreachable();
+			}
+			return result;
+		}
+
 
 		// Evaluates the expression invoking the callback passed for unknown variables,
 		// this avoids copying of the entire tree and any simplifier calls so is preferred
