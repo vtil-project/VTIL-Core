@@ -54,19 +54,19 @@ namespace vtil
 		// for it at the specified point of the block, limit determines the maximum number of blocks 
 		// to trace backwards, any negative number implies infinite since it won't reach 0.
 		//
-		virtual symbolic::expression::reference rtrace( const symbolic::variable& lookup, int64_t limit = -1 );
+		virtual symbolic::expression::reference rtrace( const symbolic::variable& lookup );
 
 		// Wrappers around the functions above that return expressions with the registers packed.
 		//
 		symbolic::expression::reference trace_p( const symbolic::variable& lookup ) { return symbolic::variable::pack_all( trace( lookup ) ); }
-		symbolic::expression::reference rtrace_p( const symbolic::variable& lookup, int64_t limit = -1 ) { return symbolic::variable::pack_all( rtrace( lookup, limit ) ); }
+		symbolic::expression::reference rtrace_p( const symbolic::variable& lookup ) { return symbolic::variable::pack_all( rtrace( lookup ) ); }
 
 		// Wrappers around trace(_p) and rtrace(_p) that can trace an entire expression.
 		//
 		symbolic::expression::reference trace_exp( const symbolic::expression::reference& exp );
-		symbolic::expression::reference rtrace_exp( const symbolic::expression::reference& exp, int64_t limit = -1 );
+		symbolic::expression::reference rtrace_exp( const symbolic::expression::reference& exp );
 		symbolic::expression::reference trace_pexp( const symbolic::expression::reference& exp ) { return symbolic::variable::pack_all( trace_exp( exp ) ); }
-		symbolic::expression::reference rtrace_pexp( const symbolic::expression::reference& exp, int64_t limit = -1 ) { return symbolic::variable::pack_all( rtrace_exp( exp, limit ) ); }
+		symbolic::expression::reference rtrace_pexp( const symbolic::expression::reference& exp ) { return symbolic::variable::pack_all( rtrace_exp( exp ) ); }
 
 		// Purifies the tracer.
 		//
