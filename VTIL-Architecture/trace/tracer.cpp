@@ -308,13 +308,12 @@ namespace vtil
 			{
 				// Determine whether we're in a loop or not.
 				//
-				bool potential_loop = true;
+				bool potential_loop = false;
 
 				// Determine whether this block can be the entry/exit to a loop.
 				//
-				//for ( auto& it : it_list )
-				//	potential_loop |= it.block->owner->has_path( it.block, lookup.at.block );
-				//potential_loop &= it_list.size() > 1;
+				for ( auto& next : lookup.at.block->prev )
+					potential_loop |= next->owner->has_path_bwd( next, lookup.at.block );
 
 				// If block does not touch our variable, skip the logic.
 				//
