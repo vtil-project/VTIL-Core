@@ -45,11 +45,6 @@
 
 namespace vtil
 {
-	// Type we describe basic block timestamps in.
-	//
-	using epoch_t = uint64_t;
-	static constexpr epoch_t invalid_epoch = ~0;
-
 	// Descriptor for any routine that is being translated.
 	// - Since optimization phase will be done in a single threaded
 	//   fashion, this structure contains no mutexes at all.
@@ -143,7 +138,7 @@ namespace vtil
 				}
 				else
 				{
-					block->epoch++;
+					block->signal_modification();
 					return &entry->value;
 				}
 			}
@@ -283,6 +278,7 @@ namespace vtil
 		// since their last read from it in an easy and fast way.
 		//
 		epoch_t epoch;
+		void signal_modification() { ++epoch; if ( owner ) owner->signal_modification(); }
 
 		// Creates a new block bound to a new routine with the given parameters.
 		//
@@ -296,7 +292,7 @@ namespace vtil
 		// Basic constructor and destructor, should be invoked via ::fork and ::begin, reserved for internal use.
 		//
 		basic_block( routine* owner, vip_t entry_vip ) 
-			: owner( owner ), entry_vip( entry_vip ), epoch( make_random<uint64_t>() ) {}
+			: owner( owner ), entry_vip( entry_vip ), epoch( make_random<epoch_t>() ) {}
 		basic_block( const basic_block& o )
 			: owner( o.owner ), entry_vip( o.entry_vip ), next( o.next ), prev( o.prev ),
 			  sp_index( o.sp_index ), sp_offset( o.sp_offset ), last_temporary_index( o.last_temporary_index ),
@@ -402,8 +398,8 @@ namespace vtil
 		size_t size() const              { return instruction_count; }
 		const instruction& back() const  { dassert( tail ); return tail->value; }
 		const instruction& front() const { dassert( head ); return head->value; }
-		instruction& wback()             { dassert( tail ); epoch++; return tail->value; }
-		instruction& wfront()            { dassert( head ); epoch++; return head->value; }
+		instruction& wback()             { dassert( tail ); signal_modification(); return tail->value; }
+		instruction& wfront()            { dassert( head ); signal_modification(); return head->value; }
 		iterator begin()                 { return { this, head }; }
 		iterator end()                   { return { this, nullptr }; }
 		const_iterator begin() const     { return { this, head }; }

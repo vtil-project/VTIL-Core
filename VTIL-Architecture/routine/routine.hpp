@@ -41,6 +41,11 @@ namespace vtil
 	//
 	struct basic_block;
 
+	// Type we describe timestamps in.
+	//
+	using epoch_t = uint64_t;
+	static constexpr epoch_t invalid_epoch = ~0;
+
 	// Declare types of path containers.
 	//
 	using path_set = std::unordered_set<const basic_block*, hasher<>>;
@@ -63,22 +68,6 @@ namespace vtil
 		// Physical architecture routine is bound to.
 		//
 		architecture_identifier arch_id;
-
-		// Constructed from architecture identifier.
-		//
-		routine( architecture_identifier arch_id ) 
-			: arch_id( arch_id ) 
-		{
-			switch ( arch_id )
-			{
-				case architecture_arm64:   routine_convention =    arm64::default_call_convention;
-				                           subroutine_convention = arm64::default_call_convention; break;
-				case architecture_amd64:   routine_convention =    amd64::default_call_convention;
-				                           subroutine_convention = amd64::default_call_convention; break;
-				case architecture_virtual: routine_convention =    { .purge_stack = true };
-				                           subroutine_convention = { .purge_stack = true }; break;
-			}
-		};
 
 		// Cache of explored blocks, mapping virtual instruction pointer to the basic block structure.
 		//
@@ -116,6 +105,28 @@ namespace vtil
 		// Multivariate runtime context.
 		//
 		multivariate<routine> context = {};
+
+		// Epoch provided to allow external entities determine if the routine 
+		// is modified or not since their last read from it in an easy and fast way.
+		//
+		relaxed_atomic<epoch_t> epoch;
+		void signal_modification() { ++epoch; }
+
+		// Constructed from architecture identifier.
+		//
+		routine( architecture_identifier arch_id ) 
+			: arch_id( arch_id ), epoch( make_random<epoch_t>() )
+		{
+			switch ( arch_id )
+			{
+				case architecture_arm64:   routine_convention =    arm64::default_call_convention;
+				                           subroutine_convention = arm64::default_call_convention; break;
+				case architecture_amd64:   routine_convention =    amd64::default_call_convention;
+				                           subroutine_convention = amd64::default_call_convention; break;
+				case architecture_virtual: routine_convention =    { .purge_stack = true };
+				                           subroutine_convention = { .purge_stack = true }; break;
+			}
+		};
 
 		// Helpers for the allocation of unique internal registers.
 		//

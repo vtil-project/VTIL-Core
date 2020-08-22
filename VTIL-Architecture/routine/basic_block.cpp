@@ -202,9 +202,9 @@ namespace vtil
 	//
 	il_iterator basic_block::erase( const const_iterator& pos )
 	{
-		// Increment epoch to signal modification.
+		// Signal modification.
 		//
-		epoch++;
+		signal_modification();
 
 		// If no previous entry, head and possibly also tail:
 		//
@@ -257,7 +257,7 @@ namespace vtil
 		//
 		head = nullptr;
 		tail = nullptr;
-		epoch++;
+		signal_modification();
 		instruction_count = 0;
 		return this;
 	}
@@ -284,9 +284,9 @@ namespace vtil
 	//
 	il_iterator basic_block::insert_final( const const_iterator& pos, list_entry* new_entry, bool process )
 	{
-		// Increment epoch to signal modification.
+		// Signal modification.
 		//
-		epoch++;
+		signal_modification();
 
 		// If marked to be processed:
 		//

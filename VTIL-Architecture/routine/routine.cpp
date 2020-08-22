@@ -75,6 +75,10 @@ namespace vtil
 		//
 		std::lock_guard g{ this->mutex };
 
+		// Signal modification.
+		//
+		signal_modification();
+
 		// Insert self-referential links.
 		//
 		path_cache[ 0 ][ dst ][ dst ].insert( dst );
@@ -140,6 +144,10 @@ namespace vtil
 		//
 		std::lock_guard g{ this->mutex };
 
+		// Signal modification.
+		//
+		signal_modification();
+
 		// Invoke from entry point.
 		//
 		path_cache[ 0 ].clear();
@@ -172,6 +180,10 @@ namespace vtil
 	std::pair<basic_block*, bool> routine::create_block( vip_t vip, basic_block* src )
 	{
 		std::lock_guard g{ this->mutex };
+
+		// Signal modification.
+		//
+		signal_modification();
 
 		// Try inserting into the map:
 		//
@@ -214,6 +226,10 @@ namespace vtil
 		// Acquire the routine mutex.
 		//
 		std::lock_guard g{ this->mutex };
+
+		// Signal modification.
+		//
+		signal_modification();
 
 		// Enumerate both forwards and backwards caches.
 		//
