@@ -75,10 +75,6 @@ namespace vtil
 		//
 		std::lock_guard g{ this->mutex };
 
-		// Signal modification.
-		//
-		signal_modification();
-
 		// Insert self-referential links.
 		//
 		path_cache[ 0 ][ dst ][ dst ].insert( dst );
@@ -144,10 +140,6 @@ namespace vtil
 		//
 		std::lock_guard g{ this->mutex };
 
-		// Signal modification.
-		//
-		signal_modification();
-
 		// Invoke from entry point.
 		//
 		path_cache[ 0 ].clear();
@@ -183,7 +175,7 @@ namespace vtil
 
 		// Signal modification.
 		//
-		signal_modification();
+		signal_cfg_modification();
 
 		// Try inserting into the map:
 		//
@@ -229,7 +221,7 @@ namespace vtil
 
 		// Signal modification.
 		//
-		signal_modification();
+		signal_cfg_modification();
 
 		// Enumerate both forwards and backwards caches.
 		//
@@ -278,6 +270,147 @@ namespace vtil
 		//
 		explored_blocks.erase( block->entry_vip );
 		delete block;
+	}
+
+	// Gets a list of exits.
+	//
+	std::vector<const basic_block*> routine::get_exits() const
+	{
+		// Acquire the routine mutex.
+		//
+		std::lock_guard g{ this->mutex };
+
+		// Make a vector of all blocks with no next's and return.
+		//
+		std::vector<const basic_block*> exits;
+		for ( auto& [vip, block] : explored_blocks )
+			if ( block->next.empty() )
+				exits.push_back( block );
+		return exits;
+	}
+
+	// Gets a list of depth ordered block lists that can be analysed in parallel without any dependencies on previous level.
+	//
+	struct depth_ordered_list_cache 
+	{
+		struct entry
+		{
+			epoch_t epoch = invalid_epoch;
+			std::vector<routine::depth_entry> list;
+		};
+		entry directions[ 2 ];
+	};
+
+	std::vector<routine::depth_entry> routine::get_depth_ordered_list( bool fwd ) const
+	{
+		// Acquire the routine mutex.
+		//
+		std::lock_guard g{ this->mutex };
+
+		// Return if already cached.
+		//
+		auto& cache = context.get<depth_ordered_list_cache>().directions[ fwd ? 1 : 0 ];
+		if ( std::exchange( cache.epoch, cfg_epoch ) == cfg_epoch )
+			return cache.list;
+
+		// Allocate visited list.
+		//
+		std::unordered_set<const basic_block*, hasher<>> visited;
+		visited.reserve( num_blocks() );
+
+		// Begin state, if forward from entry, else from exits.
+		//
+		std::vector<std::pair<size_t, std::vector<const basic_block*>>> state = {};
+
+		if ( fwd )
+		{
+			if ( entry_point )
+				state.push_back( { 0, { entry_point } } );
+		}
+		else
+		{
+			if ( auto exits = get_exits(); !exits.empty() )
+				state.emplace_back( 0, std::move( exits ) );
+		}
+
+		// Hold previous size, start loop.
+		//
+		size_t previous_counter = 0;
+		for ( size_t depth = 1;; depth++ )
+		{
+			// For each block in previous state:
+			//
+			size_t counter = state.size();
+			for ( size_t p_idx = previous_counter; p_idx != counter; p_idx++ )
+			{
+				for ( auto& block : state[ p_idx ].second )
+				{
+					// For each possible source:
+					//
+					for ( auto& prev : ( fwd ? block->next : block->prev ) )
+					{
+						// Skip if already visited.
+						//
+						if ( !visited.emplace( prev ).second )
+							continue;
+
+						// Try to merge into any list.
+						//
+						size_t n_idx = counter;
+						for ( ; n_idx != state.size(); n_idx++ )
+						{
+							// If it will cause circular dependencies, skip.
+							//
+							bool has_dep = false;
+							for ( auto& other : state[ n_idx ].second )
+							{
+								if ( fwd ) has_dep = has_path( prev, other )     || has_path( other, prev );
+								else       has_dep = has_path_bwd( prev, other ) || has_path_bwd( other, prev );
+								
+								if ( has_dep ) break;
+							}
+							if ( has_dep ) continue;
+
+							// Insert into the list and stop the search.
+							//
+							state[ n_idx ].second.emplace_back( prev );
+							break;
+						}
+
+						// If we could not insert into any list, create another.
+						//
+						if ( n_idx == state.size() )
+							state.push_back( { depth, { prev } } );
+					}
+				}
+			}
+
+			// If none inserted, break.
+			//
+			if ( counter == state.size() )
+				break;
+		}
+
+		// Flatten to make it easier to copy, write to cache and return.
+		//
+		cache.list.clear();
+		cache.list.reserve( num_blocks() );
+
+		for ( auto [list, level_dependency] : zip( state, iindices ) )
+		{
+			for ( auto block : list.second )
+			{
+				cache.list.push_back( {
+						.level_dependency = level_dependency,
+						.level_depth = list.first,
+						.block = block
+				} );
+			}
+		}
+
+		// Return the result.
+		//
+		return cache.list;
 	}
 
 	// Provide basic statistics about the complexity of the routine.

@@ -109,13 +109,15 @@ namespace vtil
 		// Epoch provided to allow external entities determine if the routine 
 		// is modified or not since their last read from it in an easy and fast way.
 		//
+		epoch_t cfg_epoch;
 		relaxed_atomic<epoch_t> epoch;
 		void signal_modification() { ++epoch; }
+		void signal_cfg_modification() { ++epoch; ++cfg_epoch; }
 
 		// Constructed from architecture identifier.
 		//
 		routine( architecture_identifier arch_id ) 
-			: arch_id( arch_id ), epoch( make_random<epoch_t>() )
+			: arch_id( arch_id ), epoch( make_random<epoch_t>() ), cfg_epoch( make_random<epoch_t>() )
 		{
 			switch ( arch_id )
 			{
@@ -212,6 +214,20 @@ namespace vtil
 		void enumerate( callback fn, const iterator_type& src, const iterator_type& dst = {} ) const;
 		template<typename callback, typename iterator_type>
 		void enumerate_bwd( callback fn, const iterator_type& src, const iterator_type& dst = {} ) const;
+
+		// Gets a list of exits.
+		//
+		std::vector<const basic_block*> get_exits() const;
+
+		// Gets a list of depth ordered block lists that can be analysed in parallel without any dependencies on previous level.
+		//
+		struct depth_entry
+		{
+			size_t level_dependency;
+			size_t level_depth;
+			const basic_block* block;
+		};
+		std::vector<depth_entry> get_depth_ordered_list( bool fwd ) const;
 
 		// Provide basic statistics about the complexity of the routine.
 		//
