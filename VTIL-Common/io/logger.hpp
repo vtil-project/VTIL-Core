@@ -239,7 +239,7 @@ namespace vtil::logger
 
 		// Print the warning.
 		//
-		log( CON_YLW, "[!] Warning: %s\n", message );
+		log( CON_YLW, "\n[!] Warning: %s\n", message );
 
 		// Restore the padding and return.
 		//
@@ -270,7 +270,7 @@ namespace vtil::logger
 		// Error will stop any execution so feel free to ignore any locks. Print error message.
 		//
 		set_color( CON_RED );
-		fprintf( VTIL_LOGGER_DST, "[*] Error: %s\n", message.c_str() );
+		fprintf( VTIL_LOGGER_DST, "\n[*] Error: %s\n", message.c_str() );
 
 		// Break the program. 
 		//
