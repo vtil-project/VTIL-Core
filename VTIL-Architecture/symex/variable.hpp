@@ -77,6 +77,25 @@ namespace vtil::symbolic
 		// Check if details are unknown.
 		//
 		bool is_unknown() { return unknown; }
+
+		// Combines two access details together.
+		//
+		access_details operator+( const access_details& o ) const
+		{
+			if ( !o ) return *this;
+			if ( !*this ) return o;
+
+			bitcnt_t bmax = std::max( o.bit_offset + o.bit_count, bit_offset + bit_count );
+			bitcnt_t bmin = std::max( o.bit_offset, bit_offset );
+
+			return {
+				.bit_offset = bmin,
+				.bit_count =  bmax - bmin,
+				.read =  read || o.read,
+				.write = write || o.write
+			};
+		}
+		access_details& operator+=( const access_details& o ) { return *this = o + *this; }
 	};
 
 	// A pseudo single-static-assignment variable describing the state of a 
