@@ -105,6 +105,21 @@ namespace vtil
 		// Multivariate runtime context.
 		//
 		multivariate<routine> context = {};
+		
+		// Cache of depth ordered lists.
+		//
+		struct depth_entry
+		{
+			size_t level_dependency;
+			size_t level_depth;
+			const basic_block* block;
+		};
+		struct depth_ordered_list
+		{
+			epoch_t epoch = invalid_epoch;
+			std::vector<routine::depth_entry> list;
+		};
+		mutable depth_ordered_list depth_ordered_list_cache[ 2 ];
 
 		// Epoch provided to allow external entities determine if the routine 
 		// is modified or not since their last read from it in an easy and fast way.
@@ -221,12 +236,6 @@ namespace vtil
 
 		// Gets a list of depth ordered block lists that can be analysed in parallel without any dependencies on previous level.
 		//
-		struct depth_entry
-		{
-			size_t level_dependency;
-			size_t level_depth;
-			const basic_block* block;
-		};
 		std::vector<depth_entry> get_depth_ordered_list( bool fwd ) const;
 
 		// Provide basic statistics about the complexity of the routine.

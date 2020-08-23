@@ -291,16 +291,6 @@ namespace vtil
 
 	// Gets a list of depth ordered block lists that can be analysed in parallel without any dependencies on previous level.
 	//
-	struct depth_ordered_list_cache 
-	{
-		struct entry
-		{
-			epoch_t epoch = invalid_epoch;
-			std::vector<routine::depth_entry> list;
-		};
-		entry directions[ 2 ];
-	};
-
 	std::vector<routine::depth_entry> routine::get_depth_ordered_list( bool fwd ) const
 	{
 		// Acquire the routine mutex.
@@ -309,7 +299,7 @@ namespace vtil
 
 		// Return if already cached.
 		//
-		auto& cache = context.get<depth_ordered_list_cache>().directions[ fwd ? 1 : 0 ];
+		auto& cache = depth_ordered_list_cache[ fwd ? 1 : 0 ];
 		if ( std::exchange( cache.epoch, cfg_epoch ) == cfg_epoch )
 			return cache.list;
 
@@ -519,6 +509,19 @@ namespace vtil
 				map_l1.emplace( copy->get_block( k1->entry_vip ), std::move( map_l2 ) );
 			}
 			map = map_l1;
+		}
+
+		// Fix depth ordered list cache.
+		//
+		for ( auto& list : copy->depth_ordered_list_cache )
+		{
+			if ( list.epoch == copy->cfg_epoch )
+			{
+				for ( auto& entry : list.list )
+				{
+					entry.block = copy->get_block( entry.block->entry_vip );
+				}
+			}
 		}
 
 		// Return the copy.
