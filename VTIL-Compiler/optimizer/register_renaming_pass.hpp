@@ -33,7 +33,7 @@ namespace vtil::optimizer
 {
 	// Attempts to rename registers as a way to propagate through MOV instructions.
 	//
-	struct register_renaming_pass : pass_interface<true>
+	struct register_renaming_pass : pass_interface<execution_order::serial>
 	{
 		size_t pass( basic_block* blk, bool xblock = false ) override;
 	};

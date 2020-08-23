@@ -222,7 +222,7 @@ namespace vtil::optimizer
 	{
 		// Invoke original method, if any removed:
 		//
-		if ( size_t cnt = pass_interface<>::xpass( rtn ) )
+		if ( size_t cnt = pass_interface::xpass( rtn ) )
 		{
 			// Delete non-referenced blocks entirely.
 			//

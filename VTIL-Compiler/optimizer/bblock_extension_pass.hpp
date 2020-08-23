@@ -34,7 +34,7 @@ namespace vtil::optimizer
 {
 	// Attempts to merge multiple basic blocks into a single extended basic block.
 	//
-	struct bblock_extension_pass : pass_interface<true>
+	struct bblock_extension_pass : pass_interface<execution_order::custom>
 	{
 		// List of blocks we have already visited, refreshed per xpass call.
 		//

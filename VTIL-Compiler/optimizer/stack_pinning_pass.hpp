@@ -35,30 +35,6 @@ namespace vtil::optimizer
 	//
 	struct stack_pinning_pass : pass_interface<>
 	{
-		path_set visited;
-
 		size_t pass( basic_block* blk, bool xblock = false ) override;
-
-		// Cross block logic should execute from the bottom.
-		//
-		size_t cpass( basic_block* blk )
-		{
-			// Skip if already visited.
-			//
-			if ( !visited.emplace( blk ).second )
-				return 0;
-
-			// Recurse into children, then invoke self.
-			//
-			size_t count = 0;
-			for ( basic_block* block : blk->next )
-				count += cpass( block );
-			return count + pass( blk, true );
-		}
-		size_t xpass( routine* rtn ) override
-		{
-			visited.reserve( rtn->explored_blocks.size() );
-			return cpass( rtn->entry_point );
-		}
 	};
 };

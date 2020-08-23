@@ -38,7 +38,7 @@ namespace vtil::optimizer
 	//    it was left without any references.
 	// 2) Converts jmps to jccs where it can be inferred.
 	//
-	struct branch_correction_pass : pass_interface<>
+	struct branch_correction_pass : pass_interface<execution_order::parallel>
 	{
 		std::shared_mutex mutex;
 		cached_tracer ctracer = {};

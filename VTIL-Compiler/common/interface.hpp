@@ -59,85 +59,216 @@ namespace vtil::optimizer
 			saved_cache() { }
 			saved_cache( const saved_cache& o ) { fassert( !o.state ); }
 		};
+
+		template<typename T>
+		__forceinline static decltype( auto ) ref_adjust( T&& x )
+		{
+			if constexpr ( std::is_reference_v<T> )
+				return std::ref( x );
+			else
+				return x;
+		}
 	};
+
+	// Pass execution order.
+	// - Note that while serial_<> asserts all links are processed is
+	//   followed, parrellel_<> cannot do this, and that neither can
+	//   assert whole path is processed.
+	//
+	enum class execution_order
+	{
+		custom,
+		serial,
+		serial_bf,
+		serial_df,
+		parallel,
+		parallel_bf,
+		parallel_df,
+	};
+
+	// RAII cache swap helper.
+	//
+	struct scope_simplifier_cache
+	{
+		impl::saved_cache& cache;
+		symbolic::simplifier_state_ptr pcache = nullptr;
+
+		scope_simplifier_cache( basic_block* block )
+			: cache( block->context )
+		{
+			// If there's a valid cache saved, swap.
+			//
+			if ( cache.state )
+				pcache = symbolic::swap_simplifier_state( std::move( cache.state ) );
+		}
+
+		~scope_simplifier_cache()
+		{
+			// Save current cache into the block.
+			//
+			cache.state = symbolic::swap_simplifier_state( std::move( pcache ) );
+		}
+	};
+
+	// Generic parallel worker helper.
+	//
+	template<Iterable C, typename F> requires Invocable<F, void, decltype( *std::begin( std::declval<C&>() ) )>
+	static void transform_parallel( C&& container, const F& worker )
+	{
+		size_t container_size = dynamic_size( container );
+
+		// If parallel transformation is disabled or if the container only has one entry, 
+		// fallback to serial transformation.
+		//
+		if ( !VTIL_OPT_USE_PARALLEL_TRANSFORM || container_size == 1 )
+		{
+			for ( auto it = std::begin( container ); it != std::end( container ); ++it )
+				return worker( *it );
+		}
+		// Otherwise pick parallel transformation method:
+		//
+		else
+		{
+			// If thread pooling is enabled, use std::future.
+			//
+			if constexpr ( VTIL_OPT_USE_THREAD_POOLING )
+			{
+				std::vector<std::future<void>> pool;
+				pool.reserve( container_size );
+				for ( auto it = std::begin( container ); it != std::end( container ); ++it )
+					pool.emplace_back( std::async( std::launch::async, std::ref( worker ), impl::ref_adjust( *it ) ) );
+			}
+			// If thread pooling is disabled, use std::thread.
+			//
+			else
+			{
+				std::vector<std::thread> pool;
+				pool.reserve( container_size );
+				for ( auto it = std::begin( container ); it != std::end( container ); ++it )
+					pool.emplace_back( std::ref( worker ), impl::ref_adjust( *it ) );
+				for ( auto& thread : pool )
+					thread.join();
+			}
+		}
+	}
+
 
 	// Passes every block through the transformer given in parallel, returns the 
 	// number of instances where this transformation was applied.
 	//
-	template<typename T, typename... Tx>
-	static auto transform_parallel( routine* rtn, T&& fn, Tx&&... args )
+	template<typename T>
+	static auto apply_pass( routine* rtn, T* opt )
 	{
-		using ret_type = decltype( fn( std::declval<basic_block*>(), std::declval<Tx&&>()... ) );
-
 		// Declare worker and allocate the final result.
 		//
 		std::atomic<size_t> n = { 0 };
-		auto worker = [ & ] ( basic_block* blk )
+		auto worker = [ & ] ( basic_block* block )
 		{
-			// If there's a valid cache saved, swap.
-			//
-			impl::saved_cache& cache = blk->context;
-			symbolic::simplifier_state_ptr pcache = nullptr;
-			if ( cache.state )
-				pcache = symbolic::swap_simplifier_state( std::move( cache.state ) );
-
-			// Execute.
-			//
-			if constexpr ( impl::AtomicSummable<ret_type> ) 
-				n += fn( blk, args... );
-			else
-				fn( blk, args... );
-
-			// Save current cache into the block.
-			//
-			cache.state = symbolic::swap_simplifier_state( std::move( pcache ) );
+			scope_simplifier_cache _s{ block };
+			n += opt->pass( block, true );
 		};
 
-		// If parallel transformation is disabled, use fallback.
+		// Switch based on order:
 		//
-		if constexpr ( !VTIL_OPT_USE_PARALLEL_TRANSFORM )
+		switch ( T::exec_order )
 		{
-			rtn->for_each( worker );
-		}
-		// If thread pooling is enabled, use std::future.
-		//
-		else if constexpr ( VTIL_OPT_USE_THREAD_POOLING )
-		{
-			std::vector<std::future<void>> pool;
-			pool.reserve( rtn->explored_blocks.size() );
-
-			rtn->for_each( [ & ] ( basic_block* blk )
+			case execution_order::custom:
 			{
-				pool.emplace_back( std::async( std::launch::async, worker, blk ) );
-			} );
-		}
-		// If thread pooling is disabled, use std::thread.
-		//
-		else
-		{
-			std::vector<std::thread> pool;
-			pool.reserve( rtn->explored_blocks.size() );
-
-			rtn->for_each( [ & ] ( auto* blk )
+				fassert( T::exec_order != execution_order::custom );
+				break;
+			}
+			case execution_order::serial:
 			{
-				pool.emplace_back( worker, blk );
-			} );
+				rtn->for_each( worker );
+				break;
+			}
+			case execution_order::serial_bf:
+			case execution_order::serial_df:
+			{
+				// Declare visit list and recursion helper.
+				//
+				path_set visited;
+				visited.reserve( rtn->num_blocks() );
+				auto rec = [ & ] ( basic_block* blk, auto&& self, bool fwd )
+				{
+					if ( !visited.emplace( blk ).second )
+						return;
+					for ( auto& prev : ( fwd ? blk->next : blk->prev ) )
+						self( prev, self, fwd );
+					worker( blk );
+				};
+				
+				// If depth-first, start from entry point, iterate forward.
+				//
+				if constexpr ( T::exec_order == execution_order::serial_df )
+				{
+					rec( rtn->entry_point, rec, true );
+				}
+				// If breadth-first, start from each exit, iterate backward.
+				//
+				else
+				{
+					for ( const basic_block* exit : rtn->get_exits() )
+						rec( make_mutable( exit ), rec, false );
+				}
+				break;
+			}
+			case execution_order::parallel:
+			{
+				// Invoke parallel transformation.
+				//
+				transform_parallel( rtn->explored_blocks, [ & ] ( const std::pair<const vip_t, basic_block*>& pair )
+				{
+					worker( pair.second );
+				} );
+				break;
+			}
+			case execution_order::parallel_bf:
+			case execution_order::parallel_df:
+			{
+				// Get depth ordered list.
+				//
+				auto entries = rtn->get_depth_ordered_list( T::exec_order == execution_order::parallel_bf );
 
-			std::for_each( pool.begin(), pool.end(), std::mem_fn( &std::thread::join ) );
+				// Begin segmentation loop.
+				//
+				auto it_begin = entries.begin();
+				while ( it_begin != entries.end() )
+				{
+					// Find the last iterator with matching dependency.
+					//
+					auto it_end = it_begin;
+					while ( it_end != entries.end() &&
+							it_end->level_dependency == it_begin->level_dependency )
+						it_end++;
+
+					// Queue segment for work.
+					//
+					transform_parallel( make_range( it_begin, it_end ), [ & ] ( const routine::depth_placement& entry )
+					{
+						return worker( make_mutable( entry.block ) );
+					} );
+
+					// Continue search from next segment.
+					//
+					it_begin = it_end;
+				}
+				break;
+			}
+			default: 
+				unreachable();
 		}
-
-		// Return final result.
-		//
-		if constexpr( impl::AtomicSummable<ret_type> )
-			return n.load();
+		return n.load();
 	}
 
 	// Declares a generic pass interface that any optimization pass implements.
 	// - Passes should be always default constructable.
 	//
-	template<bool serial_execution = false>
+	template<execution_order order = execution_order::parallel>
 	struct pass_interface
 	{
+		static constexpr execution_order exec_order = order;
+
 		// Passes a single basic block through the optimizer, xblock will be set to true
 		// if cross-block exploration is allowed.
 		//
@@ -146,15 +277,7 @@ namespace vtil::optimizer
 		// Passes every block through the optimizer with block refrences freely explorable,
 		// returns the number of instances where this optimization was applied.
 		//
-		virtual size_t xpass( routine* rtn ) 
-		{
-			size_t n = 0;
-			if constexpr ( serial_execution )
-				rtn->for_each( [ & ] ( auto* blk ) { n += pass( blk, true ); } );
-			else
-				n = transform_parallel( rtn, [ & ] ( auto* blk ) { return pass( blk, true ); } );
-			return n;
-		}
+		virtual size_t xpass( routine* rtn ) { return apply_pass( rtn, this ); }
 
 		// Returns the name of the pass.
 		//
@@ -173,7 +296,7 @@ namespace vtil::optimizer
 	template<typename T>
 	struct combine_pass<T> : T {};
 	template<typename T1, typename... Tx>
-	struct combine_pass<T1, Tx...> : pass_interface<>
+	struct combine_pass<T1, Tx...> : pass_interface<execution_order::custom>
 	{
 		size_t pass( basic_block* blk, bool xblock = false ) override
 		{
@@ -193,7 +316,7 @@ namespace vtil::optimizer
 	// Passes through first optimizer, if not no-op, passes through the rest.
 	//
 	template<typename T1, typename... Tx>
-	struct conditional_pass : pass_interface<>
+	struct conditional_pass : pass_interface<execution_order::custom>
 	{
 		size_t pass( basic_block* blk, bool xblock = false ) override
 		{
@@ -217,7 +340,7 @@ namespace vtil::optimizer
 	// Passes through each optimizer provided until the passes do not change the block.
 	//
 	template<typename... Tx>
-	struct exhaust_pass : pass_interface<>
+	struct exhaust_pass : pass_interface<execution_order::custom>
 	{
 		// Simple looping until pass returns 0.
 		//
@@ -241,7 +364,7 @@ namespace vtil::optimizer
 	// Specializes the pass logic depending on whether it's restricted or not.
 	//
 	template<typename opt_lblock, typename opt_xblock>
-	struct specialize_pass : pass_interface<>
+	struct specialize_pass : pass_interface<execution_order::custom>
 	{
 		size_t pass( basic_block* blk, bool xblock = false ) override
 		{
@@ -279,7 +402,7 @@ namespace vtil::optimizer
 
 	// No-op pass.
 	//
-	struct nop_pass : pass_interface<>
+	struct nop_pass : pass_interface<execution_order::custom>
 	{
 		size_t pass( basic_block* blk, bool xblock = false ) override { return 0; }
 		size_t xpass( routine* rtn ) override { return 0; }

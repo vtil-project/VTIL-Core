@@ -68,7 +68,7 @@ namespace vtil::optimizer
 	// Removes every non-volatile instruction whose effects are
 	// ignored or overwritten.
 	//
-	struct fast_dead_code_elimination_pass : pass_interface<>
+	struct fast_dead_code_elimination_pass : pass_interface<execution_order::custom>
 	{
 		std::unordered_set< basic_block* > sealed;
 		std::unordered_map< basic_block*, std::unordered_map< register_id, uint64_t > > reg_map;

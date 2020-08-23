@@ -75,6 +75,7 @@ namespace vtil
         void flush() { cache.clear(); }
         void flush( basic_block* blk )
         {
+            std::shared_lock lock{ mtx };
             for ( auto it = cache.begin(); it != cache.end(); )
             {
                 if ( it->first.at.block == blk )

@@ -234,7 +234,8 @@ namespace vtil
 		//
 		std::vector<const basic_block*> get_exits() const;
 
-		// Gets a list of depth ordered block lists that can be analysed in parallel without any dependencies on previous level.
+		// Gets a list of depth ordered block lists that can be analysed in parallel with 
+		// weakened dependencies on previous level.
 		//
 		std::vector<depth_placement> get_depth_ordered_list( bool fwd ) const;
 

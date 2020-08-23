@@ -289,7 +289,8 @@ namespace vtil
 		return exits;
 	}
 
-	// Gets a list of depth ordered block lists that can be analysed in parallel without any dependencies on previous level.
+	// Gets a list of depth ordered block lists that can be analysed in parallel with 
+	// weakened dependencies on previous level.
 	//
 	std::vector<routine::depth_placement> routine::get_depth_ordered_list( bool fwd ) const
 	{
@@ -305,7 +306,7 @@ namespace vtil
 
 		// Allocate visited list.
 		//
-		std::unordered_set<const basic_block*, hasher<>> visited;
+		path_set visited;
 		visited.reserve( num_blocks() );
 
 		// Begin state, if forward from entry, else from exits.
@@ -333,44 +334,53 @@ namespace vtil
 			size_t counter = state.size();
 			for ( size_t p_idx = previous_counter; p_idx != counter; p_idx++ )
 			{
-				for ( auto& block : state[ p_idx ].second )
+				for ( auto& block : backwards( state[ p_idx ].second ) )
 				{
 					// For each possible source:
 					//
-					for ( auto& prev : ( fwd ? block->next : block->prev ) )
+					for ( auto& next : ( fwd ? block->next : block->prev ) )
 					{
 						// Skip if already visited.
 						//
-						if ( !visited.emplace( prev ).second )
+						if ( !visited.emplace( next ).second )
 							continue;
 
 						// Try to merge into any list.
 						//
-						size_t n_idx = counter;
-						for ( ; n_idx != state.size(); n_idx++ )
+						size_t n_idx = state.size();
+						for ( ; n_idx != counter; n_idx-- )
 						{
-							// If it will cause circular dependencies, skip.
+							auto& stream = state[ n_idx - 1 ];
+
+							// If it will cause circular dependencies within stream, skip.
 							//
-							bool has_dep = false;
-							for ( auto& other : state[ n_idx ].second )
+							auto conflict_it = std::find_if( stream.second.begin(), stream.second.end(), [ & ] ( auto other )
 							{
-								if ( fwd ) has_dep = has_path( prev, other )     || has_path( other, prev );
-								else       has_dep = has_path_bwd( prev, other ) || has_path_bwd( other, prev );
-								
-								if ( has_dep ) break;
-							}
-							if ( has_dep ) continue;
+								if ( fwd )
+								{
+									return std::find( next->prev.begin(), next->prev.end(), other ) != next->prev.end() ||
+										   std::find( other->prev.begin(), other->prev.end(), next ) != other->prev.end();
+								}
+								else
+								{
+									return std::find( next->next.begin(), next->next.end(), other ) != next->next.end() ||
+										   std::find( other->next.begin(), other->next.end(), next ) != other->next.end();
+								}
+							} );
+
+							if ( conflict_it != stream.second.end() )
+								continue;
 
 							// Insert into the list and stop the search.
 							//
-							state[ n_idx ].second.emplace_back( prev );
+							stream.second.emplace_back( next );
 							break;
 						}
 
 						// If we could not insert into any list, create another.
 						//
-						if ( n_idx == state.size() )
-							state.push_back( { depth, { prev } } );
+						if ( n_idx == counter )
+							state.insert( state.begin() + counter, { depth, { next } } );
 					}
 				}
 			}
