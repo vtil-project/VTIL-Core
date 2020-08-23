@@ -181,7 +181,7 @@ namespace vtil
 		const path_set* set_allowed;
 		if ( dst.is_valid() )
 		{
-			set_allowed = &src.block->owner->get_path_bwd( src.block, dst.block );
+			set_allowed = &src.block->owner->get_path( dst.block, src.block );
 			set.reserve( set_allowed->size() );
 		}
 		else

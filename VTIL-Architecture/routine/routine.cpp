@@ -34,15 +34,8 @@ namespace vtil
 	//
 	const path_set& routine::get_path( const basic_block* src, const basic_block* dst ) const
 	{
-		if ( auto it = path_cache[ 0 ].find( src ); it != path_cache[ 0 ].end() )
+		if ( auto it = path_cache.find( src ); it != path_cache.end() )
 			if ( auto it2 = it->second.find( dst ); it2 != it->second.end() )
-				return it2->second;
-		return static_default;
-	}
-	const path_set& routine::get_path_bwd( const basic_block* src, const basic_block* dst ) const
-	{
-		if ( auto it = path_cache[ 1 ].find( dst ); it != path_cache[ 1 ].end() )
-			if ( auto it2 = it->second.find( src ); it2 != it->second.end() )
 				return it2->second;
 		return static_default;
 	}
@@ -51,19 +44,15 @@ namespace vtil
 	//
 	bool routine::has_path( const basic_block* src, const basic_block* dst ) const
 	{
-		return get_path( src, dst ).size() != 0;
-	}
-	bool routine::has_path_bwd( const basic_block* src, const basic_block* dst ) const
-	{
-		return get_path_bwd( src, dst ).size() != 0;
+		return !get_path( src, dst ).empty();
 	}
 
 	// Checks whether the block is in a loop.
 	//
 	bool routine::is_looping( const basic_block* blk ) const
 	{
-		for ( auto next : blk->next )
-			if ( has_path( next, blk ) )
+		for ( auto prev : blk->prev )
+			if ( has_path( blk, prev ) )
 				return true;
 		return false;
 	}
@@ -75,61 +64,42 @@ namespace vtil
 		//
 		std::lock_guard g{ this->mutex };
 
-		// Insert self-referential links.
+		// Signal modification.
 		//
-		path_cache[ 0 ][ dst ][ dst ].insert( dst );
-		path_cache[ 1 ][ dst ][ dst ].insert( dst );
+		signal_cfg_modification();
 
-		// If source is given:
+		// Insert direct link.
+		// src => dst
 		//
-		if ( src )
+		auto& src_links = path_cache[ src ];
+		auto& fwd_d = src_links[ dst ];
+		bool new_f = fwd_d.insert( dst ).second;
+		fwd_d.insert( src );
+
+		// Backward propagate.
+		// src->prev => dst
+		//
+		for ( auto& [src2, entry] : path_cache )
 		{
-			// If foward path is already explored, skip.
-			//
-			if ( path_cache[ 0 ][ src ].contains( dst ) )
-				return;
-
-			// Insert direct links.
-			//
-			auto& fwd = path_cache[ 0 ][ src ][ dst ];
-			fwd.insert( src ); fwd.insert( dst );
-			auto& bwd = path_cache[ 1 ][ dst ][ src ];
-			bwd.insert( src ); bwd.insert( dst );
-
-			// Forward propagate.
-			//
-			for ( auto& [prev, level2] : path_cache[ 0 ] )
+			if ( auto it = entry.find( src ); it != entry.end() )
 			{
-				for ( auto& [next, paths] : level2 )
-				{
-					if ( next == src )
-					{
-						auto& propagated_link = path_cache[ 0 ][ prev ][ dst ];
-						propagated_link.insert( paths.begin(), paths.end() );
-						propagated_link.insert( dst );
-					}
-				}
-			}
-			// Backwards propagate.
-			//
-			for ( auto& [prev, level2] : path_cache[ 1 ] )
-			{
-				for ( auto& [next, paths] : level2 )
-				{
-					if ( prev == dst )
-					{
-						auto& propagated_link = path_cache[ 1 ][ src ][ next ];
-						propagated_link.insert( paths.begin(), paths.end() );
-						propagated_link.insert( src );
-					}
-				}
+				path_set& ps = it->second;
+				auto& fwd = entry[ dst ];
+				fwd.insert( ps.begin(), ps.end() );
+				fwd.insert( dst );
 			}
 		}
 
-		// Recurse.
+		// Forward propagate.
+		// src => dst->next
 		//
-		for ( auto next : dst->next )
-			explore_path( dst, next );
+		auto& dst_links = path_cache[ dst ];
+		for ( auto& [dst2, path] : dst_links )
+		{
+			auto& fwd = src_links[ dst2 ];
+			fwd.insert( path.begin(), path.end() );
+			fwd.insert( src );
+		}
 	}
 
 	// Flushes the path cache, reserved for internal use.
@@ -140,11 +110,30 @@ namespace vtil
 		//
 		std::lock_guard g{ this->mutex };
 
-		// Invoke from entry point.
+		// Signal modification.
 		//
-		path_cache[ 0 ].clear();
-		path_cache[ 1 ].clear();
-		explore_path( nullptr, entry_point );
+		signal_cfg_modification();
+
+		// Reset to only self links.
+		//
+		path_cache.clear();
+		for_each( [ & ] ( auto blk ) 
+		{ 
+			path_cache[ blk ][ blk ].insert( blk ); 
+		} );
+
+		// Create vertices.
+		//
+		std::set<std::pair<const basic_block*, const basic_block*>> visited;
+		for_each( [ & ] ( auto blk ) 
+		{
+			for ( auto next : blk->next )
+				if ( visited.emplace( blk, next ).second )
+					explore_path( blk, next );
+			for ( auto prev : blk->prev )
+				if ( visited.emplace( prev, blk ).second )
+					explore_path( prev, blk );
+		} );
 	}
 
 	// Finds a block in the list, get variant will throw if none found.
@@ -187,6 +176,10 @@ namespace vtil
 			//
 			block = new basic_block( this, vip );
 			if ( !entry_point ) entry_point = block;
+			
+			// Create self link.
+			//
+			path_cache[ block ][ block ].insert( block );
 		}
 
 		// Fix links and explore the path.
@@ -198,15 +191,16 @@ namespace vtil
 			bool new_next = std::find( src->next.begin(), src->next.end(), block ) == src->next.end();
 			bool new_prev = inserted || std::find( block->prev.begin(), block->prev.end(), src ) == block->prev.end();
 
-			if ( new_next ) src->next.emplace_back( block );
-			if ( new_prev ) block->prev.emplace_back( src );
-
-			if ( new_next || new_prev )
+			if ( new_prev )
+			{
+				block->prev.emplace_back( src );
+				explore_path( block, src );
+			}
+			if ( new_next )
+			{
+				src->next.emplace_back( block );
 				explore_path( src, block );
-		}
-		else
-		{
-			explore_path( nullptr, block );
+			}
 		}
 		return { block, inserted };
 	}
@@ -223,47 +217,42 @@ namespace vtil
 		//
 		signal_cfg_modification();
 
-		// Enumerate both forwards and backwards caches.
+		// Enumerate path_map.
 		//
-		for ( auto& cache : path_cache )
+		for ( auto it = path_cache.begin(); it != path_cache.end(); )
 		{
-			// Enumerate path_map.
+			// If entry key references deleted block, erase it and continue.
 			//
-			for ( auto it = cache.begin(); it != cache.end(); )
+			if ( it->first == block )
+			{
+				it = path_cache.erase( it );
+				continue;
+			}
+
+			// Enumerate std::map<const basic_block*, path_set>
+			//
+			for ( auto it2 = it->second.begin(); it2 != it->second.end(); )
 			{
 				// If entry key references deleted block, erase it and continue.
 				//
-				if ( it->first == block )
+				if ( it2->first == block )
 				{
-					it = cache.erase( it );
+					it2 = it->second.erase( it2 );
 					continue;
 				}
 
-				// Enumerate std::map<const basic_block*, path_set>
+				// Remove any references from set.
 				//
-				for ( auto it2 = it->second.begin(); it2 != it->second.end(); )
-				{
-					// If entry key references deleted block, erase it and continue.
-					//
-					if ( it2->first == block )
-					{
-						it2 = it->second.erase( it2 );
-						continue;
-					}
-
-					// Remove any references from set.
-					//
-					it2->second.erase( block );
-
-					// Continue iteration.
-					//
-					it2++;
-				}
+				it2->second.erase( block );
 
 				// Continue iteration.
 				//
-				it++;
+				it2++;
 			}
+
+			// Continue iteration.
+			//
+			it++;
 		}
 
 		// Remove from explored blocks and delete it.
@@ -498,27 +487,20 @@ namespace vtil
 
 		// Copy path cache.
 		//
-		copy->path_cache[ 0 ] = this->path_cache[ 0 ];
-		copy->path_cache[ 1 ] = this->path_cache[ 1 ];
-		for ( path_map& map : copy->path_cache )
+		for ( const auto& [k1, v] : this->path_cache )
 		{
-			path_map map_l1 = {};
-			for ( auto& [k1, v] : map )
+			std::unordered_map<const basic_block*, path_set, hasher<>> map_l2;
+			for ( auto& [k2, set] : v )
 			{
-				std::unordered_map<const basic_block*, path_set, hasher<>> map_l2;
-				for ( auto& [k2, set] : v )
-				{
-					path_set new_set;
-					std::transform(
-						set.begin(), set.end(),
-						std::inserter( new_set, new_set.begin() ),
-						[ & ] ( const basic_block* block ) { return copy->get_block( block->entry_vip ); }
-					);
-					map_l2.emplace( copy->get_block( k2->entry_vip ), std::move( new_set ) );
-				}
-				map_l1.emplace( copy->get_block( k1->entry_vip ), std::move( map_l2 ) );
+				path_set new_set;
+				std::transform(
+					set.begin(), set.end(),
+					std::inserter( new_set, new_set.begin() ),
+					[ & ] ( const basic_block* block ) { return copy->get_block( block->entry_vip ); }
+				);
+				map_l2.emplace( copy->get_block( k2->entry_vip ), std::move( new_set ) );
 			}
-			map = map_l1;
+			copy->path_cache.emplace( copy->get_block( k1->entry_vip ), std::move( map_l2 ) );
 		}
 
 		// Fix depth ordered list cache.

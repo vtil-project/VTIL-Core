@@ -170,7 +170,7 @@ namespace vtil
 			{
 				paths_allowed = fwd
 					? &block->owner->get_path( block, dst )
-					: &block->owner->get_path_bwd( block, dst );
+					: &block->owner->get_path( dst, block );
 				is_path_restricted = true;
 				return *this;
 			}

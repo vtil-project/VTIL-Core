@@ -75,7 +75,7 @@ namespace vtil
 
 		// Cache of paths from block A to block B.
 		//
-		path_map path_cache[ 2 ];
+		path_map path_cache;
 
 		// Reference to the first block, entry point.
 		// - Can be accessed without acquiring the mutex as it will be assigned strictly once.
@@ -186,15 +186,13 @@ namespace vtil
 			spec_subroutine_conventions[ vip ] = cc;
 		}
 
-		// Gets (forward/backward) path from src to dst.
+		// Gets path from src to dst.
 		//
 		const path_set& get_path( const basic_block* src, const basic_block* dst ) const;
-		const path_set& get_path_bwd( const basic_block* src, const basic_block* dst ) const;
 
-		// Simple helpers to check if (forward/backward) path from src to dst exists.
+		// Simple helpers to check if path from src to dst exists.
 		//
 		bool has_path( const basic_block* src, const basic_block* dst ) const;
-		bool has_path_bwd( const basic_block* src, const basic_block* dst ) const;
 
 		// Checks whether the block is in a loop.
 		//
