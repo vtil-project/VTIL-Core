@@ -35,11 +35,17 @@ namespace vtil::optimizer
 	//
 	size_t dead_code_elimination_pass::pass( basic_block* blk, bool xblock )
 	{
-		size_t counter = 0;
-
 		if ( blk->empty() )
 			return 0;
 
+		std::vector<il_const_iterator> delete_list = {};
+
+		// Acquire a shared lock.
+		//
+		cnd_shared_lock lock( mtx, xblock );
+
+		// Iterate backwards.
+		//
 		auto [rbegin, rend] = reverse_iterators( *blk );
 		for ( auto it = rbegin; it != rend; ++it )
 		{
@@ -86,21 +92,24 @@ namespace vtil::optimizer
 			//
 			if ( !used )
 			{
+				// Set to nop, will be invalid instruction, but can be atomically assigned.
+				//
 				( +it )->base = &ins::nop;
-				( +it )->operands = {};
-				counter++;
+				delete_list.emplace_back( it );
 			}
 		}
 
-		// Purge simplifier cache since block iterators are invalided thus cache may fail.
+		// Acquire lock and delete instructions at once.
+		//
+		lock = {};
+		cnd_unique_lock _g( mtx, xblock );
+		for ( auto it : delete_list )
+			blk->erase( it );
+
+		// Purge simplifier cache since block iterators are invalided thus cache may fail,
+		// return deleted instruction count as result.
 		//
 		ctrace.flush( blk );
-		if ( counter != 0 )
-			symbolic::purge_simplifier_state();
-
-		// Remove all nops.
-		//
-		aux::remove_nops( blk, false );
-		return counter;
+		return delete_list.size();
 	}
 };

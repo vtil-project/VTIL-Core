@@ -34,33 +34,10 @@ namespace vtil::optimizer
 	// Removes every non-volatile instruction whose effects are
 	// ignored or overwritten.
 	//
-	struct dead_code_elimination_pass : pass_interface<true>
+	struct dead_code_elimination_pass : pass_interface<execution_order::parallel_df>
 	{
 		cached_tracer ctrace;
-		path_set visited;
-
+		std::shared_mutex mtx;
 		size_t pass( basic_block* blk, bool xblock = false ) override;
-
-		// Cross block logic should execute from the bottom.
-		//
-		size_t cpass( basic_block* blk )
-		{
-			// Skip if already visited.
-			//
-			if ( !visited.emplace( blk ).second )
-				return 0;
-
-			// Recurse into children, then invoke self.
-			//
-			size_t count = 0;
-			for ( basic_block* block : blk->next )
-				count += cpass( block );
-			return count + pass( blk, true );
-		}
-		size_t xpass( routine* rtn ) override
-		{
-			visited.reserve( rtn->explored_blocks.size() );
-			return cpass( rtn->entry_point );
-		}
 	};
 };
