@@ -56,9 +56,10 @@ namespace vtil
 				return true;
 		return false;
 	}
-	// Explores the given path, reserved for internal use.
+
+	// Explores the paths for the block, reserved for internal use.
 	//
-	void routine::explore_path( const basic_block* src, const basic_block* dst )
+	void routine::explore_paths( const basic_block* blk )
 	{
 		// Acquire the routine mutex.
 		//
@@ -68,38 +69,54 @@ namespace vtil
 		//
 		signal_cfg_modification();
 
-		// Insert direct link.
-		// src => dst
+		// Declare linker.
 		//
-		auto& src_links = path_cache[ src ];
-		auto& fwd_d = src_links[ dst ];
-		bool new_f = fwd_d.insert( dst ).second;
-		fwd_d.insert( src );
-
-		// Backward propagate.
-		// src->prev => dst
-		//
-		for ( auto& [src2, entry] : path_cache )
+		auto relink = [ & ] ( const basic_block* src, const basic_block* dst )
 		{
-			if ( auto it = entry.find( src ); it != entry.end() )
+			// Insert direct link.
+			// src => dst
+			//
+			auto& src_links = path_cache[ src ];
+			auto& fwd_d = src_links[ dst ];
+			bool new_f = fwd_d.insert( dst ).second;
+			fwd_d.insert( src );
+
+			// Backward propagate.
+			// src->prev => dst
+			//
+			for ( auto& [src2, entry] : path_cache )
 			{
-				path_set& ps = it->second;
-				auto& fwd = entry[ dst ];
-				fwd.insert( ps.begin(), ps.end() );
-				fwd.insert( dst );
+				if ( auto it = entry.find( src ); it != entry.end() )
+				{
+					path_set& ps = it->second;
+					auto& fwd = entry[ dst ];
+					fwd.insert( ps.begin(), ps.end() );
+					fwd.insert( dst );
+				}
 			}
-		}
 
-		// Forward propagate.
-		// src => dst->next
+			// Forward propagate.
+			// src => dst->next
+			//
+			auto& dst_links = path_cache[ dst ];
+			for ( auto& [dst2, path] : dst_links )
+			{
+				auto& fwd = src_links[ dst2 ];
+				fwd.insert( path.begin(), path.end() );
+				fwd.insert( src );
+			}
+		};
+
+		// Insert self link.
 		//
-		auto& dst_links = path_cache[ dst ];
-		for ( auto& [dst2, path] : dst_links )
-		{
-			auto& fwd = src_links[ dst2 ];
-			fwd.insert( path.begin(), path.end() );
-			fwd.insert( src );
-		}
+		path_cache[ blk ][ blk ].insert( blk );
+
+		// Relink each vertex.
+		//
+		for ( auto next : blk->next )
+			relink( blk, next );
+		for ( auto prev : blk->prev )
+			relink( prev, blk );
 	}
 
 	// Flushes the path cache, reserved for internal use.
@@ -124,15 +141,9 @@ namespace vtil
 
 		// Create vertices.
 		//
-		std::set<std::pair<const basic_block*, const basic_block*>> visited;
 		for_each( [ & ] ( auto blk ) 
 		{
-			for ( auto next : blk->next )
-				if ( visited.emplace( blk, next ).second )
-					explore_path( blk, next );
-			for ( auto prev : blk->prev )
-				if ( visited.emplace( prev, blk ).second )
-					explore_path( prev, blk );
+			explore_paths( blk );
 		} );
 	}
 
@@ -194,12 +205,12 @@ namespace vtil
 			if ( new_prev )
 			{
 				block->prev.emplace_back( src );
-				explore_path( block, src );
+				explore_paths( block );
 			}
 			if ( new_next )
 			{
 				src->next.emplace_back( block );
-				explore_path( src, block );
+				explore_paths( block );
 			}
 		}
 		return { block, inserted };

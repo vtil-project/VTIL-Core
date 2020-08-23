@@ -198,9 +198,9 @@ namespace vtil
 		//
 		bool is_looping( const basic_block* blk ) const;
 
-		// Explores the given path, reserved for internal use.
+		// Explores the paths for the block, reserved for internal use.
 		//
-		void explore_path( const basic_block* src, const basic_block* dst );
+		void explore_paths( const basic_block* blk );
 
 		// Flushes the path cache, reserved for internal use.
 		//

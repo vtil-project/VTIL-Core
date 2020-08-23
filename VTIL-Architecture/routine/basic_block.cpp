@@ -259,6 +259,11 @@ namespace vtil
 		tail = nullptr;
 		signal_modification();
 		instruction_count = 0;
+
+		// Reset stack.
+		//
+		sp_offset = 0;
+		sp_index = 0;
 		return this;
 	}
 	instruction basic_block::pop_front()
