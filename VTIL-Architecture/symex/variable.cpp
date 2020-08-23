@@ -186,6 +186,7 @@ namespace vtil::symbolic
 		{
 			// Iterate each operand:
 			//
+			access_details details;
 			for ( int i = 0; i < it->base->operand_count(); i++ )
 			{
 				// Skip if not register.
@@ -206,15 +207,16 @@ namespace vtil::symbolic
 				if ( !ref_reg.overlaps( *reg ) )
 					continue;
 
-				// Return access details.
+				// Append access details.
 				//
-				return {
+				details += {
 					.bit_offset = ref_reg.bit_offset - reg->bit_offset,
 					.bit_count = ref_reg.bit_count,
-					.read = it->base->operand_types[ i ] != operand_type::write,
+					.read =  it->base->operand_types[ i ] != operand_type::write,
 					.write = it->base->operand_types[ i ] >= operand_type::write
 				};
 			}
+			return details;
 		}
 		// If variable is of memory type:
 		//
@@ -391,14 +393,7 @@ namespace vtil::symbolic
 
 				// Merge rdetails and wdetails, return.
 				//
-				if ( !wdetails ) return rdetails;
-				if ( !rdetails ) return wdetails;
-				return {
-					.bit_offset = std::min( wdetails.bit_offset, rdetails.bit_offset ),
-					.bit_count = std::max( wdetails.bit_count, rdetails.bit_count ),
-					.read = true,
-					.write = true
-				};
+				return wdetails + rdetails;
 			}
 			// If variable is memory:
 			//
