@@ -91,11 +91,26 @@ namespace vtil::symbolic
 			return {
 				.bit_offset = bmin,
 				.bit_count =  bmax - bmin,
-				.read =  read || o.read,
-				.write = write || o.write
+				.read =       read  || o.read,
+				.write =      write || o.write,
+				.unknown =    unknown || o.unknown
 			};
 		}
-		access_details& operator+=( const access_details& o ) { return *this = o + *this; }
+		access_details& operator+=( const access_details& o ) { return *this = ( o + *this ); }
+
+		// String conversion.
+		//
+		std::string to_string() const
+		{
+			if ( bit_count == 0 ) return format::str( "None" );
+			const char* str;
+			if ( read && write ) str = "RW";
+			else if ( read )     str = "R";
+			else if ( write )    str = "W";
+			else                 str = "?";
+			if ( unknown )        return format::str( "Unknown [%s]\n", str );
+			return format::str( "[%s] @%d:%d\n", str, bit_count, bit_offset );
+		}
 	};
 
 	// A pseudo single-static-assignment variable describing the state of a 
