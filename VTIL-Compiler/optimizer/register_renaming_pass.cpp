@@ -54,11 +54,12 @@ namespace vtil::optimizer
 			//
 			it.clear_restrictions();
 
-			// Skip if non-position bound.
+			// Skip if position bound.
 			//
 			symbolic::variable dst = { it, it->operands[ 0 ].reg() };
 			symbolic::variable src = { it, it->operands[ 1 ].reg() };
-			if ( !src.at.is_valid() || !dst.at.is_valid() || dst.reg().is_stack_pointer() )
+			if ( !src.at.is_valid() || !dst.at.is_valid() || dst.reg().is_stack_pointer() || 
+				 src.reg().is_volatile() || src.reg() == dst.reg() )
 				continue;
 
 			// If src is used after this point, skip.
@@ -180,10 +181,7 @@ namespace vtil::optimizer
 
 		// Remove nops.
 		//
-		aux::remove_nops( blk, false );
-
-		// TODO: Compress register space!
-		//
+		aux::remove_nops( blk );
 		return cnt;
 	}
 };
