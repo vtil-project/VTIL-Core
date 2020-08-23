@@ -108,8 +108,8 @@ namespace vtil::symbolic
 			else if ( read )     str = "R";
 			else if ( write )    str = "W";
 			else                 str = "?";
-			if ( unknown )        return format::str( "Unknown [%s]\n", str );
-			return format::str( "[%s] @%d:%d\n", str, bit_count, bit_offset );
+			if ( unknown )        return format::str( "Unknown [%s]", str );
+			return format::str( "[%s] @%d:%d", str, bit_count, bit_offset );
 		}
 	};
 

@@ -290,124 +290,85 @@ namespace vtil::symbolic
 
 				// If $sp, indicate read from:
 				//
-				if ( reg.is_stack_pointer() )
-				{
-					if ( !cread )
-					{
-						result += {
-								.bit_offset = 0,
-								.bit_count = reg.bit_count,
-								.read = true,
-								.write = false
-						};
-					}
-				}
+				if ( cread && reg.is_stack_pointer() )
+					result += { .bit_offset = 0, .bit_count = reg.bit_count, .read = true, .write = false };
 
 				// If exiting the virtual machine:
 				//
 				if ( it->base == &ins::vexit )
 				{
-					// If retval register, indicate read from:
-					//
-					if ( cread )
-					{
-						for ( const register_desc& retval : it.block->owner->routine_convention.retval_registers )
-						{
-							if ( retval.overlaps( reg ) )
-							{
-								result += {
-									.bit_offset = retval.bit_offset - reg.bit_offset,
-									.bit_count = retval.bit_count,
-									.read = true, 
-									.write = false
-								};
-							}
-						}
-					}
-
-					// If volatile register, indicate discarded:
-					//
-					if ( cwrite )
-					{
-						for ( const register_desc& retval : it.block->owner->routine_convention.volatile_registers )
-							if ( retval.overlaps( reg ) )
-								result += { .bit_offset = 0, .bit_count = reg.bit_count, .read = false, .write = true };
-					}
-
 					// If virtual register, indicate discarded:
 					//
-					if ( cwrite )
+					if ( reg.is_virtual() )
 					{
-						if ( reg.is_virtual() )
+						if ( cwrite )
 							result += { .bit_offset = 0, .bit_count = reg.bit_count, .read = false, .write = true };
 					}
-
-					// Otherwise indicate read from.
+					// If physical register:
 					//
-					if ( cread )
+					else
 					{
-						result += {
-							.bit_offset = 0,
-							.bit_count = reg.bit_count,
-							.read = true,
-							.write = false
-						};
+						uint64_t volatile_mask = 0;
+
+						// If volatile register, indicate discarded:
+						//
+						for ( const register_desc& volreg : cc.volatile_registers )
+						{
+							if ( volreg.overlaps( reg ) )
+							{
+								volatile_mask |= volreg.get_mask();
+								if ( cwrite )
+									result += {.bit_offset = volreg.bit_offset - reg.bit_offset, .bit_count = volreg.bit_count, .read = false, .write = true };
+							}
+						}
+
+						if ( cread )
+						{
+							// If volatile, indicate read from if retval:
+							//
+							if ( ( reg.get_mask() & volatile_mask ) == reg.get_mask() )
+							{
+								for ( const register_desc& retval : cc.retval_registers )
+									if ( retval.overlaps( reg ) )
+										result += {.bit_offset = retval.bit_offset - reg.bit_offset, .bit_count = retval.bit_count, .read = true, .write = false };
+							}
+							// Otherwise directly indicate read from:
+							//
+							else
+							{
+								result += {.bit_offset = 0, .bit_count = reg.bit_count, .read = true, .write = false };
+							}
+						}
 					}
 				}
 				// If invoking external routine:
 				//
 				else
 				{
-					// If not only looking for read access, check if register is written to.
-					//
-					access_details wdetails = {};
 					if ( cwrite )
 					{
+						// If volatile register, indicate discarded:
+						//
 						for ( const register_desc& param : cc.volatile_registers )
-						{
 							if ( param.overlaps( reg ) )
-							{
-								wdetails.bit_offset = param.bit_offset - reg.bit_offset;
-								wdetails.bit_count = param.bit_count;
-								wdetails.write = true;
-								break;
-							}
-						}
+								result += {.bit_offset = param.bit_offset - reg.bit_offset, .bit_count = param.bit_count, .read = false, .write = true };
+
+						// If retval register, indicate discarded:
+						//
 						for ( const register_desc& retval : cc.retval_registers )
-						{
 							if ( retval.overlaps( reg ) )
-							{
-								wdetails.bit_offset = retval.bit_offset - reg.bit_offset;
-								wdetails.bit_count = retval.bit_count;
-								wdetails.write = true;
-								break;
-							}
-						}
+								result += {.bit_offset = retval.bit_offset - reg.bit_offset, .bit_count = retval.bit_count, .read = false, .write = true };
 					}
 
-					// If not only looking for write access, check if register is read from.
-					//
-					access_details rdetails = {};
 					if ( cread )
 					{
+						// If parameter register, indicate read from.
+						//
 						for ( const register_desc& param : cc.param_registers )
-						{
 							if ( param.overlaps( reg ) )
-							{
-								rdetails.bit_offset = param.bit_offset - reg.bit_offset;
-								rdetails.bit_count = param.bit_count;
-								rdetails.read = true;
-								break;
-							}
-						}
+								result += {.bit_offset = param.bit_offset - reg.bit_offset, .bit_count = param.bit_count, .read = true, .write = false };
 					}
-
-					// Merge rdetails and wdetails into result.
-					//
-					result += wdetails + rdetails;
 				}
-
-
 			}
 			// If variable is memory:
 			//
