@@ -38,7 +38,7 @@ namespace vtil
 
 	// Forward defs.
 	//
-	static symbolic::expression::reference rtrace_primitive( const symbolic::variable& lookup, tracer* tracer, path_map_t& path_map );
+	static symbolic::expression::reference rtrace_primitive( const symbolic::variable& lookup, tracer* tracer, path_map_t& path_map, const basic_block* target );
 
 	// Given a partial tracer, this routine will determine the full value of the variable
 	// at the given position where a partial write was found.
@@ -167,7 +167,7 @@ namespace vtil
 	// meaning the origin expression was a variable and it infinite-looped during propagation by itself.
     // - Note: New iterator should be a connected block's end.
 	//
-    static bool propagate( symbolic::expression::reference& ref, const il_const_iterator& it, tracer* tracer, path_map_t* path_map )
+    static bool propagate( symbolic::expression::reference& ref, const il_const_iterator& it, tracer* tracer, path_map_t* path_map, const basic_block* target )
     {
         using namespace logger;
 
@@ -228,7 +228,7 @@ namespace vtil
 				// Fail if propagation fails.
 				//
 				symbolic::expression::reference mem_ptr = std::move( mem.base.base );
-				propagate( mem_ptr, it, tracer->purify(), nullptr );
+				propagate( mem_ptr, it, tracer->purify(), nullptr, nullptr );
 				if ( !mem_ptr )
 				{
 					result = false;
@@ -251,7 +251,7 @@ namespace vtil
             //
 			symbolic::expression::reference var_traced;
 			if ( path_map )
-				var_traced = rtrace_primitive( var, tracer, *path_map );
+				var_traced = rtrace_primitive( var, tracer, *path_map, target );
 			else
 				var_traced = tracer->trace( var );
 			if ( !var_traced )
@@ -280,7 +280,7 @@ namespace vtil
 
 	// Internal implementation of ::rtrace with a path history.
 	//
-	static symbolic::expression::reference rtrace_primitive( const symbolic::variable& lookup, tracer* tracer, path_map_t& path_map )
+	static symbolic::expression::reference rtrace_primitive( const symbolic::variable& lookup, tracer* tracer, path_map_t& path_map, const basic_block* target )
 	{
 		using namespace logger;
 
@@ -331,6 +331,11 @@ namespace vtil
 				//
 				lookup.at.enum_paths( false, [ & ] ( const il_const_iterator& it )
 				{
+					// Skip if it does not reach target.
+					//
+					if ( !target->owner->has_path( it.block, target ) )
+						return enumerator::ocontinue;
+
 					// Increment path count.
 					//
 					if ( ++count == 0 )
@@ -367,7 +372,7 @@ namespace vtil
 					// Propagate each variable onto to the destination block, if total fail, skip path.
 					//
 					symbolic::expression::reference exp = default_result;
-					bool total_fail = propagate( exp, it, tracer, &path_map );
+					bool total_fail = propagate( exp, it, tracer, &path_map, target );
 					if ( potential_loop )
 						path_map[ { lookup.at.block, it.block } ]--;
 					if ( total_fail )
@@ -536,7 +541,7 @@ namespace vtil
 	{
 		bool recursive_flag_prev = std::exchange( recursive_flag, true );
 		path_map_t path_map = {};
-		auto exp = rtrace_primitive( lookup, this, path_map );
+		auto exp = rtrace_primitive( lookup, this, path_map, lookup.at.block );
 		recursive_flag = recursive_flag_prev;
 		return exp;
 	}
