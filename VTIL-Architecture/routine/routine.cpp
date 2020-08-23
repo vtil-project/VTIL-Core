@@ -291,7 +291,7 @@ namespace vtil
 
 	// Gets a list of depth ordered block lists that can be analysed in parallel without any dependencies on previous level.
 	//
-	std::vector<routine::depth_entry> routine::get_depth_ordered_list( bool fwd ) const
+	std::vector<routine::depth_placement> routine::get_depth_ordered_list( bool fwd ) const
 	{
 		// Acquire the routine mutex.
 		//

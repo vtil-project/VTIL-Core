@@ -38,7 +38,7 @@ namespace vtil
 		iterator_type iend;
 
 		constexpr iterator_type begin() const { return ibegin; }
-		constexpr iterator_type end() const { return iend; }
+		constexpr iterator_type end() const   { return iend; }
 	};
 
 	template<typename iterator_type>

@@ -108,7 +108,7 @@ namespace vtil
 		
 		// Cache of depth ordered lists.
 		//
-		struct depth_entry
+		struct depth_placement
 		{
 			size_t level_dependency;
 			size_t level_depth;
@@ -117,7 +117,7 @@ namespace vtil
 		struct depth_ordered_list
 		{
 			epoch_t epoch = invalid_epoch;
-			std::vector<routine::depth_entry> list;
+			std::vector<routine::depth_placement> list;
 		};
 		mutable depth_ordered_list depth_ordered_list_cache[ 2 ];
 
@@ -236,7 +236,7 @@ namespace vtil
 
 		// Gets a list of depth ordered block lists that can be analysed in parallel without any dependencies on previous level.
 		//
-		std::vector<depth_entry> get_depth_ordered_list( bool fwd ) const;
+		std::vector<depth_placement> get_depth_ordered_list( bool fwd ) const;
 
 		// Provide basic statistics about the complexity of the routine.
 		//
