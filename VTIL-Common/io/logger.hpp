@@ -32,15 +32,23 @@
 #include <cstdlib>
 #include <string>
 #include <mutex>
+#include <thread>
 #include <functional>
 #include "formatting.hpp"
 #include "../util/intrinsics.hpp"
 
 // [Configuration]
-// Determine which file stream we should use for logging.
+// Determine which file stream we should use for logging/errors and whether to 
+// catch unhandled exceptions or not.
 //
+#ifndef VTIL_CATCH_UNHANDLED
+	#define VTIL_CATCH_UNHANDLED 1
+#endif
 #ifndef VTIL_LOGGER_DST
 	#define VTIL_LOGGER_DST stdout
+#endif
+#ifndef VTIL_LOGGER_ERR_DST
+	#define VTIL_LOGGER_ERR_DST stderr
 #endif
 
 namespace vtil::logger
@@ -70,7 +78,7 @@ namespace vtil::logger
 	{
 		// Lock of the stream.
 		//
-		std::recursive_mutex lock;
+		std::recursive_mutex mtx;
 
 		// Whether prints are muted or not.
 		//
@@ -92,6 +100,21 @@ namespace vtil::logger
 		// Constructor initializes logger.
 		//
 		logger_state_t();
+
+		// Wrap around the lock.
+		//
+		void lock() { mtx.lock(); }
+		void unlock() { mtx.unlock(); }
+		bool try_lock() { return mtx.try_lock(); }
+		bool try_lock( uint64_t milliseconds )
+		{
+			bool locked = false;
+			auto t0 = std::chrono::steady_clock::now();
+			while ( !( locked = try_lock() ) )
+				if ( ( std::chrono::steady_clock::now() - t0 ) > std::chrono::milliseconds( milliseconds ) )
+					break;
+			return locked;
+		}
 	};
 	inline logger_state_t logger_state = {};
 
@@ -111,7 +134,7 @@ namespace vtil::logger
 
 		scope_padding( unsigned u ) : active( 1 )
 		{
-			logger_state.lock.lock();
+			logger_state.lock();
 			prev = logger_state.padding;
 			logger_state.padding += u;
 		}
@@ -120,7 +143,7 @@ namespace vtil::logger
 		{
 			if ( active-- <= 0 ) return;
 			logger_state.padding = prev;
-			logger_state.lock.unlock();
+			logger_state.unlock();
 		}
 		~scope_padding() { end(); }
 	};
@@ -136,7 +159,7 @@ namespace vtil::logger
 
 		scope_verbosity( bool verbose_output ) : active( 1 )
 		{
-			logger_state.lock.lock();
+			logger_state.lock();
 			prev = logger_state.mute;
 			logger_state.mute |= !verbose_output;
 		}
@@ -145,7 +168,7 @@ namespace vtil::logger
 		{
 			if ( active-- <= 0 ) return;
 			logger_state.mute = prev;
-			logger_state.lock.unlock();
+			logger_state.unlock();
 		}
 		~scope_verbosity() { end(); }
 	};
@@ -157,7 +180,7 @@ namespace vtil::logger
 	{
 		// Hold the lock for the critical section guarding ::log.
 		//
-		std::lock_guard g( logger_state.lock );
+		std::lock_guard g( logger_state );
 
 		// Do not execute if logs are disabled.
 		//
@@ -228,22 +251,18 @@ namespace vtil::logger
 			format::fix_parameter<params>( std::forward<params>( ps ) )...
 		);
 
-		// Acquire the lock.
+		// Try acquiring the lock.
 		//
-		std::lock_guard _g{ logger_state.lock };
+		bool locked = logger_state.try_lock( 100 );
 		
-		// Reset padding.
-		//
-		int old_padding = logger_state.padding;
-		logger_state.padding = 0;
-
 		// Print the warning.
 		//
-		log( CON_YLW, "\n[!] Warning: %s\n", message );
+		set_color( CON_YLW );
+		fprintf( VTIL_LOGGER_ERR_DST, "\n[!] Warning: %s\n", message.c_str() );
 
-		// Restore the padding and return.
+		// Unlock if previously locked.
 		//
-		logger_state.padding = old_padding;
+		if ( locked ) logger_state.unlock();
 	}
 
 	// Allows to place a hook onto the error function, this is mainly used for
@@ -267,13 +286,46 @@ namespace vtil::logger
 		//
 		if ( error_hook ) error_hook( message );
 
-		// Error will stop any execution so feel free to ignore any locks. Print error message.
+		// Try acquiring the lock.
+		//
+		bool locked = logger_state.try_lock( 100 );
+
+		// Print the error message.
 		//
 		set_color( CON_RED );
-		fprintf( VTIL_LOGGER_DST, "\n[*] Error: %s\n", message.c_str() );
+		fprintf( VTIL_LOGGER_ERR_DST, "\n[*] Error: %s\n", message.c_str() );
 
-		// Break the program. 
+		// Break the program, leave the logger locked since we'll break anyways.
 		//
 		unreachable();
 	}
+
+#if VTIL_CATCH_UNHANDLED
+	// Set default terminate handler.
+	//
+	namespace impl
+	{
+		inline const std::terminate_handler prev_terminate_handler = std::set_terminate( [ ] ()
+		{
+			// If there is a pending C++ exception, print it.
+			//
+			try { throw; }
+			catch ( const std::exception& e ) 
+			{
+				// Same as ::error logic, but do not terminate nor redirect to hook.
+				//
+				std::string message = format::as_string( e );
+				set_color( CON_RED );
+				fprintf( VTIL_LOGGER_ERR_DST, "\n[*] Error: %s\n", message.c_str() );
+				std::this_thread::sleep_for( std::chrono::milliseconds( 500 ) );
+			}
+			catch ( ... ) {}
+
+			// Call into previous handler if relevant.
+			//
+			if ( prev_terminate_handler ) 
+				prev_terminate_handler();
+		} );
+	};
+#endif
 };
