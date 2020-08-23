@@ -25,8 +25,9 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE  
 // POSSIBILITY OF SUCH DAMAGE.        
 //
-#include "stack_pinning_pass.hpp"
 #include <numeric>
+#include "stack_pinning_pass.hpp"
+#include "../common/auxiliaries.hpp"
 
 namespace vtil::optimizer
 {
@@ -76,6 +77,10 @@ namespace vtil::optimizer
 				}
 			}
 		}
+
+		// Remove nops.
+		//
+		aux::remove_nops( blk, false );
 
 		// If block is complete:
 		//

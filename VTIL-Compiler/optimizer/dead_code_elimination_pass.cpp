@@ -31,20 +31,6 @@
 
 namespace vtil::optimizer
 {
-	// Returns whether the instruction is a semantic equivalent of NOP or not.
-	//
-	static bool is_semantic_nop( const instruction& ins )
-	{
-		if ( ins.base == &ins::mov ||
-			 ins.base == &ins::movsx )
-		{
-			if ( ins.operands[ 0 ] == ins.operands[ 1 ] )
-				return true;
-		}
-
-		return false;
-	}
-
 	// Implement the pass.
 	//
 	size_t dead_code_elimination_pass::pass( basic_block* blk, bool xblock )
@@ -65,7 +51,7 @@ namespace vtil::optimizer
 			// Check if results are used if not semantically nop.
 			//
 			bool used = false;
-			if ( !is_semantic_nop( *it ) )
+			if ( !aux::is_semantic_nop( *it ) )
 			{
 				// Check register results:
 				//
@@ -114,13 +100,7 @@ namespace vtil::optimizer
 
 		// Remove all nops.
 		//
-		for ( auto it = blk->begin(); !it.is_end(); )
-		{
-			if ( !it->is_volatile() && it->base == &ins::nop )
-				it = blk->erase( it );
-			else
-				it++;
-		}
+		aux::remove_nops( blk, false );
 		return counter;
 	}
 };

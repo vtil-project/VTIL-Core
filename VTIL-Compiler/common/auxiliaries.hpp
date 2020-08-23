@@ -76,4 +76,13 @@ namespace vtil::optimizer::aux
 	// - CC&1 responsibility is left to the caller.
 	//
 	branch_info analyze_branch( const basic_block* blk, tracer* tracer, branch_analysis_flags flags );
+
+	// Checks if an instruction is a semantic NOP.
+	//
+	bool is_semantic_nop( const instruction& ins );
+
+	// Removes all NOPs,.
+	//
+	size_t remove_nops( basic_block* blk, bool semantic_nops = true, bool volatile_nops = false );
+	size_t remove_nops( routine* rtn, bool semantic_nops = true, bool volatile_nops = false );
 }

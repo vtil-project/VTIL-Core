@@ -119,6 +119,11 @@ namespace vtil
 	template<typename T>
 	concept TriviallyDestructable = std::is_trivially_destructible_v<T>;
 
+	template<typename T>
+	concept DefaultConstructable = std::is_default_constructible_v<T>;
+	template<typename T>
+	concept Destructable = std::is_destructible_v<T>;
+
 	template<typename A, typename B>
 	concept Same = std::is_same_v<A, B>;
 	template <typename From, typename To>

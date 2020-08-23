@@ -484,4 +484,79 @@ namespace vtil::optimizer::aux
 		}
 		unreachable();
 	}
+
+	// Checks if an instruction is a semantic NOP.
+	//
+	bool is_semantic_nop( const instruction& ins )
+	{
+		// MOV to self.
+		//
+		if ( ins.base == &ins::mov ||
+			 ins.base == &ins::movsx )
+		{
+			if ( ins.operands[ 0 ] == ins.operands[ 1 ] )
+				return true;
+		}
+
+		// All mathematical operations with identity constants.
+		// - TODO: Fix to use global simplifier table.
+		//
+		auto is_so = [ & ] ( const instruction_desc& insd, std::initializer_list<std::pair<int, uint64_t>> checks )
+		{
+			if ( ins.base != &insd ) return false;
+
+			for ( auto [index, constant] : checks )
+			{
+				if ( !ins.operands[ index ].is_immediate() )
+					return false;
+
+				if ( math::descriptor_of( insd.symbolic_operator ).is_signed )
+					constant = math::sign_extend( constant, ins.access_size() );
+				else
+					constant = math::zero_extend( constant, ins.access_size() );
+
+				if ( ins.operands[ index ].imm().u64 != constant )
+					return false;
+			}
+
+			return true;
+		};
+
+		return
+			is_so( ins::add,  { { 1, 0 }               } ) ||
+			is_so( ins::sub,  { { 1, 0 }               } ) ||
+			is_so( ins::mul,  { { 1, 1 }               } ) ||
+			is_so( ins::imul, { { 1, 1 }               } ) ||
+			is_so( ins::div,  { { 1, 0 }, { 2, 1 }     } ) ||
+			is_so( ins::idiv, { { 1, 0 }, { 2, 1 }     } ) ||
+			is_so( ins::rem,  { { 1, 0 }, { 2, ~0ull } } ) ||
+			is_so( ins::bshl, { { 1, 0 }               } ) ||
+			is_so( ins::bshr, { { 1, 0 }               } ) ||
+			is_so( ins::brol, { { 1, 0 }               } ) ||
+			is_so( ins::bror, { { 1, 0 }               } ) ||
+			is_so( ins::bxor, { { 1, 0 }               } ) ||
+			is_so( ins::bor,  { { 1, 0 }               } ) ||
+			is_so( ins::band, { { 1, ~0ull }           } );
+	}
+
+	// Removes all NOPs,.
+	//
+	size_t remove_nops( basic_block* blk, bool semantic_nops, bool volatile_nops )
+	{
+		size_t n = 0;
+		for ( auto it = blk->begin(); !it.is_end(); )
+		{
+			if ( ( volatile_nops || !it->is_volatile() ) && ( it->base == &ins::nop || ( semantic_nops && is_semantic_nop( *it ) ) ) )
+				it = blk->erase( it ), n++;
+			else
+				it++;
+		}
+		return n;
+	}
+	size_t remove_nops( routine* rtn, bool semantic_nops, bool volatile_nops )
+	{
+		size_t n = 0;
+		rtn->for_each( [ & ] ( basic_block* blk ) { n += remove_nops( blk, semantic_nops, volatile_nops ); } );
+		return n;
+	}
 };

@@ -178,6 +178,10 @@ namespace vtil::optimizer
 			}
 		}
 
+		// Remove nops.
+		//
+		aux::remove_nops( blk, false );
+
 		// TODO: Compress register space!
 		//
 		return cnt;
