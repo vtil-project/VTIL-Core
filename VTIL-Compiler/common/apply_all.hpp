@@ -56,16 +56,10 @@ namespace vtil::optimizer
 	// Exhaustive propagation pass.
 	//
 	using collective_propagation_pass = exhaust_pass<
-		//fast_local_passes,
-		//fast_dead_code_elimination_pass,
 		stack_propagation_pass,
-		//fast_local_passes,
 		local_pass<mov_propagation_pass>,
-		//fast_local_passes,
-		//fast_dead_code_elimination_pass,
 		local_pass<dead_code_elimination_pass>,
 		mov_propagation_pass,
-		//fast_local_passes,
 		register_renaming_pass,
 		dead_code_elimination_pass,
 		conditional_pass<
@@ -74,9 +68,7 @@ namespace vtil::optimizer
 				bblock_extension_pass,
 				symbolic_rewrite_pass<true>
 			>
-		>//,
-		//fast_local_passes,
-		//fast_dead_code_elimination_pass
+		>
 	>;
 
 	// Cross optimization pass.
@@ -93,6 +85,7 @@ namespace vtil::optimizer
 		istack_ref_substitution_pass,
 		bblock_extension_pass,
 		core_local_propagation_pass,
+		dead_code_elimination_pass,
 		symbolic_rewrite_pass<true>,
 		branch_correction_pass,
 		collective_propagation_pass,
