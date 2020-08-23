@@ -76,7 +76,7 @@ namespace vtil::optimizer::aux
 			// Restrict iteration upto origin and forward to rtrace.
 			//
 			lookup.at.restrict_path( var.at.block, false );
-			return tracer->rtrace_p( std::move( lookup ) );
+			return rec ? tracer->trace_p( std::move( lookup ) ) : tracer->rtrace_p( std::move( lookup ) );
 		};
 
 		// If at the end of improperly terminated block, declare used.
