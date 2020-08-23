@@ -31,6 +31,7 @@
 #include <cstdio>
 #include <type_traits>
 #include <chrono>
+#include <exception>
 #include <optional>
 #include "../util/lt_typeid.hpp"
 #include "../util/type_helpers.hpp"
@@ -165,6 +166,10 @@ namespace vtil::format
 		else if constexpr ( StdStringConvertible<T> )
 		{
 			return std::to_string( x );
+		}
+		else if constexpr ( std::is_base_of_v<std::exception, T> )
+		{
+			return std::string{ x.what() };
 		}
 		else if constexpr ( std::is_same_v<base_type, std::string> || 
 							std::is_same_v<base_type, const char*> )
