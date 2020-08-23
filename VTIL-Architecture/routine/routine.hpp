@@ -49,7 +49,11 @@ namespace vtil
 	// Declare types of path containers.
 	//
 	using path_set = std::unordered_set<const basic_block*, hasher<>>;
-	using path_map = std::unordered_map<const basic_block*, std::unordered_map<const basic_block*, path_set, hasher<>>, hasher<>>;
+	using path_map = std::unordered_map<
+		const basic_block*, 
+		std::unordered_map<const basic_block*, path_set, hasher<>>, 
+		hasher<>
+	>;
 
 	// Descriptor for any routine that is being translated.
 	//

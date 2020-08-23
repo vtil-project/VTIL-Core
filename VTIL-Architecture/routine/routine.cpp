@@ -202,16 +202,11 @@ namespace vtil
 			bool new_next = std::find( src->next.begin(), src->next.end(), block ) == src->next.end();
 			bool new_prev = inserted || std::find( block->prev.begin(), block->prev.end(), src ) == block->prev.end();
 
-			if ( new_prev )
-			{
-				block->prev.emplace_back( src );
+			if ( new_prev ) block->prev.emplace_back( src );
+			if ( new_next ) src->next.emplace_back( block );
+
+			if ( new_prev || new_next )
 				explore_paths( block );
-			}
-			if ( new_next )
-			{
-				src->next.emplace_back( block );
-				explore_paths( block );
-			}
 		}
 		return { block, inserted };
 	}
@@ -240,7 +235,7 @@ namespace vtil
 				continue;
 			}
 
-			// Enumerate std::map<const basic_block*, path_set>
+			// Enumerate std::unordered_map<const basic_block*, path_set>:
 			//
 			for ( auto it2 = it->second.begin(); it2 != it->second.end(); )
 			{
