@@ -36,6 +36,7 @@
 #include <functional>
 #include "formatting.hpp"
 #include "../util/intrinsics.hpp"
+#include "../util/literals.hpp"
 
 // [Configuration]
 // Determine which file stream we should use for logging/errors and whether to 
@@ -106,12 +107,12 @@ namespace vtil::logger
 		void lock() { mtx.lock(); }
 		void unlock() { mtx.unlock(); }
 		bool try_lock() { return mtx.try_lock(); }
-		bool try_lock( uint64_t milliseconds )
+		bool try_lock( timeunit_t max_wait )
 		{
 			bool locked = false;
-			auto t0 = std::chrono::steady_clock::now();
+			auto t0 = time::now();
 			while ( !( locked = try_lock() ) )
-				if ( ( std::chrono::steady_clock::now() - t0 ) > std::chrono::milliseconds( milliseconds ) )
+				if ( ( time::now() - t0 ) > max_wait )
 					break;
 			return locked;
 		}
@@ -253,7 +254,7 @@ namespace vtil::logger
 
 		// Try acquiring the lock.
 		//
-		bool locked = logger_state.try_lock( 100 );
+		bool locked = logger_state.try_lock( 100ms );
 		
 		// Print the warning.
 		//
@@ -288,7 +289,7 @@ namespace vtil::logger
 
 		// Try acquiring the lock.
 		//
-		bool locked = logger_state.try_lock( 100 );
+		bool locked = logger_state.try_lock( 100ms );
 
 		// Print the error message.
 		//
@@ -317,7 +318,7 @@ namespace vtil::logger
 				std::string message = format::as_string( e );
 				set_color( CON_RED );
 				fprintf( VTIL_LOGGER_ERR_DST, "\n[*] Error: %s\n", message.c_str() );
-				std::this_thread::sleep_for( std::chrono::milliseconds( 500 ) );
+				sleep_for( 1000ms );
 			}
 			catch ( ... ) {}
 

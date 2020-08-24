@@ -27,44 +27,12 @@
 //
 #pragma once
 #include <chrono>
-#include <type_traits>
+#include <string>
 
 namespace vtil
 {
-	// Times the callable given and returns pair [result, duration] if it has 
-	// a return value or just [duration].
+	// VTIL namespace should be able to use literals by default without having to include it.
 	//
-	template<typename T, typename... Tx>
-	static auto profile( T&& f, Tx&&... args )
-	{
-		using result_t = decltype( std::declval<T>()( std::forward<Tx>( args )... ) );
-
-		if constexpr ( std::is_same_v<result_t, void> )
-		{
-			auto t0 = std::chrono::steady_clock::now();
-			f( std::forward<Tx>( args )... );
-			auto t1 = std::chrono::steady_clock::now();
-			return t1 - t0;
-		}
-		else
-		{
-
-			auto t0 = std::chrono::steady_clock::now();
-			result_t res = f();
-			auto t1 = std::chrono::steady_clock::now();
-			return std::make_pair( res, t1 - t0 );
-		}
-	}
-
-	// Same as ::profile but ignores the return value and runs N times.
-	//
-	template<size_t N, typename T, typename... Tx>
-	static auto profile_n( T&& f, Tx&&... args )
-	{
-		auto t0 = std::chrono::steady_clock::now();
-		for ( size_t i = 0; i != N; i++ ) 
-			f( args... ); // Not forwarded since we can't move N times.
-		auto t1 = std::chrono::steady_clock::now();
-		return t1 - t0;
-	}
+	using namespace std::literals::string_literals;
+	using namespace std::literals::chrono_literals;
 };

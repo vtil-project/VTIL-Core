@@ -136,6 +136,7 @@
     <ClInclude Include="includes\vtil\utility" />
     <ClInclude Include="io\asserts.hpp" />
     <ClInclude Include="io\enum_name.hpp" />
+    <ClInclude Include="io\fileio.hpp" />
     <ClInclude Include="io\formatting.hpp" />
     <ClInclude Include="io\logger.hpp" />
     <ClInclude Include="math\bitwise.hpp" />
@@ -147,10 +148,11 @@
     <ClInclude Include="util\detached_queue.hpp" />
     <ClInclude Include="util\enumerator.hpp" />
     <ClInclude Include="util\function_view.hpp" />
+    <ClInclude Include="util\literals.hpp" />
     <ClInclude Include="util\relaxed_atomics.hpp" />
+    <ClInclude Include="util\time.hpp" />
     <ClInclude Include="util\trilean.hpp" />
     <ClInclude Include="util\type_helpers.hpp" />
-    <ClInclude Include="util\profiler.hpp" />
     <ClInclude Include="util\random.hpp" />
     <ClInclude Include="util\static_warning.hpp" />
     <ClInclude Include="util\thread_identifier.hpp" />

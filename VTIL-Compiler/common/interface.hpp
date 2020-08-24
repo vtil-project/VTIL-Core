@@ -115,7 +115,7 @@ namespace vtil::optimizer
 	template<Iterable C, typename F> requires Invocable<F, void, decltype( *std::begin( std::declval<C&>() ) )>
 	static void transform_parallel( C&& container, const F& worker )
 	{
-		size_t container_size = dynamic_size( container );
+		size_t container_size = std::size( container );
 
 		// If parallel transformation is disabled or if the container only has one entry, 
 		// fallback to serial transformation.
@@ -445,21 +445,18 @@ namespace vtil::optimizer
 		{
 			if ( !xblock )
 				logger::log( "Block %08x => %-64s |", blk->entry_vip, T{}.name() );
-			auto t0 = std::chrono::steady_clock::now();
-			size_t cnt = T::pass( blk, xblock );
-			auto t1 = std::chrono::steady_clock::now();
+
+			auto [cnt, time] = profile( [ & ] () { return T::pass( blk, xblock ); } );
 			if ( !xblock )
-				logger::log( " Took %-8.2fms (N=%d).\n", ( t1 - t0 ).count() * 1e-6f, cnt );
+				logger::log( " Took %-10s (N=%d).\n", time, cnt );
 			return cnt;
 		}
 
 		size_t xpass( routine* rtn ) override
 		{
 			logger::log( "Routine => %-64s            |", T{}.name() );
-			auto t0 = std::chrono::steady_clock::now();
-			size_t cnt = T::xpass( rtn );
-			auto t1 = std::chrono::steady_clock::now();
-			logger::log( " Took %-8.2fms (N=%d).\n", ( t1 - t0 ).count() * 1e-6f, cnt );
+			auto [cnt, time] = profile( [ & ] () { return T::xpass( rtn ); } );
+			logger::log( " Took %-10s (N=%d).\n", time, cnt );
 			return cnt;
 		}
 	};

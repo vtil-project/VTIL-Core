@@ -18,7 +18,7 @@
 #include "../../util/multivariate.hpp"
 #include "../../util/static_warning.hpp"
 #include "../../util/random.hpp"
-#include "../../util/profiler.hpp"
+#include "../../util/time.hpp"
 #include "../../util/bitmap.hpp"
 #include "../../util/type_helpers.hpp"
 #include "../../util/enumerator.hpp"
@@ -27,13 +27,4 @@
 #include "../../util/detached_queue.hpp"
 #include "../../util/relaxed_atomics.hpp"
 #include "../../util/function_view.hpp"
-
-// VTIL namespace should be able to use literals by default without having to include it.
-//
-#include <chrono>
-#include <string>
-namespace vtil
-{
-	using namespace std::literals::string_literals;
-	using namespace std::literals::chrono_literals;
-};
+#include "../../util/literals.hpp"

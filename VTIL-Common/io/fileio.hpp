@@ -26,28 +26,44 @@
 // POSSIBILITY OF SUCH DAMAGE.        
 //
 #pragma once
-#include <iterator>
-#include <type_traits>
+#include <vector>
+#include <string>
+#include <filesystem>
+#include <fstream>
+#include <iostream>
+#include "../io/logger.hpp"
 
-namespace vtil
+namespace vtil::file
 {
-	template<typename iterator_type>
-	struct range_t
+	// Declare a simple interface to read/write files for convenience.
+	//
+	static std::vector<uint8_t> read_raw( const std::filesystem::path& path )
 	{
-		iterator_type ibegin;
-		iterator_type iend;
+		// Try to open file as binary for read.
+		//
+		std::ifstream file( path, std::ios::binary );
+		if ( !file.good() ) logger::error( "File %s cannot be opened.", path );
 
-		constexpr iterator_type begin() const { return ibegin; }
-		constexpr iterator_type end() const   { return iend; }
-		constexpr size_t size() const         { return ( size_t ) std::distance( begin(), end() ); }
-	};
+		// Read the whole file and return.
+		//
+		return std::vector<uint8_t>( std::istreambuf_iterator<char>( file ), {} );
+	}
 
-	template<typename iterator_type>
-	static constexpr auto make_range( iterator_type&& begin, iterator_type&& end )
+	static void write_raw( const std::filesystem::path& path, void* data, size_t size )
 	{
-		return range_t<iterator_type>{ 
-			std::forward<iterator_type>( begin ), 
-			std::forward<iterator_type>( end ) 
-		};
+		// Try to open file as binary for write.
+		//
+		std::ofstream file( path, std::ios::binary );
+		if ( !file.good() ) logger::error( "File cannot be opened for write." );
+
+		// Write the data and return.
+		//
+		file.write( ( char* ) data, size );
+	}
+
+	template<Iterable T> requires ( is_linear_iterable_v<T> && std::is_trivial_v<iterated_type_t<T>> )
+	static void write_raw( const std::filesystem::path& path, T&& container )
+	{
+		write_raw( path, &*std::begin( container ), std::size( container ) * sizeof( iterated_type_t<T> ) );
 	}
 };

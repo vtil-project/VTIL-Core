@@ -145,9 +145,6 @@
     <ClInclude Include="util\random.hpp">
       <Filter>Utility</Filter>
     </ClInclude>
-    <ClInclude Include="util\profiler.hpp">
-      <Filter>Utility</Filter>
-    </ClInclude>
     <ClInclude Include="util\bitmap.hpp">
       <Filter>Utility</Filter>
     </ClInclude>
@@ -179,6 +176,15 @@
       <Filter>Utility</Filter>
     </ClInclude>
     <ClInclude Include="util\function_view.hpp">
+      <Filter>Utility</Filter>
+    </ClInclude>
+    <ClInclude Include="io\fileio.hpp">
+      <Filter>I/O</Filter>
+    </ClInclude>
+    <ClInclude Include="util\literals.hpp">
+      <Filter>Utility</Filter>
+    </ClInclude>
+    <ClInclude Include="util\time.hpp">
       <Filter>Utility</Filter>
     </ClInclude>
   </ItemGroup>

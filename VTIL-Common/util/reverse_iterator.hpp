@@ -28,7 +28,7 @@
 #pragma once
 #include <iterator>
 #include <type_traits>
-#include "../io/asserts.hpp"
+#include "type_helpers.hpp"
 
 namespace vtil
 {
@@ -45,38 +45,34 @@ namespace vtil
 
 		// Constructed by the original iterator type and the limit.
 		//
-		reversed_iterator( const iterator& i, const iterator& limit )
+		constexpr reversed_iterator( const iterator& i, const iterator& limit )
 			: iterator( i ), limit( limit ) {}
-		reversed_iterator( iterator&& i, iterator&& limit )
+		constexpr reversed_iterator( iterator&& i, iterator&& limit )
 			: iterator( std::move( i ) ), limit( std::move( limit ) ) {}
 
 		// Default copy/move.
 		//
-		reversed_iterator( reversed_iterator&& ) = default;
-		reversed_iterator( const reversed_iterator& ) = default;
-		reversed_iterator& operator=( reversed_iterator&& ) = default;
-		reversed_iterator& operator=( const reversed_iterator& ) = default;
+		constexpr reversed_iterator( reversed_iterator&& ) = default;
+		constexpr reversed_iterator( const reversed_iterator& ) = default;
+		constexpr reversed_iterator& operator=( reversed_iterator&& ) = default;
+		constexpr reversed_iterator& operator=( const reversed_iterator& ) = default;
 		
 		// Reverts back to a normal iterator.
 		//
-		iterator& revert() { return *this; }
-		const iterator& revert() const { return *this; }
+		constexpr iterator& revert() { return *this; }
+		constexpr const iterator& revert() const { return *this; }
 
 		// Reverse inc/dec.
 		//
-		reversed_iterator& operator--()
+		constexpr reversed_iterator& operator--()
 		{ 
-			fassert( !at_limit );
-
 			// Invoke inc, make sure it returns a reference and return self.
 			//
 			auto& _ = iterator::operator++();
 			return *this;
 		}
-		reversed_iterator& operator++()
+		constexpr reversed_iterator& operator++()
 		{ 
-			fassert( !at_limit );
-
 			// If equal to the limit, set limit and return as is.
 			//
 			if ( operator==( limit ) )
@@ -90,44 +86,55 @@ namespace vtil
 			auto& _ = iterator::operator--();
 			return *this;
 		}
+		constexpr reversed_iterator operator++( int ) { auto s = *this; operator--(); return s; }
+		constexpr reversed_iterator operator--( int ) { auto s = *this; operator++(); return s; }
 
 		// Implement (not-)equals operator with the special end tag.
 		//
-		bool operator==( reversed_iterator_end_tag ) const { return at_limit; }
-		bool operator!=( reversed_iterator_end_tag ) const { return !at_limit; }
+		constexpr bool operator==( reversed_iterator_end_tag ) const { return at_limit; }
+		constexpr bool operator!=( reversed_iterator_end_tag ) const { return !at_limit; }
 
 		// Inherit rest from operator base.
 		//
 		using iterator::operator==;
 		using iterator::operator!=;
-		using iterator::operator->;
-		using iterator::operator*;
 	};
 
 	// Returns a tuple that behaves equivalent to .rbegin and .rend.
 	//
-	template<typename T>
-	static auto reverse_iterators( T& cont )
+	template<Iterable T>
+	static constexpr auto reverse_iterators( T&& cont )
 	{
 		using iterator_type = decltype( cont.begin() );
-		return std::make_tuple(
-			reversed_iterator<iterator_type>{ std::prev( cont.end() ), cont.begin() },
+		return std::pair {
+			reversed_iterator<iterator_type>{ std::prev( std::end( cont ) ), std::begin( cont ) },
 			reversed_iterator_end_tag{}
-		);
+		};
 	}
 
 	// Reverses entire container iteration.
 	//
-	template<typename T>
-	struct reversed_container_proxy
+	namespace impl
 	{
-		T& proxy;
-		decltype( auto ) begin() { return proxy.rbegin(); }
-		decltype( auto ) end()   { return proxy.rend(); }
+		template<Iterable T>
+		struct reversed_container_proxy
+		{
+			T container;
+			decltype( auto ) begin() { return reverse_iterators( container ).first; }
+			decltype( auto ) end()   { return reverse_iterators( container ).second; }
+		};
+
+		template<ReverseIterable T>
+		struct reversed_container_proxy<T>
+		{
+			T container;
+			decltype( auto ) begin() { return std::rbegin( container ); }
+			decltype( auto ) end()   { return std::rend( container ); }
+		};
 	};
-	template<typename T>
-	static constexpr auto backwards( T& cont )
+	template<Iterable T>
+	static constexpr auto backwards( T&& container )
 	{
-		return reversed_container_proxy<T>{ cont };
+		return impl::reversed_container_proxy<T>{ std::forward<T>( container ) };
 	}
 };

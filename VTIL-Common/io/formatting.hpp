@@ -33,8 +33,10 @@
 #include <chrono>
 #include <exception>
 #include <optional>
+#include <filesystem>
 #include "../util/lt_typeid.hpp"
 #include "../util/type_helpers.hpp"
+#include "../util/time.hpp"
 #include "enum_name.hpp"
 
 #ifdef __GNUG__
@@ -163,6 +165,10 @@ namespace vtil::format
 		{
 			return enum_name<T>::resolve( x );
 		}
+		else if constexpr ( Duration<T> )
+		{
+			return time::to_string( x );
+		}
 		else if constexpr ( StdStringConvertible<T> )
 		{
 			return std::to_string( x );
@@ -176,6 +182,14 @@ namespace vtil::format
 		{
 			return std::string{ x };
 		}
+		else if constexpr ( std::is_same_v<base_type, std::filesystem::directory_entry> )
+		{
+			return x.path().string();
+		}
+		else if constexpr ( std::is_same_v<base_type, std::filesystem::path> )
+		{
+			return x.string();
+		}
 		else if constexpr ( std::is_same_v<base_type, std::wstring> )
 		{
 			return std::string{ x.begin(), x.end() };
@@ -183,29 +197,6 @@ namespace vtil::format
 		else if constexpr ( std::is_same_v<base_type, const wchar_t*> )
 		{
 			return std::string{ x, x + wcslen( x ) };
-		}
-		else if constexpr ( is_specialization_v<std::chrono::duration, base_type> )
-		{
-			static constexpr auto flt2str = [ ] ( float f ) -> std::string
-			{
-				char buffer[ 32 ];
-				snprintf( buffer, 32, "%.2f", f );
-				return buffer;
-			};
-
-			static constexpr std::tuple<base_type, const char*, bool> durations[] = 
-			{
-				{ std::chrono::duration_cast<base_type>( std::chrono::hours{ 1 } ),        "hrs",  false },
-				{ std::chrono::duration_cast<base_type>( std::chrono::minutes{ 1 } ),      "min",  false },
-				{ std::chrono::duration_cast<base_type>( std::chrono::seconds{ 1 } ),      "sec",  false },
-				{ std::chrono::duration_cast<base_type>( std::chrono::milliseconds{ 1 } ), "ms",   false },
-				{ std::chrono::duration_cast<base_type>( std::chrono::nanoseconds{ 1 } ),  "ns",   true  },
-			};
-
-			for ( auto& [dur, name, last] : durations )
-				if ( last || x > dur )
-					return flt2str( x.count() / float( dur.count() ) ) + name;
-			unreachable();
 		}
 		else if constexpr ( std::is_pointer_v<base_type> )
 		{

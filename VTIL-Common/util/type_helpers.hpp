@@ -34,6 +34,9 @@
 #include <string_view>
 #include <string>
 #include <atomic>
+#include <vector>
+#include <initializer_list>
+#include <chrono>
 #include "intrinsics.hpp"
 
 namespace vtil
@@ -93,6 +96,17 @@ namespace vtil
 	template <template<typename...> typename Tmp, typename T>
 	static constexpr bool is_specialization_v = impl::is_specialization_v<Tmp, std::remove_cvref_t<T>>;
 
+	// Check whether data is stored linearly in the iterable.
+	//
+	template<typename T>
+	static constexpr bool is_linear_iterable_v = 
+	(
+		is_specialization_v<std::vector, T> ||
+		is_specialization_v<std::basic_string, T> ||
+		is_specialization_v<std::initializer_list, T> ||
+		std::is_array_v<T&>
+	);
+
 	// Checks if the given lambda can be evaluated in compile time.
 	//
 	template<typename F, std::enable_if_t<(F{}(), true), int> = 0>
@@ -135,9 +149,13 @@ namespace vtil
 
 	template<typename T, typename Ret, typename... Args>
 	concept Invocable = requires( T&& x, Args&&... args ) { Convertible<decltype( x( std::forward<Args>( args )... ) ), Ret>; };
+	template<typename T, typename... Args>
+	concept InvocableWith = requires( T&& x, Args&&... args ) { x( std::forward<Args>( args )... ); };
 
 	template<typename T>
 	concept Iterable = requires( T v ) { std::begin( v ); std::end( v ); };
+	template<typename T>
+	concept ReverseIterable = requires( T v ) { std::rbegin( v ); std::rend( v ); };
 	template<typename V, typename T>
 	concept TypedIterable = Iterable<T> && requires( T v ) { Convertible<decltype( *std::begin( v ) ), V&>; };
 
@@ -152,6 +170,16 @@ namespace vtil
 	concept Lockable = requires( T& x ) { x.lock(); x.unlock(); };
 	template<typename T>
 	concept Atomic = is_specialization_v<std::atomic, T>;
+
+	template<typename T>
+	concept Duration = is_specialization_v<std::chrono::duration, T>;
+	template<typename T>
+	concept Timestamp = is_specialization_v<std::chrono::time_point, T>;
+
+	// Type of the iterated value.
+	//
+	template<Iterable T>
+	using iterated_type_t = std::remove_cvref_t<decltype( *std::begin( std::declval<T>() ) )>;
 
 	// Constructs a static constant given the type and parameters, returns a reference to it.
 	//
@@ -378,31 +406,6 @@ namespace vtil
 	}
 	template<typename T>
 	concept Possessable = !std::is_void_v<decltype( possess_value( std::declval<T&>() ) )>;
-
-	// Gets the size of the given container, 0 if N/A.
-	//
-	template<typename T>
-	static constexpr size_t dynamic_size( T&& o )
-	{
-		if constexpr ( DefaultRandomAccessible<T> )
-			return std::size( o );
-		else if constexpr ( CustomRandomAccessible<T> )
-			return o.size();
-		else if constexpr ( Iterable<T> )
-			return std::distance( std::begin( o ), std::end( o ) );
-		return 0;
-	}
-
-	// Gets the Nth element from the object, void if N/A.
-	//
-	template<typename T>
-	static constexpr decltype( auto ) dynamic_get( T&& o, size_t N ) 
-	{ 
-		if constexpr( RandomAccessible<T> )
-			return o[ N ];
-		else if constexpr ( Iterable<T> )
-			return *std::next( std::begin( o ), N );
-	}
 
 	// Bitcasting.
 	//

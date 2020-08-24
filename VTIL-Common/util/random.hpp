@@ -107,7 +107,7 @@ namespace vtil
 	template<Iterable T>
 	static decltype( auto ) pick_randomi( T&& source )
 	{
-		auto size = dynamic_size( source );
+		auto size = std::size( source );
 		fassert( size != 0 );
 		return dynamic_get( source, make_random<size_t>( 0, size - 1 ) );
 	}
@@ -119,7 +119,7 @@ namespace vtil
 	template<size_t offset = 0, Iterable T>
 	static constexpr decltype( auto ) pick_crandomi( T& source )
 	{
-		auto size = dynamic_size( source );
+		auto size = std::size( source );
 		fassert( size != 0 );
 		return dynamic_get( source, make_crandom( offset ) % size );
 	}
