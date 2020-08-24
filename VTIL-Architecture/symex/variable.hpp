@@ -72,7 +72,7 @@ namespace vtil::symbolic
 
 		// Cast to bool to check if non-null access.
 		//
-		explicit operator bool() const { return bit_count != 0; }
+		operator bool() const { return bit_count != 0; }
 
 		// Check if details are unknown.
 		//

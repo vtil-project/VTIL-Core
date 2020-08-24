@@ -288,33 +288,33 @@ namespace vtil
 		//
 		signal_modification();
 
+		// Validate instruction.
+		//
+		auto& ins = new_entry->value;
+		ins.is_valid( true );
+
+		// Validate registers are of matching architecture.
+		//
+		for ( auto& op : ins.operands )
+		{
+			if ( op.is_register() && op.reg().is_physical() && !op.reg().is_special() )
+				fassert( op.reg().architecture == owner->arch_id );
+		}
+
+		// Instructions cannot be appended after a branching instruction was hit.
+		//
+		auto& it = acquire( pos );
+		if ( it.is_end() && !it.is_begin() )
+			fassert( !std::prev( it )->base->is_branching() );
+
 		// If marked to be processed:
 		//
 		if( process )
 		{
-			// Validate instruction.
-			//
-			auto& ins = new_entry->value;
-			ins.is_valid( true );
-
-			// Validate registers are of matching architecture.
-			//
-			for ( auto& op : ins.operands )
-			{
-				if ( op.is_register() && op.reg().is_physical() && !op.reg().is_special() )
-					fassert( op.reg().architecture == owner->arch_id );
-			}
-
 			// If label stack is not empty and instruction has an invalid vip, use the last label pushed.
 			//
 			if ( !label_stack.empty() && ins.vip == invalid_vip )
 				ins.vip = label_stack.back();
-
-			// Instructions cannot be appended after a branching instruction was hit.
-			//
-			auto& it = acquire( pos );
-			if ( it.is_end() && !it.is_begin() )
-				fassert( !std::prev( it )->base->is_branching() );
 
 			// If inserting at end, inherit stack properties from the container.
 			//

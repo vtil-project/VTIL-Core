@@ -57,7 +57,7 @@ namespace vtil
 	// if provided invokes the proxy for each subtranslation it needs to do.
 	//
 	template<typename T>
-	static operand translate_expression( const symbolic::expression::reference& exp, basic_block* block, const T& proxy )
+	static operand translate_expression( const symbolic::expression::reference& exp, basic_block* block, const T& proxy, const il_const_iterator& it_sp = symbolic::free_form_iterator )
 	{
 		// Declare a helper to force an operand into register form.
 		//
@@ -102,7 +102,7 @@ namespace vtil
 				{
 					// If simple stack access:
 					//
-					if( auto displacement = ( var.mem().base - symbolic::CTX[ REG_SP ] ) )
+					if( auto displacement = ( var.mem().base - symbolic::CTX( it_sp )[ REG_SP ] ) )
 					{
 						operand tmp = block->tmp( exp->size() );
 						block->ldd( tmp, REG_SP, *displacement );

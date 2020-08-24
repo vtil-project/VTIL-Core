@@ -26,50 +26,16 @@
 // POSSIBILITY OF SUCH DAMAGE.        
 //
 #pragma once
-#include "translation.hpp"
+#include "type_helpers.hpp"
 
 namespace vtil
 {
-	// Translation with a cache lookup to avoid dupliate calculations.
-	//
-	struct batch_translator
+	template<typename T> requires Invocable<T, void>
+	struct finally
 	{
-		// Block we are translating into.
-		//
-		basic_block* block;
-		il_const_iterator it_sp;
-
-		// The expression cache.
-		//
-		std::unordered_map<symbolic::expression::reference, operand, 
-			               symbolic::expression::reference::hasher, 
-			               symbolic::expression::reference::if_identical> translation_cache;
-		
-		// Constructed by binding to a block and optionally a reference to 
-		// the point REG_SP will be calculated from.
-		//
-		batch_translator( basic_block* block, il_const_iterator it_sp = symbolic::free_form_iterator ) : block( block ), it_sp( std::move( it_sp ) ) {}
-
-		// operator<< is used to translate expressions.
-		//
-		operand operator<<( const symbolic::expression::reference& exp )
-		{
-			// If integer, return as is.
-			//
-			if ( exp->is_constant() ) return { *exp->get(), exp->size() };
-			
-			operand& op = translation_cache[ exp ];
-			if ( !op.is_valid() )
-			{
-				op = translate_expression(
-					exp,
-					block,
-					[ & ] ( auto& exp, auto* block ) { return *this << exp; },
-					it_sp
-				);
-			}
-			fassert( exp.size() == op.bit_count() );
-			return op;
-		}
+		T functor;
+		finally( T&& fn ) : functor( std::forward<T>( fn ) ) {}
+		finally( const finally& ) = delete;
+		~finally() { functor(); }
 	};
 };

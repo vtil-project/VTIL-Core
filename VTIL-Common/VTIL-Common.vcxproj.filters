@@ -190,6 +190,9 @@
     <ClInclude Include="util\transform_parallel.hpp">
       <Filter>Utility</Filter>
     </ClInclude>
+    <ClInclude Include="util\finally.hpp">
+      <Filter>Utility</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="io\logger.cpp">
