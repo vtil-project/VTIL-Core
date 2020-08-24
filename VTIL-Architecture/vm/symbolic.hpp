@@ -49,7 +49,7 @@ namespace vtil
 
 		// Reads from the register.
 		//
-		symbolic::expression::reference read_register( const register_desc& desc ) override 
+		symbolic::expression::reference read_register( const register_desc& desc ) const override 
 		{ 
 			return register_state.read( desc, reference_iterator ); 
 		}
@@ -64,7 +64,7 @@ namespace vtil
 
 		// Reads the given number of bytes from the memory.
 		//
-		symbolic::expression::reference read_memory( const symbolic::expression::reference& pointer, size_t byte_count ) override
+		symbolic::expression::reference read_memory( const symbolic::expression::reference& pointer, size_t byte_count ) const override
 		{
 			return memory_state.read( pointer, math::narrow_cast<bitcnt_t>( byte_count * 8 ), reference_iterator );
 		}

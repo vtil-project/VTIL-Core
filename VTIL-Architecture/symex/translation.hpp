@@ -45,7 +45,7 @@ namespace vtil
 				if ( x->symbolic_operator != math::operator_id::invalid )
 					tbl[ ( size_t ) x->symbolic_operator ] = x;
 			return tbl;
-		}( );
+		}();
 
 		fassert( lookup_table.size() > ( size_t ) op );
 		const instruction_desc* desc = lookup_table[ ( size_t ) op ];
@@ -89,9 +89,7 @@ namespace vtil
 				// If constant, simply convert into operand type.
 				//
 				if ( exp->is_constant() )
-				{
 					return { *exp->get(), exp->size() };
-				}
 
 				// Assert validity and get the variable.
 				//
@@ -316,7 +314,7 @@ namespace vtil
 				// Push [<INS> Lhs 0 Rhs] and return Lhs.
 				//
 				force_clobber_register( lhs );
-				block->push_back( { map_operator( op ),{ lhs, operand{ 0, rhs.bit_count() }, rhs } } );
+				block->push_back( { map_operator( op ), { lhs, operand{ 0, rhs.bit_count() }, rhs } } );
 				return lhs;
 			}
 			case math::operator_id::max_value:
@@ -327,7 +325,11 @@ namespace vtil
 				// Unpack the expression by forcing re-simplification without
 				// prettification requested and recurse.
 				//
-				return cvt( exp.transform( [ ] ( auto& ) {} ), true );
+				auto copy = exp;
+				( +copy )->simplify_hint = false;
+				( +copy )->is_lazy = false;
+				( +copy )->simplify();
+				return cvt( copy, true );
 			}
 			case math::operator_id::greater:
 			case math::operator_id::greater_eq:
@@ -353,7 +355,7 @@ namespace vtil
 
 				// Push [<INS> Tmp Lhs Rhs] and return Tmp.
 				//
-				block->push_back( { map_operator( op ),{ tmp, lhs, rhs } } );
+				block->push_back( { map_operator( op ), { tmp, lhs, rhs } } );
 				return tmp;
 			}
 			default:

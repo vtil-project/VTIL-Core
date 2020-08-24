@@ -63,13 +63,13 @@ namespace vtil
 
 		// Declare the overrides redirecting to the callbacks.
 		//
-		symbolic::expression::reference read_register( const register_desc& desc ) override
+		symbolic::expression::reference read_register( const register_desc& desc ) const override
 		{
 			return hooks.read_register 
 				? hooks.read_register( desc ) 
 				: vm_base::read_register( desc );
 		}
-		symbolic::expression::reference read_memory( const symbolic::expression::reference& pointer, size_t byte_count ) override
+		symbolic::expression::reference read_memory( const symbolic::expression::reference& pointer, size_t byte_count ) const override
 		{ 
 			return hooks.read_memory 
 				? hooks.read_memory( pointer, byte_count ) 

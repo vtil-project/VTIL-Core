@@ -97,7 +97,6 @@ namespace vtil::symbolic
 			//
 			using queue_key = typename detached_queue<cache_value>::key;
 
-
 			// Entry itself:
 			//
 			expression::reference result = {};

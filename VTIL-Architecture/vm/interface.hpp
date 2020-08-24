@@ -48,11 +48,11 @@ namespace vtil
 	{
 		// Reads from the register.
 		//
-		virtual symbolic::expression::reference read_register( const register_desc& desc ) { unreachable(); return {}; }
+		virtual symbolic::expression::reference read_register( const register_desc& desc ) const { unreachable(); return {}; }
 		
 		// Reads the given number of bytes from the memory, returns null if aliasing fails.
 		//
-		virtual symbolic::expression::reference read_memory( const symbolic::expression::reference& pointer, size_t byte_count ) { unreachable(); return {}; }
+		virtual symbolic::expression::reference read_memory( const symbolic::expression::reference& pointer, size_t byte_count ) const { unreachable(); return {}; }
 
 		// Writes to the register.
 		//
@@ -61,7 +61,7 @@ namespace vtil
 		// Writes the given expression to the memory, returns false if aliasing fails.
 		//
 		virtual bool write_memory( const symbolic::expression::reference& pointer, deferred_value<symbolic::expression::reference> value, bitcnt_t size ) { unreachable(); return false; }
-		bool write_memory_v( const symbolic::expression::reference& pointer, symbolic::expression::reference value ) { return write_memory( pointer, value, value.size() ); }
+		bool write_memory_v( const symbolic::expression::reference& pointer, symbolic::expression::reference value ) { return write_memory( pointer, std::move( value ), value.size() ); }
 
 		// Runs the given instruction, returns whether it was successful.
 		//
