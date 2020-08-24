@@ -334,6 +334,10 @@ namespace vtil::symbolic
 		//
 		std::optional<uid_relation_table> match_to( const expression& other, bool same_depth ) const;
 
+		// Checks if the expression given is a subexpression of the current one.
+		//
+		bool contains( const expression& o ) const;
+
 		// Calculates the x values.
 		//
 		template<size_t N = VTIL_SYMEX_XVAL_KEYS>

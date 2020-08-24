@@ -930,6 +930,25 @@ namespace vtil::symbolic
 		return std::nullopt;
 	}
 
+	// Checks if the expression given is a subexpression of the current one.
+	//
+	bool expression::contains( const expression& o ) const
+	{
+		// Depth based traversal fast-path.
+		//
+		if ( depth < o.depth ) 
+			return false;
+
+		// If same depth, redirect to is_identical.
+		//
+		if ( depth == o.depth )
+			return is_identical( o );
+
+		// Check child-nodes where possible.
+		//
+		return rhs && ( rhs->contains( o ) || ( lhs && lhs->contains( o ) ) );
+	}
+
 	// Converts to human-readable format.
 	//
 	std::string expression::to_string() const
