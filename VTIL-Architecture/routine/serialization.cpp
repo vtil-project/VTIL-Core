@@ -156,7 +156,7 @@ namespace vtil
 
 		// Write the number of blocks we will serialize.
 		//
-		serialize<clength_t>( out, rtn->explored_blocks.size() );
+		serialize<clength_t>( out, rtn->num_blocks() );
 
 		// Dump all blocks in cached order.
 		//
@@ -202,7 +202,7 @@ namespace vtil
 		//
 		clength_t num_blocks;
 		deserialize( in, num_blocks );
-		while ( rtn->explored_blocks.size() != num_blocks )
+		while ( rtn->num_blocks() != num_blocks )
 		{
 			basic_block* tmp;
 			deserialize( in, rtn, tmp );

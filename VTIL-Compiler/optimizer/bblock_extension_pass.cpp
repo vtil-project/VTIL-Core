@@ -126,7 +126,7 @@ namespace vtil::optimizer
 	{
 		// Invoke recursive optimizer starting from entry point.
 		//
-		visited.reserve( rtn->explored_blocks.size() );
+		visited.reserve( rtn->num_blocks() );
 		size_t n = pass( rtn->entry_point, true );
 		if ( n ) symbolic::purge_simplifier_state();
 		return n;

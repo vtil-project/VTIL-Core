@@ -27,10 +27,9 @@
 //
 #pragma once
 #include <vtil/utility>
-#include <map>
 #include <mutex>
-#include <type_traits>
 #include <functional>
+#include <unordered_map>
 #include "../arch/identifier.hpp"
 #include "instruction.hpp"
 #include "call_convention.hpp"
@@ -75,7 +74,7 @@ namespace vtil
 
 		// Cache of explored blocks, mapping virtual instruction pointer to the basic block structure.
 		//
-		std::map<vip_t, basic_block*> explored_blocks;
+		std::unordered_map<vip_t, basic_block*> explored_blocks;
 
 		// Cache of paths from block A to block B.
 		//
@@ -148,6 +147,14 @@ namespace vtil
 				                           subroutine_convention = { .purge_stack = true }; break;
 			}
 		};
+
+		// Wrap around explored blocks list, thread-safety left to caller.
+		//
+		auto begin() { return explored_blocks.begin(); }
+		auto end()   { return explored_blocks.end(); }
+		auto begin() const { return explored_blocks.cbegin(); }
+		auto end() const   { return explored_blocks.cend(); }
+		auto size() const  { return explored_blocks.size(); }
 
 		// Helpers for the allocation of unique internal registers.
 		//
