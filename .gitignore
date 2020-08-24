@@ -376,3 +376,6 @@ FodyWeavers.xsd
 build/
 Capstone/
 Keystone/
+
+## Intel VTune
+VTune Results/
