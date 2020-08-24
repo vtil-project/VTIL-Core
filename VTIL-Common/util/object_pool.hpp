@@ -44,13 +44,13 @@
 	#define	VTIL_OBJECT_POOL_BUCKETS           std::thread::hardware_concurrency()
 #endif
 #ifndef VTIL_OBJECT_POOL_INITIAL_SIZE
-	#define VTIL_OBJECT_POOL_INITIAL_SIZE      ( 1ull   * 1024 * 1024 )
+	#define VTIL_OBJECT_POOL_INITIAL_SIZE      ( 1ull  * 1024 * 1024 )
 #endif
 #ifndef VTIL_OBJECT_POOL_GROWTH_CAP
-	#define VTIL_OBJECT_POOL_GROWTH_CAP        ( 512ull * 1024 * 1024 )
+	#define VTIL_OBJECT_POOL_GROWTH_CAP        ( 32ull * 1024 * 1024 )
 #endif
 #ifndef VTIL_OBJECT_POOL_GROWTH_FACTOR
-	#define VTIL_OBJECT_POOL_GROWTH_FACTOR     4
+	#define VTIL_OBJECT_POOL_GROWTH_FACTOR     2
 #endif
 #ifndef VTIL_OBJECT_POOL_LOCAL_BUFFER_LEN
 	#define VTIL_OBJECT_POOL_LOCAL_BUFFER_LEN  128

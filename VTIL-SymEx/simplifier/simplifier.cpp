@@ -41,10 +41,10 @@
 	#define	VTIL_SYMEX_SELFGEN_SIGMATCH_DEPTH_LIM   3
 #endif
 #ifndef VTIL_SYMEX_LRU_CACHE_SIZE
-	#define VTIL_SYMEX_LRU_CACHE_SIZE               0x40000
+	#define VTIL_SYMEX_LRU_CACHE_SIZE               0x10000
 #endif
 #ifndef VTIL_SYMEX_LRU_PRUNE_COEFF
-	#define VTIL_SYMEX_LRU_PRUNE_COEFF              0.5
+	#define VTIL_SYMEX_LRU_PRUNE_COEFF              0.35
 #endif
 namespace vtil::symbolic
 {
