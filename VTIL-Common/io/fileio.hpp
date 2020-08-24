@@ -61,9 +61,9 @@ namespace vtil::file
 		file.write( ( char* ) data, size );
 	}
 
-	template<Iterable T> requires ( is_linear_iterable_v<T> && std::is_trivial_v<iterated_type_t<T>> )
+	template<Iterable T> requires ( is_linear_iterable_v<T> && std::is_trivial_v<iterator_value_type_t<T>> )
 	static void write_raw( const std::filesystem::path& path, T&& container )
 	{
-		write_raw( path, &*std::begin( container ), std::size( container ) * sizeof( iterated_type_t<T> ) );
+		write_raw( path, &*std::begin( container ), std::size( container ) * sizeof( iterator_value_type_t<T> ) );
 	}
 };

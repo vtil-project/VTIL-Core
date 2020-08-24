@@ -41,6 +41,9 @@
     <ClCompile Include="optimizer\fast_dead_code_elimination_pass.cpp">
       <Filter>Optimization Passes</Filter>
     </ClCompile>
+    <ClCompile Include="optimizer\fast_propagation_pass.cpp">
+      <Filter>Optimization Passes</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Includes">

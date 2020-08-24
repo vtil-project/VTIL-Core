@@ -178,8 +178,8 @@ namespace vtil
 
 	// Type of the iterated value.
 	//
-	template<Iterable T>
-	using iterated_type_t = std::remove_cvref_t<decltype( *std::begin( std::declval<T>() ) )>;
+	template<Iterable T> using iterator_reference_type_t = decltype( *std::begin( std::declval<T>() ) );
+	template<Iterable T> using iterator_value_type_t =     std::remove_cvref_t<iterator_reference_type_t<T>>;
 
 	// Constructs a static constant given the type and parameters, returns a reference to it.
 	//

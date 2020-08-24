@@ -26,25 +26,13 @@
 // POSSIBILITY OF SUCH DAMAGE.        
 //
 #pragma once
-#include <vtil/arch>
-#include <vtil/io>
-#include <chrono>
 #include <algorithm>
 #include <functional>
 #include <atomic>
-#include <thread>
-#include <future>
+#include <vtil/utility>
+#include <vtil/io>
 #include <vtil/symex>
-
-// [Configuration]
-// Determine whether or not to use parallel transformations and thread pooling.
-//
-#ifndef VTIL_OPT_USE_THREAD_POOLING
-	#define VTIL_OPT_USE_PARALLEL_TRANSFORM true
-#endif
-#ifndef VTIL_OPT_USE_THREAD_POOLING
-	#define VTIL_OPT_USE_THREAD_POOLING     true
-#endif
+#include <vtil/arch>
 
 namespace vtil::optimizer
 {
@@ -59,15 +47,6 @@ namespace vtil::optimizer
 			saved_cache() { }
 			saved_cache( const saved_cache& o ) { fassert( !o.state ); }
 		};
-
-		template<typename T>
-		__forceinline static decltype( auto ) ref_adjust( T&& x )
-		{
-			if constexpr ( std::is_reference_v<T> )
-				return std::ref( x );
-			else
-				return x;
-		}
 	};
 
 	// Pass execution order.
@@ -109,49 +88,6 @@ namespace vtil::optimizer
 			cache.state = symbolic::swap_simplifier_state( std::move( pcache ) );
 		}
 	};
-
-	// Generic parallel worker helper.
-	//
-	template<Iterable C, typename F> requires Invocable<F, void, decltype( *std::begin( std::declval<C&>() ) )>
-	static void transform_parallel( C&& container, const F& worker )
-	{
-		size_t container_size = std::size( container );
-
-		// If parallel transformation is disabled or if the container only has one entry, 
-		// fallback to serial transformation.
-		//
-		if ( !VTIL_OPT_USE_PARALLEL_TRANSFORM || container_size == 1 )
-		{
-			for ( auto it = std::begin( container ); it != std::end( container ); ++it )
-				return worker( *it );
-		}
-		// Otherwise pick parallel transformation method:
-		//
-		else
-		{
-			// If thread pooling is enabled, use std::future.
-			//
-			if constexpr ( VTIL_OPT_USE_THREAD_POOLING )
-			{
-				std::vector<std::future<void>> pool;
-				pool.reserve( container_size );
-				for ( auto it = std::begin( container ); it != std::end( container ); ++it )
-					pool.emplace_back( std::async( std::launch::async, std::ref( worker ), impl::ref_adjust( *it ) ) );
-			}
-			// If thread pooling is disabled, use std::thread.
-			//
-			else
-			{
-				std::vector<std::thread> pool;
-				pool.reserve( container_size );
-				for ( auto it = std::begin( container ); it != std::end( container ); ++it )
-					pool.emplace_back( std::ref( worker ), impl::ref_adjust( *it ) );
-				for ( auto& thread : pool )
-					thread.join();
-			}
-		}
-	}
-
 
 	// Passes every block through the transformer given in parallel, returns the 
 	// number of instances where this transformation was applied.
