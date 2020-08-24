@@ -116,20 +116,23 @@ namespace vtil
 	//
 	namespace impl
 	{
-		template<Iterable T>
-		struct reversed_container_proxy
-		{
-			T container;
-			decltype( auto ) begin() { return reverse_iterators( container ).first; }
-			decltype( auto ) end()   { return reverse_iterators( container ).second; }
-		};
+		template<typename T>
+		struct reversed_container_proxy;
 
 		template<ReverseIterable T>
 		struct reversed_container_proxy<T>
 		{
 			T container;
 			decltype( auto ) begin() { return std::rbegin( container ); }
-			decltype( auto ) end()   { return std::rend( container ); }
+			decltype( auto ) end() { return std::rend( container ); }
+		};
+		
+		template<Iterable T> requires ( !ReverseIterable<T> )
+		struct reversed_container_proxy<T>
+		{
+			T container;
+			decltype( auto ) begin() { return reverse_iterators( container ).first; }
+			decltype( auto ) end()   { return reverse_iterators( container ).second; }
 		};
 	};
 	template<Iterable T>
