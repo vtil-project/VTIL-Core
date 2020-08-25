@@ -83,7 +83,14 @@ namespace vtil::format
 #ifdef __GNUG__
 			int status;
 			char* demangled_name = abi::__cxa_demangle( in.data(), nullptr, nullptr, &status );
-			in = demangled_name;
+			// If demangling succeeds, set the name.
+			//
+			if ( status == 0 )
+			{
+				in = demangled_name;
+			}
+			// Free unconditionally.
+			//
 			free( demangled_name );
 #endif
 			
