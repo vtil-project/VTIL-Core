@@ -26,21 +26,17 @@
 // POSSIBILITY OF SUCH DAMAGE.        
 //
 #pragma once
-#include <thread>
-#include <future>
 #include <iterator>
 #include <vector>
+#include "task.hpp"
 #include "type_helpers.hpp"
 #include "intrinsics.hpp"
 
 // [Configuration]
-// Determine whether or not to use parallel transformations and thread pooling.
+// Determine whether or not to use parallel transformations.
 //
-#ifndef VTIL_USE_THREAD_POOLING
+#ifndef VTIL_USE_PARALLEL_TRANSFORM
 	#define VTIL_USE_PARALLEL_TRANSFORM true
-#endif
-#ifndef VTIL_USE_THREAD_POOLING
-	#define VTIL_USE_THREAD_POOLING     true
 #endif
 
 namespace vtil
@@ -72,32 +68,14 @@ namespace vtil
 			for ( auto it = std::begin( container ); it != std::end( container ); ++it )
 				return worker( *it );
 		}
-		// Otherwise pick parallel transformation method:
+		// Otherwise, create task pool and insert for each entry.
 		//
 		else
 		{
-			// If thread pooling is enabled, use std::future.
-			//
-			if constexpr ( VTIL_USE_THREAD_POOLING )
-			{
-				std::vector<std::future<void>> pool;
-				pool.reserve( container_size );
-				for ( auto it = std::begin( container ); it != std::end( container ); ++it )
-					pool.emplace_back( std::async( std::launch::async, std::ref( worker ), impl::ref_adjust( *it ) ) );
-				for ( auto& future : pool )
-					future.get();
-			}
-			// If thread pooling is disabled, use std::thread.
-			//
-			else
-			{
-				std::vector<std::thread> pool;
-				pool.reserve( container_size );
-				for ( auto it = std::begin( container ); it != std::end( container ); ++it )
-					pool.emplace_back( std::ref( worker ), impl::ref_adjust( *it ) );
-				for ( auto& thread : pool )
-					thread.join();
-			}
+			std::vector<task::instance> tasks;
+			tasks.reserve( container_size );
+			for ( auto it = std::begin( container ); it != std::end( container ); ++it )
+				tasks.emplace_back( [ &worker, value = impl::ref_adjust( *it ) ] () {  worker( value );  } );
 		}
 	}
 };

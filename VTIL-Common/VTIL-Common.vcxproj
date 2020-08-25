@@ -150,6 +150,7 @@
     <ClInclude Include="util\finally.hpp" />
     <ClInclude Include="util\function_view.hpp" />
     <ClInclude Include="util\literals.hpp" />
+    <ClInclude Include="util\task.hpp" />
     <ClInclude Include="util\transform_parallel.hpp" />
     <ClInclude Include="util\relaxed_atomics.hpp" />
     <ClInclude Include="util\time.hpp" />

@@ -320,30 +320,30 @@ namespace vtil::optimizer::validation
 
 				// If operand is an immediate, use as is:
 				//
-				auto eit = rtn->explored_blocks.end();
+				basic_block* blk = nullptr;
 				if ( dst.is_immediate() )
-					eit = rtn->explored_blocks.find( dst.imm().u64 );
+					blk = rtn->find_block( dst.imm().u64 );
 				// Otherwise read VM context.
 				//
 				else if ( auto jmp_dst = vm.read_register( dst.reg() )->get() )
-					eit = rtn->explored_blocks.find( *jmp_dst );
+					blk = rtn->find_block( *jmp_dst );
 
 				// If no valid destination, fail.
 				//
-				if ( eit == rtn->explored_blocks.end() )
+				if ( !blk )
 				{
-					logger::warning( "Invalid virtual jump." );
+					logger::warning( "Invalid virtual jump [ %llx => %s ].", it.block->entry_vip, dst.is_immediate() ? dst.to_string() : vm.read_register( dst.reg() )->to_string() );
 					return false;
 				}
 
 				// Fix iterator and the stack, continue.
 				//
-				it = eit->second->begin();
+				it = blk->begin();
 				vm.write_register( REG_SP, vm.read_register( REG_SP ) + lim.block->sp_offset );
 				continue;
 			}
 
-			logger::warning( "Failing execution at: %s\n", lim->to_string() );
+			logger::warning( "Failing execution at: %s.", lim->to_string() );
 			return false;
 		}
 	}
