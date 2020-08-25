@@ -35,6 +35,7 @@
 #include "detached_queue.hpp"
 #include "relaxed_atomics.hpp"
 #include "type_helpers.hpp"
+#include "task.hpp"
 
 // [Configuration]
 // Determine the number of buckets, initial size, growth settings and the local buffer length.
@@ -44,20 +45,21 @@
 	#define	VTIL_OBJECT_POOL_BUCKETS           std::thread::hardware_concurrency()
 #endif
 #ifndef VTIL_OBJECT_POOL_INITIAL_SIZE
-	#define VTIL_OBJECT_POOL_INITIAL_SIZE      ( 1ull  * 1024 * 1024 )
+	#define VTIL_OBJECT_POOL_INITIAL_SIZE      ( 8ull  * 1024 * 1024 )
 #endif
 #ifndef VTIL_OBJECT_POOL_GROWTH_CAP
-	#define VTIL_OBJECT_POOL_GROWTH_CAP        ( 32ull * 1024 * 1024 )
+	#define VTIL_OBJECT_POOL_GROWTH_CAP        ( 64ull * 1024 * 1024 )
 #endif
 #ifndef VTIL_OBJECT_POOL_GROWTH_FACTOR
 	#define VTIL_OBJECT_POOL_GROWTH_FACTOR     2
 #endif
 #ifndef VTIL_OBJECT_POOL_LOCAL_BUFFER_LEN
-	#define VTIL_OBJECT_POOL_LOCAL_BUFFER_LEN  128
+	#define VTIL_OBJECT_POOL_LOCAL_BUFFER_LEN  256
 #endif
+
 namespace vtil
 {
-	// Object pools allow for fast singular type allocation based on plf::colony.
+	// Object pools allow for fast singular type allocation.
 	//
 	template <typename T>
 	struct object_pool
@@ -238,23 +240,12 @@ namespace vtil
 				//
 				object_entry* entry = object_entry::resolve( pointer );
 				free_queue.emplace_back( &entry->free_queue_key );
-
-				// Re-evaluate pool distributions.
-				//
-				evaluate_pools();
-			}
-
-			void evaluate_pools()
-			{
-				/*
-				// TODO: Perhaps deallocate if whole pool is not used?
-				*/
 			}
 		};
 
 		// Atomic counter responsible of the grouping of threads => buckets.
 		//
-		inline static std::atomic<uint32_t> counter = { 0 };
+		inline static std::atomic<size_t> counter = { 0 };
 		
 		// Global list of buckets.
 		//
@@ -266,7 +257,7 @@ namespace vtil
 			return entries + ( idx % length );
 		}
 
-		// Local proxy that buffers all commands to avoid spinning.
+		// Local proxy that buffers all commands to avoid spinning. 
 		//
 		struct local_proxy
 		{
@@ -274,9 +265,24 @@ namespace vtil
 			//
 			detached_queue<object_entry> secondary_free_queue;
 
-			// Current bucket entry, distributed at thread initialization.
+			// Smart bucket swapping / balancing.
 			//
-			bucket_entry* bucket = get_bucket( counter++ );
+			size_t bucket_index = counter++;
+			bucket_entry* _bucketa = get_bucket( bucket_index );
+			bucket_entry* _bucketd = get_bucket( bucket_index );
+
+			bucket_entry* get_bucket_for_alloc()
+			{
+				if ( _bucketa->free_queue.empty() )
+					_bucketa = get_bucket( --bucket_index );
+				return _bucketa;
+			}
+			bucket_entry* get_bucket_for_dealloc()
+			{
+				if ( _bucketd->free_queue.size() > ( VTIL_OBJECT_POOL_INITIAL_SIZE / sizeof( object_entry ) ) )
+					_bucketd = get_bucket( ++bucket_index );
+				return _bucketd;
+			}
 
 			// Allocate / deallocate proxies.
 			//
@@ -285,7 +291,7 @@ namespace vtil
 				// Handle no-buffering case.
 				//
 				if constexpr( VTIL_OBJECT_POOL_LOCAL_BUFFER_LEN == 0 )
-					return bucket->allocate();
+					return get_bucket_for_alloc()->allocate();
 
 				// If we've buffered any freed memory regions:
 				//
@@ -303,14 +309,14 @@ namespace vtil
 
 				// Dispatch to bucket.
 				//
-				return bucket->allocate();
+				return get_bucket_for_alloc()->allocate();
 			}
 			void deallocate( T* pointer )
 			{
 				// Handle no-buffering case.
 				//
 				if constexpr ( VTIL_OBJECT_POOL_LOCAL_BUFFER_LEN == 0 )
-					return bucket->deallocate( pointer );
+					return get_bucket_for_dealloc()->deallocate( pointer );
 
 				// Insert into free queue.
 				//
@@ -319,29 +325,24 @@ namespace vtil
 				// If queue size is over the buffer length:
 				//
 				if ( secondary_free_queue.size() >= VTIL_OBJECT_POOL_LOCAL_BUFFER_LEN )
-				{
-					bucket->free_queue.emplace_back( secondary_free_queue );
-					bucket->evaluate_pools();
-				}
+					get_bucket_for_dealloc()->free_queue.emplace_back( secondary_free_queue );
+			}
+			void flush()
+			{
+				if ( secondary_free_queue.size() )
+					get_bucket_for_dealloc()->free_queue.emplace_back( secondary_free_queue );
 			}
 
 			// Flush buffer on destruction.
 			//
-			~local_proxy()
-			{
-				if ( secondary_free_queue.size() )
-				{
-					bucket->free_queue.emplace_back( secondary_free_queue );
-					bucket->evaluate_pools();
-				}
-			}
+			~local_proxy() { flush(); }
 		};
-		inline static thread_local local_proxy bucket_proxy;
+		inline static task_local( local_proxy ) bucket_proxy;
 
 		// Allocate / deallocate wrappers.
 		//
-		__forceinline static T* allocate() { return bucket_proxy.allocate(); }
-		__forceinline static void deallocate( T* pointer ) { bucket_proxy.deallocate( pointer ); }
+		__forceinline static T* allocate() { return bucket_proxy->allocate(); }
+		__forceinline static void deallocate( T* pointer ) { bucket_proxy->deallocate( pointer ); }
 
 		// Construct / deconsturct wrappers.
 		//
