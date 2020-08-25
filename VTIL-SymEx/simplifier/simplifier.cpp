@@ -352,6 +352,10 @@ namespace vtil::symbolic
 			auto [it, inserted] = map.emplace( exp, make_default<cache_value>() );
 			cache_scanner::sigscan = nullptr;
 
+			// Speculatively lock the entry.
+			//
+			it->second.lock_count++;
+
 			// If we inserted a new entry:
 			//
 			if ( inserted )
@@ -412,6 +416,10 @@ namespace vtil::symbolic
 			{
 				lru_queue.erase( &it->second.lru_key );
 			}
+
+			// Remove speculative lock.
+			//
+			it->second.lock_count--;
 
 			// Insert into the tail of use list.
 			//
