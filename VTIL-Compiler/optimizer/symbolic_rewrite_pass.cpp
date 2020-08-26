@@ -280,11 +280,6 @@ namespace vtil::optimizer
 			vm.reset();
 		}
 
-		// Purge simplifier cache since block iterators are now invalidated 
-		// making the cache also invalid.
-		//
-		symbolic::purge_simplifier_state();
-
 		// Skip rewriting if we produced larger code.
 		//
 		int64_t opt_count = blk->size() - temporary_block.size();

@@ -332,12 +332,6 @@ namespace vtil::optimizer
 					reg_read_masks[register_id( op.reg())] |= op.reg().get_mask();
 			}
 		}
-
-		// Purge simplifier cache since block iterators are invalided thus cache may fail.
-		//
-		if ( counter != 0 )
-			symbolic::purge_simplifier_state();
-
 		return counter;
 	}
 }

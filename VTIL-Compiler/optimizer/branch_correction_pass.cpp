@@ -264,10 +264,6 @@ namespace vtil::optimizer
 			// Flush paths.
 			//
 			rtn->flush_paths();
-
-			// Purge simplifier cache and return counter.
-			//
-			symbolic::purge_simplifier_state();
 			return cnt;
 		}
 		return 0;
