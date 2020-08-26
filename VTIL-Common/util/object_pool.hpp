@@ -35,7 +35,6 @@
 #include "detached_queue.hpp"
 #include "relaxed_atomics.hpp"
 #include "type_helpers.hpp"
-#include "task.hpp"
 
 // [Configuration]
 // Determine the number of buckets, initial size, growth settings and the local buffer length.
@@ -337,12 +336,12 @@ namespace vtil
 			//
 			~local_proxy() { flush(); }
 		};
-		inline static task_local( local_proxy ) bucket_proxy;
+		inline static thread_local local_proxy bucket_proxy;
 
 		// Allocate / deallocate wrappers.
 		//
-		__forceinline static T* allocate() { return bucket_proxy->allocate(); }
-		__forceinline static void deallocate( T* pointer ) { bucket_proxy->deallocate( pointer ); }
+		__forceinline static T* allocate() { return bucket_proxy.allocate(); }
+		__forceinline static void deallocate( T* pointer ) { bucket_proxy.deallocate( pointer ); }
 
 		// Construct / deconsturct wrappers.
 		//

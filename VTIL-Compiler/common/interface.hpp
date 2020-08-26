@@ -36,19 +36,6 @@
 
 namespace vtil::optimizer
 {
-	namespace impl
-	{
-		template<typename T>
-		concept AtomicSummable = requires( std::atomic<size_t>& y, T x ) { y += x; };
-
-		struct saved_cache 
-		{ 
-			symbolic::simplifier_state_ptr state = nullptr; 
-			saved_cache() { }
-			saved_cache( const saved_cache& o ) { fassert( !o.state ); }
-		};
-	};
-
 	// Pass execution order.
 	// - Note that while serial_<> asserts all links are processed is
 	//   followed, parrellel_<> cannot do this, and that neither can
@@ -65,30 +52,6 @@ namespace vtil::optimizer
 		parallel_df,
 	};
 
-	// RAII cache swap helper.
-	//
-	struct scope_simplifier_cache
-	{
-		impl::saved_cache& cache;
-		symbolic::simplifier_state_ptr pcache = nullptr;
-
-		scope_simplifier_cache( basic_block* block )
-			: cache( block->context )
-		{
-			// If there's a valid cache saved, swap.
-			//
-			if ( cache.state )
-				pcache = symbolic::swap_simplifier_state( std::move( cache.state ) );
-		}
-
-		~scope_simplifier_cache()
-		{
-			// Save current cache into the block.
-			//
-			cache.state = symbolic::swap_simplifier_state( std::move( pcache ) );
-		}
-	};
-
 	// Passes every block through the transformer given in parallel, returns the 
 	// number of instances where this transformation was applied.
 	//
@@ -100,7 +63,6 @@ namespace vtil::optimizer
 		std::atomic<size_t> n = { 0 };
 		auto worker = [ & ] ( basic_block* block )
 		{
-			scope_simplifier_cache _s{ block };
 			n += opt->pass( block, true );
 		};
 

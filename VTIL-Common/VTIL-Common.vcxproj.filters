@@ -193,7 +193,10 @@
     <ClInclude Include="util\finally.hpp">
       <Filter>Utility</Filter>
     </ClInclude>
-    <ClInclude Include="util\task.hpp">
+    <ClInclude Include="util\lru_flatmap.hpp">
+      <Filter>Utility</Filter>
+    </ClInclude>
+    <ClInclude Include="util\flat_allocator.hpp">
       <Filter>Utility</Filter>
     </ClInclude>
   </ItemGroup>

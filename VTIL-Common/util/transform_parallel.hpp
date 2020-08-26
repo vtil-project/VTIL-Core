@@ -28,7 +28,7 @@
 #pragma once
 #include <iterator>
 #include <vector>
-#include "task.hpp"
+#include <future>
 #include "type_helpers.hpp"
 #include "intrinsics.hpp"
 
@@ -66,16 +66,21 @@ namespace vtil
 		if ( !VTIL_USE_PARALLEL_TRANSFORM || container_size == 1 )
 		{
 			for ( auto it = std::begin( container ); it != std::end( container ); ++it )
-				return worker( *it );
+				worker( *it );
 		}
-		// Otherwise, create task pool and insert for each entry.
+		// Otherwise, use std::future for each entry.
 		//
 		else
 		{
-			std::vector<task::instance> tasks;
+			std::vector<std::future<void>> tasks;
 			tasks.reserve( container_size );
 			for ( auto it = std::begin( container ); it != std::end( container ); ++it )
-				tasks.emplace_back( [ &worker, value = impl::ref_adjust( *it ) ] () {  worker( value );  } );
+				tasks.emplace_back( std::async( std::launch::async, std::ref( worker ), impl::ref_adjust( *it ) ) );
+
+			// Call ::get before destruction to propagate exceptions
+			//
+			for ( auto& task : tasks )
+				task.get();
 		}
 	}
 };

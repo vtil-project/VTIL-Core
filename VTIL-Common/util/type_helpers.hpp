@@ -268,14 +268,14 @@ namespace vtil
 	// Returns the offset of given member reference.
 	//
 	template<typename V, typename C> 
-	static constexpr int32_t make_offset( V C::* ref ) noexcept { return ( int32_t ) ( uint64_t ) &( make_null<C>()->*ref ); }
+	static constexpr int64_t make_offset( V C::* ref ) noexcept { return ( int64_t ) ( uint64_t ) &( make_null<C>()->*ref ); }
 
 	// Gets the type at the given offset.
 	//
 	template<typename T = void, typename B>
-	static auto* ptr_at( B* base, int32_t off ) noexcept { return carry_const( base, ( T* ) ( ( ( uint64_t ) base ) + off ) ); }
+	static auto* ptr_at( B* base, int64_t off ) noexcept { return carry_const( base, ( T* ) ( ( ( uint64_t ) base ) + off ) ); }
 	template<typename T, typename B>
-	static auto& ref_at( B* base, int32_t off ) noexcept { return *ptr_at<T>(base, off); }
+	static auto& ref_at( B* base, int64_t off ) noexcept { return *ptr_at<T>(base, off); }
 
 	// Member reference helper.
 	//

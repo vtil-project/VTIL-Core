@@ -69,7 +69,7 @@ namespace vtil::symbolic
 			// Log the translation.
 			//
 			log<CON_BLU>( "Translating [%s] => [%s]:\n", *from, *to );
-			from->enum_variables( [ & ] ( const instance& ins )
+			from->enum_variables( [ & ] ( const directive::instance& ins )
 			{
 				log<CON_BLU>( "            %s: %s\n", ins.id, *match.translate( ins ) );
 			} );

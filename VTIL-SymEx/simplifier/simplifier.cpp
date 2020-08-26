@@ -44,8 +44,9 @@
 	#define VTIL_SYMEX_LRU_CACHE_SIZE               0x10000
 #endif
 #ifndef VTIL_SYMEX_LRU_PRUNE_COEFF
-	#define VTIL_SYMEX_LRU_PRUNE_COEFF              0.35
+	#define VTIL_SYMEX_LRU_PRUNE_COEFF            0.2
 #endif
+
 namespace vtil::symbolic
 {
 	struct join_depth_exception : std::exception
@@ -86,132 +87,59 @@ namespace vtil::symbolic
 	//
 	struct simplifier_state
 	{
-		static constexpr size_t max_cache_entries = VTIL_SYMEX_LRU_CACHE_SIZE;
-		static constexpr size_t cache_prune_count = ( size_t ) ( max_cache_entries * VTIL_SYMEX_LRU_PRUNE_COEFF );
-
-		// Declare custom hash / equivalence checks hijacking the hash map iteration.
+		// Declare the cache itself.
 		//
-		struct cache_value
+		struct sig_hasher
 		{
-			// Type of the queue key.
-			//
-			using queue_key = typename detached_queue<cache_value>::key;
-
-			// Entry itself:
-			//
-			expression::reference result = {};
-			bool is_simplified = false;
-
-			// Implementation details:
-			//
-			int32_t lock_count = 0;
-			queue_key lru_key = {};
-			queue_key spec_key = {};
-
-			// Stores a type erased iterator since we don't know the map type yet, only
-			// an issue with libstdc++ but oh well.
-			// - Ref: https://github.com/vtil-project/VTIL-Core/issues/41
-			//
-			std::unordered_map<uint64_t, uint64_t>::const_iterator _iterator = {};
-			
-			template<typename map_type>
-			auto& iterator()
-			{
-				using iterator_type = typename map_type::const_iterator;
-				static_assert( sizeof( iterator_type ) == sizeof( _iterator ), "Iterator sizes mismatch." );
-				return ( iterator_type& ) _iterator;
-			}
-			template<typename map_type>
-			const auto& iterator() const { return make_mutable( this )->template iterator<map_type>(); }
+			size_t operator()( const expression::reference& x ) { return x->signature.hash_value.as64() ^ ( x->depth + ( uint8_t ) x->op ); }
 		};
-
-
-		struct signature_hasher
+		struct cache_entry
 		{
-			size_t operator()( const expression::reference& ref ) const noexcept { return ref->signature.hash(); }
-		};
+			simplifier_state& self;
+			detached_queue_key<cache_entry> spec_key;
 
-		struct cache_scanner
-		{
-			struct sigscan_result
+			bool is_simplified;
+			expression::reference result;
+
+			~cache_entry()
 			{
-				const expression::reference& key;
-				cache_value* match = nullptr;
-				expression::uid_relation_table table;
-				int64_t diff = 0;
-			};
-			inline static thread_local sigscan_result* sigscan = nullptr;
-
-			bool operator()( const expression::reference& a, const expression::reference& b ) const noexcept 
-			{ 
-				// If there's a signature matching request:
-				//
-				if ( sigscan )
-				{
-					// Find out which argument is "this", if failed return false.
-					//
-					auto self = &a, other = &b;
-					if ( a.pointer != sigscan->key.pointer )
-						std::swap( self, other );
-
-					// Skip if not improving the result.
-					//
-					int64_t sdiff = ( *self )->depth - ( *other )->depth;
-					//if ( sdiff < 0 )
-					if( sdiff != 0  )
-						return false;
-					if ( sigscan->match && sdiff > sigscan->diff )
-						return false;
-
-					// Redirect to is identical if they're the same depth:
-					//
-					if ( sdiff == 0 && a.is_identical( *b ) )
-						return true;
-
-					// If other's past depth limit:
-					//
-					if ( ( *other )->depth > VTIL_SYMEX_SELFGEN_SIGMATCH_DEPTH_LIM )
-					{
-						// If matching signature, save the match, steal full value from the reference to the key.
-						//
-						if ( auto vec = ( *other )->match_to( **self, /*false*/ true ) )
-						{
-							sigscan->table = std::move( *vec );
-							using kv_pair = std::pair<const expression::reference, cache_value>;
-							sigscan->match = &( ( kv_pair* ) other )->second;
-							sigscan->diff = sdiff;
-							sigscan = nullptr;
-						}
-					}
-					return false;
-				}
-				// If not sigscanning, check if identical.
-				//
-				else
-				{
-					return a.is_identical( *b );
-				}
+				if ( spec_key.is_valid() )
+					self.spec_queue.erase( &spec_key );
 			}
 		};
+		using cache_type = lru_flatmap<expression::reference, cache_entry, sig_hasher>;
+		using entry_type = typename cache_type::entry_type;
 
-		// Cache entry and map type.
-		//
-		using cache_map = std::unordered_map<expression::reference, cache_value, signature_hasher, cache_scanner>;
+		cache_type cache = {
+			VTIL_SYMEX_LRU_CACHE_SIZE,
+			VTIL_SYMEX_LRU_PRUNE_COEFF
+		};
 
 		// Whether we're executing speculatively or not.
 		//
 		bool is_speculative = false;
 
-		// Queue for LRU age tracking and the speculativeness.
+		// Queue for speculativeness.
 		//
-		detached_queue<cache_value> lru_queue;
-		detached_queue<cache_value> spec_queue;
+		detached_queue<cache_entry> spec_queue;
 
-		// Cache map.
+		// Maximum allowed depth, once reached will reset to 0 to make all calls recursively fail.
 		//
-		cache_map map{ max_cache_entries };
+		size_t max_depth = std::numeric_limits<size_t>::max();
 
-		// Disallow copy.
+		struct depth_tracker
+		{
+			simplifier_state* s;
+			depth_tracker() : s( nullptr ) {}
+			depth_tracker( simplifier_state* s ) : s( s ) { s->max_depth--; }
+			depth_tracker( depth_tracker&& o ) = delete;
+			depth_tracker( const depth_tracker& ) = delete;
+			depth_tracker& operator=( depth_tracker&& o ) = delete;
+			depth_tracker& operator=( const depth_tracker& ) = delete;
+			~depth_tracker() { if ( s->max_depth ) s->max_depth++; }
+		};
+
+		// Default move, no copy.
 		//
 		simplifier_state() {}
 		simplifier_state( simplifier_state&& ) = default;
@@ -219,164 +147,109 @@ namespace vtil::symbolic
 		simplifier_state& operator=( simplifier_state&& ) = default;
 		simplifier_state& operator=( const simplifier_state& ) = delete;
 
-		// Resets the local cache.
+		// Resets the cache.
 		//
-		void reset()
-		{
-			lru_queue.reset();
-			spec_queue.reset();
-			is_speculative = false;
-			map.clear();
-			map.reserve( max_cache_entries );
-		}
+		void reset() { cache.clear(); }
 
-		// Begins speculative execution.
+		// The main lookup&insert function.
 		//
-		void begin_speculative()
+		std::tuple<cache_type::reference_wrapper<>, bool, depth_tracker> lookup( const expression::reference& ref )
 		{
-			is_speculative = true;
-		}
+			// Find the bucket based on the signature.
+			//
+			size_t hash = sig_hasher{}( ref );
+			auto* node = cache.find_node( hash );
 
-		// Ends speculative execution and marks all speculative entries valid.
-		//
-		void join_speculative()
-		{
-			for ( auto it = spec_queue.head; it; )
+			// If found any:
+			//
+			if ( node->hash == hash )
 			{
-				auto next = it->next;
-				spec_queue.erase( it );
-				it = next;
-			}
-			is_speculative = false;
-		}
+				entry_type* sig_match = nullptr;
+				std::optional<expression::uid_relation_table> sig_search;
 
-		// Ends speculative execution and trashes all incomplete speculative entries.
-		//
-		void trash_speculative()
-		{
-			spec_queue.pop_front( &cache_value::spec_key );
-
-			for ( auto it = spec_queue.head; it; )
-			{
-				auto next = it->next;
-				cache_value* value = it->get( &cache_value::spec_key );
-				fassert( value->lock_count <= 0 );
-
-				if ( value->is_simplified )
-					spec_queue.erase( it );
-				else
-					erase( value );
-				it = next;
-			}
-			is_speculative = false;
-		}
-
-		// Erases a cache entry.
-		//
-		void erase( cache_value* value )
-		{
-			fassert( value->lock_count == 0 );
-			lru_queue.erase( &value->lru_key );
-			if( value->spec_key.is_valid() )
-				spec_queue.erase( &value->spec_key );
-			map.erase( std::move( value->template iterator<cache_map>() ) );
-		}
-
-		// Initializes a new entry in the map.
-		//
-		void init_entry( const cache_map::iterator& entry_it )
-		{
-			// Save the iterator.
-			//
-			entry_it->second.template iterator<cache_map>() = entry_it;
-
-			// If simplifying speculatively, link to tail.
-			//
-			if ( is_speculative )
-				spec_queue.emplace_back( &entry_it->second.spec_key );
-
-			// If we reached max entries, prune:
-			//
-			if ( lru_queue.size() == ( max_cache_entries - 1 ) )
-			{
-				for ( auto it = lru_queue.head; it && ( lru_queue.size() + cache_prune_count ) > max_cache_entries; )
-				{
-					auto next = it->next;
-					// Erase if not locked:
-					//
-					cache_value* value = it->get( &cache_value::lru_key );
-					if ( value->lock_count <= 0 )
-						erase( value );
-					it = next;
-				}
-			}
-		}
-
-		// References to cache from the active scope.
-		//
-		struct scope_reference
-		{
-			using queue_key = typename detached_queue<scope_reference>::key;
-
-			detached_queue<scope_reference>& queue;
-			cache_value* value;
-			queue_key key;
-			
-			scope_reference( detached_queue<scope_reference>& queue, cache_value* value )
-				: queue( queue ), value( value ) { ++value->lock_count; queue.emplace_back( &key ); }
-			~scope_reference() { queue.erase( &key ); fassert( --value->lock_count >= 0 ); }
-
-			scope_reference( scope_reference&& o ) = delete;
-			scope_reference( const scope_reference& o ) = delete;
-			scope_reference& operator=( scope_reference&& o ) = delete;
-			scope_reference& operator=( const scope_reference& o ) = delete;
-		};
-		detached_queue<scope_reference> scope;
-		
-		// Maximum allowed depth, once reached will reset to 0 to make all calls recursively fail.
-		//
-		uint64_t max_depth = ~0;
-
-		// Looks up the cache for the expression, returns [<result>, <simplified?>, <exists?>, <entry>].
-		//
-		std::tuple<expression::reference&, bool&, bool, cache_value*> lookup( const expression::reference& exp )
-		{
-			// Signal signature matcher.
-			//
-			cache_scanner::sigscan_result sig_search = { exp };
-			cache_scanner::sigscan = exp->depth > VTIL_SYMEX_SELFGEN_SIGMATCH_DEPTH_LIM ? &sig_search : nullptr;
-
-			// Make sure we don't rehash and then emplace/find.
-			//
-			fassert( ( map.max_load_factor() * map.bucket_count() ) >= ( map.size() + 1 ) );
-			auto [it, inserted] = map.emplace( exp, make_default<cache_value>() );
-			cache_scanner::sigscan = nullptr;
-
-			// Speculatively lock the entry.
-			//
-			it->second.lock_count++;
-
-			// If we inserted a new entry:
-			//
-			if ( inserted )
-			{
-				// If there is a partial match:
+				// Iteration guide for both directions:
 				//
-				if ( auto base = sig_search.match )
+				std::array iteration_guide = {
+					std::pair{ node,       &cache_type::bucket_header::low },
+					std::pair{ node->high, &cache_type::bucket_header::high }
+				};
+				for ( auto [begin, direction] : iteration_guide )
 				{
-					// Reset inserted flag.
+					// Begin at begin, continue at field as long as criteria is met.
 					//
-					inserted = false;
-
-					// If simplified, transform according to the UID table.
-					//
-					if ( base->is_simplified )
+					for ( auto it = begin; it && it->hash == hash; it = it->*direction )
 					{
-						it->second.result = make_const( base->result ).transform( [ &sig_search ] ( expression::delegate& exp )
+						entry_type* entry = ( entry_type* ) it;
+						auto& [key, v] = entry->kv;
+
+						// Skip if depth or signature does not match.
+						//
+						if ( key->depth != ref->depth ||
+							 key->signature != ref->signature )
+							continue;
+
+						// If same depth and identical, just return.
+						//
+						if ( ref->is_identical( *key ) )
+						{
+							// Prioritize in LRU tracking and return.
+							//
+							cache.prune_last( entry );
+							return std::make_tuple( entry, true, this );
+						}
+
+						// If other's past depth limit and no sig was matched:
+						//
+						if ( !sig_match && key->depth > VTIL_SYMEX_SELFGEN_SIGMATCH_DEPTH_LIM )
+						{
+							// If signature matches, set as result.
+							//
+							if ( sig_search = key->match_to( *ref, /*false*/ true ) )
+								sig_match = entry;
+						}
+					}
+				}
+
+				// If there is a partial match, simplify based on it.
+				//
+				if ( sig_match )
+				{
+					// Transform according to the UID table.
+					//
+					if ( sig_match->kv.second.is_simplified )
+					{
+						// Lower the priority as we'll be re-inserting the pattern.
+						//
+						if ( is_speculative || sig_match->lock_count )
+							cache.prune_next( sig_match );
+						else
+						{
+							sig_match->kv.first = ref;
+							sig_match->kv.second.result.transform( [ & ] ( expression::delegate& exp )
+							{
+								if ( !exp->is_variable() )
+									return;
+								for ( auto& [a, b] : *sig_search )
+								{
+									if ( exp->is_identical( *a ) )
+									{
+										exp = b.make_shared();
+										break;
+									}
+								}
+							}, true, false );
+							cache.prune_last( sig_match );
+							return std::make_tuple( sig_match, true, this );
+						}
+
+						// Transform the saved expression and return after inserting
+						// to the simplification cache.
+						//
+						auto result = make_const( sig_match->kv.second.result ).transform( [ & ] ( expression::delegate& exp )
 						{
 							if ( !exp->is_variable() )
 								return;
-							for ( auto& [a, b] : sig_search.table )
+							for ( auto& [a, b] : *sig_search )
 							{
 								if ( exp->is_identical( *a ) )
 								{
@@ -385,71 +258,92 @@ namespace vtil::symbolic
 								}
 							}
 						}, true, false );
-						it->second.result->simplify_hint = true;
-						it->second.is_simplified = true;
-					}
-					// Otherwise, declare failure.
-					//
-					else
-					{
-						it->second.is_simplified = false;
-					}
+						result->simplify_hint = true;
 
-					// Erase or at least de-prioritize the previous entry.
-					//
-					if ( base->lock_count <= 0 )
-					{
-						erase( base );
+						auto ret = cache.emplace( ref, cache_entry{
+							.self = *this,
+							.spec_key = {},
+							.is_simplified = true,
+							.result = std::move( result )
+												  } );
+						if ( is_speculative )
+							spec_queue.emplace_back( &ret->second.spec_key );
+						return std::make_tuple( std::move( ret ), true, this );
 					}
+					// Since it won't be simplified, just return null indicator.
+					//
 					else
 					{
-						lru_queue.erase( &base->lru_key );
-						lru_queue.emplace_front( &base->lru_key );
+						// Higher priority since it was used and return.
+						//
+						cache.prune_last( sig_match );
+						return std::make_tuple( cache_type::reference_wrapper<>{}, true, this );
 					}
 				}
-
-				// Initialize it.
-				//
-				init_entry( it );
 			}
+
+			auto ret = cache.emplace( ref, cache_entry{
+				.self = *this,
+				.spec_key = {},
+				.is_simplified = false,
+				.result = nullptr
+									  } );
+			if ( is_speculative )
+				spec_queue.emplace_back( &ret->second.spec_key );
+			return std::make_tuple( std::move( ret ), false, this );
+		}
+
+		// Begins speculative execution.
+		//
+		void begin_speculative( size_t* out, size_t depth )
+		{
+			is_speculative = true;
+			*out = std::exchange( max_depth, depth );
+		}
+
+		// Ends speculative execution, returns false if failed.
+		//
+		bool end_speculative( size_t* in )
+		{
+			// Restore state.
+			//
+			is_speculative = false;
+
+			// If failed, trashes all incomplete speculative entries.
+			//
+			if ( !std::exchange( max_depth, *in ) )
+			{
+				spec_queue.pop_front( &cache_entry::spec_key );
+
+				for ( auto it = spec_queue.head; it; )
+				{
+					auto next = it->next;
+					entry_type* entry = ptr_at<entry_type>( it, -( int64_t ) &make_null<entry_type>()->kv.second.spec_key );
+
+					if ( entry->kv.second.is_simplified )
+						spec_queue.erase( it );
+					else
+						cache.erase( entry );
+
+					it = next;
+				}
+				return false;
+			}
+			// Otherwise remove marks.
+			//
 			else
 			{
-				lru_queue.erase( &it->second.lru_key );
+				for ( auto it = spec_queue.head; it; )
+				{
+					auto next = it->next;
+					spec_queue.erase( it );
+					it = next;
+				}
+				return true;
 			}
-
-			// Remove speculative lock.
-			//
-			it->second.lock_count--;
-
-			// Insert into the tail of use list.
-			//
-			lru_queue.emplace_back( &it->second.lru_key );
-			return { it->second.result, it->second.is_simplified, !inserted, &it->second };
 		}
 	};
-
-	static task_local( simplifier_state ) local_state;
-	void purge_simplifier_state() { if( local_state.init ) local_state->reset(); }
-
-	simplifier_state_ptr swap_simplifier_state( simplifier_state_ptr p ) 
-	{ 
-		if ( p )
-		{
-			std::swap( *p, *local_state );
-			return p;
-		}
-		else if( local_state.init )
-		{
-			return { new simplifier_state( local_state.steal() ), simplifier_state_deleter{} };
-		}
-		else
-		{
-			return nullptr;
-		}
-	}
-	void simplifier_state_deleter::operator()( simplifier_state* p ) const noexcept { delete p; }
-	simplifier_state_ptr simplifier_state_allocator::operator()() const noexcept    { return { new simplifier_state, simplifier_state_deleter{} }; }
-
+	static thread_local simplifier_state local_state;
 
 	// Attempts to prettify the expression given.
 	//
@@ -594,14 +488,16 @@ namespace vtil::symbolic
 	//
 	static bool simplify_expression_i( expression::reference& exp, bool pretty, bool unpack )
 	{
-		auto& lstate = *local_state;
+		auto& lstate = local_state;
 		using namespace logger;
 
 		// If we've reached the maximum depth, recursively fail.
 		//
-		if ( lstate.scope.size() >= lstate.max_depth )
+		if ( !lstate.max_depth )
 		{
-			lstate.max_depth = 0;
+#if VTIL_SYMEX_SIMPLIFY_VERBOSE
+			log<CON_CYN>( "Depth limit reached!\n" );
+#endif
 			return false;
 		}
 
@@ -639,15 +535,14 @@ namespace vtil::symbolic
 		// Log the input.
 		//
 		scope_padding _p( 1 );
-		if ( !state::get()->padding ) log( "\n" );
+		if ( !logger_state.padding ) log( "\n" );
 		log( "[Input]  = %s ", *exp );
 		log( "(Hash: %s)\n", exp->hash() );
 #endif
 
 		// Lookup the expression in the cache.
 		//
-		auto [cache_entry, success_flag, found, entry] = lstate.lookup( exp );
-		simplifier_state::scope_reference _g{ lstate.scope, entry };
+		auto [cache, found, _g] = lstate.lookup( exp );
 
 		// If we resolved a valid cache entry:
 		//
@@ -655,12 +550,12 @@ namespace vtil::symbolic
 		{
 			// Replace with the cached entry if simplifies.
 			//
-			if ( cache_entry && success_flag )
+			if ( cache && cache->second.is_simplified )
 			{
 #if VTIL_SYMEX_SIMPLIFY_VERBOSE
-				log<CON_YLW>( "= %s (From cache, Success: %d)\n", *cache_entry, success_flag );
+				log<CON_YLW>( "= %s (From cache, Success: %d)\n", cache->second.result, cache->second.is_simplified );
 #endif
-				exp = cache_entry;
+				exp = cache->second.result;
 				return true;
 			}
 #if VTIL_SYMEX_SIMPLIFY_VERBOSE
@@ -694,7 +589,7 @@ namespace vtil::symbolic
 				{
 					( +exp )->lhs = exp_new;
 					( +exp )->update( false );
-					success_flag = true;
+					cache->second.is_simplified = true;
 				}
 			}
 			else
@@ -704,13 +599,13 @@ namespace vtil::symbolic
 				if ( simplified || exp_new->complexity < exp->complexity )
 				{
 					exp = exp_new;
-					success_flag = true;
+					cache->second.is_simplified = true;
 				}
 			}
 
 			exp->simplify_hint = true;
-			cache_entry = exp;
-			return success_flag;
+			cache->second.result = exp;
+			return cache->second.is_simplified;
 		}
 
 		// If expression matches a basic boolean expression, simplify through that first:
@@ -721,8 +616,8 @@ namespace vtil::symbolic
 			//
 			simplify_expression( exp, pretty );
 			exp->simplify_hint = true;
-			cache_entry = exp;
-			success_flag = true;
+			cache->second.result = exp;
+			cache->second.is_simplified = true;
 			return true;
 		}
 
@@ -753,8 +648,8 @@ namespace vtil::symbolic
 				//
 				simplify_expression( exp, pretty );
 				exp->simplify_hint = true;
-				cache_entry = exp;
-				success_flag = true;
+				cache->second.result = exp;
+				cache->second.is_simplified = true;
 				return true;
 			}
 		}
@@ -769,13 +664,13 @@ namespace vtil::symbolic
 		//
 		if ( exp->value.is_known() )
 		{
-			cache_entry = expression{ exp->value.known_one(), exp->value.size() };
-			success_flag = true;
-			exp = cache_entry;
+			cache->second.result = expression{ exp->value.known_one(), exp->value.size() };
+			cache->second.is_simplified = true;
+			exp = cache->second.result;
 #if VTIL_SYMEX_SIMPLIFY_VERBOSE
 			log<CON_CYN>( "= %s [By evaluation]\n", *exp );
 #endif
-			return success_flag;
+			return cache->second.is_simplified;
 		}
 
 		// Enumerate each universal simplifier:
@@ -794,10 +689,10 @@ namespace vtil::symbolic
 				//
 				simplify_expression( exp_new, pretty );
 				exp_new->simplify_hint = true;
-				cache_entry = exp_new;
-				if( success_flag = !exp->is_identical( *exp_new ) )
+				cache->second.result = exp_new;
+				if( cache->second.is_simplified = !exp->is_identical( *exp_new ) )
 					exp = exp_new;
-				return success_flag;
+				return cache->second.is_simplified;
 			}
 		}
 
@@ -821,10 +716,10 @@ namespace vtil::symbolic
 					//
 					simplify_expression( exp_new, pretty );
 					exp_new->simplify_hint = true;
-					cache_entry = exp_new;
-					if ( success_flag = !exp->is_identical( *exp_new ) )
+					cache->second.result = exp_new;
+					if ( cache->second.is_simplified = !exp->is_identical( *exp_new ) )
 						exp = exp_new;
-					return success_flag;
+					return cache->second.is_simplified;
 				}
 			}
 		}
@@ -843,28 +738,10 @@ namespace vtil::symbolic
 				// Try simplifying with maximum depth set as expression's
 				// depth times two and pass if complexity was reduced.
 				//
-				auto pscope = lstate.scope;
-				lstate.max_depth = pscope.size() + exp_new->depth * 2;
-				lstate.begin_speculative();
+				size_t prev;
+				lstate.begin_speculative( &prev, exp_new->depth * 2 );
 				simplify_expression( exp_new, false );
-
-				// If maximum depth was reached, revert any changes to the cache
-				// and fail the join directive.
-				//
-				if ( lstate.max_depth == 0 )
-				{
-					lstate.trash_speculative();
-					lstate.scope = pscope;
-					lstate.scope.tail->next = nullptr;
-					lstate.max_depth = ~0;
-					return false;
-				}
-				else
-				{
-					lstate.join_speculative();
-					lstate.max_depth = ~0;
-					return exp_new->complexity < exp->complexity;
-				}
+				return lstate.end_speculative( &prev ) && exp_new->complexity < exp->complexity;
 			}
 			else
 			{
@@ -898,10 +775,10 @@ namespace vtil::symbolic
 				//
 				simplify_expression( exp_new, pretty );
 				exp_new->simplify_hint = true;
-				cache_entry = exp_new;
-				if ( success_flag = !exp->is_identical( *exp_new ) )
+				cache->second.result = exp_new;
+				if ( cache->second.is_simplified = !exp->is_identical( *exp_new ) )
 					exp = exp_new;
-				return success_flag;
+				return cache->second.is_simplified;
 			}
 		}
 
@@ -926,10 +803,10 @@ namespace vtil::symbolic
 					//
 					simplify_expression( exp_new, pretty );
 					exp_new->simplify_hint = true;
-					cache_entry = exp_new;
-					if ( success_flag = !exp->is_identical( *exp_new ) )
+					cache->second.result = exp_new;
+					if ( cache->second.is_simplified = !exp->is_identical( *exp_new ) )
 						exp = exp_new;
-					return success_flag;
+					return cache->second.is_simplified;
 				}
 			}
 		}
@@ -955,10 +832,10 @@ namespace vtil::symbolic
 					// Set the hint and return the simplified instance.
 					//
 					exp_new->simplify_hint = true;
-					cache_entry = exp_new;
-					if ( success_flag = !exp->is_identical( *exp_new ) )
+					cache->second.result = exp_new;
+					if ( cache->second.is_simplified = !exp->is_identical( *exp_new ) )
 						exp = exp_new;
-					return success_flag;
+					return cache->second.is_simplified;
 				}
 			}
 		}

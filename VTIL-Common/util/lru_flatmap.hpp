@@ -288,7 +288,7 @@ namespace vtil
 		}
 		void prune()
 		{
-			isize_t n = ( size_t ) ( entry_allocator.size * prune_coefficient );
+			size_t n = ( size_t ) ( entry_allocator.size * prune_coefficient );
 			for ( auto it = lru_head; it && n != 0; )
 			{
 				auto next = it->lru_next;
