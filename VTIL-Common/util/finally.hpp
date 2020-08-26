@@ -34,8 +34,10 @@ namespace vtil
 	struct finally
 	{
 		T functor;
+		bool set = true;
 		finally( T&& fn ) : functor( std::forward<T>( fn ) ) {}
+		finally( finally&& o ) : functor( o.functor ), set( std::exchange( o.set, false ) ) {}
 		finally( const finally& ) = delete;
-		~finally() { functor(); }
+		~finally() { if( set ) functor(); }
 	};
 };
