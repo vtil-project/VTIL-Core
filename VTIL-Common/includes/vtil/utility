@@ -30,4 +30,5 @@
 #include "../../util/literals.hpp"
 #include "../../util/transform_parallel.hpp"
 #include "../../util/finally.hpp"
+#include "../../util/lru_flatmap.hpp"
 #include "../../util/flat_allocator.hpp"
