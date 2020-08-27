@@ -473,13 +473,13 @@ namespace vtil
 
 	enum reloc_type_id
 	{
-	rel_based_absolute = 0,
-	rel_based_high = 1,
-	rel_based_low = 2,
-	rel_based_high_low = 3,
-	rel_based_high_adj = 4,
-	rel_based_ia64_imm64 = 9,
-	rel_based_dir64 = 10,
+		rel_based_absolute = 0,
+		rel_based_high = 1,
+		rel_based_low = 2,
+		rel_based_high_low = 3,
+		rel_based_high_adj = 4,
+		rel_based_ia64_imm64 = 9,
+		rel_based_dir64 = 10,
 	};
 
 	struct reloc_entry_t
@@ -706,44 +706,68 @@ namespace vtil
 		in_out.virtual_size =     scn->virtual_size =     math::narrow_cast<uint32_t>( aligned_size );
 	}
 
-	bool pe_image::is_relocated( uint64_t rva ) const
+	void pe_image::enum_relocations( const function_view<bool( const relocation_descriptor& )>& fn ) const
 	{
-		// TODO: Handle for PE32
-		//
-		fassert( is_pe64() );
-
 		// Get relocation directory.
 		//
 		auto dos_header = ( const dos_header_t* ) cdata();
-		auto nt_header = dos_header->get_nt_headers<true>();
-		const auto& reloc_dir = nt_header->optional_header.data_directories.basereloc_directory;
+		const auto& reloc_dir = is_pe64()
+			? dos_header->get_nt_headers<true>()->optional_header.data_directories.basereloc_directory
+			: dos_header->get_nt_headers<false>()->optional_header.data_directories.basereloc_directory;
 		if ( reloc_dir.present() )
 		{
 			// Get block boundaries
+			//
 			const auto* block_begin = &rva_to_ptr<reloc_directory_t>( reloc_dir.rva )->first_block;
-			const auto* block_end = ( const reloc_block_t* )( ( char* ) block_begin + reloc_dir.size );
+			const auto* block_end = ( const reloc_block_t* ) ( ( char* ) block_begin + reloc_dir.size );
 
 			// For each block:
-			for ( auto block = block_begin; block < block_end; block = block->get_next() )
+			//
+			for ( auto block = block_begin; block != block_end; block = block->get_next() )
 			{
 				// For each entry:
+				//
 				for ( size_t i = 0; i < block->num_entries(); i++ )
 				{
-					// Push to list if basic reloc
-					if ( block->entries[ i ].type == rel_based_dir64 )
+					// Create entry based on relocation type.
+					//
+					relocation_descriptor entry = {
+						.rva = uint64_t( block->base_rva ) + block->entries[ i ].offset
+					};
+
+					switch ( block->entries[ i ].type )
 					{
-						uint64_t rva_reloc = uint64_t(block->base_rva) + block->entries[ i ].offset;
-						if ( rva_reloc <= rva && rva < ( rva_reloc + 8 ) )
-							return true;
+						case rel_based_dir64:
+							entry.length = 8; 
+							entry.relocator = [ ] ( void* data, int64_t delta ) { *( ( uint64_t* ) data ) += delta; };
+							break;
+						case rel_based_high_low:
+							entry.length = 4;
+							entry.relocator = [ ] ( void* data, int64_t delta ) { *( ( int32_t* ) data ) += math::narrow_cast<int32_t>( delta ); };
+							break;
+						case rel_based_low:
+							entry.length = 2;
+							entry.relocator = [ ] ( void* data, int64_t delta ) { *( ( int16_t* ) data ) += ( int16_t ) ( ( uint16_t ) delta ); };
+							break;
+						case rel_based_high:
+							entry.length = 2;
+							entry.relocator = [ ] ( void* data, int64_t delta ) { *( ( int16_t* ) data ) += ( int16_t ) ( ( ( uint32_t ) delta ) >> 16 ); };
+							break;
+						case rel_based_absolute:
+							entry.length = 0;
+							entry.relocator = [ ] ( void* data, int64_t delta ) { /*nop*/ };
+							break;
+						default:
+							logger::error( "Unknown relocation type: %d\n", block->entries[ i ].type );
+							break;
 					}
-					// Throw exception if unknown relocation type
-					else
-					{
-						fassert( block->entries[ i ].type == reloc_type_id::rel_based_absolute );
-					}
+
+					// Invoke enumerator, break if requested.
+					//
+					if ( fn( entry ) )
+						return;
 				}
 			}
 		}
-		return false;
 	}
 };

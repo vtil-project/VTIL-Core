@@ -31,6 +31,7 @@
 #include <optional>
 #include "../util/zip.hpp"
 #include "../util/numeric_iterator.hpp"
+#include "../util/function_view.hpp"
 
 namespace vtil
 {
@@ -75,6 +76,15 @@ namespace vtil
 			}
 			return std::nullopt;
 		}
+	};
+
+	// Generic relocation information.
+	//
+	struct relocation_descriptor
+	{
+		uint64_t rva;
+		size_t length;
+		void( *relocator )( void* data, int64_t delta );
 	};
 
 	// Generic image interface.
@@ -152,9 +162,9 @@ namespace vtil
 		//
 		virtual void add_section( section_descriptor& in_out, const void* data, size_t size ) = 0;
 
-		// Returns whether the address provided will be relocated or not.
+		// Invokes the enumerator for each relocation entry in the binary, breaks if enumerator returns true.
 		//
-		virtual bool is_relocated( uint64_t rva ) const = 0;
+		virtual void enum_relocations( const function_view<bool( const relocation_descriptor& )>& fn ) const = 0;
 
 		// Returns the image base.
 		//
@@ -209,6 +219,27 @@ namespace vtil
 		section_iterator begin() const { return { this, 0 }; }
 		section_iterator_end_tag_t end() const { return {}; }
 		section_descriptor operator[]( size_t n ) const { return get_section( n ); }
+
+		// Returns whether the address provided will be relocated or not.
+		//
+		bool is_relocated( uint64_t rva ) const
+		{
+			bool found = false;
+			enum_relocations( [ & ] ( const relocation_descriptor& e )
+			{
+				return ( found = ( e.rva <= rva && rva < ( e.rva + e.length ) ) );
+			} );
+			return found;
+		}
+
+		// Returns a list of all relocation entries.
+		//
+		std::vector<relocation_descriptor> get_relocations() const
+		{
+			std::vector<relocation_descriptor> entries;
+			enum_relocations( [ & ] ( const relocation_descriptor& e ) { entries.emplace_back( e ); return false; } );
+			return entries;
+		}
 
 		// Cast to bool redirects to ::is_valid.
 		//
