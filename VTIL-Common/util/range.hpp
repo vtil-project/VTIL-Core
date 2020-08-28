@@ -61,8 +61,7 @@ namespace vtil
 				//
 				const F& transform;
 				base_iterator at;
-				constexpr iterator( base_iterator&& i,      const F& transform ) : at( std::move( i ) ), transform( transform ) {}
-				constexpr iterator( const base_iterator& i, const F& transform ) : at( i ),              transform( transform ) {}
+				constexpr iterator( const base_iterator& i, const F& transform ) : at( i ), transform( transform ) {}
 
 				// Support bidirectional iteration.
 				//
