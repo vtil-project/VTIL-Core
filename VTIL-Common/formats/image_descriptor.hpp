@@ -53,16 +53,23 @@ namespace vtil
 		// Relative virtual address of the section and the lenght of the data at runtime.
 		//
 		uint64_t virtual_address = 0;
-		size_t  virtual_size = 0;
+		size_t virtual_size = 0;
 
 		// Physical address of the section and the length of the data on disk.
 		//
 		uint64_t physical_address = 0;
-		size_t  physical_size = 0;
+		size_t physical_size = 0;
 	
 		// Cast to bool redirects to ::valid.
 		//
 		explicit operator bool() const { return valid; }
+
+		// Checks if RVA is within this section.
+		//
+		bool contains( uint64_t rva, size_t n = 1 ) const
+		{
+			return virtual_address <= rva && ( rva + n ) <= ( virtual_address + virtual_size );
+		}
 
 		// Translates relative virtual address to physical address.
 		//
@@ -99,10 +106,10 @@ namespace vtil
 			// Generic iterator typedefs.
 			//
 			using iterator_category = std::bidirectional_iterator_tag;
-			using difference_type =   size_t;
+			using difference_type =   int64_t;
+			using reference =         section_descriptor;
 			using value_type =        section_descriptor;
-			using pointer =           section_descriptor*;
-			using reference =         section_descriptor&;
+			using pointer =           void*;
 
 			// Range of iteration and a reference to the original binary.
 			//
