@@ -135,7 +135,7 @@ namespace vtil::format
 				// Adjust format if needed, find absolute value to use.
 				//
 				uint64_t r;
-				if ( std::is_signed_v<T> && value < 0 ) r = ( uint64_t ) -value, fidx++;
+				if ( std::is_signed_v<T> && value < 0 ) r = ( uint64_t ) -int64_t( value ), fidx++;
 				else                                    r = ( uint64_t ) value;
 
 				// Allocate buffer [ 3 + log_b(2^64) ], write to it and return.
