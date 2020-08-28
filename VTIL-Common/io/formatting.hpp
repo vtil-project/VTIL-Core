@@ -260,7 +260,7 @@ namespace vtil::format
 			if constexpr ( StringConvertible<decltype( *std::begin( x ) )> )
 			{
 				std::string items = {};
-				for ( auto& entry : x )
+				for ( auto&& entry : x )
 					items += as_string( entry ) + ", ";
 				if ( !items.empty() ) items.resize( items.size() - 2 );
 				return "{" + items + "}";
@@ -391,15 +391,18 @@ namespace vtil::format
 
             // Convert fields in each entry into string.
             //
-            std::vector<std::array<std::string, field_count>> string_entries( entry_count );
-            for ( auto [output, entry] : zip( string_entries, data_source ) )
-            {
-                make_constant_series<field_count>( [ & ] ( auto tag )
-                {
-                    auto at = []( auto&& x ) -> auto& { return std::get<decltype( tag )::value>( x ); };
-                    output[ decltype( tag )::value ] = as_string( at( entry ) );
-                } );
-            }
+            std::vector<std::array<std::string, field_count>> string_entries;
+			string_entries.reserve( entry_count );
+
+			for ( auto eit = std::begin( data_source ); eit != std::end( data_source ); eit++ )
+			{
+				auto& output = string_entries.emplace_back();
+				make_constant_series<field_count>( [ & ] ( auto tag )
+				{
+					auto at = []( auto&& x ) -> auto& { return std::get<decltype( tag )::value>( x ); };
+					output[ decltype( tag )::value ] = as_string( at( *eit ) );
+				} );
+			}
 
             // Determine field lengths.
             //

@@ -107,7 +107,7 @@ namespace vtil
 		};
 	}
 	template<Iterable C, typename Fn>
-	static constexpr auto view_transformed( C&& container, Fn&& f )
+	static constexpr auto make_view( C&& container, Fn&& f )
 	{
 		return impl::range_proxy<decltype( std::begin( container ) ), Fn>{
 			std::forward<Fn>( f ),
