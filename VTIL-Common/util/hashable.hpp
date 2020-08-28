@@ -224,7 +224,7 @@ namespace vtil
 		__forceinline constexpr hash_t operator()( const T& obj ) const noexcept
 		{
 			if constexpr ( std::tuple_size_v<T> != 0 )
-				return std::apply( make_hash, obj );
+				return std::apply( [ ] ( auto&&... params ) { return make_hash( params... ); }, obj );
 			else 
 				return lt_typeid_v<T>;
 		}

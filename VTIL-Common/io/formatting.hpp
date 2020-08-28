@@ -121,7 +121,6 @@ namespace vtil::format
 	struct strongly_formatted_integer
 	{
 		T value = 0;
-
 		constexpr strongly_formatted_integer() {}
 		constexpr strongly_formatted_integer( T value ) : value( value ) {}
 		constexpr operator T& ( ) { return value; }
@@ -157,7 +156,6 @@ namespace vtil::format
 		static constexpr std::array unit_abbrv = { "b", "kb", "mb", "gb", "tb" };
 
 		T value = 0;
-
 		constexpr byte_count_t() {}
 		constexpr byte_count_t( T value ) : value( value ) {}
 		constexpr operator T&() { return value; }
@@ -187,6 +185,23 @@ namespace vtil::format
 				}
 			}
 			unreachable();
+		}
+	};
+
+	// Special type tag for character formatting.
+	//
+	template<typename T = char>
+	struct strong_character_t
+	{
+		T value = 0;
+		constexpr strong_character_t() {}
+		constexpr strong_character_t( T value ) : value( value ) {}
+		constexpr operator T& ( ) { return value; }
+		constexpr operator const T& ( ) const { return value; }
+
+		std::string to_string() const
+		{
+			return std::string( 1, ( char ) value );
 		}
 	};
 
@@ -261,6 +276,10 @@ namespace vtil::format
 		else if constexpr ( std::is_same_v<base_type, int64_t> )
 		{
 			return hex_t<base_type>( x ).to_string();
+		}
+		else if constexpr ( std::is_same_v<base_type, bool> )
+		{
+			return std::string{ x ? "true" : "false" };
 		}
 		else if constexpr ( StdStringConvertible<T> )
 		{
