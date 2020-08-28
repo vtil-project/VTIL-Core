@@ -455,7 +455,7 @@ namespace vtil::format
     {
         // Required typedefs.
         //
-        using entry_type_t = typename iterator_value_type_t<C>;
+        using entry_type_t = iterator_value_type_t<C>;
         
         // Declare field count.
         //
