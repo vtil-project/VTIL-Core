@@ -71,8 +71,12 @@ namespace vtil
 				static constexpr auto linear_series = make_constant_series<iteration_limit>(
 					[ ] ( auto tag ) { return generate<T( decltype( tag )::value + min_value )>(); }
 				);
-				auto& [str, valid] = linear_series[ value ];
-				if ( valid ) return std::string{ str.begin(), str.end() };
+				value_type adjusted = value - min_value;
+				if ( value_type( 0 ) <= adjusted && adjusted < value_type( iteration_limit ) )
+				{
+					auto& [str, valid] = linear_series[ adjusted ];
+					if ( valid ) return std::string{ str.begin(), str.end() };
+				}
 			}
 			// If not and type is not signed, try interpreting it as a flag combination:
 			//
