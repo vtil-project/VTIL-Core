@@ -38,6 +38,7 @@
 #include "../util/lt_typeid.hpp"
 #include "../util/type_helpers.hpp"
 #include "../util/time.hpp"
+#include "../util/numeric_iterator.hpp"
 #include "enum_name.hpp"
 
 #ifdef __GNUG__
@@ -112,41 +113,82 @@ namespace vtil::format
 			}
 			return in;
 		}
-
-		// Special type tags for integer formatting.
-		//
-		template<Integral T, bool hex>
-		struct strongly_formatted_integer
-		{
-			T value = 0;
-
-			constexpr strongly_formatted_integer() {}
-			constexpr strongly_formatted_integer( T value ) : value( value ) {}
-			constexpr operator T&() { return value; }
-			constexpr operator const T&() const { return value; }
-
-			std::string to_string() const
-			{
-				// Pick the base format.
-				//
-				const char* fmts[] = { "0x%llx", "-0x%llx", "%llu", "-%llu" };
-				size_t fidx = hex ? 0 : 2;
-
-				// Adjust format if needed, find absolute value to use.
-				//
-				uint64_t r;
-				if ( std::is_signed_v<T> && value < 0 ) r = ( uint64_t ) -int64_t( value ), fidx++;
-				else                                    r = ( uint64_t ) value;
-
-				// Allocate buffer [ 3 + log_b(2^64) ], write to it and return.
-				//
-				char buffer[ ( hex ? 16 : 20 ) + 3 ];
-				return std::string{ buffer, buffer + snprintf( buffer, std::size( buffer ), fmts[fidx], r ) };
-			}
-		};
 	};
-	template<Integral T> using hex_t = impl::strongly_formatted_integer<T, true>;
-	template<Integral T> using dec_t = impl::strongly_formatted_integer<T, false>;
+
+	// Special type tags for integer formatting.
+	//
+	template<Integral T, bool hex>
+	struct strongly_formatted_integer
+	{
+		T value = 0;
+
+		constexpr strongly_formatted_integer() {}
+		constexpr strongly_formatted_integer( T value ) : value( value ) {}
+		constexpr operator T& ( ) { return value; }
+		constexpr operator const T& ( ) const { return value; }
+
+		std::string to_string() const
+		{
+			// Pick the base format.
+			//
+			const char* fmts[] = { "0x%llx", "-0x%llx", "%llu", "-%llu" };
+			size_t fidx = hex ? 0 : 2;
+
+			// Adjust format if needed, find absolute value to use.
+			//
+			uint64_t r;
+			if ( std::is_signed_v<T> && value < 0 ) r = ( uint64_t ) -int64_t( value ), fidx++;
+			else                                    r = ( uint64_t ) value;
+
+			// Allocate buffer [ 3 + log_b(2^64) ], write to it and return.
+			//
+			char buffer[ ( hex ? 16 : 20 ) + 3 ];
+			return std::string{ buffer, buffer + snprintf( buffer, std::size( buffer ), fmts[ fidx ], r ) };
+		}
+	};
+	template<Integral T> using hex_t = strongly_formatted_integer<T, true>;
+	template<Integral T> using dec_t = strongly_formatted_integer<T, false>;
+
+	// Special type tag for memory/file size formatting.
+	//
+	template<Integral T = size_t>
+	struct byte_count_t
+	{
+		static constexpr std::array unit_abbrv = { "b", "kb", "mb", "gb", "tb" };
+
+		T value = 0;
+
+		constexpr byte_count_t() {}
+		constexpr byte_count_t( T value ) : value( value ) {}
+		constexpr operator T&() { return value; }
+		constexpr operator const T&() const { return value; }
+
+		std::string to_string() const
+		{
+			// Convert to double.
+			//
+			double fvalue = ( double ) value;
+
+			// Iterate unit list in descending order.
+			//
+			for ( auto [abbrv, i] : backwards( zip( unit_abbrv, iindices ) ) )
+			{
+				double limit = pow( 1024.0, i );
+
+				// If value is larger than the unit given or if we're at the last unit:
+				//
+				if ( std::abs( fvalue ) >= limit || abbrv == *std::begin( unit_abbrv ) )
+				{
+					// Convert float to string.
+					//
+					char buffer[ 32 ];
+					snprintf( buffer, 32, "%.2lf%s", fvalue / limit, abbrv );
+					return buffer;
+				}
+			}
+			unreachable();
+		}
+	};
 
 	// Suffixes used to indicate registers of N bytes.
 	//
@@ -218,8 +260,7 @@ namespace vtil::format
 		}
 		else if constexpr ( std::is_same_v<base_type, int64_t> )
 		{
-			if ( x < 0 ) return "-" + as_string( uint64_t( -x ) );
-			else         return as_string( uint64_t( x ) );
+			return hex_t<base_type>( x ).to_string();
 		}
 		else if constexpr ( StdStringConvertible<T> )
 		{
