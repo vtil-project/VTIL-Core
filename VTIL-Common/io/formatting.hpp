@@ -177,6 +177,16 @@ namespace vtil::format
 		{
 			return time::to_string( x );
 		}
+		else if constexpr ( std::is_same_v<base_type, uint64_t> )
+		{
+			char buffer[ 16 + 3 ];
+			return std::string{ buffer, buffer + snprintf( buffer, std::size( buffer ), "0x%llx", x ) };
+		}
+		else if constexpr ( std::is_same_v<base_type, int64_t> )
+		{
+			if ( x < 0 ) return "-" + as_string( uint64_t( -x ) );
+			else         return as_string( uint64_t( x ) );
+		}
 		else if constexpr ( StdStringConvertible<T> )
 		{
 			return std::to_string( x );
