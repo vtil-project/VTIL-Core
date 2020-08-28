@@ -118,6 +118,8 @@ namespace vtil
 	template<typename T>
 	concept Integral = std::is_integral_v<T>;
 	template<typename T>
+	concept FloatingPoint = std::is_floating_point_v<T>;
+	template<typename T>
 	concept Trivial = std::is_trivial_v<T>;
 	template<typename T>
 	concept Enum = std::is_enum_v<T>;

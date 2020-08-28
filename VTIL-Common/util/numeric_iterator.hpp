@@ -55,34 +55,36 @@ namespace vtil
 
 			// Default constructor.
 			//
-			iterator( value_type at, value_type limit = 0 ) :
+			constexpr iterator( value_type at, value_type limit = 0 ) :
 				at( at ), limit( limit ) {}
 
 			// Support bidirectional iteration.
 			//
-			iterator& operator++() { at++; return *this; }
-			iterator& operator--() { at--; return *this; }
+			constexpr iterator& operator++() { at++; return *this; }
+			constexpr iterator& operator--() { at--; return *this; }
+			constexpr iterator operator++( int ) { auto s = *this; operator--(); return s; }
+			constexpr iterator operator--( int ) { auto s = *this; operator++(); return s; }
 
 			// Equality check against another iterator.
 			//
-			bool operator==( const iterator& other ) const 
+			constexpr bool operator==( const iterator& other ) const
 			{ 
 				return at == other.at && limit == other.limit;
 			}
-			bool operator!=( const iterator& other ) const 
+			constexpr bool operator!=( const iterator& other ) const
 			{ 
 				return at != other.at || limit != other.limit;
 			}
 			
 			// Equality check against special end iterator.
 			//
-			bool operator==( iterator_end_tag_t ) const { return at == limit; }
-			bool operator!=( iterator_end_tag_t ) const { return at != limit; }
+			constexpr bool operator==( iterator_end_tag_t ) const { return at == limit; }
+			constexpr bool operator!=( iterator_end_tag_t ) const { return at != limit; }
 
 			// Redirect dereferencing to container.
 			//
-			value_type operator*() { return at; }
-			value_type operator*() const { return at; }
+			constexpr value_type operator*() { return at; }
+			constexpr value_type operator*() const { return at; }
 		};
 		using const_iterator = iterator;
 

@@ -47,27 +47,35 @@ namespace vtil
 		{
 			// Declare proxying iterator.
 			//
-			struct iterator : base_iterator
+			struct iterator
 			{
 				// Modify certain traits.
 				//
-				using reference =         decltype( std::declval<F>()( std::declval<typename base_iterator::reference>() ) );
+				using reference =         decltype( std::declval<F>()( *std::declval<base_iterator>() ) );
 				using value_type =        typename std::remove_reference_t<reference>;
 				
 				// Constructed by the original iterator and a reference to transformation function.
 				//
 				const F& transform;
-				constexpr iterator( base_iterator&& i,      const F& transform ) : base_iterator( std::move( i ) ), transform( transform ) {}
-				constexpr iterator( const base_iterator& i, const F& transform ) : base_iterator( i ),              transform( transform ) {}
+				base_iterator at;
+				constexpr iterator( base_iterator&& i,      const F& transform ) : at( std::move( i ) ), transform( transform ) {}
+				constexpr iterator( const base_iterator& i, const F& transform ) : at( i ),              transform( transform ) {}
+
+				// Support bidirectional iteration.
+				//
+				constexpr iterator& operator++() { at++; return *this; }
+				constexpr iterator& operator--() { at--; return *this; }
+				constexpr iterator operator++( int ) { auto s = *this; operator--(); return s; }
+				constexpr iterator operator--( int ) { auto s = *this; operator++(); return s; }
+
+				// Equality check against another iterator.
+				//
+				constexpr bool operator==( const iterator& other ) const { return at == other.at; }
+				constexpr bool operator!=( const iterator& other ) const { return at != other.at; }
 
 				// Override accessor to apply transformation where relevant.
 				//
-				reference operator*() const { return transform( base_iterator::operator*() ); }
-
-				// Inherit rest from operator base.
-				//
-				using base_iterator::operator==;
-				using base_iterator::operator!=;
+				constexpr reference operator*() const { return transform( base_iterator::operator*() ); }
 			};
 			using const_iterator = iterator;
 
@@ -83,9 +91,6 @@ namespace vtil
 			constexpr iterator end() const   { return { iend, transform }; }
 			constexpr size_t size() const    { return ( size_t ) std::distance( begin(), end() ); }
 		};
-
-		template<typename I, typename F>
-		range_proxy( F, I, I )->range_proxy<I, F>;
 	};
 
 	template<typename It, typename Fn>
