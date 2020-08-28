@@ -483,8 +483,8 @@ namespace vtil::format
 
     // Declare deduction guide.
     //
-    template<Iterable C>
-    table( C&&, std::initializer_list<std::string_view> labels )->table<C>;
+    template<typename C>
+    table( C&&, std::initializer_list<std::string_view> )->table<C>;
 };
 #undef HAS_RTTI
 
