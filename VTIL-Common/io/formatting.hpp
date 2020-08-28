@@ -184,10 +184,16 @@ namespace vtil::format
 		{
 			return std::string{ x.what() };
 		}
-		else if constexpr ( std::is_same_v<base_type, std::string> || 
-							std::is_same_v<base_type, const char*> )
+		else if constexpr ( CppString<base_type> || CppStringView<base_type> )
 		{
-			return std::string{ x };
+			return std::string{ x.begin(), x.end() };
+		}
+		else if constexpr ( CString<base_type> )
+		{
+			return std::string{
+				x,
+				x + std::char_traits<string_unit_t<base_type>>::length( x )
+			};
 		}
 		else if constexpr ( std::is_same_v<base_type, std::filesystem::directory_entry> )
 		{
@@ -196,14 +202,6 @@ namespace vtil::format
 		else if constexpr ( std::is_same_v<base_type, std::filesystem::path> )
 		{
 			return x.string();
-		}
-		else if constexpr ( std::is_same_v<base_type, std::wstring> )
-		{
-			return std::string{ x.begin(), x.end() };
-		}
-		else if constexpr ( std::is_same_v<base_type, const wchar_t*> )
-		{
-			return std::string{ x, x + wcslen( x ) };
 		}
 		else if constexpr ( std::is_pointer_v<base_type> )
 		{

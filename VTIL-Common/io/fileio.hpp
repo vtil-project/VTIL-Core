@@ -33,20 +33,32 @@
 #include <iostream>
 #include "../io/logger.hpp"
 
+// Declare a simple interface to read/write files for convenience.
+//
 namespace vtil::file
 {
-	// Declare a simple interface to read/write files for convenience.
+	// Binary I/O.
 	//
-	static std::vector<uint8_t> read_raw( const std::filesystem::path& path )
+	template<Trivial T = uint8_t>
+	static std::vector<T> read_raw( const std::filesystem::path& path )
 	{
 		// Try to open file as binary for read.
 		//
 		std::ifstream file( path, std::ios::binary );
-		if ( !file.good() ) logger::error( "File %s cannot be opened.", path );
+		if ( !file.good() ) logger::error( "File %s cannot be opened for read.", path );
+
+		// Determine file length and validity.
+		//
+		file.seekg( 0, std::ios_base::end );
+		std::streampos length = file.tellg();
+		file.seekg( 0, std::ios_base::beg );
+		fassert( ( length % sizeof( T ) ) == 0 );
 
 		// Read the whole file and return.
 		//
-		return std::vector<uint8_t>( std::istreambuf_iterator<char>( file ), {} );
+		std::vector<T> buffer( length / sizeof( T ) );
+		file.read( (char*) buffer.data(), length );
+		return buffer;
 	}
 
 	static void write_raw( const std::filesystem::path& path, void* data, size_t size )
@@ -54,16 +66,97 @@ namespace vtil::file
 		// Try to open file as binary for write.
 		//
 		std::ofstream file( path, std::ios::binary );
-		if ( !file.good() ) logger::error( "File cannot be opened for write." );
+		if ( !file.good() ) logger::error( "File %s cannot be opened for write.", path );
 
 		// Write the data and return.
 		//
 		file.write( ( char* ) data, size );
 	}
 
-	template<Iterable T> requires ( is_linear_iterable_v<T> && std::is_trivial_v<iterator_value_type_t<T>> )
-	static void write_raw( const std::filesystem::path& path, T&& container )
+	template<Iterable C = std::initializer_list<uint8_t>> requires ( Trivial<iterator_value_type_t<C>> )
+	static void write_raw( const std::filesystem::path& path, C&& container )
 	{
-		write_raw( path, &*std::begin( container ), std::size( container ) * sizeof( iterator_value_type_t<T> ) );
+		// Try to open file as binary for write.
+		//
+		std::ofstream file( path, std::ios::binary );
+		if ( !file.good() ) logger::error( "File %s cannot be opened for write.", path );
+
+		// Write every element and return.
+		//
+		if constexpr ( !is_linear_iterable_v<C> )
+		{
+			for ( auto& e : container )
+				file.write( ( char* ) e, sizeof( iterator_value_type_t<C> ) );
+		}
+		else
+		{
+			file.write( ( char* ) &*std::begin( container ), std::size( container ) * sizeof( iterator_value_type_t<C> ) );
+		}
+	}
+
+	// String I/O.
+	//
+	template<typename C = char>
+	static std::vector<std::basic_string<C>> read_lines( const std::filesystem::path& path )
+	{
+		// Try to open file as string for read.
+		//
+		std::basic_ifstream<C> file( path );
+		if ( !file.good() ) logger::error( "File %s cannot be opened for read.", path );
+
+		// Read every lines and return.
+		//
+		std::vector<std::basic_string<C>> output;
+		while ( std::getline( file, output.emplace_back() ) );
+		output.pop_back();
+		return output;
+	}
+
+	template<typename C = char>
+	static std::basic_string<C> read_string( const std::filesystem::path& path )
+	{
+		// Try to open file as string for read.
+		//
+		std::basic_ifstream<C> file( path );
+		if ( !file.good() ) logger::error( "File %s cannot be opened for read.", path );
+
+		// Read the whole file and return.
+		//
+		return { std::istreambuf_iterator<C>( file ), {} };
+	}
+
+	template<Iterable C = std::initializer_list<std::string_view>> requires( String<iterator_value_type_t<C>> )
+	static void write_lines( const std::filesystem::path& path, C&& container )
+	{
+		using char_type = string_unit_t<iterator_value_type_t<C>>;
+
+		// Try to open file as string for write.
+		//
+		std::basic_ofstream<char_type> file( path );
+		if ( !file.good() ) logger::error( "File %s cannot be opened for write.", path );
+
+		// Write every line and return.
+		//
+		for ( std::basic_string_view<char_type> view : container )
+		{
+			file.write( view.data(), view.size() );
+			file << std::endl;
+		}
+	}
+
+	template<String S = std::string_view>
+	static void write_string( const std::filesystem::path& path, S&& data )
+	{
+		using char_type = string_unit_t<S>;
+
+		// Try to open file as string for write.
+		//
+		std::basic_ofstream<char_type> file( path );
+		if ( !file.good() ) logger::error( "File %s cannot be opened for write.", path );
+
+		// Write the whole string and return.
+		//
+		std::basic_string_view<char_type> view = data;
+		file.write( view.begin(), view.size() );
 	}
 };

@@ -142,22 +142,34 @@ namespace vtil
 	concept Same = std::is_same_v<A, B>;
 	template <typename From, typename To>
 	concept Convertible = std::is_convertible_v<From, To>;
+	template <template<typename...> typename Tmp, typename T>
+	concept Specialization = is_specialization_v<Tmp, T>;
 	template<typename T, typename... Args>
 	concept Constructable = requires { T( std::declval<Args>()... ); };
 	template<typename T, typename X>
 	concept Assignable = requires( T r, X v ) { r = v; };
 
+	// Functor traits.
+	//
 	template<typename T, typename Ret, typename... Args>
 	concept Invocable = requires( T&& x, Args&&... args ) { Convertible<decltype( x( std::forward<Args>( args )... ) ), Ret>; };
 	template<typename T, typename... Args>
 	concept InvocableWith = requires( T&& x, Args&&... args ) { x( std::forward<Args>( args )... ); };
 
+	// Container traits.
+	//
 	template<typename T>
 	concept Iterable = requires( T v ) { std::begin( v ); std::end( v ); };
 	template<typename T>
 	concept ReverseIterable = requires( T v ) { std::rbegin( v ); std::rend( v ); };
+
+	template<Iterable T> 
+	using iterator_reference_type_t = decltype( *std::begin( std::declval<T>() ) );
+	template<Iterable T> 
+	using iterator_value_type_t = typename std::remove_cvref_t<iterator_reference_type_t<T>>;
+
 	template<typename V, typename T>
-	concept TypedIterable = Iterable<T> && requires( T v ) { Convertible<decltype( *std::begin( v ) ), V&>; };
+	concept TypedIterable = Iterable<T> && Same<iterator_value_type_t<T>, V>;
 
 	template<typename T>
 	concept DefaultRandomAccessible = requires( T v ) { make_const( v )[ 0 ]; std::size( v ); };
@@ -166,20 +178,41 @@ namespace vtil
 	template<typename T>
 	concept RandomAccessible = DefaultRandomAccessible<T> || CustomRandomAccessible<T>;
 
+	// String traits.
+	//
 	template<typename T>
-	concept Lockable = requires( T& x ) { x.lock(); x.unlock(); };
+	concept CppStringView = is_specialization_v<std::basic_string_view, T>;
+	template<typename T>
+	concept CppString = is_specialization_v<std::basic_string, T>;
+	template<typename T>
+	concept CString = std::is_pointer_v<T> &&
+		( std::is_same_v<std::remove_cv_t<std::remove_pointer_t<T>>, char> ||
+		  std::is_same_v<std::remove_cv_t<std::remove_pointer_t<T>>, wchar_t> ||
+		  std::is_same_v<std::remove_cv_t<std::remove_pointer_t<T>>, char8_t> ||
+		  std::is_same_v<std::remove_cv_t<std::remove_pointer_t<T>>, char16_t> ||
+		  std::is_same_v<std::remove_cv_t<std::remove_pointer_t<T>>, char32_t> );
+
+	template<typename T>
+	concept String = CppString<T> || CString<T> || CppStringView<T>;
+
+	template<String T>
+	using string_unit_t = typename std::remove_cvref_t<decltype( std::declval<T>()[ 0 ] )>;
+	template<String T>
+	using string_view_t = typename std::basic_string_view<string_unit_t<T>>;
+
+	// Atomicity-related traits.
+	//
+	template<typename T>
+	concept Lockable = requires( T & x ) { x.lock(); x.unlock(); };
 	template<typename T>
 	concept Atomic = is_specialization_v<std::atomic, T>;
 
+	// Chrono traits.
+	//
 	template<typename T>
 	concept Duration = is_specialization_v<std::chrono::duration, T>;
 	template<typename T>
 	concept Timestamp = is_specialization_v<std::chrono::time_point, T>;
-
-	// Type of the iterated value.
-	//
-	template<Iterable T> using iterator_reference_type_t = decltype( *std::begin( std::declval<T>() ) );
-	template<Iterable T> using iterator_value_type_t =     std::remove_cvref_t<iterator_reference_type_t<T>>;
 
 	// Constructs a static constant given the type and parameters, returns a reference to it.
 	//
@@ -214,7 +247,7 @@ namespace vtil
 	namespace impl
 	{
 		template<typename T>
-		using decay_ptr = std::conditional_t<std::is_pointer_v<std::remove_cvref_t<T>>, std::remove_cvref_t<T>, T>;
+		using decay_ptr = typename std::conditional_t<std::is_pointer_v<std::remove_cvref_t<T>>, std::remove_cvref_t<T>, T>;
 
 		template<typename T, typename = void> struct make_const {};
 		template<typename T> struct make_const<T&, void>    { using type = std::add_const_t<T>&;    };
@@ -288,6 +321,11 @@ namespace vtil
 	using static_function_t = R(*)(A...);
 	template<typename C, typename R, typename... A>
 	using member_function_t = R(C::*)(A...);
+
+	// Helper used to replace types within parameter packs.
+	//
+	template<typename T, typename O>
+	using swap_type_t = O;
 
 	// Implement helpers for basic series creation.
 	//
