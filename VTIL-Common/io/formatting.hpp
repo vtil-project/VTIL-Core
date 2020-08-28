@@ -112,7 +112,41 @@ namespace vtil::format
 			}
 			return in;
 		}
+
+		// Special type tags for integer formatting.
+		//
+		template<Integral T, bool hex>
+		struct strongly_formatted_integer
+		{
+			T value = 0;
+
+			constexpr strongly_formatted_integer() {}
+			constexpr strongly_formatted_integer( T value ) : value( value ) {}
+			constexpr operator T&() { return value; }
+			constexpr operator const T&() const { return value; }
+
+			std::string to_string() const
+			{
+				// Pick the base format.
+				//
+				const char* fmts[] = { "0x%llx", "-0x%llx", "%llu", "-%llu" };
+				size_t fidx = hex ? 0 : 2;
+
+				// Adjust format if needed, find absolute value to use.
+				//
+				uint64_t r;
+				if ( std::is_signed_v<T> && value < 0 ) r = ( uint64_t ) -value, fidx++;
+				else                                    r = ( uint64_t ) value;
+
+				// Allocate buffer [ 3 + log_b(2^64) ], write to it and return.
+				//
+				char buffer[ ( hex ? 16 : 20 ) + 3 ];
+				return std::string{ buffer, buffer + snprintf( buffer, std::size( buffer ), fmts[fidx], r ) };
+			}
+		};
 	};
+	template<Integral T> using hex_t = impl::strongly_formatted_integer<T, true>;
+	template<Integral T> using dec_t = impl::strongly_formatted_integer<T, false>;
 
 	// Suffixes used to indicate registers of N bytes.
 	//
