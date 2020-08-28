@@ -109,8 +109,8 @@ namespace vtil
 			//
 			constexpr base_iterator& operator++() { ++index; return *this; }
 			constexpr base_iterator& operator--() { --index; return *this; }
-			constexpr base_iterator operator++( int ) { auto s = *this; operator--(); return s; }
-			constexpr base_iterator operator--( int ) { auto s = *this; operator++(); return s; }
+			constexpr base_iterator operator++( int ) { auto s = *this; operator++(); return s; }
+			constexpr base_iterator operator--( int ) { auto s = *this; operator--(); return s; }
 
 			// Equality check against another iterator.
 			//

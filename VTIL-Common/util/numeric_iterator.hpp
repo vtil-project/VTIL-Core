@@ -43,7 +43,7 @@ namespace vtil
 			// Generic iterator typedefs.
 			//
 			using iterator_category = std::bidirectional_iterator_tag;
-			using difference_type =   size_t;
+			using difference_type =   std::make_signed_t<T>;
 			using value_type =        T;
 			using pointer =           T*;
 			using reference =         T&;
@@ -62,8 +62,8 @@ namespace vtil
 			//
 			constexpr iterator& operator++() { at++; return *this; }
 			constexpr iterator& operator--() { at--; return *this; }
-			constexpr iterator operator++( int ) { auto s = *this; operator--(); return s; }
-			constexpr iterator operator--( int ) { auto s = *this; operator++(); return s; }
+			constexpr iterator operator++( int ) { auto s = *this; operator++(); return s; }
+			constexpr iterator operator--( int ) { auto s = *this; operator--(); return s; }
 
 			// Equality check against another iterator.
 			//

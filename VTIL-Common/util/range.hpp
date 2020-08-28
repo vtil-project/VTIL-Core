@@ -49,10 +49,13 @@ namespace vtil
 			//
 			struct iterator
 			{
-				// Modify certain traits.
+				// Define iterator traits.
 				//
+				using iterator_category = typename std::iterator_traits<base_iterator>::iterator_category;
+				using difference_type =   typename std::iterator_traits<base_iterator>::difference_type;
 				using reference =         decltype( std::declval<F>()( *std::declval<base_iterator>() ) );
-				using value_type =        typename std::remove_reference_t<reference>;
+				using value_type =        std::remove_reference_t<reference>;
+				using pointer =           value_type*;
 				
 				// Constructed by the original iterator and a reference to transformation function.
 				//
@@ -65,8 +68,8 @@ namespace vtil
 				//
 				constexpr iterator& operator++() { at++; return *this; }
 				constexpr iterator& operator--() { at--; return *this; }
-				constexpr iterator operator++( int ) { auto s = *this; operator--(); return s; }
-				constexpr iterator operator--( int ) { auto s = *this; operator++(); return s; }
+				constexpr iterator operator++( int ) { auto s = *this; operator++(); return s; }
+				constexpr iterator operator--( int ) { auto s = *this; operator--(); return s; }
 
 				// Equality check against another iterator.
 				//
@@ -75,7 +78,7 @@ namespace vtil
 
 				// Override accessor to apply transformation where relevant.
 				//
-				constexpr reference operator*() const { return transform( base_iterator::operator*() ); }
+				constexpr reference operator*() const { return transform( *at ); }
 			};
 			using const_iterator = iterator;
 
@@ -89,7 +92,7 @@ namespace vtil
 			//
 			constexpr iterator begin() const { return { ibegin, transform }; }
 			constexpr iterator end() const   { return { iend, transform }; }
-			constexpr size_t size() const    { return ( size_t ) std::distance( begin(), end() ); }
+			constexpr size_t size() const    { return ( size_t ) std::distance( ibegin, iend ); }
 		};
 	};
 
