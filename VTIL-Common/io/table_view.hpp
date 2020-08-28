@@ -87,7 +87,7 @@ namespace vtil::format
             std::vector<std::array<std::string, field_count>> string_entries;
 			string_entries.reserve( entry_count );
 
-			for ( auto eit = std::begin( data_source ); eit != std::end( data_source ); eit++ )
+			for ( auto eit = std::begin( data_source ); eit != std::end( data_source ); ++eit )
 			{
 				auto& output = string_entries.emplace_back();
 				make_constant_series<field_count>( [ & ] ( auto tag )
