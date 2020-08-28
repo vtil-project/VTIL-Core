@@ -30,10 +30,10 @@
 #include <cstring>
 #include <cstdio>
 #include <type_traits>
-#include <chrono>
 #include <exception>
 #include <optional>
 #include <filesystem>
+#include <numeric>
 #include "../util/lt_typeid.hpp"
 #include "../util/type_helpers.hpp"
 #include "../util/time.hpp"
@@ -347,6 +347,140 @@ namespace vtil::format
 		if ( value >= 0 ) return str( "+ 0x%llx", value );
 		else              return str( "- 0x%llx", -value );
 	}
+
+	// Table renderer configuration.
+    //
+    struct table_rendering_configuration
+    {
+        char vertical_delimiter =   '|';
+        char horizontal_delimiter = '-';
+        size_t left_pad =           0;
+        size_t right_pad =          0;
+    };
+
+    // Declare table structure, data source container must hold a tuple with
+    // every element being string convertible by ::as_string.
+    //
+    template<Iterable C> requires( Specialization<std::tuple, iterator_value_type_t<C>> && 
+                                   StringConvertible<C> )
+    struct table
+    {
+        // Required typedefs.
+        //
+        using entry_type_t = typename iterator_value_type_t<C>;
+        
+        // Declare field count.
+        //
+        static constexpr size_t field_count = std::tuple_size_v<iterator_value_type_t<C>>;
+        
+        // Takes a data source and a list of labels.
+        //
+        C&& data_source;
+        std::array<std::string_view, field_count> labels;
+
+        constexpr table( std::array<std::string_view, field_count> labels, C&& data_source )
+            : data_source( std::forward<C>( data_source ) ), labels( std::move( labels ) ) {}
+
+        // Declare string conversion.
+        //
+        std::string to_string( table_rendering_configuration config = {} ) const
+        {
+            // Determine entry count.
+            //
+            const size_t entry_count = std::size( data_source );
+
+            // Convert fields in each entry into string.
+            //
+            std::vector<std::array<std::string, field_count>> string_entries( entry_count );
+            for ( auto [output, entry] : zip( string_entries, data_source ) )
+            {
+                make_constant_series<field_count>( [ & ] ( auto tag )
+                {
+                    auto at = []( auto&& x ) -> auto& { return std::get<decltype( tag )::value>( x ); };
+                    output[ decltype( tag )::value ] = as_string( at( entry ) );
+                } );
+            }
+
+            // Determine field lengths.
+            //
+            std::array<size_t, field_count> field_lengths;
+            for ( auto [len, label] : zip( field_lengths, labels ) )
+                len = label.length();
+            for ( auto& fields : string_entries )
+            {
+                for ( auto [len, label] : zip( field_lengths, fields ) )
+                    len = std::max( len, label.length() );
+            }
+
+            // Allocate a buffer for the output.
+            //
+            const size_t line_length = 
+                /* field data */ std::accumulate( field_lengths.begin(), field_lengths.end(), 0ull ) + 
+                /* delimiters */ 2 + field_count * 3 - 1 +
+                /* new line   */ 1;
+            const size_t line_count = entry_count + /*labels*/ 1 + /*delimiters*/ 3;
+            
+            std::string result( line_count * ( line_length + config.left_pad + config.right_pad ), '\0' );
+            
+            // Declare the iterator and data primitives.
+            //
+            auto iterator = result.begin();
+            auto write =   [ & ] ( auto... cs )                { ( ( *iterator++ = cs ), ... ); };
+            auto write_n = [ & ] ( const std::string_view& v ) { iterator = std::copy( v.begin(), v.end(), iterator ); };
+            auto fill =    [ & ] ( char c, size_t n )          { iterator = std::fill_n( iterator, n, c ); };
+            auto begl =    [ & ] ()                            { fill( ' ', config.left_pad ); };
+            auto endl =    [ & ] () mutable                    { fill( ' ', config.right_pad ); *( iterator - 1 ) = '\n'; };
+
+            // Declare helpers for writing lines.
+            //
+            auto write_table_limit = [ & ] ()
+            {
+                begl();
+                fill( config.horizontal_delimiter, line_length );
+                endl();
+            };
+            auto write_fields = [ & ] ( const auto& fields )
+            {
+                begl();
+                write( config.vertical_delimiter, ' ' );
+                for ( auto [field, len] : zip( fields, field_lengths ) )
+                {
+                    auto end_real = iterator + len;
+                    write_n( field );
+                    if ( end_real > iterator )
+                        fill( ' ', end_real - iterator );
+                    write( ' ', config.vertical_delimiter, ' ' );
+                }
+                endl();
+            };
+            auto write_label_delim = [ & ] ()
+            {
+                begl();
+                write( config.vertical_delimiter, config.horizontal_delimiter );
+                for ( size_t field_len : field_lengths )
+                {
+                    fill( config.horizontal_delimiter, field_len );
+                    write( config.horizontal_delimiter, config.vertical_delimiter, config.horizontal_delimiter );
+                }
+                endl();
+            };
+
+            // Format the whole table and return the result.
+            //
+            write_table_limit();
+            write_fields( labels );
+            write_label_delim();
+            for( auto& fields : string_entries )
+                write_fields( fields );
+            write_table_limit();
+            return result;
+        }
+    };
+
+    // Declare deduction guide.
+    //
+    template<Iterable C>
+    table( std::initializer_list<std::string_view> labels, C&& )->table<C>;
 };
 #undef HAS_RTTI
 
