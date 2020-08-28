@@ -34,6 +34,7 @@
 #include <optional>
 #include <filesystem>
 #include <numeric>
+#include <string_view>
 #include "../util/lt_typeid.hpp"
 #include "../util/type_helpers.hpp"
 #include "../util/time.hpp"
@@ -378,7 +379,7 @@ namespace vtil::format
         C&& data_source;
         std::array<std::string_view, field_count> labels;
 
-        constexpr table( std::array<std::string_view, field_count> labels, C&& data_source )
+        constexpr table( C&& data_source, std::array<std::string_view, field_count> labels )
             : data_source( std::forward<C>( data_source ) ), labels( std::move( labels ) ) {}
 
         // Declare string conversion.
@@ -483,7 +484,7 @@ namespace vtil::format
     // Declare deduction guide.
     //
     template<Iterable C>
-    table( std::initializer_list<std::string_view> labels, C&& )->table<C>;
+    table( C&&, std::initializer_list<std::string_view> labels )->table<C>;
 };
 #undef HAS_RTTI
 

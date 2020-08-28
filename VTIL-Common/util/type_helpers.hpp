@@ -31,12 +31,12 @@
 #include <stdint.h>
 #include <array>
 #include <tuple>
-#include <string_view>
 #include <string>
 #include <atomic>
 #include <vector>
-#include <initializer_list>
 #include <chrono>
+#include <string_view>
+#include <initializer_list>
 #include "intrinsics.hpp"
 
 namespace vtil
@@ -373,77 +373,6 @@ namespace vtil
 	{
 		return impl::make_constant_series<decltype( N )>( std::forward<T>( f ), std::make_integer_sequence<decltype( N ), N>{} );
 	}
-
-	// Resets the value of the object referenced.
-	//
-	template<typename T>
-	concept CustomResettable = requires( T& v ) { v.reset(); };
-	template<typename T>
-	concept CustomClearable =  requires( T& v ) { v.clear(); };
-
-	template<typename T>
-	static constexpr auto null_value( T& ref )
-	{
-		// Handle numerics and pointers.
-		//
-		if constexpr ( std::is_arithmetic_v<T> )   { ref = 0;       return true; }
-		else if constexpr ( std::is_pointer_v<T> ) { ref = nullptr; return true; }
-
-		// If it has ::reset or ::clear, invoke it.
-		//
-		else if constexpr ( CustomResettable<T> )  { ref.reset();   return true; }
-		else if constexpr ( CustomClearable<T> )   { ref.clear();   return true; }
-
-		// Try assigning default value:
-		//
-		else if constexpr ( std::is_move_assignable_v<T> || std::is_copy_assignable_v<T> )
-		{
-			// Try constructing using T(void), T(nullptr), T(std::nullopt), T(0).
-			//
-			if constexpr      ( Constructable<T> )                 { ref = T();                 return true; }
-			else if constexpr ( Constructable<T, std::nullptr_t> ) { ref = T( nullptr );        return true; }
-			else if constexpr ( Constructable<T, std::nullopt_t> ) { ref = T( std::nullopt );   return true; }
-			else if constexpr ( Constructable<T, int8_t> )         { ref = T( ( int8_t ) 0 );   return true; }
-			else if constexpr ( Constructable<T, uint8_t> )        { ref = T( ( uint8_t ) 0u ); return true; }
-		}
-		// -- Fail.
-	}
-	template<typename T>
-	concept Nullable = !std::is_void_v<decltype( null_value<T>( std::declval<T&>() ) )>;
-
-	// Almost equivalent behaviour to std::move, but will make sure target is invalidated. If a custom
-	// move constructor does not exist, e.g. a trivial type, will assign default value after moving from it.
-	//
-	template<typename T>
-	[[nodiscard]] static constexpr T possess_value( T& v )
-	{
-		// If trivial type, use exchange (likely to generate single XCHG).
-		//
-		if constexpr ( std::is_integral_v<T> || std::is_floating_point_v<T> || std::is_pointer_v<T> )
-		{
-			return std::exchange( v, ( T ) 0 );
-		}
-		// If trivially move constructable, std::move will not invalidate the target so invoke 
-		// move and invalidate manually here.
-		//
-		else if constexpr ( std::is_move_constructible_v<T> && Nullable<T> )
-		{
-			T value{ std::move( v ) };
-			null_value( v );
-			return value;
-		}
-		// If there is a copy constructor, copy it and then reset.
-		//
-		else if constexpr ( std::is_copy_constructible_v<T> && Nullable<T> )
-		{
-			T value{ v };
-			null_value( v );
-			return value;
-		}
-		// -- Fail.
-	}
-	template<typename T>
-	concept Possessable = !std::is_void_v<decltype( possess_value( std::declval<T&>() ) )>;
 
 	// Bitcasting.
 	//
