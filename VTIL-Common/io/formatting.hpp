@@ -214,7 +214,7 @@ namespace vtil::format
 		{
 			if constexpr ( StringConvertible<decltype( x.first )> && StringConvertible<decltype( x.second )> )
 			{
-				return "{" + as_string( x.first ) + ", " + as_string( x.second ) + "}";
+				return "(" + as_string( x.first ) + ", " + as_string( x.second ) + ")";
 			}
 			else return type_tag<T>{};
 		}

@@ -121,6 +121,8 @@ namespace vtil
 	concept Trivial = std::is_trivial_v<T>;
 	template<typename T>
 	concept Enum = std::is_enum_v<T>;
+	template<typename T>
+	concept Tuple = is_specialization_v<std::tuple, T> || is_specialization_v<std::pair, T>;
 
 	template<typename T>
 	concept TriviallyCopyable = std::is_trivially_copyable_v<T>;
