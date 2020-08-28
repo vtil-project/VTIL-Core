@@ -39,6 +39,7 @@
 #include "../util/type_helpers.hpp"
 #include "../util/time.hpp"
 #include "../util/numeric_iterator.hpp"
+#include "../util/intrinsics.hpp"
 #include "enum_name.hpp"
 
 #ifdef __GNUG__
@@ -115,96 +116,6 @@ namespace vtil::format
 		}
 	};
 
-	// Special type tags for integer formatting.
-	//
-	template<Integral T, bool hex>
-	struct strongly_formatted_integer
-	{
-		T value = 0;
-		constexpr strongly_formatted_integer() {}
-		constexpr strongly_formatted_integer( T value ) : value( value ) {}
-		constexpr operator T& ( ) { return value; }
-		constexpr operator const T& ( ) const { return value; }
-
-		std::string to_string() const
-		{
-			// Pick the base format.
-			//
-			const char* fmts[] = { "0x%llx", "-0x%llx", "%llu", "-%llu" };
-			size_t fidx = hex ? 0 : 2;
-
-			// Adjust format if needed, find absolute value to use.
-			//
-			uint64_t r;
-			if ( std::is_signed_v<T> && value < 0 ) r = ( uint64_t ) -int64_t( value ), fidx++;
-			else                                    r = ( uint64_t ) value;
-
-			// Allocate buffer [ 3 + log_b(2^64) ], write to it and return.
-			//
-			char buffer[ ( hex ? 16 : 20 ) + 3 ];
-			return std::string{ buffer, buffer + snprintf( buffer, std::size( buffer ), fmts[ fidx ], r ) };
-		}
-	};
-	template<Integral T> using hex_t = strongly_formatted_integer<T, true>;
-	template<Integral T> using dec_t = strongly_formatted_integer<T, false>;
-
-	// Special type tag for memory/file size formatting.
-	//
-	template<Integral T = size_t>
-	struct byte_count_t
-	{
-		static constexpr std::array unit_abbrv = { "b", "kb", "mb", "gb", "tb" };
-
-		T value = 0;
-		constexpr byte_count_t() {}
-		constexpr byte_count_t( T value ) : value( value ) {}
-		constexpr operator T&() { return value; }
-		constexpr operator const T&() const { return value; }
-
-		std::string to_string() const
-		{
-			// Convert to double.
-			//
-			double fvalue = ( double ) value;
-
-			// Iterate unit list in descending order.
-			//
-			for ( auto [abbrv, i] : backwards( zip( unit_abbrv, iindices ) ) )
-			{
-				double limit = pow( 1024.0, i );
-
-				// If value is larger than the unit given or if we're at the last unit:
-				//
-				if ( std::abs( fvalue ) >= limit || abbrv == *std::begin( unit_abbrv ) )
-				{
-					// Convert float to string.
-					//
-					char buffer[ 32 ];
-					snprintf( buffer, 32, "%.2lf%s", fvalue / limit, abbrv );
-					return buffer;
-				}
-			}
-			unreachable();
-		}
-	};
-
-	// Special type tag for character formatting.
-	//
-	template<typename T = char>
-	struct strong_character_t
-	{
-		T value = 0;
-		constexpr strong_character_t() {}
-		constexpr strong_character_t( T value ) : value( value ) {}
-		constexpr operator T& ( ) { return value; }
-		constexpr operator const T& ( ) const { return value; }
-
-		std::string to_string() const
-		{
-			return std::string( 1, ( char ) value );
-		}
-	};
-
 	// Suffixes used to indicate registers of N bytes.
 	//
 	static constexpr char suffix_map[] = { 0, VTIL_FMT_SUFFIX_1, VTIL_FMT_SUFFIX_2, 0, VTIL_FMT_SUFFIX_4, 0, 0, 0, VTIL_FMT_SUFFIX_8 };
@@ -252,7 +163,7 @@ namespace vtil::format
 	concept StringConvertible = requires( T v ) { !is_specialization_v<type_tag, decltype( as_string( v ) )>; };
 
 	template<typename T>
-	static auto as_string( const T& x )
+	__forceinline static auto as_string( const T& x )
 	{
 		using base_type = std::decay_t<T>;
 		
@@ -378,7 +289,7 @@ namespace vtil::format
 	// Used to fix std::(w)string usage in combination with "%(l)s".
 	//
 	template<typename T>
-	inline static auto fix_parameter( T&& x )
+	__forceinline static auto fix_parameter( T&& x )
 	{
 		using base_type = std::remove_cvref_t<T>;
 
@@ -452,175 +363,6 @@ namespace vtil::format
 		if ( value >= 0 ) return str( "+ 0x%llx", value );
 		else              return str( "- 0x%llx", -value );
 	}
-
-	// Table renderer configuration.
-    //
-    struct table_rendering_configuration
-    {
-        char vertical_delimiter =   '|';
-        char horizontal_delimiter = '-';
-        size_t left_pad =           0;
-        size_t right_pad =          0;
-		size_t max_entries =        std::numeric_limits<size_t>::max();
-		size_t field_max_length =   std::numeric_limits<size_t>::max();
-    };
-
-    // Declare table structure, data source container must hold a tuple with
-    // every element being string convertible by ::as_string.
-    //
-    template<Iterable C> requires( Tuple<iterator_value_type_t<C>> && 
-                                   StringConvertible<C> )
-    struct table_view
-    {
-        // Required typedefs.
-        //
-        using entry_type_t = iterator_value_type_t<C>;
-        
-        // Declare field count.
-        //
-        static constexpr size_t field_count = std::tuple_size_v<iterator_value_type_t<C>>;
-        
-        // Takes a data source, a list of labels, and optionally rendering configuration.
-        //
-        C&& data_source;
-		table_rendering_configuration config;
-		std::array<std::string_view, field_count> labels;
-		
-		constexpr table_view( C&& data_source, std::array<std::string_view, field_count> labels, table_rendering_configuration config = {} )
-            : data_source( std::forward<C>( data_source ) ), labels( std::move( labels ) ), config( std::move( config ) ) {}
-
-        // Declare string conversion.
-        //
-        std::string to_string() const
-        {
-            // Determine entry count.
-            //
-            const size_t entry_count = std::size( data_source );
-
-            // Convert fields in each entry into string and resize if over limit.
-            //
-            std::vector<std::array<std::string, field_count>> string_entries;
-			string_entries.reserve( entry_count );
-
-			for ( auto eit = std::begin( data_source ); eit != std::end( data_source ); eit++ )
-			{
-				auto& output = string_entries.emplace_back();
-				make_constant_series<field_count>( [ & ] ( auto tag )
-				{
-					auto at = []( auto&& x ) -> auto& { return std::get<decltype( tag )::value>( x ); };
-					std::string& str = output[ decltype( tag )::value ];
-
-					str = as_string( at( *eit ) );
-					if ( str.length() > config.field_max_length )
-					{
-						str.resize( config.field_max_length );
-						if ( config.field_max_length > 3 )
-							std::fill_n( str.end() - 3, 3, '.' );
-					}
-				} );
-
-				// Break if limit reached.
-				//
-				if ( string_entries.size() > config.max_entries )
-					break;
-			}
-
-            // Determine field lengths.
-            //
-            std::array<size_t, field_count> field_lengths;
-            for ( auto [len, label] : zip( field_lengths, labels ) )
-                len = label.length();
-            for ( auto& fields : string_entries )
-            {
-                for ( auto [len, label] : zip( field_lengths, fields ) )
-                    len = std::max( len, label.length() );
-            }
-
-            // Allocate a buffer for the output.
-            //
-			const bool table_overflow = string_entries.size() != entry_count;
-            const size_t line_length = 
-                /* field data */ std::accumulate( field_lengths.begin(), field_lengths.end(), 0ull ) + 
-                /* delimiters */ 2 + field_count * 3 - 1 +
-                /* new line   */ 1;
-            const size_t line_count = 
-				/* active entries */ string_entries.size() + 
-				/* labels         */ 1 + 
-				/* delimiters     */ 3 + table_overflow;
-            
-            std::string result( line_count * ( line_length + config.left_pad + config.right_pad ), '\0' );
-            
-            // Declare the iterator and data primitives.
-            //
-            auto iterator = result.begin();
-            auto write =   [ & ] ( auto... cs )                { ( ( *iterator++ = cs ), ... ); };
-            auto write_n = [ & ] ( const std::string_view& v ) { iterator = std::copy( v.begin(), v.end(), iterator ); };
-            auto fill =    [ & ] ( char c, size_t n )          { iterator = std::fill_n( iterator, n, c ); };
-            auto begl =    [ & ] ()                            { fill( ' ', config.left_pad ); };
-            auto rendl =   [ & ] ()                            { fill( ' ', config.right_pad ); *( iterator - 1 ) = '\n'; };
-
-            // Declare helpers for writing lines.
-            //
-            auto write_table_limit = [ & ] ()
-            {
-                begl();
-                fill( config.horizontal_delimiter, line_length );
-                rendl();
-            };
-            auto write_fields = [ & ] ( const auto& fields )
-            {
-                begl();
-                write( config.vertical_delimiter, ' ' );
-                for ( auto [field, len] : zip( fields, field_lengths ) )
-                {
-                    auto end_real = iterator + len;
-                    write_n( field );
-                    if ( end_real > iterator )
-                        fill( ' ', end_real - iterator );
-                    write( ' ', config.vertical_delimiter, ' ' );
-                }
-                rendl();
-            };
-            auto write_label_delim = [ & ] ()
-            {
-                begl();
-                write( config.vertical_delimiter, config.horizontal_delimiter );
-                for ( size_t field_len : field_lengths )
-                {
-                    fill( config.horizontal_delimiter, field_len );
-                    write( config.horizontal_delimiter, config.vertical_delimiter, config.horizontal_delimiter );
-                }
-                rendl();
-            };
-			auto write_overflow_delim = [ & ] ()
-			{
-				if ( table_overflow )
-				{
-					begl();
-					write( config.vertical_delimiter, ' ', '.', '.', '.' );
-					fill( ' ', line_length - 7 );
-					write( config.vertical_delimiter, ' ' );
-					rendl();
-				}
-			};
-
-            // Format the whole table and return the result.
-            //
-            write_table_limit();
-            write_fields( labels );
-            write_label_delim();
-            for( auto& fields : string_entries )
-                write_fields( fields );
-			write_overflow_delim();
-            write_table_limit();
-            return result;
-        }
-    };
-
-    // Declare deduction guide.
-    //
-    template<typename C> table_view( C&&, std::initializer_list<std::string_view> )->table_view<C>;
-	template<typename C> table_view( C&&, std::initializer_list<std::string_view>, table_rendering_configuration )->table_view<C>;
 };
 #undef HAS_RTTI
 

@@ -1,6 +1,8 @@
 #pragma once
 #include "../../io/asserts.hpp"
 #include "../../io/formatting.hpp"
+#include "../../io/strong_formatting.hpp"
+#include "../../io/table_view.hpp"
 #include "../../io/logger.hpp"
 #include "../../io/enum_name.hpp"
 #include "../../io/fileio.hpp"
