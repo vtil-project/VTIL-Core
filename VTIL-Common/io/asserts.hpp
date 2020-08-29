@@ -47,6 +47,19 @@ namespace vtil
 			else                                logger::error( "Assertion failure, %s", string );
 		}
 	}
+
+	// A helper to throw formatted strings.
+	//
+	template<typename... params>
+	__forceinline static void fthrow [[noreturn]] ( const char* fmt, params&&... ps )
+	{
+		// Format error message.
+		//
+		throw std::runtime_error( format::str(
+			fmt,
+			format::fix_parameter<params>( std::forward<params>( ps ) )...
+		) );
+	}
 };
 
 // Declare assert macro.

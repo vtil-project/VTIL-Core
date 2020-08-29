@@ -125,7 +125,7 @@ namespace vtil::format
 
 	// Explicit percentage formatting.
 	//
-	template<FloatingPoint T = float>
+	template<FloatingPoint T = double>
 	struct percentage
 	{
 		T value = 0.0f;

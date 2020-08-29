@@ -182,8 +182,14 @@ namespace vtil::format
 				if ( table_overflow )
 				{
 					begl();
-					write( config.vertical_delimiter, ' ', '.', '.', '.' );
-					fill( ' ', line_length - 7 );
+					write( config.vertical_delimiter, ' ' );
+
+					std::string indicator = format::str( "... (%d more)", entry_count - string_entries.size() );
+					if ( indicator.size() > ( line_length - 4 ) )
+						indicator.resize( line_length - 4 );
+					write_n( indicator );
+					fill( ' ', line_length - 4 - indicator.size() );
+					
 					write( config.vertical_delimiter, ' ' );
 					rendl();
 				}
