@@ -119,7 +119,7 @@ namespace vtil::format
 					// Convert float to string.
 					//
 					char buffer[ 32 ];
-					snprintf( buffer, 32, "%.2lf%s", fvalue / limit, abbrv );
+					snprintf( buffer, 32, "%.1lf%s", fvalue / limit, abbrv );
 					return buffer;
 				}
 			}

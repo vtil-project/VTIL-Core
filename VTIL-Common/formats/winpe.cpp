@@ -514,7 +514,7 @@ namespace vtil
 		auto dos_header = ( dos_header_t* ) self->cdata();
 		auto* nt_hdrs = dos_header->get_nt_headers<true>();
 
-		if( nt_hdrs->file_header.machine == machine_id::amd64 )
+		if( nt_hdrs->optional_header.magic == OPT_HDR64_MAGIC )
 			return fn( carry_const( self, ( nt_headers_x64_t* ) nt_hdrs ) );
 		else
 			return fn( carry_const( self, ( nt_headers_x86_t* ) nt_hdrs ) );
@@ -523,7 +523,7 @@ namespace vtil
 	bool pe_image::is_pe64() const
 	{
 		auto dos_header = ( const dos_header_t* ) cdata();
-		return dos_header->get_nt_headers<true>()->file_header.machine == machine_id::amd64;
+		return dos_header->get_nt_headers<true>()->optional_header.magic == OPT_HDR64_MAGIC;
 	}
 	uint64_t pe_image::get_alignment_mask() const
 	{
@@ -678,10 +678,15 @@ namespace vtil
 		if ( nt_header->signature != NT_HDR_MAGIC )
 			return false;
 
-		// Validat optional header magic.
+		// Validate optional header magic.
 		//
 		if ( nt_header->optional_header.magic != OPT_HDR32_MAGIC &&
 			 nt_header->optional_header.magic != OPT_HDR64_MAGIC )
+			return false;
+
+		// Make sure it is not managed code.
+		//
+		if ( visit_nt( this, [ ] ( auto* nt ) { return nt->optional_header.data_directories.com_descriptor_directory.present(); } ) )
 			return false;
 		
 		// TODO: Validate more data...

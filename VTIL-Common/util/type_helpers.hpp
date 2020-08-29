@@ -173,7 +173,7 @@ namespace vtil
 	using iterator_value_type_t = typename std::remove_cvref_t<iterator_reference_type_t<T>>;
 
 	template<typename V, typename T>
-	concept TypedIterable = Iterable<T> && Same<iterator_value_type_t<T>, V>;
+	concept TypedIterable = Iterable<T> && Same<std::decay_t<iterator_value_type_t<T>>, std::decay_t<V>>;
 
 	template<typename T>
 	concept DefaultRandomAccessible = requires( T v ) { make_const( v )[ 0 ]; std::size( v ); };
