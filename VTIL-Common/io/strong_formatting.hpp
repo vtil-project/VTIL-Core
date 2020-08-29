@@ -34,36 +34,58 @@ namespace vtil::format
 {
 	// Explicit integer formatting.
 	//
-	template<Integral T, bool hex>
-	struct strongly_formatted_integer
+	template<Integral T>
+	struct decimal
 	{
 		T value = 0;
-		constexpr strongly_formatted_integer() {}
-		constexpr strongly_formatted_integer( T value ) : value( value ) {}
+		constexpr decimal() {}
+		constexpr decimal( T value ) : value( value ) {}
 		constexpr operator T& ( ) { return value; }
 		constexpr operator const T& ( ) const { return value; }
 
 		std::string to_string() const
 		{
-			// Pick the base format.
-			//
-			const char* fmts[] = { "0x%llx", "-0x%llx", "%llu", "-%llu" };
-			size_t fidx = hex ? 0 : 2;
+			const char* fmts[] = { "%llu", "-%llu" };
 
 			// Adjust format if needed, find absolute value to use.
 			//
 			uint64_t r;
-			if ( std::is_signed_v<T> && value < 0 ) r = ( uint64_t ) -int64_t( value ), fidx++;
+			bool sign = false;
+			if ( std::is_signed_v<T> && value < 0 ) r = ( uint64_t ) -int64_t( value ), sign = true;
 			else                                    r = ( uint64_t ) value;
 
-			// Allocate buffer [ 3 + log_b(2^64) ], write to it and return.
+			// Allocate buffer [ 3 + log_10(2^64) ], write to it and return.
 			//
-			char buffer[ ( hex ? 16 : 20 ) + 3 ];
-			return std::string{ buffer, buffer + snprintf( buffer, std::size( buffer ), fmts[ fidx ], r ) };
+			char buffer[ 20 + 3 ];
+			return std::string{ buffer, buffer + snprintf( buffer, std::size( buffer ), fmts[ ( size_t ) sign ], r ) };
 		}
 	};
-	template<Integral T> using hexadecimal = strongly_formatted_integer<T, true>;
-	template<Integral T> using decimal =     strongly_formatted_integer<T, false>;
+	template<Integral T>
+	struct hexadecimal
+	{
+		T value = 0;
+		constexpr hexadecimal() {}
+		constexpr hexadecimal( T value ) : value( value ) {}
+		constexpr operator T& ( ) { return value; }
+		constexpr operator const T& ( ) const { return value; }
+
+		std::string to_string() const
+		{
+			const char* fmts[] = { "0x%llx", "-0x%llx" };
+
+			// Adjust format if needed, find absolute value to use.
+			//
+			uint64_t r;
+			bool sign = false;
+			if ( std::is_signed_v<T> && value < 0 ) r = ( uint64_t ) -int64_t( value ), sign = true;
+			else                                    r = ( uint64_t ) value;
+
+			// Allocate buffer [ 3 + log_16(2^64) ], write to it and return.
+			//
+			char buffer[ 16 + 3 ];
+			return std::string{ buffer, buffer + snprintf( buffer, std::size( buffer ), fmts[ ( size_t ) sign ], r ) };
+		}
+	};
 
 	// Explicit memory/file size formatting.
 	//
