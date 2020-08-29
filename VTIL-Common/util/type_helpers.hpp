@@ -185,16 +185,16 @@ namespace vtil
 	// String traits.
 	//
 	template<typename T>
-	concept CppStringView = is_specialization_v<std::basic_string_view, T>;
+	concept CppStringView = is_specialization_v<std::basic_string_view, std::decay_t<T>>;
 	template<typename T>
-	concept CppString = is_specialization_v<std::basic_string, T>;
+	concept CppString = is_specialization_v<std::basic_string, std::decay_t<T>>;
 	template<typename T>
-	concept CString = std::is_pointer_v<T> &&
-		( std::is_same_v<std::remove_cv_t<std::remove_pointer_t<T>>, char> ||
-		  std::is_same_v<std::remove_cv_t<std::remove_pointer_t<T>>, wchar_t> ||
-		  std::is_same_v<std::remove_cv_t<std::remove_pointer_t<T>>, char8_t> ||
-		  std::is_same_v<std::remove_cv_t<std::remove_pointer_t<T>>, char16_t> ||
-		  std::is_same_v<std::remove_cv_t<std::remove_pointer_t<T>>, char32_t> );
+	concept CString = std::is_pointer_v<std::decay_t<T>> &&
+		( std::is_same_v<std::remove_cv_t<std::remove_pointer_t<std::decay_t<T>>>, char> ||
+		  std::is_same_v<std::remove_cv_t<std::remove_pointer_t<std::decay_t<T>>>, wchar_t> ||
+		  std::is_same_v<std::remove_cv_t<std::remove_pointer_t<std::decay_t<T>>>, char8_t> ||
+		  std::is_same_v<std::remove_cv_t<std::remove_pointer_t<std::decay_t<T>>>, char16_t> ||
+		  std::is_same_v<std::remove_cv_t<std::remove_pointer_t<std::decay_t<T>>>, char32_t> );
 
 	template<typename T>
 	concept String = CppString<T> || CString<T> || CppStringView<T>;
