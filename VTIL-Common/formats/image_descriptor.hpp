@@ -177,6 +177,10 @@ namespace vtil
 		//
 		virtual uint64_t get_image_base() const = 0;
 
+		// Returns the entry point if relevant.
+		//
+		virtual std::optional<uint64_t> get_entry_point() const = 0;
+
 		// Returns the image size and the raw byte array.
 		//
 		virtual size_t get_image_size() const = 0;

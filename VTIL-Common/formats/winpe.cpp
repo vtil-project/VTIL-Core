@@ -626,6 +626,18 @@ namespace vtil
 			return dos_header->get_nt_headers<false>()->optional_header.image_base;
 	}
 
+	std::optional<uint64_t> pe_image::get_entry_point() const
+	{
+		// Get the entry point from optional header, return nullopt if zero.
+		//
+		auto dos_header = ( const dos_header_t* ) cdata();
+		uint64_t ep = is_pe64()
+			? dos_header->get_nt_headers<true>()->optional_header.entry_point
+			: dos_header->get_nt_headers<false>()->optional_header.entry_point;
+		if ( ep ) return ep;
+		return std::nullopt;
+	}
+
 	bool pe_image::is_valid() const
 	{
 		// Get image boundaries and the dos header.
