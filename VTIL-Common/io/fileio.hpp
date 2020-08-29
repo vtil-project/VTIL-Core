@@ -45,7 +45,7 @@ namespace vtil::file
 		// Try to open file as binary for read.
 		//
 		std::ifstream file( path, std::ios::binary );
-		if ( !file.good() ) logger::error( "File %s cannot be opened for read.", path );
+		if ( !file.good() ) fthrow( "File %s cannot be opened for read.", path );
 
 		// Determine file length and validity.
 		//
@@ -66,7 +66,7 @@ namespace vtil::file
 		// Try to open file as binary for write.
 		//
 		std::ofstream file( path, std::ios::binary );
-		if ( !file.good() ) logger::error( "File %s cannot be opened for write.", path );
+		if ( !file.good() ) fthrow( "File %s cannot be opened for write.", path );
 
 		// Write the data and return.
 		//
@@ -79,7 +79,7 @@ namespace vtil::file
 		// Try to open file as binary for write.
 		//
 		std::ofstream file( path, std::ios::binary );
-		if ( !file.good() ) logger::error( "File %s cannot be opened for write.", path );
+		if ( !file.good() ) fthrow( "File %s cannot be opened for write.", path );
 
 		// Write every element and return.
 		//
@@ -102,7 +102,7 @@ namespace vtil::file
 		// Try to open file as string for read.
 		//
 		std::basic_ifstream<C> file( path );
-		if ( !file.good() ) logger::error( "File %s cannot be opened for read.", path );
+		if ( !file.good() ) fthrow( "File %s cannot be opened for read.", path );
 
 		// Read every lines and return.
 		//
@@ -118,7 +118,7 @@ namespace vtil::file
 		// Try to open file as string for read.
 		//
 		std::basic_ifstream<C> file( path );
-		if ( !file.good() ) logger::error( "File %s cannot be opened for read.", path );
+		if ( !file.good() ) fthrow( "File %s cannot be opened for read.", path );
 
 		// Read the whole file and return.
 		//
@@ -133,7 +133,7 @@ namespace vtil::file
 		// Try to open file as string for write.
 		//
 		std::basic_ofstream<char_type> file( path );
-		if ( !file.good() ) logger::error( "File %s cannot be opened for write.", path );
+		if ( !file.good() ) fthrow( "File %s cannot be opened for write.", path );
 
 		// Write every line and return.
 		//
@@ -152,7 +152,7 @@ namespace vtil::file
 		// Try to open file as string for write.
 		//
 		std::basic_ofstream<char_type> file( path );
-		if ( !file.good() ) logger::error( "File %s cannot be opened for write.", path );
+		if ( !file.good() ) fthrow( "File %s cannot be opened for write.", path );
 
 		// Write the whole string and return.
 		//
