@@ -133,6 +133,11 @@ namespace vtil::format
 		constexpr percentage( T value ) : value( value ) {}
 		constexpr operator T& ( ) { return value; }
 		constexpr operator const T& ( ) const { return value; }
+		
+		// Additional constructor for ratio.
+		//
+		template<Integral I>
+		constexpr percentage( I a, I b ) : value( T(a)/T(b) ) {}
 
 		std::string to_string() const
 		{
