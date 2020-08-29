@@ -182,7 +182,7 @@ namespace vtil::format
 
 		std::string to_string() const
 		{
-			return enum_name<T>{ value }.to_string();
+			return enum_name<T>::resolve( value );
 		}
 	};
 };

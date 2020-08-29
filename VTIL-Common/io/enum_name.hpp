@@ -35,7 +35,7 @@ namespace vtil
 {
 	// Used to generate names for enum types.
 	//
-	template<Enum T>
+	template<Enum T, typename = void>
 	struct enum_name
 	{
 		static constexpr int iteration_limit = 64;
@@ -101,15 +101,5 @@ namespace vtil
 			}
 			return std::to_string( value );
 		}
-
-		// Dummy constructor and string conversion.
-		//
-		std::string name;
-		enum_name( T v ) : name( resolve( v ) ) {}
-
-		std::string&& to_string() && { return std::move( name ); }
-		operator std::string&&()  && { return std::move( name ); }
-		const std::string& to_string() const& { return name; }
-		operator const std::string&()  const& { return name; }
 	};
 };
