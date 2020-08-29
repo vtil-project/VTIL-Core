@@ -71,8 +71,16 @@ namespace vtil::format
 		table_rendering_configuration config;
 		std::array<std::string_view, field_count> labels;
 		
-		constexpr table_view( C&& data_source, std::array<std::string_view, field_count> labels, table_rendering_configuration config = {} )
-			: data_source( std::forward<C>( data_source ) ), labels( std::move( labels ) ), config( std::move( config ) ) {}
+		constexpr table_view( C&& data_source, std::initializer_list<std::string_view> vlabels, table_rendering_configuration config = {} )
+			: data_source( std::forward<C>( data_source ) ), config( std::move( config ) ) 
+		{
+			auto it = vlabels.begin();
+			for ( size_t i = 0; i < field_count; i++ )
+			{
+				if ( it == vlabels.end() ) labels[ i ] = "";
+				else                       labels[ i ] = *it++;
+			}
+		}
 
 		// Declare string conversion.
 		//
