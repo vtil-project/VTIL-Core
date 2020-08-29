@@ -178,6 +178,10 @@ namespace vtil
 		//
 		virtual std::optional<uint64_t> get_entry_point() const = 0;
 
+		// Returns whether the image has any relocations.
+		//
+		virtual bool has_relocations() const = 0;
+
 		// Returns the image size and the raw byte array.
 		//
 		virtual size_t size() const = 0;
@@ -252,15 +256,6 @@ namespace vtil
 				if ( scn.execute && scn.physical_size && scn.virtual_size )
 					if ( fn( scn ) )
 						return;
-		}
-
-		// Returns whether the image has any relocations.
-		//
-		bool has_relocations() const
-		{
-			bool result = false;
-			enum_relocations( [ & ] ( auto&& ) { result = true; return true; } );
-			return result;
 		}
 
 		// Cast to bool redirects to ::is_valid.

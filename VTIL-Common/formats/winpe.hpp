@@ -57,6 +57,7 @@ namespace vtil
 		virtual void enum_relocations( const function_view<bool( const relocation_descriptor& )>& fn ) const override;
 		virtual uint64_t get_image_base() const override;
 		virtual size_t get_image_size() const override;
+		virtual bool has_relocations() const override;
 		virtual std::optional<uint64_t> get_entry_point() const override;
 		virtual size_t size() const override { return raw_bytes.size(); }
 		virtual void* data()  override { return raw_bytes.data(); }
