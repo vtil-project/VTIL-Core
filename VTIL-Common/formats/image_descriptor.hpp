@@ -28,6 +28,7 @@
 #pragma once
 #include <stdint.h>
 #include <string>
+#include <string_view>
 #include <optional>
 #include "../util/zip.hpp"
 #include "../util/function_view.hpp"
@@ -41,7 +42,7 @@ namespace vtil
 	{
 		// Name of the section.
 		//
-		std::string name = {};
+		std::string_view name = nullptr;
 
 		// Characteristics of the section.
 		//
