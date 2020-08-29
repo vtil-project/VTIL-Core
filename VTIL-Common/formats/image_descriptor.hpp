@@ -83,6 +83,15 @@ namespace vtil
 			}
 			return std::nullopt;
 		}
+
+		// Basic comparison operators, only checks the mapping.
+		//
+		bool operator==( const section_descriptor& o ) const
+		{
+			return virtual_address == o.virtual_address &&
+				   physical_address == o.physical_address;
+		}
+		bool operator!=( const section_descriptor& o ) const { return !operator==( o ); }
 	};
 
 	// Generic relocation information.
