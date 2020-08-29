@@ -71,14 +71,15 @@ namespace vtil::format
 		table_rendering_configuration config;
 		std::array<std::string_view, field_count> labels;
 		
-		constexpr table_view( C&& data_source, std::initializer_list<std::string_view> vlabels, table_rendering_configuration config = {} )
+		template<Iterable I = std::initializer_list<std::string_view>> requires Convertible<iterator_value_type_t<I>, std::string_view>
+		constexpr table_view( C&& data_source, I&& vlabels, table_rendering_configuration config = {} )
 			: data_source( std::forward<C>( data_source ) ), config( std::move( config ) ) 
 		{
-			auto it = vlabels.begin();
+			auto it = std::begin( vlabels );
 			for ( size_t i = 0; i < field_count; i++ )
 			{
-				if ( it == vlabels.end() ) labels[ i ] = "";
-				else                       labels[ i ] = *it++;
+				if ( it == std::end( vlabels ) ) labels[ i ] = "";
+				else                             labels[ i ] = *it++;
 			}
 		}
 
@@ -160,7 +161,7 @@ namespace vtil::format
 				fill( config.horizontal_delimiter, line_length );
 				rendl();
 			};
-			auto write_fields = [ & ] ( const auto& fields )
+			auto write_entry = [ & ] ( const auto& fields )
 			{
 				begl();
 				write( config.vertical_delimiter, ' ' );
@@ -206,10 +207,10 @@ namespace vtil::format
 			// Format the whole table and return the result.
 			//
 			write_table_limit();
-			write_fields( labels );
+			write_entry( labels );
 			write_label_delim();
 			for( auto& fields : string_entries )
-				write_fields( fields );
+				write_entry( fields );
 			write_overflow_delim();
 			write_table_limit();
 			return result;
@@ -220,4 +221,6 @@ namespace vtil::format
 	//
 	template<typename C> table_view( C&&, std::initializer_list<std::string_view> )->table_view<C>;
 	template<typename C> table_view( C&&, std::initializer_list<std::string_view>, table_rendering_configuration )->table_view<C>;
+	template<typename C, typename I> table_view( C&&, I&& )->table_view<C>;
+	template<typename C, typename I> table_view( C&&, I&&, table_rendering_configuration )->table_view<C>;
 };
