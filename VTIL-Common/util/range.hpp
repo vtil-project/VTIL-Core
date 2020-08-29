@@ -29,6 +29,7 @@
 #include <iterator>
 #include <type_traits>
 #include "type_helpers.hpp"
+#include "intrinsics.hpp"
 
 namespace vtil
 {
@@ -37,7 +38,7 @@ namespace vtil
 		struct no_transform 
 		{
 			template<typename T>
-			T operator()( T&& x ) const noexcept { return x; }
+			__forceinline T operator()( T&& x ) const noexcept { return x; }
 		};
 
 		// Declare a proxying range container.
@@ -92,6 +93,7 @@ namespace vtil
 			constexpr iterator begin() const { return { ibegin, transform }; }
 			constexpr iterator end() const   { return { iend, transform }; }
 			constexpr size_t size() const    { return ( size_t ) std::distance( ibegin, iend ); }
+			constexpr decltype( auto ) operator[]( size_t n ) const { return transform( *std::next( ibegin, n ) ); }
 		};
 	};
 

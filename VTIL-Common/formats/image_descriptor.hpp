@@ -30,8 +30,8 @@
 #include <string>
 #include <optional>
 #include "../util/zip.hpp"
-#include "../util/numeric_iterator.hpp"
 #include "../util/function_view.hpp"
+#include "../util/range.hpp"
 
 namespace vtil
 {
@@ -100,7 +100,6 @@ namespace vtil
 	{
 		// Declare the iterator type.
 		//
-		struct section_iterator_end_tag_t {};
 		struct section_iterator
 		{
 			// Generic iterator typedefs.
@@ -111,42 +110,26 @@ namespace vtil
 			using value_type =        section_descriptor;
 			using pointer =           void*;
 
-			// Range of iteration and a reference to the original binary.
+			// Contains an index and a reference to the original image.
 			//
+			const image_descriptor* image;
 			size_t at;
-			size_t limit;
-			const image_descriptor* binary;
-
-			// Default constructor.
-			//
-			section_iterator( const image_descriptor* binary, size_t at ) :
-				at( at ), limit( binary->get_section_count() ), binary( binary ) {}
 
 			// Support bidirectional iteration.
 			//
 			section_iterator& operator++() { at++; return *this; }
 			section_iterator& operator--() { at--; return *this; }
+			section_iterator operator++( int ) { auto s = *this; operator++(); return s; }
+			section_iterator operator--( int ) { auto s = *this; operator--(); return s; }
 
 			// Equality check against another iterator.
 			//
-			bool operator==( const section_iterator& other ) const
-			{ 
-				return at == other.at && limit == other.limit;
-			}
-			bool operator!=( const section_iterator& other ) const
-			{ 
-				return at != other.at || limit != other.limit;
-			}
-			
-			// Equality check against special end iterator.
-			//
-			bool operator==( section_iterator_end_tag_t ) const { return at == limit; }
-			bool operator!=( section_iterator_end_tag_t ) const { return at != limit; }
+			bool operator==( const section_iterator& other ) const { return at == other.at && image == other.image; }
+			bool operator!=( const section_iterator& other ) const { return at != other.at || image != other.image; }
 
-			// Redirect dereferencing to the binary itself.
+			// Redirect dereferencing to the image itself.
 			//
-			value_type operator*() { return binary->get_section( at ); }
-			value_type operator*() const { return binary->get_section( at ); }
+			value_type operator*() const { return image->get_section( at ); }
 		};
 
 		// Returns the number of sections in the binary.
@@ -177,7 +160,7 @@ namespace vtil
 		//
 		virtual uint64_t get_image_base() const = 0;
 
-		// Returns the entry point if relevant.
+		// Returns the entry point's RVA if relevant, else nullopt.
 		//
 		virtual std::optional<uint64_t> get_entry_point() const = 0;
 
@@ -191,24 +174,12 @@ namespace vtil
 		//
 		virtual bool is_valid() const = 0;
 
-		// Returns the section associated with the given relative virtual address.
-		//
-		std::pair<section_descriptor, size_t> rva_to_section( uint64_t rva ) const
-		{
-			for ( auto [scn, idx] : zip( *this, iindices ) )
-			{
-				if ( scn.virtual_address <= rva && rva < ( scn.virtual_address + scn.virtual_size ) )
-					return { scn, idx };
-			}
-			return {};
-		}
-
 		// Returns the data associated with the given relative virtual address.
 		//
 		template<typename T = void>
 		T* rva_to_ptr( uint64_t rva )
 		{
-			auto [scn, _] = rva_to_section( rva );
+			auto scn = rva_to_section( rva );
 			if ( !scn ) return nullptr;
 			auto offset = scn.translate( rva );
 			if ( !offset ) return nullptr;
@@ -217,28 +188,35 @@ namespace vtil
 		template<typename T = void>
 		const T* rva_to_ptr( uint64_t rva ) const
 		{
-			auto [scn, _] = rva_to_section( rva );
+			auto scn = rva_to_section( rva );
 			if ( !scn ) return nullptr;
 			auto offset = scn.translate( rva );
 			if ( !offset ) return nullptr;
 			return ( const T* ) ( ( const uint8_t* ) cdata() + *offset );
 		}
 
-		// Wrap get_section to make the interface iterable.
+		// Returns an enumeratable section list.
 		//
-		size_t size() const { return get_section_count(); }
-		section_iterator begin() const { return { this, 0 }; }
-		section_iterator_end_tag_t end() const { return {}; }
-		section_descriptor operator[]( size_t n ) const { return get_section( n ); }
+		auto enum_sections() const { return make_range<section_iterator>( { this, 0 }, { this, get_section_count() } ); }
+
+		// Returns the section associated with the given relative virtual address.
+		//
+		section_descriptor rva_to_section( uint64_t rva ) const
+		{
+			for ( auto scn : enum_sections() )
+				if ( scn.virtual_address <= rva && rva < ( scn.virtual_address + scn.virtual_size ) )
+					return scn;
+			return {};
+		}
 
 		// Returns whether the address provided will be relocated or not.
 		//
-		bool is_relocated( uint64_t rva ) const
+		bool is_relocated( uint64_t rva, size_t n = 1 ) const
 		{
 			bool found = false;
 			enum_relocations( [ & ] ( const relocation_descriptor& e )
 			{
-				return ( found = ( e.rva <= rva && rva < ( e.rva + e.length ) ) );
+				return ( found = ( e.rva <= rva && ( rva + n ) <= ( e.rva + e.length ) ) );
 			} );
 			return found;
 		}
@@ -250,6 +228,16 @@ namespace vtil
 			std::vector<relocation_descriptor> entries;
 			enum_relocations( [ & ] ( const relocation_descriptor& e ) { entries.emplace_back( e ); return false; } );
 			return entries;
+		}
+
+		// Enumerates all non-empty and executable sections, breaks if enumerator returns true.
+		//
+		void enum_executable( const function_view<bool( const section_descriptor& )>& fn ) const
+		{
+			for ( auto scn : enum_sections() )
+				if ( scn.execute && scn.physical_size && scn.virtual_size )
+					if ( fn( scn ) )
+						return;
 		}
 
 		// Cast to bool redirects to ::is_valid.
