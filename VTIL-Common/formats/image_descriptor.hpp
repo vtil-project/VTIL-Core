@@ -169,13 +169,17 @@ namespace vtil
 		//
 		virtual uint64_t get_image_base() const = 0;
 
+		// Returns the image size.
+		//
+		virtual size_t get_image_size() const = 0;
+
 		// Returns the entry point's RVA if relevant, else nullopt.
 		//
 		virtual std::optional<uint64_t> get_entry_point() const = 0;
 
 		// Returns the image size and the raw byte array.
 		//
-		virtual size_t get_image_size() const = 0;
+		virtual size_t size() const = 0;
 		virtual void* data() = 0;
 		virtual const void* cdata() const = 0;
 
@@ -206,13 +210,13 @@ namespace vtil
 
 		// Returns an enumeratable section list.
 		//
-		auto enum_sections() const { return make_range<section_iterator>( { this, 0 }, { this, get_section_count() } ); }
+		auto sections() const { return make_range<section_iterator>( { this, 0 }, { this, get_section_count() } ); }
 
 		// Returns the section associated with the given relative virtual address.
 		//
 		section_descriptor rva_to_section( uint64_t rva ) const
 		{
-			for ( auto scn : enum_sections() )
+			for ( auto scn : sections() )
 				if ( scn.virtual_address <= rva && rva < ( scn.virtual_address + scn.virtual_size ) )
 					return scn;
 			return {};
@@ -243,10 +247,19 @@ namespace vtil
 		//
 		void enum_executable( const function_view<bool( const section_descriptor& )>& fn ) const
 		{
-			for ( auto scn : enum_sections() )
+			for ( auto scn : sections() )
 				if ( scn.execute && scn.physical_size && scn.virtual_size )
 					if ( fn( scn ) )
 						return;
+		}
+
+		// Returns whether the image has any relocations.
+		//
+		bool has_relocations() const
+		{
+			bool result = false;
+			enum_relocations( [ & ] ( auto&& ) { result = true; return true; } );
+			return result;
 		}
 
 		// Cast to bool redirects to ::is_valid.
