@@ -42,7 +42,7 @@ namespace vtil
 	{
 		// Name of the section.
 		//
-		std::string_view name = nullptr;
+		std::string_view name = "";
 
 		// Characteristics of the section.
 		//

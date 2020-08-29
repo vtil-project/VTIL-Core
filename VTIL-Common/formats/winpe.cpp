@@ -513,8 +513,9 @@ namespace vtil
 	{
 		auto dos_header = ( dos_header_t* ) self->cdata();
 		auto* nt_hdrs = dos_header->get_nt_headers<true>();
+
 		if( nt_hdrs->file_header.machine == machine_id::amd64 )
-			return fn( carry_const( self, nt_hdrs ) );
+			return fn( carry_const( self, ( nt_headers_x64_t* ) nt_hdrs ) );
 		else
 			return fn( carry_const( self, ( nt_headers_x86_t* ) nt_hdrs ) );
 	}
