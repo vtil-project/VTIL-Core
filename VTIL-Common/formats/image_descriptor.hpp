@@ -69,7 +69,7 @@ namespace vtil
 		//
 		bool contains( uint64_t rva, size_t n = 1 ) const
 		{
-			return virtual_address <= rva && ( rva + n ) <= ( virtual_address + virtual_size );
+			return virtual_address < ( rva + n ) && rva < ( virtual_address + virtual_size );
 		}
 
 		// Translates relative virtual address to physical address.
@@ -234,7 +234,7 @@ namespace vtil
 			bool found = false;
 			enum_relocations( [ & ] ( const relocation_descriptor& e )
 			{
-				return ( found = ( e.rva <= rva && ( rva + n ) <= ( e.rva + e.length ) ) );
+				return ( found = ( e.rva < ( rva + n ) && rva < ( e.rva + e.length ) ) );
 			} );
 			return found;
 		}
