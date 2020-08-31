@@ -33,55 +33,13 @@
 
 namespace vtil
 {
-	namespace impl
-	{
-		// References the N'th element of the container with no overflow checks.
-		//
-		template<typename T>
-		struct doref_wrapper
-		{
-			constexpr decltype( auto ) operator()( T& o, size_t N ) const
-			{
-				return o[ N ];
-			}
-		};
-
-		// References the N'th element of the container, repeats the elements from
-		// the beginning if the limit is reached. If non-container type is passed
-		// returns as is.
-		//
-		template<typename T>
-		struct modref_wrapper
-		{
-			constexpr decltype( auto ) operator()( T& o, size_t N ) const
-			{
-				return o[ N % std::size( o ) ];
-			}
-		};
-
-		// References the N'th element of the container, returns null reference
-		// if the limit is reached. If non-container type is passed returns as is
-		// for [0] and null reference after that.
-		//
-		template<typename T>
-		struct optref_wrapper
-		{
-			constexpr auto operator()( T& o, size_t N ) const
-			{
-				if constexpr ( std::is_reference_v<o[ N ]> )
-					return dereference_if_n( N < std::size( o ), std::begin( o ), N );
-				else
-					return N < std::size( o ) ? std::optional{ o[ N ] } : std::nullopt;
-			}
-		};
-	};
-
-	template<template<typename> typename accessor, typename... Tx>
+	template<Iterable... Tx>
 	struct joint_container
 	{
-		// Declare the entry type.
+		// Iterator types.
 		//
-		using entry_type = std::tuple<decltype( accessor<Tx>{}( std::declval<Tx&>(), 0 ) )... >;
+		using iterator_array =  std::tuple<decltype( std::begin( std::declval<Tx>() ) )...>;
+		using reference_array = std::tuple<decltype( *std::begin( std::declval<Tx>() ) )...>;
 
 		// Declare the iterator type.
 		//
@@ -90,75 +48,49 @@ namespace vtil
 			// Generic iterator typedefs.
 			//
 			using iterator_category = std::bidirectional_iterator_tag;
-			using difference_type =   int;
-			using value_type =        entry_type*;
-			using pointer =           entry_type*;
-			using reference =         entry_type&;
+			using difference_type =   int64_t;
+			using pointer =           void*;
+			using value_type =        reference_array;
+			using reference =         reference_array;
 
-			// Self reference and the index.
+			// Iterators.
 			//
-			const joint_container& container;
-			size_t index;
+			iterator_array iterators;
 
-			// Default constructor.
-			//
-			base_iterator( const joint_container& container, size_t index = 0 ) :
-				container( container ), index( index ) {}
+			template<typename... T>
+			constexpr base_iterator( T&&... its ) : iterators( std::make_tuple( std::forward<T>( its )... ) ) {}
 
 			// Support bidirectional iteration.
 			//
-			constexpr base_iterator& operator++() { ++index; return *this; }
-			constexpr base_iterator& operator--() { --index; return *this; }
+			constexpr base_iterator& operator++() { std::apply( [ ] ( auto&... it ) { ( ( ++it ), ... ); }, iterators ); return *this; }
+			constexpr base_iterator& operator--() { std::apply( [ ] ( auto&... it ) { ( ( --it ), ... ); }, iterators ); return *this; }
 			constexpr base_iterator operator++( int ) { auto s = *this; operator++(); return s; }
 			constexpr base_iterator operator--( int ) { auto s = *this; operator--(); return s; }
 
 			// Equality check against another iterator.
 			//
-			constexpr bool operator==( const base_iterator& other ) const { return index == other.index && &container == &other.container; }
-			constexpr bool operator!=( const base_iterator& other ) const { return index != other.index || &container != &other.container; }
+			constexpr bool operator==( const base_iterator& other ) const { return std::get<0>( iterators ) == std::get<0>( other.iterators ); }
+			constexpr bool operator!=( const base_iterator& other ) const { return std::get<0>( iterators ) != std::get<0>( other.iterators ); }
 
 			// Redirect dereferencing to container.
 			//
-			constexpr entry_type operator*() const { return container.at( index ); }
+			constexpr reference_array operator*() const { return std::apply( [ ] ( auto&... it ) { return reference_array{ *it... }; }, iterators ); }
 		};
 		using iterator =       base_iterator;
 		using const_iterator = base_iterator;
 
 		// Tuple containing data sources.
 		//
-		std::tuple<Tx&...> sources;
-		size_t size_0;
-
-		constexpr joint_container( std::tuple<Tx&...>&& source )
-			: sources( std::move( source ) ), size_0( std::size( std::get<0>( sources ) ) ) {}
-
-		// Declare random access helper.
-		//
-		template<size_t... I>
-		constexpr entry_type at( size_t idx, std::index_sequence<I...> ) const
-		{
-			return { accessor<Tx>{}( std::get<I>( sources ), idx )... };
-		}
-		constexpr entry_type at( size_t idx ) const
-		{
-			return at( idx, std::index_sequence_for<Tx...>{} );
-		}
+		std::tuple<Tx...> sources;
 
 		// Generic container helpers.
 		//
-		constexpr size_t size() const { return size_0; }
-		constexpr iterator begin() const { return { *this, 0 }; }
-		constexpr iterator end() const { return { *this, size_0 }; }
+		constexpr size_t size() const    { return std::size( std::get<0>( sources ) ); }
+		constexpr iterator begin() const { return std::apply( [ ] ( auto&... src ) { return iterator( std::begin( src )... ); }, sources ); }
+		constexpr iterator end() const   { return std::apply( [ ] ( auto&... src ) { return iterator( std::end( src )... ); }, sources ); }
+		constexpr decltype( auto ) operator[]( size_t n ) const { return *std::next( begin(), n ); }
 	};
 
-	// Simple joint container creation from wrappers.
-	//
-	template <typename... Tx> requires ( Iterable<Tx&> && ... )
-	static constexpr auto zip_s( Tx&... args ) -> joint_container<impl::optref_wrapper, Tx...> { return { std::tie( args... ) }; }
-
-	template <typename... Tx> requires ( Iterable<Tx&> && ... )
-	static constexpr auto zip_c( Tx&... args ) -> joint_container<impl::modref_wrapper, Tx...> { return { std::tie( args... ) }; }
-
-	template <typename... Tx> requires ( Iterable<Tx&> && ... )
-	static constexpr auto zip( Tx&... args )   -> joint_container<impl::doref_wrapper, Tx...>  { return { std::tie( args... ) }; }
+	template <Iterable... Tx>
+	static constexpr auto zip( Tx&&... args ) { return joint_container<Tx...>{ .sources = { std::forward<Tx>( args )... } }; }
 };
