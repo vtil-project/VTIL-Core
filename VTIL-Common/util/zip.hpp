@@ -36,10 +36,8 @@ namespace vtil
 	template<Iterable... Tx>
 	struct joint_container
 	{
-		// Iterator types.
-		//
-		using iterator_array =  std::tuple<decltype( std::begin( std::declval<Tx>() ) )...>;
-		using reference_array = std::tuple<decltype( *std::begin( std::declval<Tx>() ) )...>;
+		using iterator_array =  std::tuple<decltype( std::begin( std::declval<const Tx&>() ) )...>;
+		using reference_array = std::tuple<decltype( *std::begin( std::declval<const Tx&>() ) )...>;
 
 		// Declare the iterator type.
 		//
@@ -56,9 +54,6 @@ namespace vtil
 			// Iterators.
 			//
 			iterator_array iterators;
-
-			template<typename... T>
-			constexpr base_iterator( T&&... its ) : iterators( std::make_tuple( std::forward<T>( its )... ) ) {}
 
 			// Support bidirectional iteration.
 			//
@@ -79,18 +74,28 @@ namespace vtil
 		using iterator =       base_iterator;
 		using const_iterator = base_iterator;
 
-		// Tuple containing data sources.
+		// Tuple containing data sources, length of iteration range, pre-computed begin and end.
 		//
-		std::tuple<Tx...> sources;
+		const std::tuple<Tx...> sources;
+		const size_t length;
+		const iterator begin_p;
+		const iterator end_p;
 
-		// Generic container helpers.
+		template<typename... Tv>
+		constexpr joint_container( Tv&&... sc )
+			: sources( std::forward<Tv>( sc )... ),
+			  length(  std::size( std::get<0>( sources ) ) ),
+			  begin_p( std::apply( [ & ] ( auto&... src ) { return iterator{ { std::begin( src )... }                      }; }, sources ) ),
+			  end_p(   std::apply( [ & ] ( auto&... src ) { return iterator{ { std::next( std::begin( src ), length )... } }; }, sources ) ) {}
+
+		// Generic container interface.
 		//
-		constexpr size_t size() const    { return std::size( std::get<0>( sources ) ); }
-		constexpr iterator begin() const { return std::apply( [ ] ( auto&... src ) { return iterator( std::begin( src )... ); }, sources ); }
-		constexpr iterator end() const   { return std::apply( [ ] ( auto&... src ) { return iterator( std::end( src )... ); }, sources ); }
+		constexpr size_t size() const     { return length; }
+		constexpr iterator begin() const  { return begin_p; }
+		constexpr iterator end() const    { return end_p; }
 		constexpr decltype( auto ) operator[]( size_t n ) const { return *std::next( begin(), n ); }
 	};
 
 	template <Iterable... Tx>
-	static constexpr auto zip( Tx&&... args ) { return joint_container<Tx...>{ .sources = { std::forward<Tx>( args )... } }; }
+	static constexpr joint_container<Tx...> zip( Tx&&... args ) { return { std::forward<Tx>( args )... }; }
 };
