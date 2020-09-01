@@ -80,7 +80,7 @@ namespace vtil::optimizer
 				// Clear pending if relevant.
 				//
 				if ( lpending.is_valid() )
-					pending.erase( possess_value( lpending ) );
+					pending.erase( std::exchange( lpending, {} ) );
 
 				// If we're at a branch, validate is_used again.
 				//

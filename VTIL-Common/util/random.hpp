@@ -60,10 +60,16 @@ namespace vtil
 
 	// Generates a single random number.
 	//
-	template<typename T>
+	template<Integral T>
 	static T make_random( T min = std::numeric_limits<T>::min(), T max = std::numeric_limits<T>::max() )
 	{
-		return std::uniform_int_distribution<T>{ min, max }( impl::local_rng );
+		using V = std::conditional_t<sizeof( T ) < 4, int32_t, T>;
+		return ( T ) std::uniform_int_distribution<V>{ ( V ) min, ( V ) max }( impl::local_rng );
+	}
+	template<FloatingPoint T>
+	static T make_random( T min = std::numeric_limits<T>::min(), T max = std::numeric_limits<T>::max() )
+	{
+		return std::uniform_real_distribution<T>{ min, max }( impl::local_rng );
 	}
 	static constexpr uint64_t make_crandom( size_t offset = 0 )
 	{
@@ -109,7 +115,7 @@ namespace vtil
 	{
 		auto size = std::size( source );
 		fassert( size != 0 );
-		return dynamic_get( source, make_random<size_t>( 0, size - 1 ) );
+		return *std::next( std::begin( source ), make_random<size_t>( 0, size - 1 ) );
 	}
 	template<size_t offset = 0, typename... Tx>
 	static constexpr auto pick_crandom( Tx&&... args )
@@ -121,6 +127,6 @@ namespace vtil
 	{
 		auto size = std::size( source );
 		fassert( size != 0 );
-		return dynamic_get( source, make_crandom( offset ) % size );
+		return *std::next( std::begin( source ), make_crandom( offset ) % size );
 	}
 };

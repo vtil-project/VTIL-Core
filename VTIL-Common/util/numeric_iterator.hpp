@@ -37,52 +37,33 @@ namespace vtil
 	{
 		// Declare the iterator type.
 		//
-		struct iterator_end_tag_t {};
 		struct iterator
 		{
 			// Generic iterator typedefs.
 			//
 			using iterator_category = std::bidirectional_iterator_tag;
-			using value_type = T;
-			using difference_type =   size_t;
-			using pointer =           value_type*;
-			using reference =         value_type&;
+			using difference_type =   std::make_signed_t<T>;
+			using value_type =        T;
+			using reference =         T&;
+			using pointer =           void*;
 
-			// Range of iteration.
-			//
 			value_type at;
-			value_type limit;
-
-			// Default constructor.
-			//
-			iterator( value_type at, value_type limit = 0 ) :
-				at( at ), limit( limit ) {}
 
 			// Support bidirectional iteration.
 			//
-			iterator& operator++() { at++; return *this; }
-			iterator& operator--() { at--; return *this; }
+			constexpr iterator& operator++() { at++; return *this; }
+			constexpr iterator& operator--() { at--; return *this; }
+			constexpr iterator operator++( int ) { auto s = *this; operator++(); return s; }
+			constexpr iterator operator--( int ) { auto s = *this; operator--(); return s; }
 
 			// Equality check against another iterator.
 			//
-			bool operator==( const iterator& other ) const 
-			{ 
-				return at == other.at && limit == other.limit;
-			}
-			bool operator!=( const iterator& other ) const 
-			{ 
-				return at != other.at || limit != other.limit;
-			}
+			constexpr bool operator==( const iterator& other ) const { return at == other.at; }
+			constexpr bool operator!=( const iterator& other ) const { return at != other.at; }
 			
-			// Equality check against special end iterator.
-			//
-			bool operator==( iterator_end_tag_t ) const { return at == limit; }
-			bool operator!=( iterator_end_tag_t ) const { return at != limit; }
-
 			// Redirect dereferencing to container.
 			//
-			value_type operator*() { return at; }
-			value_type operator*() const { return at; }
+			constexpr value_type operator*() const { return at; }
 		};
 		using const_iterator = iterator;
 
@@ -98,8 +79,8 @@ namespace vtil
 		// Generic container helpers.
 		//
 		constexpr size_t size() const { return max_value - min_value; }
-		constexpr iterator begin() const { return { min_value, max_value }; }
-		constexpr iterator_end_tag_t end() const { return {}; }
+		constexpr iterator begin() const { return { min_value }; }
+		constexpr iterator end() const   { return { max_value }; }
 		constexpr T operator[]( size_t n ) const { return min_value + n; }
 	};
 	template<Integral T> numeric_range( T a )      -> numeric_range<T>;

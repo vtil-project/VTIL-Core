@@ -35,7 +35,7 @@ namespace vtil
 {
 	// Used to generate names for enum types.
 	//
-	template<Enum T>
+	template<Enum T, typename = void>
 	struct enum_name
 	{
 		static constexpr int iteration_limit = 64;
@@ -71,8 +71,12 @@ namespace vtil
 				static constexpr auto linear_series = make_constant_series<iteration_limit>(
 					[ ] ( auto tag ) { return generate<T( decltype( tag )::value + min_value )>(); }
 				);
-				auto& [str, valid] = linear_series[ value ];
-				if ( valid ) return std::string{ str.begin(), str.end() };
+				value_type adjusted = value - min_value;
+				if ( value_type( 0 ) <= adjusted && adjusted < value_type( iteration_limit ) )
+				{
+					auto& [str, valid] = linear_series[ adjusted ];
+					if ( valid ) return std::string{ str.begin(), str.end() };
+				}
 			}
 			// If not and type is not signed, try interpreting it as a flag combination:
 			//
@@ -97,15 +101,5 @@ namespace vtil
 			}
 			return std::to_string( value );
 		}
-
-		// Dummy constructor and string conversion.
-		//
-		std::string name;
-		enum_name( T v ) : name( resolve( v ) ) {}
-
-		std::string&& to_string() && { return std::move( name ); }
-		operator std::string&&()  && { return std::move( name ); }
-		const std::string& to_string() const& { return name; }
-		operator const std::string&()  const& { return name; }
 	};
 };

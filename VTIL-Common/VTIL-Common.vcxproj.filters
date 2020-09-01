@@ -199,6 +199,12 @@
     <ClInclude Include="util\flat_allocator.hpp">
       <Filter>Utility</Filter>
     </ClInclude>
+    <ClInclude Include="io\strong_formatting.hpp">
+      <Filter>I/O</Filter>
+    </ClInclude>
+    <ClInclude Include="io\table_view.hpp">
+      <Filter>I/O</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="io\logger.cpp">

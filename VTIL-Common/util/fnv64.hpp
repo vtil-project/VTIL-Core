@@ -60,12 +60,14 @@ namespace vtil
 		{
 			using array_t = std::array<uint8_t, sizeof( T )>;
 
+#ifndef __INTELLISENSE__
 			if ( std::is_constant_evaluated() && !std::is_same_v<array_t, T> )
 			{
 				if constexpr ( Bitcastable<T> )
 					return add_bytes( bit_cast<array_t>( data ) );
 				unreachable();
 			}
+#endif
 
 			for ( uint8_t byte : ( const array_t& ) data )
 			{

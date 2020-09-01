@@ -30,13 +30,16 @@
 #include <cstring>
 #include <cstdio>
 #include <type_traits>
-#include <chrono>
 #include <exception>
 #include <optional>
 #include <filesystem>
+#include <numeric>
+#include <string_view>
 #include "../util/lt_typeid.hpp"
 #include "../util/type_helpers.hpp"
 #include "../util/time.hpp"
+#include "../util/numeric_iterator.hpp"
+#include "../util/intrinsics.hpp"
 #include "enum_name.hpp"
 
 #ifdef __GNUG__
@@ -160,7 +163,7 @@ namespace vtil::format
 	concept StringConvertible = requires( T v ) { !is_specialization_v<type_tag, decltype( as_string( v ) )>; };
 
 	template<typename T>
-	static auto as_string( const T& x )
+	__forceinline static auto as_string( const T& x )
 	{
 		using base_type = std::decay_t<T>;
 		
@@ -176,6 +179,19 @@ namespace vtil::format
 		{
 			return time::to_string( x );
 		}
+		else if constexpr ( std::is_same_v<base_type, uint64_t> )
+		{
+			char buffer[ 16 + 3 ];
+			return std::string{ buffer, buffer + snprintf( buffer, std::size( buffer ), "0x%llx", x ) };
+		}
+		else if constexpr ( std::is_same_v<base_type, int64_t> )
+		{
+			return hex_t<base_type>( x ).to_string();
+		}
+		else if constexpr ( std::is_same_v<base_type, bool> )
+		{
+			return std::string{ x ? "true" : "false" };
+		}
 		else if constexpr ( StdStringConvertible<T> )
 		{
 			return std::to_string( x );
@@ -184,10 +200,16 @@ namespace vtil::format
 		{
 			return std::string{ x.what() };
 		}
-		else if constexpr ( std::is_same_v<base_type, std::string> || 
-							std::is_same_v<base_type, const char*> )
+		else if constexpr ( CppString<base_type> || CppStringView<base_type> )
 		{
-			return std::string{ x };
+			return std::string{ x.begin(), x.end() };
+		}
+		else if constexpr ( CString<base_type> )
+		{
+			return std::string{
+				x,
+				x + std::char_traits<string_unit_t<base_type>>::length( x )
+			};
 		}
 		else if constexpr ( std::is_same_v<base_type, std::filesystem::directory_entry> )
 		{
@@ -196,14 +218,6 @@ namespace vtil::format
 		else if constexpr ( std::is_same_v<base_type, std::filesystem::path> )
 		{
 			return x.string();
-		}
-		else if constexpr ( std::is_same_v<base_type, std::wstring> )
-		{
-			return std::string{ x.begin(), x.end() };
-		}
-		else if constexpr ( std::is_same_v<base_type, const wchar_t*> )
-		{
-			return std::string{ x, x + wcslen( x ) };
 		}
 		else if constexpr ( std::is_pointer_v<base_type> )
 		{
@@ -215,7 +229,7 @@ namespace vtil::format
 		{
 			if constexpr ( StringConvertible<decltype( x.first )> && StringConvertible<decltype( x.second )> )
 			{
-				return "{" + as_string( x.first ) + ", " + as_string( x.second ) + "}";
+				return "(" + as_string( x.first ) + ", " + as_string( x.second ) + ")";
 			}
 			else return type_tag<T>{};
 		}
@@ -262,7 +276,7 @@ namespace vtil::format
 			if constexpr ( StringConvertible<decltype( *std::begin( x ) )> )
 			{
 				std::string items = {};
-				for ( auto& entry : x )
+				for ( auto&& entry : x )
 					items += as_string( entry ) + ", ";
 				if ( !items.empty() ) items.resize( items.size() - 2 );
 				return "{" + items + "}";
@@ -275,7 +289,7 @@ namespace vtil::format
 	// Used to fix std::(w)string usage in combination with "%(l)s".
 	//
 	template<typename T>
-	inline static auto fix_parameter( T&& x )
+	__forceinline static auto fix_parameter( T&& x )
 	{
 		using base_type = std::remove_cvref_t<T>;
 
@@ -328,10 +342,10 @@ namespace vtil::format
 
 	// Formats the integer into a signed hexadecimal.
 	//
-	template<typename T, std::enable_if_t<std::is_integral_v<std::remove_cvref_t<T>>, int> = 0>
-	static std::string hex( T&& value )
+	template<Integral T>
+	static std::string hex( T value )
 	{
-		if constexpr ( !std::is_signed_v<std::remove_cvref_t<T>> )
+		if constexpr ( !std::is_signed_v<T> )
 		{
 			return str( "0x%llx", value );
 		}

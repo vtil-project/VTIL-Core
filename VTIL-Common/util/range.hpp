@@ -28,26 +28,100 @@
 #pragma once
 #include <iterator>
 #include <type_traits>
+#include "type_helpers.hpp"
+#include "intrinsics.hpp"
 
 namespace vtil
 {
-	template<typename iterator_type>
-	struct range_t
+	namespace impl
 	{
-		iterator_type ibegin;
-		iterator_type iend;
+		struct no_transform 
+		{
+			template<typename T>
+			__forceinline T operator()( T&& x ) const noexcept { return x; }
+		};
 
-		constexpr iterator_type begin() const { return ibegin; }
-		constexpr iterator_type end() const   { return iend; }
-		constexpr size_t size() const         { return ( size_t ) std::distance( begin(), end() ); }
+		// Declare a proxying range container.
+		//
+		template<typename base_iterator, typename F>
+		struct range_proxy
+		{
+			// Declare proxying iterator.
+			//
+			struct iterator
+			{
+				// Define iterator traits.
+				//
+				using iterator_category = typename std::iterator_traits<std::remove_cvref_t<base_iterator>>::iterator_category;
+				using difference_type =   typename std::iterator_traits<std::remove_cvref_t<base_iterator>>::difference_type;
+				using reference =         decltype( std::declval<F>()( *std::declval<base_iterator>() ) );
+				using value_type =        std::remove_reference_t<reference>;
+				using pointer =           value_type*;
+				
+				// Constructed by the original iterator and a reference to transformation function.
+				//
+				const F& transform;
+				base_iterator at;
+				constexpr iterator( const base_iterator& i, const F& transform ) : at( i ), transform( transform ) {}
+
+				// Support bidirectional iteration.
+				//
+				constexpr iterator& operator++() { at++; return *this; }
+				constexpr iterator& operator--() { at--; return *this; }
+				constexpr iterator operator++( int ) { auto s = *this; operator++(); return s; }
+				constexpr iterator operator--( int ) { auto s = *this; operator--(); return s; }
+
+				// Equality check against another iterator.
+				//
+				constexpr bool operator==( const iterator& other ) const { return at == other.at; }
+				constexpr bool operator!=( const iterator& other ) const { return at != other.at; }
+
+				// Override accessor to apply transformation where relevant.
+				//
+				constexpr reference operator*() const { return transform( *at ); }
+			};
+			using const_iterator = iterator;
+
+			// Holds transformation begin an end.
+			//
+			F transform;
+			base_iterator ibegin;
+			base_iterator iend;
+
+			// Declare basic container interface.
+			//
+			constexpr iterator begin() const { return { ibegin, transform }; }
+			constexpr iterator end() const   { return { iend, transform }; }
+			constexpr size_t size() const    { return ( size_t ) std::distance( ibegin, iend ); }
+			constexpr decltype( auto ) operator[]( size_t n ) const { return transform( *std::next( ibegin, n ) ); }
+		};
 	};
 
-	template<typename iterator_type>
-	static constexpr auto make_range( iterator_type&& begin, iterator_type&& end )
+	template<typename It, typename Fn>
+	static constexpr auto make_range( It&& begin, It&& end, Fn&& f )
 	{
-		return range_t<iterator_type>{ 
-			std::forward<iterator_type>( begin ), 
-			std::forward<iterator_type>( end ) 
+		return impl::range_proxy<It, Fn>{
+			std::forward<Fn>( f ),
+			std::forward<It>( begin ), 
+			std::forward<It>( end ) 
+		};
+	}
+	template<typename It>
+	static constexpr auto make_range( It&& begin, It&& end )
+	{
+		return impl::range_proxy<It, impl::no_transform>{
+			impl::no_transform{},
+			std::forward<It>( begin ), 
+			std::forward<It>( end ) 
+		};
+	}
+	template<Iterable C, typename Fn>
+	static constexpr auto make_view( C&& container, Fn&& f )
+	{
+		return impl::range_proxy<decltype( std::begin( container ) ), Fn>{
+			std::forward<Fn>( f ),
+			std::begin( container ),
+			std::end( container )
 		};
 	}
 };

@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|x64">
@@ -139,6 +139,8 @@
     <ClInclude Include="io\fileio.hpp" />
     <ClInclude Include="io\formatting.hpp" />
     <ClInclude Include="io\logger.hpp" />
+    <ClInclude Include="io\strong_formatting.hpp" />
+    <ClInclude Include="io\table_view.hpp" />
     <ClInclude Include="math\bitwise.hpp" />
     <ClInclude Include="math\operable.hpp" />
     <ClInclude Include="math\operators.hpp" />

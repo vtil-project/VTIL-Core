@@ -83,7 +83,7 @@ namespace vtil
 			{
 				// If time is larger than the duration given or if we're at the last duration:
 				//
-				if ( t > duration || duration == *std::begin( time::basic_unit_durations ) )
+				if ( t >= duration || duration == *std::begin( time::basic_unit_durations ) )
 				{
 					// Convert float to string.
 					//

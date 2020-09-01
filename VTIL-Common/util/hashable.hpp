@@ -174,10 +174,9 @@ namespace vtil
 	template<typename C, typename... T>
 	__forceinline static constexpr hash_t make_hash( const C& current, T&&... rest )
 	{
-		return combine_hash( 
-			make_hash( std::forward<T>( rest )... ), 
-			make_hash( current ) 
-		);
+		hash_t hash = make_hash( current );
+		( ( hash = combine_hash( hash, make_hash( rest ) ) ), ... );
+		return hash;
 	}
 
 	// Vararg hasher wrapper that should be used to create hashes from N values, explicitly ignoring the order.
@@ -187,10 +186,9 @@ namespace vtil
 	template<typename C, typename... T>
 	__forceinline static constexpr hash_t make_unordered_hash( const C& current, T&&... rest )
 	{
-		return combine_unordered_hash(
-			make_unordered_hash( std::forward<T>( rest )... ),
-			make_unordered_hash( current )
-		);
+		hash_t hash = make_unordered_hash( current );
+		( ( hash = combine_unordered_hash( hash, make_unordered_hash( rest ) ) ), ... );
+		return hash;
 	}
 
 	// Overload for std::optional.
@@ -218,31 +216,17 @@ namespace vtil
 		}
 	};
 
-	// Overload for std::pair.
+	// Overload for std::pair / std::tuple.
 	//
-	template<typename A, typename B>
-	struct hasher<std::pair<A, B>>
+	template<Tuple T>
+	struct hasher<T>
 	{
-		__forceinline constexpr hash_t operator()( const std::pair<A, B>& obj ) const noexcept
+		__forceinline constexpr hash_t operator()( const T& obj ) const noexcept
 		{
-			return make_hash( obj.first, obj.second );
-		}
-	};
-
-	// Overload for std::tuple.
-	//
-	template<typename... Tx>
-	struct hasher<std::tuple<Tx...>>
-	{
-		template<typename T, size_t... I>
-		__forceinline constexpr auto hash_all( const T& obj, std::index_sequence<I...> ) const noexcept
-		{
-			return make_hash( std::get<I>( obj )... );
-		}
-
-		__forceinline constexpr hash_t operator()( const std::tuple<Tx...>& obj ) const noexcept
-		{
-			return hash_all( obj, std::index_sequence_for<Tx...>{} );
+			if constexpr ( std::tuple_size_v<T> != 0 )
+				return std::apply( [ ] ( auto&&... params ) { return make_hash( params... ); }, obj );
+			else 
+				return lt_typeid_v<T>;
 		}
 	};
 

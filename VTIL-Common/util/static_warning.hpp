@@ -35,9 +35,9 @@
        constexpr auto ____SW_SX1(____sw_, __LINE__) = []{               \
        	__pragma( warning( push ) )                                     \
        	__pragma( warning( 1:4996 ) )                                   \
-       	struct [[deprecated( message )]] make_warning {};               \
+       	struct [[deprecated( message )]] _ {};                          \
        	if constexpr ( !( condition ) )                                 \
-              make_warning{};                                           \
+              _{};                                                      \
        	__pragma( warning( pop ) )                                      \
             return 0;                                                   \
        }
@@ -47,10 +47,10 @@
        	_Pragma("GCC diagnostic push")                                  \
        	_Pragma("-Wdeprecated")                                         \
            struct {                                           	        \
-               [[deprecated( message )]] void make_warning() const {}   \
+               [[deprecated( message )]] void __() const {}             \
            } _;                                                         \
            if constexpr ( !( condition ) )                              \
-              _.make_warning();                                         \
+              _.__();                                                   \
        	_Pragma("GCC diagnostic pop")                                   \
             return 0;                                                   \
        }
