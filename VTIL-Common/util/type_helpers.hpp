@@ -156,9 +156,9 @@ namespace vtil
 	// Functor traits.
 	//
 	template<typename T, typename Ret, typename... Args>
-	concept Invocable = requires( T&& x, Args&&... args ) { Convertible<decltype( x( std::forward<Args>( args )... ) ), Ret>; };
+	concept Invocable = requires( T&& x ) { Convertible<decltype( x( std::declval<Args>()... ) ), Ret>; };
 	template<typename T, typename... Args>
-	concept InvocableWith = requires( T&& x, Args&&... args ) { x( std::forward<Args>( args )... ); };
+	concept InvocableWith = requires( T&& x ) { x( std::declval<Args>()... ); };
 
 	// Container traits.
 	//
