@@ -46,6 +46,13 @@
 #ifndef VTIL_SYMEX_LRU_PRUNE_COEFF
 	#define VTIL_SYMEX_LRU_PRUNE_COEFF              0.2
 #endif
+#ifndef VTIL_SYMEX_VERIFY
+	#ifdef _DEBUG
+		#define	VTIL_SYMEX_VERIFY                       1
+	#else
+		#define	VTIL_SYMEX_VERIFY                       0
+	#endif
+#endif
 
 namespace vtil::symbolic
 {
@@ -287,7 +294,7 @@ namespace vtil::symbolic
 				.spec_key = {},
 				.is_simplified = false,
 				.result = nullptr
-									  } );
+			} );
 			if ( is_speculative )
 				spec_queue.emplace_back( &ret->second.spec_key );
 			return std::make_tuple( std::move( ret ), false, this );
@@ -857,6 +864,14 @@ namespace vtil::symbolic
 	//
 	bool simplify_expression( expression::reference& exp, bool pretty, bool unpack )
 	{
-		return simplify_expression_i( exp, pretty, unpack );
+#if VTIL_SYMEX_VERIFY
+		auto previous_value = exp->xvalues();
+#endif
+		bool simplified = simplify_expression_i( exp, pretty, unpack );
+#if VTIL_SYMEX_VERIFY
+		if ( simplified )
+			fassert( previous_value == exp->xvalues() );
+#endif
+		return simplified;
 	}
 };
