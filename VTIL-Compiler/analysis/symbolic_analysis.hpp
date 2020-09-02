@@ -247,9 +247,9 @@ namespace vtil::analysis
 				//
 				for ( auto& [k, v] : seg.register_state )
 				{
-					math::bit_enum( v.bitmap, [ & ] ( bitcnt_t i )
+					math::bit_enum( v.bitmap, [ &, v = std::ref( v.linear_store ) ] ( bitcnt_t i )
 					{
-						v.linear_store[ i ].simplify( pack );
+						v[ i ].simplify( pack );
 					} );
 				}
 
