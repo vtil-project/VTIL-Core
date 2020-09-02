@@ -19,14 +19,14 @@
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
-    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v142</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
     <SpectreMitigation>false</SpectreMitigation>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
-    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>v142</PlatformToolset>
     <WholeProgramOptimization>false</WholeProgramOptimization>
@@ -67,7 +67,7 @@
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
-      <BufferSecurityCheck>false</BufferSecurityCheck>
+      <BufferSecurityCheck>true</BufferSecurityCheck>
       <ControlFlowGuard>false</ControlFlowGuard>
       <AdditionalOptions>/bigobj %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
@@ -76,6 +76,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <LinkTimeCodeGeneration>Default</LinkTimeCodeGeneration>
+      <AdditionalOptions>/STACK:34359738368 %(AdditionalOptions)</AdditionalOptions>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -105,6 +106,7 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalOptions>/STACK:34359738368 %(AdditionalOptions)</AdditionalOptions>
     </Link>
     <Lib>
       <LinkTimeCodeGeneration>true</LinkTimeCodeGeneration>
@@ -112,22 +114,23 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="common\auxiliaries.cpp" />
-    <ClCompile Include="optimizer\bblock_extension_pass.cpp" />
-    <ClCompile Include="optimizer\branch_correction_pass.cpp" />
-    <ClCompile Include="optimizer\dead_code_elimination_pass.cpp" />
-    <ClCompile Include="optimizer\fast_dead_code_elimination_pass.cpp" />
-    <ClCompile Include="optimizer\fast_propagation_pass.cpp" />
-    <ClCompile Include="optimizer\istack_ref_substitution_pass.cpp" />
-    <ClCompile Include="optimizer\mov_propagation_pass.cpp" />
-    <ClCompile Include="optimizer\register_renaming_pass.cpp" />
-    <ClCompile Include="optimizer\stack_pinning_pass.cpp" />
-    <ClCompile Include="optimizer\stack_propagation_pass.cpp" />
-    <ClCompile Include="optimizer\symbolic_rewrite_pass.cpp" />
+    <ClCompile Include="main.cpp" />
+    <ClInclude Include="analysis\symbolic_analysis.hpp" />
+    <ClInclude Include="optimizer\bblock_extension_pass.cpp" />
+    <ClInclude Include="optimizer\branch_correction_pass.cpp" />
+    <ClInclude Include="optimizer\dead_code_elimination_pass.cpp" />
+    <ClInclude Include="optimizer\fast_dead_code_elimination_pass.cpp" />
+    <ClInclude Include="optimizer\fast_propagation_pass.cpp" />
+    <ClInclude Include="optimizer\istack_ref_substitution_pass.cpp" />
+    <ClInclude Include="optimizer\mov_propagation_pass.cpp" />
+    <ClInclude Include="optimizer\register_renaming_pass.cpp" />
+    <ClInclude Include="optimizer\stack_pinning_pass.cpp" />
+    <ClInclude Include="optimizer\stack_propagation_pass.cpp" />
+    <ClInclude Include="optimizer\symbolic_rewrite_pass.cpp" />
     <ClCompile Include="validation\pass_validation.cpp" />
     <ClCompile Include="validation\test1.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="common\apply_all.hpp" />
     <ClInclude Include="common\auxiliaries.hpp" />
     <ClInclude Include="common\interface.hpp" />
     <ClInclude Include="includes\vtil\optimizer-tests" />
@@ -152,6 +155,20 @@
   </ItemGroup>
   <ItemGroup>
     <Text Include="CMakeLists.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\VTIL-Architecture\VTIL-Architecture.vcxproj">
+      <Project>{a79e2869-7626-4801-b09d-5c12f5163ba3}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\VTIL-Common\VTIL-Common.vcxproj">
+      <Project>{ec6b8f7f-730c-4086-b143-4664cc16df8f}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\VTIL-SymEx\VTIL-SymEx.vcxproj">
+      <Project>{fe3202ce-d05c-4e04-ae9b-d30305d8ce31}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\VTIL-Tests\VTIL-Tests.vcxproj">
+      <Project>{836dc7aa-919e-4463-970b-22d9012a8da4}</Project>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
