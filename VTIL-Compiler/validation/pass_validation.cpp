@@ -81,6 +81,10 @@ namespace vtil::optimizer::validation
 		const uint64_t return_address = ( uint64_t ) &vm;
 		vm.write_memory_v( vm.read_register( REG_SP ), return_address );
 
+		// Declare current iterator.
+		//
+		il_const_iterator it = rtn->entry_point->begin();
+
 		// Instrument the virtual execution to verify actions:
 		//
 		bool success = true;
@@ -112,7 +116,7 @@ namespace vtil::optimizer::validation
 					//
 					if ( action_it == action_end || !std::get_if<external_call>( &*action_it ) )
 					{
-						logger::warning( "Unexpected call." );
+						logger::warning( "[Block: %llx] Unexpected call.", it.block->entry_vip );
 						success = false;
 						return vm_exit_reason::unknown_instruction;
 					}
@@ -129,7 +133,7 @@ namespace vtil::optimizer::validation
 						: vm.read_register( ins.operands[ 0 ].reg() );
 					if ( target_call->value.get() != call.address )
 					{
-						logger::warning( "Unexpected callee, expected 0x%llx, got [%s].", call.address, *target_call );
+						logger::warning( "[Block: %llx] Unexpected callee, expected 0x%llx, got [%s].", it.block->entry_vip, call.address, *target_call );
 						success = false;
 						return vm_exit_reason::unknown_instruction;
 					}
@@ -137,19 +141,19 @@ namespace vtil::optimizer::validation
 					// Validate parameters.
 					//
 					const call_convention& call_conv = rtn->get_cconv( ins.vip );
-					auto it = call_conv.param_registers.begin();
+					auto pit = call_conv.param_registers.begin();
 					for ( auto [value, id] : zip( call.parameters, iindices ) )
 					{
 						symbolic::expression::reference exp;
 
 						// If we did not reach the end of registers yet:
 						//
-						if ( it != call_conv.param_registers.end() )
+						if ( pit != call_conv.param_registers.end() )
 						{
 							// Read from the register and increment iterator.
 							//
-							exp = vm.read_register( *it );
-							it++;
+							exp = vm.read_register( *pit );
+							pit++;
 						}
 						else
 						{
@@ -166,7 +170,7 @@ namespace vtil::optimizer::validation
 						//
 						if ( exp->value.get() != value )
 						{
-							logger::warning( "Parameter %d does not match, expected 0x%llx, got [%s].", id, value, exp );
+							logger::warning( "[Block: %llx] Parameter %d does not match, expected 0x%llx, got [%s].", it.block->entry_vip, id, value, exp );
 							success = false;
 							return vm_exit_reason::unknown_instruction;
 						}
@@ -185,7 +189,7 @@ namespace vtil::optimizer::validation
 					//
 					if ( action_it == action_end || !std::get_if<vm_exit>( &*action_it ) )
 					{
-						logger::warning( "Unexpected exit." );
+						logger::warning( "[Block: %llx] Unexpected exit.", it.block->entry_vip );
 						success = false;
 						return vm_exit_reason::unknown_instruction;
 					}
@@ -202,7 +206,7 @@ namespace vtil::optimizer::validation
 						: vm.read_register( ins.operands[ 0 ].reg() );
 					if ( sreturn_address->value.get() != return_address )
 					{
-						logger::warning( "Unexpected return address, expected 0x%llx, got [%s].", return_address, *sreturn_address );
+						logger::warning( "[Block: %llx] Unexpected return address, expected 0x%llx, got [%s].", it.block->entry_vip, return_address, *sreturn_address );
 						success = false;
 						return vm_exit_reason::unknown_instruction;
 					}
@@ -214,7 +218,7 @@ namespace vtil::optimizer::validation
 						auto exp = vm.read_register( reg );
 						if ( exp->value.get() != value )
 						{
-							logger::warning( "Return state %s does not match, expected 0x%llx, got [%s].", reg, value, exp );
+							logger::warning( "[Block: %llx] Return state %s does not match, expected 0x%llx, got [%s].", it.block->entry_vip, reg, value, exp );
 							success = false;
 							return vm_exit_reason::unknown_instruction;
 						}
@@ -227,7 +231,6 @@ namespace vtil::optimizer::validation
 			//
 			return vm.symbolic_vm::execute( ins );
 		};
-
 		vm.hooks.read_memory = [ & ] ( const symbolic::expression::reference& pointer, size_t sz )
 		{
 			// If action log has a matching read memory on top of the stack:
@@ -247,7 +250,6 @@ namespace vtil::optimizer::validation
 
 			return vm.symbolic_vm::read_memory( pointer, sz );
 		};
-
 		vm.hooks.write_memory = [ & ] ( const symbolic::expression::reference& pointer, deferred_value<symbolic::expression::reference> value, bitcnt_t size )
 		{
 			// If action log has a matching write memory on top of the stack:
@@ -261,7 +263,7 @@ namespace vtil::optimizer::validation
 					//
 					if ( value.get()->value.get() != mem.value )
 					{
-						logger::warning( "Unexpected memory write into 0x%llx, expected 0x%llx, got [%s].", mem.address, mem.value, value.get() );
+						logger::warning( "[Block: %llx] Unexpected memory write into 0x%llx, expected 0x%llx, got [%s].", it.block->entry_vip, mem.address, mem.value, value.get() );
 						success = false;
 					}
 					++action_it;
@@ -270,10 +272,8 @@ namespace vtil::optimizer::validation
 			return vm.symbolic_vm::write_memory( pointer, value, size );
 		};
 
-
-		// Begin from the entry point:
+		// Begin the loop:
 		//
-		il_const_iterator it = rtn->entry_point->begin();
 		while ( true )
 		{
 			// Run until it VM exits.
@@ -332,7 +332,7 @@ namespace vtil::optimizer::validation
 				//
 				if ( !blk )
 				{
-					logger::warning( "Invalid virtual jump [ %llx => %s ].", it.block->entry_vip, dst.is_immediate() ? dst.to_string() : vm.read_register( dst.reg() )->to_string() );
+					logger::warning( "[Block: %llx] Invalid virtual jump [%s].", it.block->entry_vip, dst.is_immediate() ? dst.to_string() : vm.read_register( dst.reg() )->to_string() );
 					return false;
 				}
 
@@ -343,7 +343,7 @@ namespace vtil::optimizer::validation
 				continue;
 			}
 
-			logger::warning( "Failing execution at: %s.", lim->to_string() );
+			logger::warning( "[Block: %llx] Failing execution at: %s.", it.block->entry_vip, lim->to_string() );
 			return false;
 		}
 	}
