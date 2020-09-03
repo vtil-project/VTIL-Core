@@ -142,18 +142,18 @@ namespace vtil::symbolic
 
 		// Transforms the whole tree according to the functor, much more optimized compared to expression::transform.
 		//
-		template<typename T>
+		template<typename T> requires Invocable<T, void, expression_delegate&>
 		bool transform_single( const T& func, bool auto_simplify, bool do_update );
-		template<typename T>
+		template<typename T> requires Invocable<T, void, expression_delegate&>
 		[[nodiscard]] std::pair<bool, expression_reference> transform_single( const T& func, bool auto_simplify, bool do_update ) const
 		{
 			auto copy = make_copy( *this );
 			return { copy.transform_single( func, auto_simplify, do_update ), std::move( copy ) };
 		}
 
-		template<typename T>
+		template<typename T> requires Invocable<T, void, expression_delegate&>
 		bool transform_rec( const T& func, bool bottom, bool auto_simplify );
-		template<typename T>
+		template<typename T> requires Invocable<T, void, expression_delegate&>
 		[[nodiscard]] std::pair<bool, expression_reference> transform_rec( const T& func, bool bottom, bool auto_simplify ) const
 		{
 			auto copy = make_copy( *this );
@@ -162,13 +162,13 @@ namespace vtil::symbolic
 
 		// Implement original transform signature.
 		//
-		template<typename T>
+		template<typename T> requires Invocable<T, void, expression_delegate&>
 		expression_reference& transform( const T& func, bool bottom = false, bool auto_simplify = true )
 		{
 			transform_rec( func, bottom, auto_simplify );
 			return *this;
 		}
-		template<typename T>
+		template<typename T> requires Invocable<T, void, expression_delegate&>
 		expression_reference transform( const T& func, bool bottom = false, bool auto_simplify = true ) const
 		{
 			return std::move( make_copy( *this ).transform( func, bottom, auto_simplify ) );
@@ -416,7 +416,7 @@ namespace vtil::symbolic
 		// this avoids copying of the entire tree and any simplifier calls so is preferred
 		// over *transform(...).get().
 		//
-		template<typename T>
+		template<typename T> requires Invocable<T, std::optional<uint64_t>, const unique_identifier&>
 		math::bit_vector evaluate( T&& lookup ) const
 		{
 			// If value is known, return as is.
@@ -458,7 +458,7 @@ namespace vtil::symbolic
 
 		// Enumerates the whole tree.
 		//
-		template<typename T>
+		template<typename T> requires Invocable<T, void, const expression&>
 		const expression& enumerate( const T& fn, bool bottom = false ) const
 		{
 			if ( bottom )
@@ -518,7 +518,7 @@ namespace vtil::symbolic
 
 	// Transforms the whole tree according to the functor, much more optimized compared to expression::transform.
 	//
-	template<typename T>
+	template<typename T>requires Invocable<T, void, expression_delegate&>
 	bool expression_reference::transform_single( const T& func, bool auto_simplify, bool do_update )
 	{
 		// Save original hash.
@@ -559,7 +559,7 @@ namespace vtil::symbolic
 		//
 		return true;
 	}
-	template<typename T>
+	template<typename T> requires Invocable<T, void, expression_delegate&>
 	bool expression_reference::transform_rec( const T& func, bool bottom, bool auto_simplify )
 	{
 		const auto transform_children = [ & ] ()
