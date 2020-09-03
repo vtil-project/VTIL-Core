@@ -257,6 +257,123 @@ namespace vtil::analysis
 				//
 				for ( auto& [k, v] : seg.memory_state )
 					v.simplify( pack );
+
+				// Simplify the branch:
+				//
+				if ( seg.branch_targets.size() )
+				{
+					for ( auto& v : seg.branch_targets )
+						v.simplify( true );
+					if ( auto& v = seg.branch_cc )
+						v.simplify( true );
+
+					// If non-const JMP, try converting into JS.
+					//
+					if ( !seg.branch_cc && seg.branch_targets[ 0 ]->depth > 2 )
+					{
+						// Enumerate into the branch target:
+						//
+						auto& statement = seg.branch_targets[ 0 ];
+						std::function<void( const symbolic::expression& )> ccscan = [ & ] ( const symbolic::expression& ccexp )
+						{
+							// If we've already found a condition, skip traversal.
+							//
+							if ( seg.branch_cc )
+								return;
+
+							// If pointer, traverse into it.
+							//
+							if ( ccexp.is_variable() )
+							{
+								auto& var = ccexp.uid.get<symbolic::variable>();
+								if ( var.is_memory() )
+									var.mem().decay()->enumerate( ccscan );
+							}
+
+							// If this is a possible condition:
+							//
+							if ( ( ccexp.value.unknown_mask() | ccexp.value.known_one() ) == 1 )
+							{
+								// Save the hash of default value.
+								//
+								auto hash_unchanged = statement->hash();
+
+								// Calculate the xvalues for CC:
+								//
+								std::array xvals = ccexp.xvalues();
+
+								// Reverse the condition and calculate xvalues for !CC:
+								//
+								auto rccexp = ~ccexp;
+								std::array rvals = xvals;
+								for ( auto& v : rvals )
+									v ^= 1;
+
+								// Declare the value of CC for current transformation and the transformer.
+								//
+								bool expected_value;
+								std::function<void( symbolic::expression_delegate& )> cctfm = [ & ] ( symbolic::expression_delegate& pexp )
+								{
+									// If pointer, traverse into it.
+									//
+									if ( pexp->is_variable() )
+									{
+										auto& var = pexp->uid.get<symbolic::variable>();
+										if ( var.is_memory() )
+										{
+											// If changed, replace pointer.
+											//
+											symbolic::expression::reference mexp = var.mem().decay();
+											hash_t hash_0 = mexp.hash();
+											mexp.transform( cctfm );
+											if ( hash_0 != mexp.hash() )
+												( +pexp )->uid = symbolic::variable{ var.at, { mexp, var.mem().bit_count } };
+										}
+									}
+
+									// If possible condition:
+									//
+									if ( ( pexp->value.unknown_mask() | pexp->value.known_one() ) == 1 )
+									{
+										// If expected value or inverse, replace.
+										//
+										std::array xvals2 = pexp->xvalues();
+										// Intellisense really does not like std::array::operator==.
+										if ( !memcmp( xvals.data(), xvals2.data(), sizeof( xvals2 ) ) )
+										{
+											if ( pexp->equals( ccexp ) )
+												*+pexp = { expected_value, 1 };
+										}
+										else if ( !memcmp( rvals.data(), xvals2.data(), sizeof( xvals2 ) ) )
+										{
+											if ( pexp->equals( rccexp ) )
+												*+pexp = { !expected_value, 1 };
+										}
+									}
+								};
+
+								// Create two statements, one assuming CC=1, other assuming CC=0.
+								//
+								symbolic::expression::reference cnd_sat = statement;
+								expected_value = true;
+								cnd_sat.transform( cctfm );
+
+								symbolic::expression::reference cnd_nsat = statement;
+								expected_value = false;
+								cnd_nsat.transform( cctfm );
+
+								// If both expressions simplified, convert into JS branch.
+								//
+								if ( cnd_sat->hash() != hash_unchanged && cnd_nsat->hash() != hash_unchanged )
+								{
+									seg.branch_cc = ccexp;
+									seg.branch_targets = { std::move( cnd_sat ), std::move( cnd_nsat ) };
+								}
+							}
+						};
+						statement->enumerate( ccscan );
+					}
+				}
 			}
 		}
 
