@@ -138,22 +138,18 @@ namespace vtil::optimizer
 					};
 					auto rmask = get_used_mask( get_used_mask, sblk, std::next( it ), reg );
 
-					// DUM FIX
+					// TODO: Fix, does not handle partial discard.
 					//
+					symbolic::context::segmented_value& vctx = ctx;
 					math::bit_enum( ctx.bitmap, [ & ] ( bitcnt_t n )
 					{
-						if ( !( math::fill( ctx.linear_store[ n ].size(), n ) & rmask ) )
+						if ( !( math::fill( vctx.linear_store[ n ].size(), n ) & rmask ) )
 						{
-							math::bit_reset( ctx.bitmap, n );
-							ctx.linear_store[ n ] = nullptr;
+							math::bit_reset( vctx.bitmap, n );
+							vctx.linear_store[ n ] = nullptr;
 							cnt++;
 						}
 					} );
-
-					//if ( !kit->second.bitmap )
-					//	kit = it->register_state.value_map.erase( kit );
-					//else
-					//	++kit;
 				}
 			}
 
