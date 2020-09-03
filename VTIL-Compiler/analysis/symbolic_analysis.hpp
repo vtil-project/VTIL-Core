@@ -52,7 +52,7 @@ namespace vtil::analysis
 		{
 			uint64_t known = 0, read = desc.get_mask();
 			auto result = register_state.read( desc, segment_begin, &known );
-			if ( ( read & known ) != read )
+			if ( is_executing && ( read & ~known ) )
 				make_mutable( register_references )[ desc ] |= read & ~known;
 			return result;
 		}
