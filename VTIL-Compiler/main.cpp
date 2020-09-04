@@ -51,6 +51,9 @@ namespace vtil::optimizer
 						//
 						if ( it == blk.end() )
 						{
+							if ( id.flags & register_local )
+								return 0;
+
 							// TODO DO THIS PROPERLY
 							uint64_t rmask = 0;
 							uint64_t vmask = math::fill( 64 );
@@ -164,47 +167,7 @@ using namespace vtil::logger;
 void optimizer_test( routine* rtn )
 {
 	optimizer::bblock_extension_pass{}( rtn );
-
-	transform_parallel( rtn->explored_blocks, [ ] ( const std::pair<const vip_t, basic_block*>& e )
-	{
-		analysis::symbolic_analysis& a = e.second->context;
-
-		// Run simple dce.
-		//
-		for ( auto it = a.segments.begin(); it != a.segments.end(); ++it )
-		{
-			for ( auto kit = it->register_state.value_map.begin(); kit != it->register_state.value_map.end(); )
-			{
-				bool used = false;
-				if ( kit->first.flags & register_local )
-				{
-					for ( auto& seg : make_range( std::next( it ), a.segments.end() ) )
-					{
-						auto it = seg.register_references.find( kit->first );
-						if ( used = it != seg.register_references.end() && it->second & kit->second.bitmap )
-							break;
-
-						bitcnt_t write_msb = math::msb( kit->second.bitmap ) - 1;
-						bitcnt_t write_size = kit->second.linear_store[ write_msb ].size() + write_msb;
-						register_desc k = { kit->first, write_size };
-
-						for ( auto& sfx : seg.suffix )
-							if ( used = symbolic::variable{ k }.read_by( sfx ) )
-								break;
-					}
-				}
-				else
-				{
-					used = true;
-				}
-
-				if ( !used )
-					kit = it->register_state.value_map.erase( kit );
-				else
-					++kit;
-			}
-		}
-	} );
+	optimizer::update_analysis<analysis::symbolic_analysis>{}( rtn );
 
 	while ( size_t n = optimizer::symbolic_dce{}( rtn ) );
 
