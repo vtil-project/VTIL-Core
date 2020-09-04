@@ -30,6 +30,22 @@
 
 namespace vtil
 {
+	// Gets the calling convention for the given VIP (that resolves into VXCALL.
+	//
+	call_convention routine::get_cconv( vip_t vip ) const
+	{
+		if ( auto it = spec_subroutine_conventions.find( vip ); it != spec_subroutine_conventions.end() )
+			return it->second;
+		return subroutine_convention;
+	}
+
+	// Sets the calling convention for the given VIP (that resolves into VXCALL.
+	//
+	void routine::set_cconv( vip_t vip, const call_convention& cc )
+	{
+		spec_subroutine_conventions[ vip ] = cc;
+	}
+
 	// Gets (forward/backward) path from src to dst.
 	//
 	const path_set& routine::get_path( const basic_block* src, const basic_block* dst ) const
@@ -61,10 +77,6 @@ namespace vtil
 	//
 	void routine::explore_paths( const basic_block* blk )
 	{
-		// Acquire the routine mutex.
-		//
-		std::lock_guard g{ this->mutex };
-
 		// Signal modification.
 		//
 		signal_cfg_modification();
@@ -123,10 +135,6 @@ namespace vtil
 	//
 	void routine::flush_paths()
 	{
-		// Acquire the routine mutex.
-		//
-		std::lock_guard g{ this->mutex };
-
 		// Signal modification.
 		//
 		signal_cfg_modification();
@@ -151,16 +159,12 @@ namespace vtil
 	//
 	basic_block* routine::find_block( vip_t vip ) const
 	{
-		std::lock_guard g{ this->mutex };
-
 		auto it = explored_blocks.find( vip );
 		if ( it == explored_blocks.end() ) return nullptr;
 		return it->second;
 	}
 	basic_block* routine::get_block( vip_t vip ) const
 	{
-		std::lock_guard g{ this->mutex };
-
 		basic_block* block = find_block( vip );
 		fassert( block );
 		return block;
@@ -171,8 +175,6 @@ namespace vtil
 	//
 	std::pair<basic_block*, bool> routine::create_block( vip_t vip, basic_block* src )
 	{
-		std::lock_guard g{ this->mutex };
-
 		// Signal modification.
 		//
 		signal_cfg_modification();
@@ -215,10 +217,6 @@ namespace vtil
 	//
 	void routine::delete_block( basic_block* block )
 	{
-		// Acquire the routine mutex.
-		//
-		std::lock_guard g{ this->mutex };
-
 		// Signal modification.
 		//
 		signal_cfg_modification();
@@ -271,10 +269,6 @@ namespace vtil
 	//
 	std::vector<const basic_block*> routine::get_exits() const
 	{
-		// Acquire the routine mutex.
-		//
-		std::lock_guard g{ this->mutex };
-
 		// Make a vector of all blocks with no next's and return.
 		//
 		std::vector<const basic_block*> exits;
@@ -289,10 +283,6 @@ namespace vtil
 	//
 	std::vector<routine::depth_placement> routine::get_depth_ordered_list( bool fwd ) const
 	{
-		// Acquire the routine mutex.
-		//
-		std::lock_guard g{ this->mutex };
-
 		// Return if already cached.
 		//
 		auto& cache = depth_ordered_list_cache[ fwd ? 1 : 0 ];
@@ -412,20 +402,12 @@ namespace vtil
 	//
 	size_t routine::num_blocks() const
 	{
-		// Acquire the routine mutex.
-		//
-		std::lock_guard g{ this->mutex }; 
-
 		// Return the number of blocks.
 		//
 		return explored_blocks.size();
 	}
 	size_t routine::num_instructions() const
 	{
-		// Acquire the routine mutex.
-		//
-		std::lock_guard g{ this->mutex };
-
 		// Sum up instructions in every block.
 		//
 		size_t n = 0;
@@ -435,10 +417,6 @@ namespace vtil
 	}
 	size_t routine::num_branches() const
 	{
-		// Acquire the routine mutex.
-		//
-		std::lock_guard g{ this->mutex };
-
 		// Sum up paths in every block.
 		//
 		size_t n = 0;
@@ -451,10 +429,6 @@ namespace vtil
 	//
 	routine::~routine()
 	{
-		// Acquire the routine mutex.
-		//
-		std::lock_guard g{ this->mutex };
-
 		for ( auto& [vip, block] : explored_blocks )
 		{
 			block->next.clear();
@@ -467,10 +441,6 @@ namespace vtil
 	//
 	routine* routine::clone() const
 	{
-		// Acquire the routine mutex.
-		//
-		std::lock_guard g{ this->mutex };
-
 		// Copy the routine.
 		//
 		auto copy = new routine( *this );

@@ -31,6 +31,7 @@
 #include <vector>
 #include <algorithm>
 #include <iterator>
+#include <shared_mutex>
 #include <vtil/io>
 #include <vtil/utility>
 #include "routine.hpp"
@@ -46,17 +47,6 @@
 namespace vtil
 {
 	// Descriptor for any routine that is being translated.
-	// - Since optimization phase will be done in a single threaded
-	//   fashion, this structure contains no mutexes at all.
-	//
-	// - During the translation phase, only .prev links should be
-	//   accessed, under the strict condition that owning routine's
-	//   mutex is held by the accesser. For the sake of "basic" 
-	//   expression simplification in order to resolve branch destinations
-	//   or stack pointer value when required.
-	//
-	// - No block should under any circumstance modify any of the properties 
-	//   of any other block, with the only exception being .prev.
 	//
 	struct basic_block
 	{
@@ -239,6 +229,10 @@ namespace vtil
 		using iterator =          base_iterator<false>;
 		using const_iterator =    base_iterator<true>;
 		using allocator =         std::allocator<list_entry>;
+
+		// Shared mutex left for the use of the lifter // optimizer.
+		//
+		mutable relaxed<std::shared_mutex> generic_mutex;
 
 		// Routine that this basic block belongs to.
 		//

@@ -27,9 +27,9 @@
 //
 #pragma once
 #include <vtil/utility>
-#include <mutex>
 #include <functional>
 #include <unordered_map>
+#include <shared_mutex>
 #include "../arch/identifier.hpp"
 #include "instruction.hpp"
 #include "call_convention.hpp"
@@ -64,9 +64,9 @@ namespace vtil
 		routine( const routine& ) = default;
 		routine& operator=( const routine& ) = default;
 	public:
-		// Mutex guarding the whole structure, more information on thread-safety can be found at basic_block.hpp.
+		// Shared mutex left for the use of the lifter // optimizer.
 		//
-		mutable relaxed<std::recursive_mutex> mutex;
+		mutable relaxed<std::shared_mutex> generic_mutex;
 
 		// Physical architecture routine is bound to.
 		//
@@ -81,7 +81,6 @@ namespace vtil
 		path_map path_cache;
 
 		// Reference to the first block, entry point.
-		// - Can be accessed without acquiring the mutex as it will be assigned strictly once.
 		//
 		basic_block* entry_point = nullptr;
 
@@ -172,7 +171,6 @@ namespace vtil
 		template<typename T>
 		void for_each( T&& fn )
 		{
-			std::lock_guard _g( mutex );
 			for ( auto& [vip, block] : explored_blocks )
 				if ( enumerator::invoke( fn, block ).should_break )
 					return;
@@ -180,21 +178,11 @@ namespace vtil
 
 		// Gets the calling convention for the given VIP (that resolves into VXCALL.
 		//
-		call_convention get_cconv( vip_t vip ) const
-		{
-			std::lock_guard _g( mutex );
-			if ( auto it = spec_subroutine_conventions.find( vip ); it != spec_subroutine_conventions.end() )
-				return it->second;
-			return subroutine_convention;
-		}
+		call_convention get_cconv( vip_t vip ) const;
 
 		// Sets the calling convention for the given VIP (that resolves into VXCALL.
 		//
-		void set_cconv( vip_t vip, const call_convention& cc )
-		{
-			std::lock_guard _g( mutex );
-			spec_subroutine_conventions[ vip ] = cc;
-		}
+		void set_cconv( vip_t vip, const call_convention& cc );
 
 		// Gets path from src to dst.
 		//
