@@ -453,9 +453,13 @@ namespace vtil
 			return this;
 		}
 		template<typename T>
-		basic_block* assign( const T& o ) 
-		{ 
-			return assign( std::begin( o ), std::end( o ) ); 
+		basic_block* assign( const T& o ) { return assign( std::begin( o ), std::end( o ) ); }
+		basic_block* assign( basic_block&& o )
+		{
+			std::swap( head, o.head );
+			std::swap( tail, o.tail );
+			std::swap( instruction_count, o.instruction_count );
+			return this;
 		}
 
 		// Instruction deletion.
