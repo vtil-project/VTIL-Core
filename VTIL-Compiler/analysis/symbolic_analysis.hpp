@@ -164,17 +164,11 @@ namespace vtil::analysis
 		}
 	};
 
-	struct symbolic_analysis : mv_updatable_tag
+	struct symbolic_analysis : synchronized_context<basic_block>
 	{
 		// List of segments, ideally just one if none of it quit due to alias analysis failure.
 		//
 		std::list<symbolic_segment> segments;
-
-		// Initializes the context given the parent if not done already.
-		// - Block is not const qualified since we need to add temporaries upon alias analysis failure.
-		//
-		relaxed<std::mutex> update_lock;
-		relaxed_atomic<epoch_t> epoch = invalid_epoch;
 
 		// Wrap around std::list.
 		//
@@ -186,55 +180,47 @@ namespace vtil::analysis
 
 		// Updates the symbolic analysis.
 		//
-		symbolic_analysis& update( const basic_block* block )
+		void update( const basic_block* block ) override
 		{
-			if ( epoch_t e0 = epoch.load(); e0 != block->epoch )
+			// Reset all segments.
+			//
+			segments.clear();
+
+			// Until we reach the end of the block:
+			//
+			for ( il_const_iterator it = block->begin(); !it.is_end(); )
 			{
-				std::lock_guard _g( update_lock );
-				if ( epoch.compare_exchange_strong( e0, block->epoch ) )
+				// Create a new segment and run the VM.
+				//
+				symbolic_segment* seg = &segments.emplace_back( it );
+				std::tie( it, seg->exit_reason ) = seg->run( it );
+				seg->segment_end = it;
+
+				// If end, break.
+				//
+				if ( seg->exit_reason == vm_exit_reason::stream_end )
+					break;
+
+				// If not alias failure:
+				//
+				if ( seg->exit_reason != vm_exit_reason::alias_failure )
 				{
-					// Reset all segments.
+					// If VM state is empty, and this is not the first segment, pop it.
 					//
-					segments.clear();
-
-					// Until we reach the end of the block:
-					//
-					for ( il_const_iterator it = block->begin(); !it.is_end(); )
+					if ( seg->memory_state.size() == 0 &&
+						 seg->register_state.size() == 0 &&
+						 segments.size() > 1 )
 					{
-						// Create a new segment and run the VM.
-						//
-						symbolic_segment* seg = &segments.emplace_back( it );
-						std::tie( it, seg->exit_reason ) = seg->run( it );
-						seg->segment_end = it;
-
-						// If end, break.
-						//
-						if ( seg->exit_reason == vm_exit_reason::stream_end )
-							break;
-
-						// If not alias failure:
-						//
-						if ( seg->exit_reason != vm_exit_reason::alias_failure )
-						{
-							// If VM state is empty, and this is not the first segment, pop it.
-							//
-							if ( seg->memory_state.size() == 0 &&
-								 seg->register_state.size() == 0 &&
-								 segments.size() > 1 )
-							{
-								segments.pop_back();
-								seg = &segments.back();
-							}
-
-							// Append the instruction to the suffix.
-							//
-							seg->suffix.emplace_back( it++ );
-							seg->segment_end = it;
-						}
+						segments.pop_back();
+						seg = &segments.back();
 					}
+
+					// Append the instruction to the suffix.
+					//
+					seg->suffix.emplace_back( it++ );
+					seg->segment_end = it;
 				}
 			}
-			return *this;
 		}
 
 		// Pre-simplifies all current expressions stored.
@@ -616,7 +602,7 @@ namespace vtil::analysis
 			// TODO: This is dumb but is due to symbolic variable stuff.
 			//
 			if ( block == segments.front().segment_begin.block )
-				make_mutable( epoch )--;
+				mark_dirty();
 
 			// Copy temporary block over input.
 			//

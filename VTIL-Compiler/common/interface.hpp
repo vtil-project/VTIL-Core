@@ -359,6 +359,42 @@ namespace vtil::optimizer
 		}
 	};
 
+	// Used to assert that the basic blocks contains updated analysis of the given type.
+	//
+	template<typename T>
+	struct update_analysis : pass_interface<execution_order::custom>
+	{
+		size_t pass( basic_block* blk, bool xblock = false ) override
+		{
+			// Invoke get once and return.
+			//
+			auto& _ = blk->context.template get<T>();
+			return 0;
+		}
+
+		size_t xpass( routine* rtn ) override 
+		{
+			// Enumerate over blocks and append to an update list if required.
+			//
+			std::vector<std::pair<basic_block*, T*>> update_list;
+			update_list.reserve( rtn->num_blocks() );
+			for ( auto& [vip, blk] : rtn->explored_blocks )
+			{
+				T& ref = blk->context.template get_raw<T>();
+				if ( !ref.is_updated( blk ) )
+					update_list.emplace_back( blk, &ref );
+			}
+
+			// Apply parallel transformation.
+			//
+			transform_parallel( update_list, [ ] ( const std::pair<basic_block*, T*>& pair )
+			{
+				pair.second->update_if( pair.first );
+			} );
+			return 0;
+		}
+	};
+
 	// This wrapper applies a template modifier on each individual pass in the
 	// given compound pass.
 	//
