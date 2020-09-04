@@ -1,4 +1,8 @@
 #pragma once
+#include <vector>
+#include <unordered_map>
+#include <list>
+#include <mutex>
 #include <vtil/arch>
 #include <vtil/utility>
 #include <vtil/symex>
@@ -245,7 +249,7 @@ namespace vtil::analysis
 				//
 				for ( auto& [k, v] : seg.register_state )
 				{
-					math::bit_enum( v.bitmap, [ &, v = std::ref( v.linear_store ) ] ( bitcnt_t i )
+					math::bit_enum( v.bitmap, [ &, v = std::ref( v.linear_store ) ]( bitcnt_t i )
 					{
 						v[ i ].simplify( pack );
 					} );
@@ -387,7 +391,7 @@ namespace vtil::analysis
 			// For each segment:
 			//
 			std::vector<instruction> instruction_buffer;
-			for( auto it = segments.begin(); it != segments.end(); ++it )
+			for ( auto it = segments.begin(); it != segments.end(); ++it )
 			{
 				auto& vm = *it;
 
@@ -558,7 +562,7 @@ namespace vtil::analysis
 
 				// Emit suffix.
 				//
-				if( !vm.suffix.empty() )
+				if ( !vm.suffix.empty() )
 				{
 					int32_t sp_index_d = temporary_block.sp_index - vm.suffix.front()->sp_index;
 					for ( auto& iit : vm.suffix )
@@ -566,10 +570,10 @@ namespace vtil::analysis
 						instruction ins = *iit;
 						ins.sp_index += sp_index_d;
 						ins.sp_offset += sp_offset_d;
-						if ( ins.base->reads_memory() && 
+						if ( ins.base->reads_memory() &&
 							 ins.memory_location().first.is_stack_pointer() )
 							ins.memory_location().second += sp_offset_d;
-						
+
 						temporary_block.np_emplace_back( ins );
 						temporary_block.sp_index = ins.sp_index;
 						temporary_block.sp_offset = ins.sp_offset;
@@ -583,7 +587,7 @@ namespace vtil::analysis
 					if ( vm.is_branch_real )
 					{
 						fassert( !vm.branch_cc && branch_targets.size() == 1 );
-						if( vm.is_branch_exiting )
+						if ( vm.is_branch_exiting )
 							temporary_block.vexit( branch_targets[ 0 ] );
 						else
 							temporary_block.vxcall( branch_targets[ 0 ] );
@@ -613,5 +617,64 @@ namespace vtil::analysis
 			block->sp_offset = temporary_block.sp_offset + segments.back().segment_end.block->sp_offset;
 			block->last_temporary_index = temporary_block.last_temporary_index;
 		}
+
+		// Dumps the current state.
+		//
+		void dump() const
+		{
+			using namespace logger;
+
+			for ( auto it = segments.begin(); it != segments.end(); it++ )
+			{
+				auto& seg = *it;
+
+				log<CON_GRN>( "[Segment %s]\n", seg.segment_begin );
+
+				log<CON_CYN>( "- # Memory Ops:   %d\n", seg.memory_state.size() );
+				log<CON_CYN>( "- # Register Ops: %d\n", seg.register_state.size() );
+				log<CON_YLW>( "- Stack pointer:  %s\n", seg.register_state.read( REG_SP ) );
+
+				switch ( seg.exit_reason )
+				{
+					case vm_exit_reason::stream_end:
+						log<CON_BLU>( "Exit due to stream end\n" );
+
+						if ( seg.is_branch_real )
+						{
+							if ( seg.segment_begin.block->next.empty() )
+								log<CON_RED>( "Real Exit     " );
+							else
+								log<CON_RED>( "Real Call     " );
+						}
+						else                      log<CON_BLU>( "Virtual Branch" );
+						log<CON_BRG>( " => " );
+						if ( seg.branch_cc )
+						{
+							log<CON_YLW>( "%s", seg.branch_cc );            log<CON_BRG>( " ? " );
+							log<CON_GRN>( "%s", seg.branch_targets[ 0 ] );  log<CON_BRG>( " : " );
+							log<CON_RED>( "%s\n", seg.branch_targets[ 1 ] );
+						}
+						else
+						{
+							log<CON_PRP>( "%s\n", seg.branch_targets );
+						}
+
+						break;
+					case vm_exit_reason::alias_failure:
+						log<CON_RED>( "Exit due to alias analysis failure @" );
+						log<CON_BRG>( " \"%s\"\n", std::next( it )->segment_begin->to_string() );
+
+						break;
+					case vm_exit_reason::high_arithmetic:
+						log<CON_RED>( "Exit due to high arithmetic:\n" );
+						break;
+					case vm_exit_reason::unknown_instruction:
+						log<CON_PRP>( "Exit due to non-symbolic instruction:\n" );
+						break;
+				}
+				for ( auto& ins : seg.suffix )
+					log<CON_YLW>( " + %s\n", ins );
+			}
+		};
 	};
 };

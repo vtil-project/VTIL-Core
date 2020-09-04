@@ -55,56 +55,57 @@ namespace vtil::optimizer
 
 	// Exhaustive propagation pass.
 	//
-	using collective_propagation_pass = exhaust_pass<
-		stack_propagation_pass,
-		local_pass<mov_propagation_pass>,
-		local_pass<dead_code_elimination_pass>,
-		mov_propagation_pass,
-		register_renaming_pass,
-		dead_code_elimination_pass,
-		conditional_pass<
-			branch_correction_pass,
+	using collective_propagation_pass = 
+		exhaust_pass<
+			stack_propagation_pass,
+			local_pass<mov_propagation_pass>,
+			local_pass<dead_code_elimination_pass>,
+			mov_propagation_pass,
+			register_renaming_pass,
+			dead_code_elimination_pass,
 			conditional_pass<
-				bblock_extension_pass,
-				symbolic_rewrite_pass<true>
+				branch_correction_pass,
+				conditional_pass<
+					bblock_extension_pass,
+					symbolic_rewrite_pass<true>
+				>
 			>
-		>
-	>;
+		>;
 
 	// Cross optimization pass.
 	//
-	using core_local_propagation_pass = combine_pass<
-		local_pass<stack_propagation_pass>,
-		local_pass<dead_code_elimination_pass>,
-		local_pass<mov_propagation_pass>,
-		local_pass<register_renaming_pass>,
-		local_pass<dead_code_elimination_pass>
-	>;
-	using collective_cross_pass = combine_pass<
-		stack_pinning_pass,
-		istack_ref_substitution_pass,
-		bblock_extension_pass,
-		core_local_propagation_pass,
-		dead_code_elimination_pass,
-		symbolic_rewrite_pass<true>,
-		branch_correction_pass,
-		collective_propagation_pass,
-		symbolic_rewrite_pass<true>,
-		core_local_propagation_pass,
-		collective_propagation_pass,
-		//fast_dead_code_elimination_pass,
-		exhaust_pass<
-			conditional_pass<
-				symbolic_rewrite_pass<false>,
-				exhaust_pass<
-					//fast_local_passes,
-					//fast_dead_code_elimination_pass,
-					collective_propagation_pass
+	using core_local_propagation_pass = 
+		combine_pass<
+			local_pass<stack_propagation_pass>,
+			local_pass<dead_code_elimination_pass>,
+			local_pass<mov_propagation_pass>,
+			local_pass<register_renaming_pass>,
+			local_pass<dead_code_elimination_pass>
+		>;
+
+	using collective_cross_pass = 
+		combine_pass<
+			stack_pinning_pass,
+			istack_ref_substitution_pass,
+			bblock_extension_pass,
+			core_local_propagation_pass,
+			dead_code_elimination_pass,
+			symbolic_rewrite_pass<true>,
+			branch_correction_pass,
+			collective_propagation_pass,
+			symbolic_rewrite_pass<true>,
+			core_local_propagation_pass,
+			collective_propagation_pass,
+			exhaust_pass<
+				conditional_pass<
+					symbolic_rewrite_pass<false>,
+					exhaust_pass<
+						collective_propagation_pass
+					>
 				>
-			>
-		>,
-		stack_pinning_pass
-	>;
+			>,
+			stack_pinning_pass
+		>;
 
 	// Local optimization pass.
 	//
