@@ -150,11 +150,10 @@ namespace vtil
 
 		// Wrap around explored blocks list, thread-safety left to caller.
 		//
-		auto begin() { return explored_blocks.begin(); }
-		auto end()   { return explored_blocks.end(); }
-		auto begin() const { return explored_blocks.cbegin(); }
-		auto end() const   { return explored_blocks.cend(); }
-		auto size() const  { return explored_blocks.size(); }
+		auto blocks() const { return make_view( explored_blocks, [ ] ( auto& pair ) { return pair.second; } ); }
+		auto begin() const  { return blocks().begin(); }
+		auto end() const    { return blocks().end(); }
+		auto size() const   { return explored_blocks.size(); }
 
 		// Helpers for the allocation of unique internal registers.
 		//
