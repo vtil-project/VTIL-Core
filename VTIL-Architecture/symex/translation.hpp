@@ -56,8 +56,8 @@ namespace vtil
 	// Translates the given symbolic expression into instruction equivalents, 
 	// if provided invokes the proxy for each subtranslation it needs to do.
 	//
-	template<typename T>
-	static operand translate_expression( const symbolic::expression::reference& exp, basic_block* block, const T& proxy, const il_const_iterator& it_sp = symbolic::free_form_iterator )
+	template<typename T> requires Invocable<T, operand, const symbolic::expression::reference&, basic_block*>
+	static operand translate_expression( const symbolic::expression::reference& exp, basic_block* block, T&& proxy, const il_const_iterator& it_sp = symbolic::free_form_iterator )
 	{
 		// Declare a helper to force an operand into register form.
 		//
@@ -364,5 +364,12 @@ namespace vtil
 
 		unreachable();
 		return {};
+	}
+	static operand translate_expression( const symbolic::expression::reference& exp, basic_block* block, const il_const_iterator& it_sp = symbolic::free_form_iterator )
+	{
+		return translate_expression( exp, block, [ & ] ( const symbolic::expression::reference& exp, basic_block* block )
+		{
+			return translate_expression( exp, block, it_sp );
+		}, it_sp );
 	}
 };

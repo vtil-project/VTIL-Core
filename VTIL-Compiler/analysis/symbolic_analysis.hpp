@@ -7,9 +7,7 @@ namespace vtil::analysis
 {
 	// TODO: 
 	// - sp_offset based r/w discarding
-	// - emitting back to basic_block
-	// - on-demand simplification
-	// - cross segment read / write via interruption segments failing or continuing operations
+	// - cross segment read / write
 	// - should not be an analysis, but rather a seperate representation of basic_block.
 	//
 	struct symbolic_segment : vm_interface
@@ -417,22 +415,32 @@ namespace vtil::analysis
 					//
 					if ( k.is_flags() && math::popcnt( pair.second.bitmap ) <= 4 )
 					{
-						// For each bit:
+						// If only singular bits were written:
 						//
+						bool valid = true;
 						math::bit_enum( pair.second.bitmap, [ & ] ( bitcnt_t i )
 						{
-							// Read the value and pack.
-							//
-							auto v = symbolic::variable::pack_all( pair.second.linear_store[ i ] );
-
-							// Buffer a mov instruction to the exact bit.
-							//
-							register_desc ks = k;
-							ks.bit_offset += i;
-							ks.bit_count = 1;
-							instruction_buffer.emplace_back( &ins::mov, ks, translator << v );
+							valid &= pair.second.linear_store[ i ].size() == 1;
 						} );
-						continue;
+						if ( valid )
+						{
+							// For each bit:
+							//
+							math::bit_enum( pair.second.bitmap, [ & ] ( bitcnt_t i )
+							{
+								// Read the value and pack.
+								//
+								auto v = symbolic::variable::pack_all( pair.second.linear_store[ i ] );
+
+								// Buffer a mov instruction to the exact bit.
+								//
+								register_desc ks = k;
+								ks.bit_offset += i;
+								ks.bit_count = 1;
+								instruction_buffer.emplace_back( &ins::mov, ks, translator << v );
+							} );
+							continue;
+						}
 					}
 
 					// Validate the register output.

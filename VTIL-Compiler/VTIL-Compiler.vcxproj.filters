@@ -11,6 +11,39 @@
       <Filter>Validation</Filter>
     </ClCompile>
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="optimizer\bblock_extension_pass.cpp">
+      <Filter>Optimizer\Old</Filter>
+    </ClCompile>
+    <ClCompile Include="optimizer\branch_correction_pass.cpp">
+      <Filter>Optimizer\Old</Filter>
+    </ClCompile>
+    <ClCompile Include="optimizer\dead_code_elimination_pass.cpp">
+      <Filter>Optimizer\Old</Filter>
+    </ClCompile>
+    <ClCompile Include="optimizer\fast_dead_code_elimination_pass.cpp">
+      <Filter>Optimizer\Old</Filter>
+    </ClCompile>
+    <ClCompile Include="optimizer\fast_propagation_pass.cpp">
+      <Filter>Optimizer\Old</Filter>
+    </ClCompile>
+    <ClCompile Include="optimizer\istack_ref_substitution_pass.cpp">
+      <Filter>Optimizer\Old</Filter>
+    </ClCompile>
+    <ClCompile Include="optimizer\mov_propagation_pass.cpp">
+      <Filter>Optimizer\Old</Filter>
+    </ClCompile>
+    <ClCompile Include="optimizer\register_renaming_pass.cpp">
+      <Filter>Optimizer\Old</Filter>
+    </ClCompile>
+    <ClCompile Include="optimizer\stack_pinning_pass.cpp">
+      <Filter>Optimizer\Old</Filter>
+    </ClCompile>
+    <ClCompile Include="optimizer\stack_propagation_pass.cpp">
+      <Filter>Optimizer\Old</Filter>
+    </ClCompile>
+    <ClCompile Include="optimizer\symbolic_rewrite_pass.cpp">
+      <Filter>Optimizer\Old</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Includes">
@@ -27,6 +60,9 @@
     </Filter>
     <Filter Include="Analysis">
       <UniqueIdentifier>{aab92ab2-48b8-44ce-a265-ab08ce53e0fe}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Optimizer\Old">
+      <UniqueIdentifier>{4550daf0-16b1-4e6d-b8b8-e3f3765b273c}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -51,71 +87,41 @@
     <ClInclude Include="analysis\symbolic_analysis.hpp">
       <Filter>Analysis</Filter>
     </ClInclude>
-    <ClInclude Include="optimizer\bblock_extension_pass.cpp">
-      <Filter>Optimizer</Filter>
-    </ClInclude>
     <ClInclude Include="optimizer\bblock_extension_pass.hpp">
-      <Filter>Optimizer</Filter>
-    </ClInclude>
-    <ClInclude Include="optimizer\branch_correction_pass.cpp">
-      <Filter>Optimizer</Filter>
+      <Filter>Optimizer\Old</Filter>
     </ClInclude>
     <ClInclude Include="optimizer\branch_correction_pass.hpp">
-      <Filter>Optimizer</Filter>
-    </ClInclude>
-    <ClInclude Include="optimizer\dead_code_elimination_pass.cpp">
-      <Filter>Optimizer</Filter>
+      <Filter>Optimizer\Old</Filter>
     </ClInclude>
     <ClInclude Include="optimizer\dead_code_elimination_pass.hpp">
-      <Filter>Optimizer</Filter>
-    </ClInclude>
-    <ClInclude Include="optimizer\fast_dead_code_elimination_pass.cpp">
-      <Filter>Optimizer</Filter>
+      <Filter>Optimizer\Old</Filter>
     </ClInclude>
     <ClInclude Include="optimizer\fast_dead_code_elimination_pass.hpp">
-      <Filter>Optimizer</Filter>
-    </ClInclude>
-    <ClInclude Include="optimizer\fast_propagation_pass.cpp">
-      <Filter>Optimizer</Filter>
+      <Filter>Optimizer\Old</Filter>
     </ClInclude>
     <ClInclude Include="optimizer\fast_propagation_pass.hpp">
-      <Filter>Optimizer</Filter>
-    </ClInclude>
-    <ClInclude Include="optimizer\istack_ref_substitution_pass.cpp">
-      <Filter>Optimizer</Filter>
+      <Filter>Optimizer\Old</Filter>
     </ClInclude>
     <ClInclude Include="optimizer\istack_ref_substitution_pass.hpp">
-      <Filter>Optimizer</Filter>
-    </ClInclude>
-    <ClInclude Include="optimizer\mov_propagation_pass.cpp">
-      <Filter>Optimizer</Filter>
+      <Filter>Optimizer\Old</Filter>
     </ClInclude>
     <ClInclude Include="optimizer\mov_propagation_pass.hpp">
-      <Filter>Optimizer</Filter>
-    </ClInclude>
-    <ClInclude Include="optimizer\register_renaming_pass.cpp">
-      <Filter>Optimizer</Filter>
+      <Filter>Optimizer\Old</Filter>
     </ClInclude>
     <ClInclude Include="optimizer\register_renaming_pass.hpp">
-      <Filter>Optimizer</Filter>
-    </ClInclude>
-    <ClInclude Include="optimizer\stack_pinning_pass.cpp">
-      <Filter>Optimizer</Filter>
+      <Filter>Optimizer\Old</Filter>
     </ClInclude>
     <ClInclude Include="optimizer\stack_pinning_pass.hpp">
-      <Filter>Optimizer</Filter>
-    </ClInclude>
-    <ClInclude Include="optimizer\stack_propagation_pass.cpp">
-      <Filter>Optimizer</Filter>
+      <Filter>Optimizer\Old</Filter>
     </ClInclude>
     <ClInclude Include="optimizer\stack_propagation_pass.hpp">
-      <Filter>Optimizer</Filter>
-    </ClInclude>
-    <ClInclude Include="optimizer\symbolic_rewrite_pass.cpp">
-      <Filter>Optimizer</Filter>
+      <Filter>Optimizer\Old</Filter>
     </ClInclude>
     <ClInclude Include="optimizer\symbolic_rewrite_pass.hpp">
-      <Filter>Optimizer</Filter>
+      <Filter>Optimizer\Old</Filter>
+    </ClInclude>
+    <ClInclude Include="common\apply_all.hpp">
+      <Filter>Common</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
