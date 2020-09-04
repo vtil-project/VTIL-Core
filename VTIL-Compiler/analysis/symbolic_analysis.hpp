@@ -1,11 +1,11 @@
 #pragma once
-#include <vector>
-#include <unordered_map>
 #include <list>
 #include <mutex>
+#include <vector>
+#include <unordered_map>
 #include <vtil/arch>
-#include <vtil/utility>
 #include <vtil/symex>
+#include <vtil/common>
 
 namespace vtil::analysis
 {
@@ -580,6 +580,10 @@ namespace vtil::analysis
 					}
 				}
 
+				// Adjust sp_offset.
+				//
+				temporary_block.sp_offset = std::prev( vm.segment_end )->sp_offset + sp_offset_d;
+
 				// Emit branch.
 				//
 				if ( !branch_targets.empty() )
@@ -602,6 +606,10 @@ namespace vtil::analysis
 						fassert( branch_targets.size() == 1 );
 						temporary_block.jmp( branch_targets[ 0 ] );
 					}
+
+					// Adjust end-of-block sp_offset.
+					//
+					temporary_block.sp_offset = vm.segment_end.block->sp_offset + sp_offset_d;
 				}
 			}
 
@@ -612,9 +620,9 @@ namespace vtil::analysis
 
 			// Copy temporary block over input.
 			//
-			block->assign( temporary_block );
+			block->assign( std::move( temporary_block ) );
 			block->sp_index = temporary_block.sp_index;
-			block->sp_offset = temporary_block.sp_offset + segments.back().segment_end.block->sp_offset;
+			block->sp_offset = temporary_block.sp_offset;
 			block->last_temporary_index = temporary_block.last_temporary_index;
 		}
 
@@ -628,7 +636,7 @@ namespace vtil::analysis
 			{
 				auto& seg = *it;
 
-				log<CON_GRN>( "[Segment %s]\n", seg.segment_begin );
+				log<CON_GRN>( "[%s - %s]\n", seg.segment_begin, seg.segment_end );
 
 				log<CON_CYN>( "- # Memory Ops:   %d\n", seg.memory_state.size() );
 				log<CON_CYN>( "- # Register Ops: %d\n", seg.register_state.size() );
