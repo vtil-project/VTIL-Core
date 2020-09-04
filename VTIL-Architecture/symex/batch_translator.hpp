@@ -59,7 +59,7 @@ namespace vtil
 			if ( exp->is_constant() ) return { *exp->get(), exp->size() };
 			
 			operand& op = translation_cache[ exp ];
-			if ( !op.is_valid() )
+			if ( op.is_null() )
 			{
 				op = translate_expression(
 					exp,

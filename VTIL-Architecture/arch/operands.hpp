@@ -39,6 +39,10 @@ namespace vtil
 	#pragma pack(push, 4)
 	struct operand : reducable<operand>
 	{
+		// None type for discrimination of default initialized operand.
+		//
+		struct none_t : reducable<none_t> { REDUCE_TO( 0 ); };
+
 		// If register type, we just need the register descriptor.
 		//
 		using register_t = register_desc;
@@ -73,11 +77,11 @@ namespace vtil
 
 		// Descriptor of this operand.
 		//
-		std::variant<immediate_t, register_t> descriptor = {};
+		std::variant<immediate_t, register_t, none_t> descriptor;
 
 		// Default constructor / move / copy.
 		//
-		constexpr operand()  {}
+		constexpr operand() : descriptor( none_t{} ) {}
 		constexpr operand( operand&& ) = default;
 		constexpr operand( const operand& ) = default;
 		constexpr operand& operator=( operand&& ) = default;
@@ -114,27 +118,15 @@ namespace vtil
 		// Simple helpers to determine the type of operand.
 		//
 		constexpr bool is_register() const { return std::holds_alternative<register_t>( descriptor ); }
-		constexpr bool is_immediate() const { return std::holds_alternative<immediate_t>( descriptor ) && imm().bit_count != 0; }
+		constexpr bool is_immediate() const { return std::holds_alternative<immediate_t>( descriptor ); }
+		constexpr bool is_null() const { return std::holds_alternative<none_t>( descriptor ); }
 		constexpr bool is_valid() const
 		{ 
-			// If register:
+			// Must be valid register or immediate, null is considered invalid.
 			//
-			if ( is_register() )
-			{
-				// Bit offset and bit count must be both byte-aligned
-				// with the exception of bit count == 1 for boolean registers.
-				//
-				if ( reg().bit_count != 1 )
-				{
-					return !( reg().bit_offset & 7 ) &&
-						   !( reg().bit_count & 7 );
-				}
-				return true;
-			}
-
-			// Otherwise must be a valid immediate.
-			//
-			return is_immediate(); 
+			return is_register() 
+				? reg().is_valid() 
+				: is_immediate() && imm().bit_count != 0;
 		}
 
 		// Declare reduction.
