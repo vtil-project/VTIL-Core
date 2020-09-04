@@ -127,6 +127,7 @@
     <ClCompile Include="optimizer\register_renaming_pass.cpp" />
     <ClCompile Include="optimizer\stack_pinning_pass.cpp" />
     <ClCompile Include="optimizer\stack_propagation_pass.cpp" />
+    <ClCompile Include="optimizer\symbolic\preliminary_register_elimination.cpp" />
     <ClCompile Include="optimizer\symbolic_rewrite_pass.cpp" />
     <ClCompile Include="validation\pass_validation.cpp" />
     <ClCompile Include="validation\test1.cpp" />
@@ -145,6 +146,7 @@
     <ClInclude Include="optimizer\register_renaming_pass.hpp" />
     <ClInclude Include="optimizer\stack_pinning_pass.hpp" />
     <ClInclude Include="optimizer\stack_propagation_pass.hpp" />
+    <ClInclude Include="optimizer\symbolic\preliminary_register_elimination.hpp" />
     <ClInclude Include="optimizer\symbolic_rewrite_pass.hpp" />
     <ClInclude Include="validation\pass_validation.hpp" />
     <ClInclude Include="validation\test1.hpp" />

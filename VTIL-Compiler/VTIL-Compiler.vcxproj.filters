@@ -44,6 +44,9 @@
     <ClCompile Include="optimizer\symbolic_rewrite_pass.cpp">
       <Filter>Optimizer\Old</Filter>
     </ClCompile>
+    <ClCompile Include="optimizer\symbolic\preliminary_register_elimination.cpp">
+      <Filter>Optimizer\Symbolic</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Includes">
@@ -63,6 +66,9 @@
     </Filter>
     <Filter Include="Optimizer\Old">
       <UniqueIdentifier>{4550daf0-16b1-4e6d-b8b8-e3f3765b273c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Optimizer\Symbolic">
+      <UniqueIdentifier>{6e738f2e-aea1-4ddf-abcf-5bc1ca57f173}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -122,6 +128,9 @@
     </ClInclude>
     <ClInclude Include="common\apply_all.hpp">
       <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="optimizer\symbolic\preliminary_register_elimination.hpp">
+      <Filter>Optimizer\Symbolic</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
