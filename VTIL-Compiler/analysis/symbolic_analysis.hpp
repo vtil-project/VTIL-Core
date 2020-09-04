@@ -398,39 +398,29 @@ namespace vtil::analysis
 					// Find out the highest bit modified and size we'd have to write.
 					//
 					bitcnt_t write_msb = math::msb( pair.second.bitmap ) - 1;
-					bitcnt_t write_size = pair.second.linear_store[ write_msb ].size() + write_msb;
-					register_desc k = { pair.first, write_size };
+					bitcnt_t write_size = pair.second.linear_store[ write_msb ].size();
+					register_desc k = { pair.first, write_size, write_msb };
 
 					// If partially inherited flags register with 4 or less changes:
 					//
 					if ( k.is_flags() && math::popcnt( pair.second.bitmap ) <= 4 )
 					{
-						// If only singular bits were written:
+						// For each bit:
 						//
-						bool valid = true;
 						math::bit_enum( pair.second.bitmap, [ & ] ( bitcnt_t i )
 						{
-							valid &= pair.second.linear_store[ i ].size() == 1;
-						} );
-						if ( valid )
-						{
-							// For each bit:
+							// Read the value and pack.
 							//
-							math::bit_enum( pair.second.bitmap, [ & ] ( bitcnt_t i )
-							{
-								// Read the value and pack.
-								//
-								auto v = symbolic::variable::pack_all( pair.second.linear_store[ i ] );
+							auto v = symbolic::variable::pack_all( pair.second.linear_store[ i ] );
 
-								// Buffer a mov instruction to the exact bit.
-								//
-								register_desc ks = k;
-								ks.bit_offset += i;
-								ks.bit_count = 1;
-								instruction_buffer.emplace_back( &ins::mov, ks, translator << v );
-							} );
-							continue;
-						}
+							// Buffer a mov instruction to the exact bit.
+							//
+							register_desc ks = k;
+							ks.bit_offset += i;
+							ks.bit_count = 1;
+							instruction_buffer.emplace_back( &ins::mov, ks, translator << v );
+						} );
+						continue;
 					}
 
 					// Validate the register output.
