@@ -31,6 +31,7 @@
 #include <array>
 #include <string>
 #include <thread>
+#include <atomic>
 #include "literals.hpp"
 #include "type_helpers.hpp"
 #include "zip.hpp"
@@ -93,6 +94,18 @@ namespace vtil
 				}
 			}
 			unreachable();
+		}
+
+		// Platform specific fast monotic counter.
+		//
+		namespace mimpl { inline std::atomic<uint64_t> tcounter = 0; };
+		static uint64_t monotonic()
+		{
+#ifdef _WIN64
+			return *( volatile uint64_t* ) 0x7FFE0014;
+#else
+			return ++mimpl::tcounter;
+#endif
 		}
 	};
 	using timestamp_t = time::stamp_t;
