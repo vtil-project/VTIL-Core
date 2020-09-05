@@ -43,6 +43,7 @@ namespace vtil::analysis
 		// Reference tracking.
 		//
 		std::unordered_map<register_desc::weak_id, uint64_t> register_references;
+		std::unordered_map<symbolic::pointer, uint64_t> memory_references;
 
 		// Basic construction from iterator.
 		//
@@ -52,30 +53,51 @@ namespace vtil::analysis
 		//
 		symbolic::expression::reference read_register( const register_desc& desc ) const override
 		{
+			// Try reading from register state.
+			//
 			uint64_t known = 0, read = desc.get_mask();
 			auto result = register_state.read( desc, segment_begin, &known );
+
+			// If we were executing and value had unknowns, add to references, return the result.
+			//
 			if ( is_executing && ( read & ~known ) )
 				make_mutable( register_references )[ desc ] |= read & ~known;
 			return result;
 		}
-		void write_register( const register_desc& desc, symbolic::expression::reference value ) override
-		{
-			register_state.write( desc, std::move( value.make_lazy() ) );
-			//register_state.write( desc, std::move( value ) );
-		}
 		symbolic::expression::reference read_memory( const symbolic::expression::reference& pointer, size_t byte_count ) const override
 		{
-			return memory_state.read( pointer, math::narrow_cast< bitcnt_t >( byte_count * 8 ), segment_begin );
+			// Parse the pointer.
+			//
+			bitcnt_t size = math::narrow_cast<bitcnt_t>( byte_count * 8 );
+			symbolic::pointer spointer = pointer;
+			
+			// Try reading from memory state.
+			//
+			uint64_t known = 0, read = math::fill( size );
+			auto result = memory_state.read( spointer, size, segment_begin, &known );
+
+			// If we were executing and value had unknowns, add to references, return the result.
+			//
+			if ( is_executing && ( read & ~known ) )
+				make_mutable( memory_references )[ spointer ] |= read & ~known;
+			return result;
+		}
+		void write_register( const register_desc& desc, symbolic::expression::reference value ) override
+		{
+			// Make value lazy, write to register state.
+			//
+			register_state.write( desc, std::move( value.make_lazy() ) );
 		}
 		bool write_memory( const symbolic::expression::reference& pointer, deferred_value<symbolic::expression::reference> value, bitcnt_t size ) override
 		{
-			deferred_result value_n = [ & ]() -> auto { return value.get().make_lazy(); };
+			// Created deferred result proxy making value lazy, write to memory state.
+			//
+			deferred_result value_n = [ & ]() -> auto { return std::move( value.get().make_lazy() ); };
 			return memory_state.write( pointer, value_n, size ).has_value();
-			//return memory_state.write( pointer, value, size ).has_value();
 		}
 		vm_exit_reason execute( const instruction& ins ) override
 		{
-			// Set is_executing flag.
+			// Set is_executing flag during execution.
 			//
 			finally _g( [ & ] () { is_executing = false; } );
 			is_executing = true;
@@ -617,6 +639,11 @@ namespace vtil::analysis
 				log<CON_CYN>( "- # Memory Ops:   %d\n", seg.memory_state.size() );
 				log<CON_CYN>( "- # Register Ops: %d\n", seg.register_state.size() );
 				log<CON_YLW>( "- Stack pointer:  %s\n", seg.register_state.read( REG_SP ) );
+
+				for ( auto&& [m, v] : seg.memory_state )
+					log( "%s => %s\n", m, v );
+				log( "Ref: MEM = %s\n", seg.memory_references );
+				log( "     REG = %s\n", seg.register_references );
 
 				switch ( seg.exit_reason )
 				{

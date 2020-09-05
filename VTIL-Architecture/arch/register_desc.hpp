@@ -94,24 +94,27 @@ namespace vtil
 		//
 		struct weak_id : reducable<weak_id> 
 		{ 
-			uint32_t flags; 
-			uint64_t cid; 
-			
-			// Construct from the weak identifier.
+			// Holds base register identifier and it's flags.
 			//
-			constexpr weak_id( uint32_t flags, uint64_t id ) 
+			uint32_t flags;
+			uint64_t cid;
+			constexpr weak_id( uint32_t flags, uint64_t id )
 				: flags( flags ), cid( id ) {}
 
 			// Default copy / move.
 			//
-			weak_id( weak_id&& ) = default;
-			weak_id( const weak_id& ) = default;
-			weak_id& operator=( weak_id&& ) = default;
-			weak_id& operator=( const weak_id& ) = default;
+			constexpr weak_id( weak_id&& ) = default;
+			constexpr weak_id( const weak_id& ) = default;
+			constexpr weak_id& operator=( weak_id&& ) = default;
+			constexpr weak_id& operator=( const weak_id& ) = default;
 
 			// Declare reduction.
 			//
 			REDUCE_TO( flags, cid );
+
+			// Redirect to_string to base.
+			//
+			std::string to_string() const { return register_desc{ *this, 64 }.to_string(); }
 		};
 
 		// Decay to weak identifier.
@@ -283,7 +286,6 @@ namespace vtil
 		}
 
 		// Conversion to human-readable format.
-		// - Note: Do not move this to a source file since we want the template we're using to be overriden!
 		//
 		std::string to_string() const 
 		{ 

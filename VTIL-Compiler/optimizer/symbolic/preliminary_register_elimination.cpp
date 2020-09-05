@@ -189,7 +189,7 @@ namespace vtil::optimizer
 				// Create the mask for the existing value.
 				//
 				uint64_t value_mask = 0;
-				symbolic::context::segmented_value& vctx = ctx;
+				auto& vctx = ctx;
 				math::bit_enum( ctx.bitmap, [ & ]( bitcnt_t n )
 				{
 					// If value can be atomically discarded (deleted entirely), do so.
@@ -204,7 +204,7 @@ namespace vtil::optimizer
 					//
 					else
 					{
-						value_mask |= math::fill( ctx.linear_store[ n ].size(), n );
+						value_mask |= math::fill( vctx.linear_store[ n ].size(), n );
 					}
 				} );
 
