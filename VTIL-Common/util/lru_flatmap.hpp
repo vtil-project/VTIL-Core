@@ -27,6 +27,8 @@
 //
 #pragma once
 #include <memory>
+#include "intrinsics.hpp"
+#include "time.hpp"
 #include "type_helpers.hpp"
 #include "detached_queue.hpp"
 #include "flat_allocator.hpp"
@@ -74,8 +76,9 @@ namespace vtil
 			//
 			bucket_header bucket_entry;
 
-			// LRU list and lock count.
+			// LRU links, time, and lock count.
 			//
+			uint64_t lru_timestamp;
 			entry_type* lru_prev;
 			entry_type* lru_next;
 			int64_t lock_count = 0;
@@ -159,20 +162,33 @@ namespace vtil
 
 		// Finds the balanced node given the hash.
 		//
-		bucket_header* find_node( size_t hash )
+		__forceinline bucket_header* find_node( size_t hash )
 		{
-			// Find the balanced node.
+			// Get bucket header.
 			//
 			bucket_header* it = &buckets.get()[ hash % bucket_count ];
+
+			// Find the balanced node and return it.
+			//
 			if ( it->hash > hash )
 			{
-				while ( it->low && it->low->hash >= hash )
-					it = it->low;
+				do
+				{
+					auto it2 = it->low;
+					if ( !it2 ) return it;
+					it = it2;
+				}
+				while ( it->hash > hash );
 			}
 			else
 			{
-				while ( it->high && it->high->hash <= hash )
-					it = it->high;
+				do
+				{
+					auto it2 = it->high;
+					if ( !it2 ) return it;
+					it = it2;
+				}
+				while ( it->hash < hash );
 			}
 			return it;
 		}
@@ -180,23 +196,22 @@ namespace vtil
 		// Element insertation.
 		//
 		template<typename... Tx>
-		reference_wrapper<> emplace( Tx&&... args )
+		reference_wrapper<> emplace_hint( std::optional<size_t> hhash, bucket_header* hit, Tx&&... args )
 		{
 			// If we cannot allocate an entry, prune the list.
 			//
 			if ( entry_allocator.empty() )
-				prune();
+				prune( hit );
 
 			// Allocate an entry.
 			//
 			entry_type* entry = entry_allocator.allocate();
-			fassert( entry );
 			new ( &entry->kv ) std::pair<const K, V>( std::forward<Tx>( args )... );
 
 			// Find the balanced node for the item.
 			//
-			size_t hash = hasher{}( entry->kv.first );
-			bucket_header* it = find_node( hash );
+			size_t hash = hhash.value_or( hasher{}( entry->kv.first ) );
+			bucket_header* it = hit ? hit : find_node( hash );
 
 			// Link after it.
 			//
@@ -222,6 +237,7 @@ namespace vtil
 			// Link to LRU.
 			//
 			entry->lock_count = 0;
+			entry->lru_timestamp = time::monotonic();
 			if ( !lru_head )
 			{
 				entry->lru_prev = nullptr;
@@ -240,6 +256,9 @@ namespace vtil
 			//
 			return entry;
 		}
+		template<typename... Tx>
+		__forceinline reference_wrapper<> emplace( Tx&&... args ) { return emplace_hint( std::nullopt, nullptr, std::forward<Tx>( args )... ); }
+
 
 		// Element lookup.
 		//
@@ -281,18 +300,29 @@ namespace vtil
 			if ( entry->bucket_entry.high )
 				entry->bucket_entry.high->low = entry->bucket_entry.low;
 
+			// If building in debug mode, mark dead.
+			//
+#ifdef _DEBUG
+			entry->bucket_entry.high = ( bucket_header* ) 0xDDDDDDDDDDDDDDDD;
+			entry->bucket_entry.low =  ( bucket_header* ) 0xDDDDDDDDDDDDDDDD;
+			entry->lru_next = ( entry_type* ) 0xDDDDDDDDDDDDDDDD;
+			entry->lru_prev = ( entry_type* ) 0xDDDDDDDDDDDDDDDD;
+#endif
+
 			// Deallocate the key/value pair and release the memory.
 			//
 			std::destroy_at( &entry->kv );
 			entry_allocator.deallocate( entry );
 		}
-		void prune()
+
+		template<typename... Tx>
+		void prune( Tx*... skipped )
 		{
 			size_t n = ( size_t ) ( entry_allocator.size * prune_coefficient );
 			for ( auto it = lru_head; it && n != 0; )
 			{
 				auto next = it->lru_next;
-				if ( !it->lock_count )
+				if ( !it->lock_count && ( ( skipped != &it->bucket_entry ) && ... ) )
 					erase( it ), n--;
 				it = next;
 			}
@@ -322,6 +352,7 @@ namespace vtil
 
 			// Relink as head.
 			//
+			entry->lru_timestamp = 0;
 			entry->lru_prev = nullptr;
 			entry->lru_next = lru_head;
 			lru_head->lru_prev = entry;
@@ -349,6 +380,7 @@ namespace vtil
 
 			// Relink as tail.
 			//
+			entry->lru_timestamp = time::monotonic();
 			entry->lru_prev = lru_tail;
 			entry->lru_next = nullptr;
 			lru_tail->lru_next = entry;

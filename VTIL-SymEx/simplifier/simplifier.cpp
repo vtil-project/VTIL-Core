@@ -34,8 +34,8 @@
 #include <vtil/utility>
 
 // [Configuration]
-// Determine the depth limit after which we start self generated signature matching and
-// the properties of the LRU cache.
+// Determine the depth limit after which we start self generated signature matching
+// properties of the LRU cache and whether simplifications are verified or not.
 //
 #ifndef VTIL_SYMEX_SELFGEN_SIGMATCH_DEPTH_LIM
 	#define	VTIL_SYMEX_SELFGEN_SIGMATCH_DEPTH_LIM   3
@@ -46,11 +46,14 @@
 #ifndef VTIL_SYMEX_LRU_PRUNE_COEFF
 	#define VTIL_SYMEX_LRU_PRUNE_COEFF              0.2
 #endif
+#ifndef VTIL_SYMEX_HASH_COLLISION_MAX
+	#define VTIL_SYMEX_HASH_COLLISION_MAX           8
+#endif
 #ifndef VTIL_SYMEX_VERIFY
 	#ifdef _DEBUG
-		#define	VTIL_SYMEX_VERIFY                       1
+		#define	VTIL_SYMEX_VERIFY                   1
 	#else
-		#define	VTIL_SYMEX_VERIFY                       0
+		#define	VTIL_SYMEX_VERIFY                   0
 	#endif
 #endif
 
@@ -116,6 +119,7 @@ namespace vtil::symbolic
 		};
 		using cache_type = lru_flatmap<expression::reference, cache_entry, sig_hasher>;
 		using entry_type = typename cache_type::entry_type;
+		using node_type =  typename cache_type::bucket_header;
 
 		cache_type cache = {
 			VTIL_SYMEX_LRU_CACHE_SIZE,
@@ -165,7 +169,40 @@ namespace vtil::symbolic
 			// Find the bucket based on the signature.
 			//
 			size_t hash = sig_hasher{}( ref );
-			auto* node = cache.find_node( hash );
+			node_type* node = cache.find_node( hash );
+
+			// Details for sub-group LRU discarding.
+			//
+			size_t hash_matching_node_count = 0;
+			node_type* replacement_node = nullptr;
+			auto smart_emplace = [ & ] ( expression::reference&& result = nullptr ) -> cache_type::reference_wrapper<>
+			{
+				// If not speculative, matching count is above or equal to maximum hash collision and we have a free replacement node, replace it.
+				//
+				if ( !is_speculative && hash_matching_node_count >= VTIL_SYMEX_HASH_COLLISION_MAX && replacement_node )
+				{
+					entry_type* entry = ( entry_type* ) replacement_node;
+					entry->kv.first = ref;
+					entry->kv.second.is_simplified = result.is_valid();
+					entry->kv.second.result = std::move( result );
+					cache.prune_last( entry );
+					return { entry };
+				}
+				// Otherwise emplace with hint, if speculative add to queue.
+				//
+				else
+				{
+					auto res = cache.emplace_hint( hash, node, ref, cache_entry{
+						.self = *this,
+						.spec_key = {},
+						.is_simplified = result.is_valid(),
+						.result = std::move( result )
+					} );
+					if ( is_speculative )
+						spec_queue.emplace_back( &res->second.spec_key );
+					return res;
+				}
+			};
 
 			// If found any:
 			//
@@ -180,7 +217,7 @@ namespace vtil::symbolic
 					std::pair{ node,       &cache_type::bucket_header::low },
 					std::pair{ node->high, &cache_type::bucket_header::high }
 				};
-				for ( auto [begin, direction] : iteration_guide )
+				for ( auto&& [begin, direction] : iteration_guide )
 				{
 					// Begin at begin, continue at field as long as criteria is met.
 					//
@@ -189,13 +226,19 @@ namespace vtil::symbolic
 						entry_type* entry = ( entry_type* ) it;
 						auto& [key, v] = entry->kv;
 
+						// Update sub-group LRU info.
+						//
+						hash_matching_node_count++;
+						if ( entry->lock_count == 0 && ( !replacement_node || ( ( entry_type* ) replacement_node )->lru_timestamp > entry->lru_timestamp ) )
+							replacement_node = ( node_type* ) entry;
+
 						// Skip if depth or signature does not match.
 						//
 						if ( key->depth != ref->depth ||
 							 key->signature != ref->signature )
 							continue;
 
-						// If same depth and identical, just return.
+						// If identical, simply return.
 						//
 						if ( ref->is_identical( *key ) )
 						{
@@ -266,16 +309,7 @@ namespace vtil::symbolic
 							}
 						}, true, false );
 						result->simplify_hint = true;
-
-						auto ret = cache.emplace( ref, cache_entry{
-							.self = *this,
-							.spec_key = {},
-							.is_simplified = true,
-							.result = std::move( result )
-												  } );
-						if ( is_speculative )
-							spec_queue.emplace_back( &ret->second.spec_key );
-						return std::make_tuple( std::move( ret ), true, this );
+						return std::make_tuple( smart_emplace( std::move( result ) ), true, this );
 					}
 					// Since it won't be simplified, just return null indicator.
 					//
@@ -288,16 +322,7 @@ namespace vtil::symbolic
 					}
 				}
 			}
-
-			auto ret = cache.emplace( ref, cache_entry{
-				.self = *this,
-				.spec_key = {},
-				.is_simplified = false,
-				.result = nullptr
-			} );
-			if ( is_speculative )
-				spec_queue.emplace_back( &ret->second.spec_key );
-			return std::make_tuple( std::move( ret ), false, this );
+			return std::make_tuple( smart_emplace( nullptr ), false, this );
 		}
 
 		// Begins speculative execution.
