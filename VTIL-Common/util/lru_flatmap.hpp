@@ -184,7 +184,7 @@ namespace vtil
 		{
 			// If we cannot allocate an entry, prune the list.
 			//
-			if ( entry_allocator.free_list.empty() )
+			if ( entry_allocator.empty() )
 				prune();
 
 			// Allocate an entry.

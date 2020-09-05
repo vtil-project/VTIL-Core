@@ -92,11 +92,17 @@ namespace vtil
 				return &e->value.typed;
 			return nullptr;
 		}
-
 		void deallocate( T* p )
 		{
 			entry_type* entry = ( entry_type* ) p;
 			free_list.emplace_front( &entry->free_key );
+		}
+
+		// Returns true if further memory cannot be allocated using this allocator.
+		//
+		bool empty() const
+		{
+			return free_list.empty() && comitted >= size;
 		}
 	};
 
