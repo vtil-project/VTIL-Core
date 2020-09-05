@@ -335,6 +335,7 @@ namespace vtil::symbolic::directive
         { __rotl(__rotr(A,B),C),                              __iff(B>=C, __rotr(A,!(B-C))) },
         { __rotl(__rotr(A,C),B),                              __iff(B>=C, __rotl(A,!(B-C))) },
         { __rotl(~A,C),                                       ~__rotl(A,C) },
+        { __rotl(A,Q),                                        __rotr(A,!(__bcnt(A)-Q)) },
 
         // ROR:
         //
@@ -346,6 +347,7 @@ namespace vtil::symbolic::directive
         { __rotr(__rotl(A,C),B),                              __iff(B>=C, __rotr(A,(B-C))) },
         { __rotr(__rotr(A,B),C),                              __rotr(A,(B+C)) },
         { __rotr(~A,C),                                       ~__rotr(A,C) },
+        { __rotr(A,Q),                                        __rotl(A,!(__bcnt(A)-Q)) },
 
         // NOT:
         //
