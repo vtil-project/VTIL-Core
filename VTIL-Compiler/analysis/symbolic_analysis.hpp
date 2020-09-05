@@ -589,6 +589,7 @@ namespace vtil::analysis
 					if ( vm.is_branch_real )
 					{
 						fassert( !vm.branch_cc && branch_targets.size() == 1 );
+
 						if ( vm.is_branch_exiting )
 							temporary_block.vexit( branch_targets[ 0 ] );
 						else
@@ -597,11 +598,16 @@ namespace vtil::analysis
 					else if ( vm.branch_cc )
 					{
 						fassert( branch_targets.size() == 2 );
-						temporary_block.js( branch_cc, branch_targets[ 0 ], branch_targets[ 1 ] );
+
+						if ( branch_cc.is_register() )
+							temporary_block.js( branch_cc, branch_targets[ 0 ], branch_targets[ 1 ] );
+						else
+							temporary_block.jmp( branch_cc.imm().u64 ? branch_targets[ 1 ] : branch_targets[ 0 ] );
 					}
 					else
 					{
 						fassert( branch_targets.size() == 1 );
+
 						temporary_block.jmp( branch_targets[ 0 ] );
 					}
 
