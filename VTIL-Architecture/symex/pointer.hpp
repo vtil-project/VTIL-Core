@@ -101,6 +101,6 @@ namespace vtil::symbolic
 
 		// Define reduction.
 		//
-		REDUCE_TO( flags, base ? ( boxed_expression& ) *base : make_static<boxed_expression>() );
+		REDUCE_TO( flags, xvalues.front(), base ? ( boxed_expression& ) *base : make_static<boxed_expression>() );
 	};
 };
