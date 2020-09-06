@@ -199,19 +199,36 @@ namespace vtil::symbolic
 			std::array<uint64_t, VTIL_SYMEX_XVAL_KEYS> values = { 0 };
 			std::bitset<VTIL_SYMEX_XVAL_KEYS> ud;
 
-			// Basic comparison.
+			// Comparison helpers taking predicates.
 			//
 			template<typename Pr>
-			constexpr bool compare( const approximation& o ) const
+			constexpr bool compare( const approximation& o, Pr predicate = {} ) const
 			{
 				for ( size_t n = 0; n != VTIL_SYMEX_XVAL_KEYS; n++ )
-					if ( !Pr{}( values[ n ], o.values[ n ] ) && !ud[ n ] && !o.ud[ n ] )
+					if ( !predicate( values[ n ], o.values[ n ] ) && !ud[ n ] && !o.ud[ n ] )
 						return false;
 				return true;
 			}
+			template<typename Pr>
+			constexpr bool compare( Pr predicate = {} ) const
+			{
+				for ( size_t n = 0; n != VTIL_SYMEX_XVAL_KEYS; n++ )
+					if ( !predicate( values[ n ] ) && !ud[ n ] )
+						return false;
+				return true;
+			}
+
+			// Basic vector comparison.
+			//
 			constexpr bool operator==( const approximation& o ) const { return compare<std::equal_to<uint64_t>>( o ); }
 			constexpr bool operator!=( const approximation& o ) const { return !compare<std::equal_to<uint64_t>>( o ); }
 			constexpr bool operator<( const approximation& o ) const  { return !compare<std::greater_equal<uint64_t>>( o ); }
+
+			// Basic value comparison.
+			//
+			constexpr bool operator==( uint64_t xv ) const { return compare( [ & ] ( uint64_t v ) { return v == xv; } ); }
+			constexpr bool operator!=( uint64_t xv ) const { return !compare( [ & ] ( uint64_t v ) { return v == xv; } ); }
+			constexpr bool operator<( uint64_t xv ) const  { return !compare( [ & ] ( uint64_t v ) { return v >= xv; } ); }
 
 			// Wrap array interface.
 			//

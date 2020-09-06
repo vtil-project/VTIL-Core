@@ -202,7 +202,6 @@ namespace vtil::optimizer
 
 				// If pointer can be rewritten as $sp + C:
 				//
-				operand base, offset, value;
 				if ( auto displacement = ( k - symbolic::CTX[ REG_SP ] ) )
 				{
 					// Buffer a str $sp, c, value.

@@ -169,12 +169,10 @@ namespace vtil::symbolic
 			}
 			case directive_op_desc::iff:
 			{
-				static constexpr expression::approximation expected = { .values = { make_expanded_series<VTIL_SYMEX_XVAL_KEYS>( [ ] ( auto ) { return 1ull; } ) } };
-
 				// Translate left hand side, if failed to do so or is not equal to [true], fail.
 				//
 				auto condition_status = translate( sym, dir->lhs, 0 );
-				if ( !condition_status || condition_status->approximate() != expected ||
+				if ( !condition_status || condition_status->approximate() != 1ull ||
 					 !condition_status.simplify()->get().value_or( false ) )
 				{
 #if VTIL_SYMEX_SIMPLIFY_VERBOSE
