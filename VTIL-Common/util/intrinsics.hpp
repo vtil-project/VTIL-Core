@@ -65,30 +65,21 @@
 
     // Declare _?mul128
     //
+    using int128_t =  __int128;
+    using uint128_t = unsigned __int128;
+
     __forceinline static uint64_t _umul128( uint64_t _Multiplier, uint64_t _Multiplicand, uint64_t* _HighProduct )
     {
-        uint64_t LowProduct;
-        uint64_t HighProduct;
-
-        __asm__( "mulq  %[b]"
-                 :"=d"( HighProduct ), "=a"( LowProduct )
-                 : "1"( _Multiplier ), [ b ]"rm"( _Multiplicand ) );
-
-        *_HighProduct = HighProduct;
-        return LowProduct;
+        uint128_t _Product = uint128_t( _Multiplicand ) * _Multiplier;
+        *_HighProduct = uint64_t( _Product >> 64 );
+        return uint64_t( _Product );
     }
 
     __forceinline static int64_t _mul128( int64_t _Multiplier, int64_t _Multiplicand, int64_t* _HighProduct )
     {
-        int64_t LowProduct;
-        int64_t HighProduct;
-
-        __asm__( "imulq  %[b]"
-                 :"=d"( HighProduct ), "=a"( LowProduct )
-                 : "1"( _Multiplier ), [ b ]"rm"( _Multiplicand ) );
-
-        *_HighProduct = HighProduct;
-        return LowProduct;
+        int128_t _Product = int128_t( _Multiplier ) * _Multiplicand;
+        *_HighProduct = int64_t( uint128_t( _Product ) >> 64 );
+        return int64_t( _Product );
     }
 
     // Declare _?mulh
