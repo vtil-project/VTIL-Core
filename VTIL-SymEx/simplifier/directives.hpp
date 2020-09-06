@@ -145,8 +145,8 @@ namespace vtil::symbolic::directive
 
         // Convert SHL|SHR and OR combinations to rotate.
         //
-        { (A>>B)|(A<<C),                                      __iff(C==(__bcnt(A)-B), __rotr(A,B)) },
-        { (A<<B)|(A>>C),                                      __iff(C==(__bcnt(A)-B), __rotl(A,B)) },
+        { (A>>B)|(A<<C),                                      __iff(C==(__bcnt(A)-B), __assuming(__uless(B,__bcnt(A)), __rotr(A,B))) },
+        { (A<<B)|(A>>C),                                      __iff(C==(__bcnt(A)-B), __assuming(__uless(B,__bcnt(A)), __rotl(A,B))) },
 
         // Drop unnecessary casts.
         //
@@ -194,7 +194,7 @@ namespace vtil::symbolic::directive
         //
         { __ucast(A,B)|(__ucast((0x1+~(A>>U)), B)<<C),        __iff((B>__bcnt(A))&(U==(__bcnt(A)-1))&(C==__bcnt(A))&(__bcnt(A)!=1), __cast(A,B)) },
         { __ucast(A,B)|((~(__ucast(A,B)>>U)+0x1)<<C),         __iff((B>__bcnt(A))&(U==(__bcnt(A)-1))&(C==__bcnt(A))&(__bcnt(A)!=1), __cast(A,B)) },
-        { (((((~(A>>B))|-0x2)+0x1)<<U)|A),                    __iff((U==(B+1))&(__bcnt(A)!=1), __cast(__ucast(A,U),__bcnt(A))) },
+        //{ (((((~(A>>B))|-0x2)+0x1)<<U)|A),                    __iff((U==(B+1))&(__bcnt(A)!=1), __cast(__ucast(A,U),__bcnt(A))) },
        
         /*// Prefer immediates with their real sign. 
         //
@@ -308,9 +308,9 @@ namespace vtil::symbolic::directive
         { (A|B)<<C,                                           !(A<<C)|s(B<<C) },
         { (A&B)<<C,                                           !(A<<C)&s(B<<C) },
         { (A^B)<<C,                                           !(A<<C)^s(B<<C) },
-        { (A<<B)<<C,                                          A<<!(B+C) },
-        { (A>>B)<<C,                                          __iff(B>=C, !((-1>>B)<<C)&(A>>!(B-C))) },
-        { (A>>C)<<B,                                          __iff(B>=C, !((-1>>C)<<B)&(A<<!(B-C))) },
+        { (A<<c(B,U))<<c(C,U),                                A<<!(B+C) },
+        { (A>>c(B,U))<<c(C,U),                                __iff(B>=C, !((-1>>B)<<C)&(A>>!(B-C))) },
+        { (A>>c(C,U))<<c(B,U),                                __iff(B>=C, !((-1>>C)<<B)&(A<<!(B-C))) },
         // Missing: __rotl, __rotr
         { (~A)<<U,                                            (~(A<<U))&(-1<<U) },
 
@@ -319,9 +319,9 @@ namespace vtil::symbolic::directive
         { (A|B)>>C,                                           !(A>>C)|s(B>>C) },
         { (A&B)>>C,                                           !(A>>C)&s(B>>C) },
         { (A^B)>>C,                                           !(A>>C)^s(B>>C) },
-        { (A<<C)>>B,                                          __iff(B>=C, !((-1<<C)>>B)&(A>>!(B-C))) },
-        { (A<<B)>>C,                                          __iff(B>=C, !((-1<<B)>>C)&(A<<!(B-C))) },
-        { (A>>B)>>C,                                          A>>!(B+C) },
+        { (A<<c(C,U))>>c(B,U),                                __iff(B>=C, !((-1<<C)>>B)&(A>>!(B-C))) },
+        { (A<<c(B,U))>>c(C,U),                                __iff(B>=C, !((-1<<B)>>C)&(A<<!(B-C))) },
+        { (A>>c(B,U))>>c(C,U),                                A>>!(B+C) },
         // Missing: __rotl, __rotr
         { (~A)>>U,                                            (~(A>>U))&(-1>>U) },
 
