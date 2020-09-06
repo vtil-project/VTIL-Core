@@ -101,7 +101,7 @@ namespace vtil::symbolic
 		//
 		struct sig_hasher
 		{
-			size_t operator()( const expression::reference& x ) { return x->signature.hash_value.as64() ^ ( x->depth + ( uint8_t ) x->op ); }
+			size_t operator()( const expression::reference& x ) { return x->signature.hash().as64() ^ ( x->depth * ( 13 + x->size() ) ); }
 		};
 		struct cache_entry
 		{
@@ -235,7 +235,8 @@ namespace vtil::symbolic
 						// Skip if depth or signature does not match.
 						//
 						if ( key->depth != ref->depth ||
-							 key->signature != ref->signature )
+							 key->signature != ref->signature ||
+							 key->size() != ref->size() )
 							continue;
 
 						// If identical, simply return.
