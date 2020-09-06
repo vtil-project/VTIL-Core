@@ -33,30 +33,6 @@
 #include <vtil/io>
 #include <vtil/utility>
 
-// [Configuration]
-// Determine the depth limit after which we start self generated signature matching
-// properties of the LRU cache and whether simplifications are verified or not.
-//
-#ifndef VTIL_SYMEX_SELFGEN_SIGMATCH_DEPTH_LIM
-	#define	VTIL_SYMEX_SELFGEN_SIGMATCH_DEPTH_LIM   4
-#endif
-#ifndef VTIL_SYMEX_LRU_CACHE_SIZE
-	#define VTIL_SYMEX_LRU_CACHE_SIZE               0x18000
-#endif
-#ifndef VTIL_SYMEX_LRU_PRUNE_COEFF
-	#define VTIL_SYMEX_LRU_PRUNE_COEFF              0.2
-#endif
-#ifndef VTIL_SYMEX_HASH_COLLISION_MAX
-	#define VTIL_SYMEX_HASH_COLLISION_MAX           8
-#endif
-#ifndef VTIL_SYMEX_VERIFY
-	#ifdef _DEBUG
-		#define	VTIL_SYMEX_VERIFY                   1
-	#else
-		#define	VTIL_SYMEX_VERIFY                   0
-	#endif
-#endif
-
 namespace vtil::symbolic
 {
 	struct join_depth_exception : std::exception
@@ -235,8 +211,7 @@ namespace vtil::symbolic
 						// Skip if depth or signature does not match.
 						//
 						if ( key->depth != ref->depth ||
-							 key->signature != ref->signature ||
-							 key->size() != ref->size() )
+							 key->signature != ref->signature )
 							continue;
 
 						// If identical, simply return.
@@ -269,32 +244,7 @@ namespace vtil::symbolic
 					//
 					if ( sig_match->kv.second.is_simplified )
 					{
-						// Lower the priority as we'll be re-inserting the pattern.
-						//
-						if ( is_speculative || sig_match->lock_count )
-							cache.prune_next( sig_match );
-						else
-						{
-							sig_match->kv.first = ref;
-							sig_match->kv.second.result.transform( [ & ] ( expression::delegate& exp )
-							{
-								if ( !exp->is_variable() )
-									return;
-								for ( auto& [a, b] : *sig_search )
-								{
-									if ( exp->is_identical( *a ) )
-									{
-										exp = b.make_shared();
-										break;
-									}
-								}
-							}, true, false );
-							cache.prune_last( sig_match );
-							return std::make_tuple( sig_match, true, this );
-						}
-
-						// Transform the saved expression and return after inserting
-						// to the simplification cache.
+						// Transform the expression according to the table and set simplification hint.
 						//
 						auto result = make_const( sig_match->kv.second.result ).transform( [ & ] ( expression::delegate& exp )
 						{
@@ -310,7 +260,23 @@ namespace vtil::symbolic
 							}
 						}, true, false );
 						result->simplify_hint = true;
-						return std::make_tuple( smart_emplace( std::move( result ) ), true, this );
+
+						// If speculative or if the match is locked, lower the priority of match and insert a new entry.
+						//
+						if ( is_speculative || sig_match->lock_count )
+						{
+							cache.prune_next( sig_match );
+							return std::make_tuple( smart_emplace( std::move( result ) ), true, this );
+						}
+						// Otherwise replace match entry.
+						//
+						else
+						{
+							sig_match->kv.first = ref;
+							sig_match->kv.second.result = std::move( result );
+							cache.prune_last( sig_match );
+							return std::make_tuple( sig_match, true, this );
+						}
 					}
 					// Since it won't be simplified, just return null indicator.
 					//

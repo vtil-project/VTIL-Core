@@ -38,6 +38,30 @@
 	#define VTIL_SYMEX_SIMPLIFY_VERBOSE 0
 #endif
 
+// [Configuration]
+// Determine the depth limit after which we start self generated signature matching
+// properties of the LRU cache and whether simplifications are verified or not.
+//
+#ifndef VTIL_SYMEX_SELFGEN_SIGMATCH_DEPTH_LIM
+	#define	VTIL_SYMEX_SELFGEN_SIGMATCH_DEPTH_LIM   4
+#endif
+#ifndef VTIL_SYMEX_LRU_CACHE_SIZE
+	#define VTIL_SYMEX_LRU_CACHE_SIZE               0x18000
+#endif
+#ifndef VTIL_SYMEX_LRU_PRUNE_COEFF
+	#define VTIL_SYMEX_LRU_PRUNE_COEFF              0.2
+#endif
+#ifndef VTIL_SYMEX_HASH_COLLISION_MAX
+	#define VTIL_SYMEX_HASH_COLLISION_MAX           8
+#endif
+#ifndef VTIL_SYMEX_VERIFY
+	#ifdef _DEBUG
+		#define	VTIL_SYMEX_VERIFY                   1
+	#else
+		#define	VTIL_SYMEX_VERIFY                   0
+	#endif
+#endif
+
 namespace vtil::symbolic
 {
 	// Attempts to simplify the expression given, returns whether the simplification
