@@ -93,6 +93,10 @@ namespace vtil
 				   physical_address == o.physical_address;
 		}
 		bool operator!=( const section_descriptor& o ) const { return !operator==( o ); }
+
+		// Simple string conversion.
+		//
+		std::string to_string() const { return { name.begin(), name.end() }; }
 	};
 
 	// Generic relocation information.

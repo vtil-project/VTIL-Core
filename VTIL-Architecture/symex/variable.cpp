@@ -569,7 +569,11 @@ namespace vtil::symbolic
 		//
 		if ( at.is_begin() )    return base + "?";
 		else if ( at.is_end() ) return base + "*";
-		else                    return base + "." + std::to_string( std::distance( at.block->begin(), at ) );
+		
+		size_t n = 0;
+		for ( auto it = at; !it.is_begin(); --it )
+			n++;
+		return base + "." + std::to_string( n );
 	}
 
 	// Packs all the variables in the expression where it'd be optimal.
