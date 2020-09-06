@@ -92,15 +92,6 @@ namespace vtil::symbolic::directive
             mask_one,
             // - __mask_unk(x), will generate the mask for known zero bits.
             mask_zero,
-
-
-            // Evaluation-time Message
-            // -----------------------
-            // - __unreachable(), indicates that this directive should never be matched and if it is,
-            //   simplifier logic has a bug which should be fixed, acts as a debugging/validation tool.
-            unreachable,
-            // - __warning(), indicates that this directive should generate a warning.
-            warning,
         max,
         } value = min;
 
@@ -135,8 +126,6 @@ namespace vtil::symbolic::directive
                 case mask_unknown:  return "{mask=? " + rhs + "}";
                 case mask_one:      return "{mask=1 " + rhs + "}";
                 case mask_zero:     return "{mask=0 " + rhs + "}";
-                case unreachable:   return "unreachable()";
-                case warning:       return "{warning(), " + rhs + "}";
                 default:            unreachable();
             }
         }
@@ -321,7 +310,6 @@ namespace vtil::symbolic::directive
     static instance operator!( const instance& a ) { return { tagged<directive_op_desc::simplify>, a }; }
     static instance __iff( const instance& a, const instance& b ) { return { a, tagged<directive_op_desc::iff>, b }; }
     static instance __or( const instance& a, const instance& b ) { return { a, tagged<directive_op_desc::or_also>, b }; }
-    static instance __unreachable() { return { 0ull, tagged<directive_op_desc::unreachable>, 0ull }; }
     static instance __mask_unk( const instance& a ) { return { tagged<directive_op_desc::mask_unknown>, a }; }
     static instance __mask_knw1( const instance& a ) { return { tagged<directive_op_desc::mask_one>, a }; }
     static instance __mask_knw0( const instance& a ) { return { tagged<directive_op_desc::mask_zero>, a }; }

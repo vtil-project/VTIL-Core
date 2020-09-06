@@ -132,18 +132,18 @@ namespace vtil
     public:
         // Define basic comparison operators using std::tuple.
         //
-        template<std::enable_if_t<flags&reducable_equ, int> = 0>
+        template<std::enable_if_t<( flags & reducable_equ ) != 0, int> = 0>
         __forceinline constexpr auto operator==( const T& other ) const { return &other == this || reduce_proxy( ( T& ) *this ) == reduce_proxy( other ); }
-        template<std::enable_if_t<flags&reducable_nequ, int> = 0>
+        template<std::enable_if_t<( flags & reducable_nequ ) != 0, int> = 0>
         __forceinline constexpr auto operator!=( const T& other ) const { return &other != this && reduce_proxy( ( T& ) *this ) != reduce_proxy( other ); }
-        template<std::enable_if_t<flags&reducable_leq, int> = 0>
+        template<std::enable_if_t<( flags & reducable_leq ) != 0, int> = 0>
         __forceinline constexpr auto operator<=( const T& other ) const { return &other == this || reduce_proxy( ( T& ) *this ) <= reduce_proxy( other ); }
-        template<std::enable_if_t<flags&reducable_greq, int> = 0>
+        template<std::enable_if_t<( flags & reducable_greq ) != 0, int> = 0>
         __forceinline constexpr auto operator>=( const T& other ) const { return &other == this || reduce_proxy( ( T& ) *this ) >= reduce_proxy( other ); }
-        template<std::enable_if_t<flags&reducable_less, int> = 0>
-        __forceinline constexpr auto operator< ( const T& other ) const { return &other != this && reduce_proxy( ( T& ) *this ) <  reduce_proxy( other ); }
-        template<std::enable_if_t<flags&reducable_greater, int> = 0>
-        __forceinline constexpr auto operator> ( const T& other ) const { return &other != this && reduce_proxy( ( T& ) *this ) >  reduce_proxy( other ); }
+        template<std::enable_if_t<( flags & reducable_less ) != 0, int> = 0>
+        __forceinline constexpr auto operator< ( const T& other ) const { return &other != this && reduce_proxy( ( T& ) *this ) < reduce_proxy( other ); }
+        template<std::enable_if_t<( flags & reducable_greater ) != 0, int> = 0>
+        __forceinline constexpr auto operator> ( const T& other ) const { return &other != this && reduce_proxy( ( T& ) *this ) > reduce_proxy( other ); }
 
         // Define VTIL hash using a simple VTIL tuple hasher.
         //

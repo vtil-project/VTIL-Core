@@ -341,19 +341,19 @@ namespace vtil::math
 	//
 	class bit_vector : public reducable<bit_vector>
 	{
-		// Value of the known bits, mask of it can be found by [::known_mask()]
-		// - Guaranteed to hold 0 for unknown bits.
+		// Number of bits this vector contains.
 		//
-		uint64_t known_bits = 0;
+		bitcnt_t bit_count = 0;
 
 		// Mask for the bit that we do not know.
 		// - Guaranteed to hold 0 for known bits and for all bits above bit_count.
 		//
 		uint64_t unknown_bits = 0;
 
-		// Number of bits this vector contains.
+		// Value of the known bits, mask of it can be found by [::known_mask()]
+		// - Guaranteed to hold 0 for unknown bits.
 		//
-		bitcnt_t bit_count = 0;
+		uint64_t known_bits = 0;
 
 	public:
 		// Default constructor, will result in invalid bit-vector.

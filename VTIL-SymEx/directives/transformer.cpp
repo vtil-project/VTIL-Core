@@ -169,7 +169,7 @@ namespace vtil::symbolic
 			}
 			case directive_op_desc::iff:
 			{
-				static constexpr expression::approximation expected = { .values = make_expanded_series<VTIL_SYMEX_XVAL_KEYS>( [ ] ( auto ) { return 1ull; } ) };
+				static constexpr expression::approximation expected = { .values = { make_expanded_series<VTIL_SYMEX_XVAL_KEYS>( [ ] ( auto ) { return 1ull; } ) } };
 
 				// Translate left hand side, if failed to do so or is not equal to [true], fail.
 				//
@@ -224,22 +224,6 @@ namespace vtil::symbolic
 					return ( *+exp = expression{ exp->known_zero(), exp->size() }, exp );
 				}
 				break;
-			}
-			case directive_op_desc::unreachable:
-			{
-				// Print an error.
-				//
-				error( "Directive-time assertation failure!\n" );
-			}
-			case directive_op_desc::warning:
-			{
-				// Print a warning.
-				//
-				log<CON_YLW>( "Directive-time warning!!\n" );
-
-				// Continue the translation from the right hand side.
-				//
-				return translate( sym, dir->rhs, bit_cnt );
 			}
 			default:
 				unreachable();
