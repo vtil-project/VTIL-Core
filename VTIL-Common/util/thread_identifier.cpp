@@ -29,6 +29,8 @@
 
 #if _WIN64
 	#include <intrin.h>
+#elif defined(__EMSCRIPTEN__)
+	#include <pthread.h>
 #else
 	#include <unistd.h>
 	#include <sys/syscall.h>

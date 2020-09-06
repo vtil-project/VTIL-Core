@@ -26,6 +26,7 @@
 // POSSIBILITY OF SUCH DAMAGE.        
 //
 #pragma once
+#include <math.h>
 #include "formatting.hpp"
 
 // Trivial types with useful explict formatting wrappers.
