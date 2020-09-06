@@ -159,8 +159,8 @@ namespace vtil::optimizer
 
 						// Apply same heuristic for suffix:
 						//
-						bitcnt_t msb = math::msb( vmask ) - 1;
-						bitcnt_t lsb = math::lsb( vmask ) - 1;
+						bitcnt_t msb = math::msb( vmask );
+						bitcnt_t lsb = math::lsb( vmask );
 						symbolic::variable var = { register_desc{ id, msb - lsb + 1, lsb } };
 						for ( auto& sfx : it->suffix )
 						{
@@ -250,8 +250,7 @@ namespace vtil::optimizer
 					// Calculate the next region's offset, break if none left.
 					//
 					bitcnt_t offset = math::lsb( preserve );
-					if ( !offset ) break;
-					offset--;
+					if ( offset < 0 ) break;
 
 					// Calculate the size.
 					//

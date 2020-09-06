@@ -419,7 +419,7 @@ namespace vtil::analysis
 
 					// Find out the highest bit modified and size we'd have to write.
 					//
-					bitcnt_t write_msb = math::msb( pair.second.bitmap ) - 1;
+					bitcnt_t write_msb = math::msb( pair.second.bitmap );
 					bitcnt_t write_size = pair.second.linear_store[ write_msb ].size();
 					register_desc k = { pair.first, write_size, write_msb };
 

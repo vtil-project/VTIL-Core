@@ -101,52 +101,51 @@ namespace vtil::math
 	}
 	__forceinline static constexpr bitcnt_t msb( uint64_t x )
 	{
-		// Optimized using intrinsic on MSVC, Clang should be smart enough to do this on its own.
+		// Optimized using intrinsics if not const evaluated.
 		//
-#ifdef _MSC_VER
 		if ( !std::is_constant_evaluated() )
 		{
-			unsigned long idx = 0;
-			return _BitScanReverse64( &idx, x ) ? ( bitcnt_t ) idx + 1 : 0;
-		}
+#ifdef _MSC_VER
+			unsigned long idx;
+			return _BitScanReverse64( &idx, x ) ? idx : -1;
+#elif __has_builtin(__builtin_ctzll)
+			return x ? 63 - __builtin_clzll( x ) : -1;
 #endif
-		// Return index + 1 on success:
+		}
+
+		// Start scan loop, return idx if found, else -1.
 		//
 		for ( bitcnt_t i = 63; i >= 0; i-- )
 			if ( x & ( 1ull << i ) )
-				return i + 1;
-		// Zero otherwise.
-		//
-		return 0;
+				return i;
+		return -1;
 	}
 	__forceinline static constexpr bitcnt_t lsb( uint64_t x )
 	{
-		// Optimized using intrinsic on MSVC, Clang should be smart enough to do this on its own.
+		// Optimized using intrinsics if not const evaluated.
 		//
-#ifdef _MSC_VER
 		if ( !std::is_constant_evaluated() )
 		{
-			unsigned long idx = 0;
-			return _BitScanForward64( &idx, x ) ? ( bitcnt_t ) idx + 1 : 0;
-		}
+#ifdef _MSC_VER
+			unsigned long idx;
+			return _BitScanForward64( &idx, x ) ? idx : -1;
+#elif __has_builtin(__builtin_ctzll)
+			return x ? __builtin_ctzll( x ) : -1;
 #endif
-		// Return index + 1 on success:
+		}
+
+		// Start scan loop, return idx if found, else -1.
 		//
 		for ( bitcnt_t i = 0; i <= 63; i++ )
 			if ( x & ( 1ull << i ) )
-				return i + 1;
-		// Zero otherwise.
-		//
-		return 0;
+				return i;
+		return -1;
 	}
 	__forceinline static constexpr bool bit_test( uint64_t value, bitcnt_t n )
 	{
-		// Optimized using intrinsic on MSVC, Clang should be smart enough to do this on its own.
+		// _bittest64 forcefully writes to memory for no reason, let the compilers 
+		// generate bt reg, reg from this as expected.
 		//
-#ifdef _MSC_VER
-		if ( !std::is_constant_evaluated() )
-			return _bittest64( ( long long* ) &value, n );
-#endif
 		return value & ( 1ull << n );
 	}
 	__forceinline static constexpr bool bit_set( uint64_t& value, bitcnt_t n )
@@ -157,7 +156,7 @@ namespace vtil::math
 		if ( !std::is_constant_evaluated() )
 			return _bittestandset64( ( long long* ) &value, n );
 #endif
-		uint64_t mask = ( 1ull << ( n & 63 ) );
+		const uint64_t mask = ( 1ull << n );
 		bool is_set = value & mask;
 		value |= mask;
 		return is_set;
@@ -170,7 +169,7 @@ namespace vtil::math
 		if ( !std::is_constant_evaluated() )
 			return _bittestandreset64( ( long long* ) &value, n );
 #endif
-		uint64_t mask = ( 1ull << ( n & 63 ) );
+		const uint64_t mask = ( 1ull << n );
 		bool is_set = value & mask;
 		value &= ~mask;
 		return is_set;
@@ -197,14 +196,10 @@ namespace vtil::math
 		size_t n = 0;
 		for ( auto it = begin; it != end; it++, n += bit_size )
 		{
-			// If we could find the bit in the block:
+			// Return if we could find the bit in the block:
 			//
-			if ( bitcnt_t i = scanner( *it ^ xor_mask ) )
-			{
-				// Return after adjusting the index.
-				//
-				return n + i - 1;
-			}
+			if ( bitcnt_t i = scanner( *it ^ xor_mask ); i >= 0 )
+				return n + i;
 		}
 
 		// Return invalid index.
@@ -220,14 +215,14 @@ namespace vtil::math
 		const auto scanner = reverse ? msb : lsb;
 		while ( true )
 		{
-			// If scanner returns 0, break.
+			// If scanner returns negative, break.
 			//
 			bitcnt_t idx = scanner( mask );
-			if ( idx == 0 ) return;
+			if ( idx < 0 ) return;
 
-			// Adjust the index, reset the bit and invoke the callback.
+			// Reset the bit and invoke the callback.
 			//
-			bit_reset( mask, --idx );
+			bit_reset( mask, idx );
 			fn( idx );
 		}
 	}
@@ -418,20 +413,14 @@ namespace vtil::math
 		{
 			fassert( 0 < new_size && new_size <= 64 );
 
-			if( signed_cast && new_size > bit_count && bit_count != 1 )
+			if( signed_cast && new_size > bit_count )
 			{
-				bit_state sign_bit = at( bit_count - 1 );
-				bool sign_bit_unk = at( bit_count - 1 ) == bit_state::unknown;
-				
-				if ( sign_bit == bit_state::unknown )
-					unknown_bits |= fill( 64, bit_count );
-				else if ( sign_bit == bit_state::one )
-					known_bits |= fill( 64, bit_count );
+				known_bits = sign_extend( known_bits, bit_count );
+				unknown_bits = sign_extend( unknown_bits, bit_count );
 			}
-
-			bit_count = new_size;
 			known_bits &= fill( new_size );
 			unknown_bits &= fill( new_size );
+			bit_count = new_size;
 			return *this;
 		}
 
@@ -439,8 +428,7 @@ namespace vtil::math
 		//
 		constexpr bit_state at( bitcnt_t n ) const
 		{
-			if ( unknown_bits & ( 1ull << n ) ) return bit_state::unknown;
-			return bit_state( ( ( ( known_bits >> n ) & 1 ) << 1 ) - 1 );
+			return bit_state( ( 2 * bit_test( known_bits, n ) ) - !bit_test( unknown_bits, n ) );
 		}
 		constexpr bit_state operator[]( bitcnt_t n ) const { return at( n ); }
 

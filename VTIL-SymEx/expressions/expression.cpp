@@ -419,7 +419,7 @@ namespace vtil::symbolic
 				// Punish for each set bit in [min_{msb x + popcnt x}(v, |v|)], in an exponentially decreasing rate.
 				//
 				int64_t cval = *value.get<true>();
-				complexity = sqrt( 1 + std::min( math::msb( cval ) + math::popcnt( cval ), 
+				complexity = sqrt( 2 + std::min( math::msb( cval ) + math::popcnt( cval ), 
 								                 math::msb( abs( cval ) ) + math::popcnt( abs( cval ) ) ) );
 
 				// Hash is made up of the bit vector masks and the number of bits.
@@ -523,11 +523,12 @@ namespace vtil::symbolic
 												   symbolic::expression::reference& rhs )
 				{
 
-					bitcnt_t op_size = lhs->size();
-					if ( ( op_size < rhs->size() && math::msb( ~rhs->value.known_zero() ) > op_size ) ||
-						 ( op_size > rhs->size() && math::msb( ~lhs->value.known_zero() ) < rhs->size() ) )
-						op_size = rhs->size();
-					return op_size;
+					bitcnt_t lsz = lhs->size();
+					bitcnt_t rsz = rhs->size();
+					if ( ( lsz < rsz && ( math::msb( ~rhs->value.known_zero() ) + 1 ) > lsz ) ||
+						 ( lsz > rsz && ( math::msb( ~lhs->value.known_zero() ) + 1 ) < rsz ) )
+						lsz = rsz;
+					return lsz;
 				};
 
 				switch ( op )

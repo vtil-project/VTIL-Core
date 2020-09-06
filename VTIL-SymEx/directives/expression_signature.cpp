@@ -30,13 +30,8 @@
 namespace vtil::symbolic
 {
 	// Declare number of bits used to save operator id.
-	// -- Intellisense has a hard time bitscanning apparently (kills it across entire project) so yeah...
 	//
-#ifdef __INTELLISENSE__
-	static constexpr bitcnt_t num_operator_bits = 6;
-#else
-	static constexpr bitcnt_t num_operator_bits = math::msb( ( uint64_t ) math::operator_id::max );
-#endif
+	static constexpr bitcnt_t num_operator_bits = math::msb( ( uint64_t ) math::operator_id::max ) + 1;
 
 	// Declare shrinking factor, determines how many bits are conserved from grand-child nodes.
 	//

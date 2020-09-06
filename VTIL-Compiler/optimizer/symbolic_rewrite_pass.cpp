@@ -89,8 +89,8 @@ namespace vtil::optimizer
 				// Skip if not written, else collapse value.
 				// -- TODO: Will be reworked...
 				//
-				bitcnt_t msb = math::msb( pair.second.bitmap ) - 1;
-				if ( msb == -1 ) continue;
+				bitcnt_t msb = math::msb( pair.second.bitmap );
+				if ( msb < 0 ) continue;
 				bitcnt_t size = pair.second.linear_store[ msb ].size() + msb;
 
 				register_desc k = { pair.first, size };
