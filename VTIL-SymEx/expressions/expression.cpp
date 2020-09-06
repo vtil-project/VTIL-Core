@@ -183,8 +183,27 @@ namespace vtil::symbolic
 					//
 					lhs.resize( new_size, false );
 					update( false );
-					break;
 				}
+				// If we're zero-extending the result:
+				//
+				else if ( !signed_cast && new_size > value.size() )
+				{
+					uint64_t val_mask = value.known_one() | value.unknown_mask();
+					lhs = std::move( lhs ).resize( new_size, false );
+					update( false );
+					*this = std::move( *this ) & expression{ val_mask, new_size };
+				}
+				// Otherwise nothing else to do.
+				//
+				else
+				{
+					if ( no_explicit ) return *this;
+					if ( signed_cast )
+						*this = __cast( *this, new_size );
+					else
+						*this = __ucast( *this, new_size );
+				}
+				break;
 			case math::operator_id::shift_right:
 				// If we're zero-extending the result:
 				//
@@ -877,13 +896,7 @@ namespace vtil::symbolic
 		//
 		const math::operator_desc& desc = a->get_op_desc();
 		if ( desc.operand_count == 1 )
-		{
-			size_t prev = tbl->size();
-			if ( match_to_impl( a->rhs, b->rhs, tbl, same_depth ) )
-				return true;
-			tbl->resize( prev );
-			return false;
-		}
+			return match_to_impl( a->rhs, b->rhs, tbl, same_depth );
 
 		// If both sides match, return true.
 		//
@@ -916,8 +929,8 @@ namespace vtil::symbolic
 		//
 		if ( is_variable() )
 		{
-			if ( b->is_variable() && size() == b->size() )
-				return a->uid != b->uid ? expression::uid_relation_table{ { a, b } } : expression::uid_relation_table{};
+			if ( ( !same_depth && b->is_variable() ) && size() == b->size() )
+				return expression::uid_relation_table{ { a, b } };
 		}
 		// Otherwise, create the relation table and call into real implementation.
 		//
