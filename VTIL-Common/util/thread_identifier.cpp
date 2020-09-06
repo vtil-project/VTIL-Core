@@ -45,6 +45,8 @@ namespace vtil
 #if _WIN64
 		static_assert( sizeof( tid_t ) == 8, "Thread identifier must be defined as a quadword." );
 		return __readgsqword( 0x48 );
+#elif defined( __EMSCRIPTEN__ )
+		return ( int ) pthread_self();
 #else
 		return ( tid_t ) syscall( SYS_gettid );
 #endif
