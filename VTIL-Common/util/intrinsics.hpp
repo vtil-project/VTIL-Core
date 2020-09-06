@@ -57,7 +57,14 @@
     #define unreachable() __assume(0)
     #define FUNCTION_NAME __FUNCSIG__
 #else
-    #include <emmintrin.h>
+    #if defined(__aarch64__) || defined(__arm__)
+        #define _mm_pause() asm volatile ("yield")
+    #elif defined(__amd64__) || defined(__amd64) || defined(__x86_64__) || defined(__x86_64)
+        #include <emmintrin.h>
+    #else
+        #define _mm_pause()
+    #endif
+
     #define unreachable() __builtin_unreachable()
     #define __forceinline __attribute__((always_inline))
     #define _AddressOfReturnAddress() ((void*)__builtin_frame_address(0))
