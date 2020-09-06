@@ -26,9 +26,10 @@
 // POSSIBILITY OF SUCH DAMAGE.        
 //
 #pragma once
+#include <functional>
+#include <unordered_set>
 #include <vtil/math>
 #include <vtil/utility>
-#include <set>
 #include "unique_identifier.hpp"
 #include "../directives/expression_signature.hpp"
 
@@ -183,6 +184,7 @@ namespace vtil::symbolic
 		using reference =          expression_reference;
 		using weak_reference =     weak_reference<expression>;
 		using uid_relation_table = std::vector<std::pair<expression::weak_reference, expression::weak_reference>>;
+		using uid_set            = std::unordered_set<std::reference_wrapper<const unique_identifier>, std::hash<unique_identifier>, std::equal_to<unique_identifier>>;
 
 		// If symbolic variable, the unique identifier that it maps to.
 		//
@@ -298,7 +300,7 @@ namespace vtil::symbolic
 
 		// Returns the number of unique variables used in the expression.
 		//
-		size_t count_unique_variables( std::set<unique_identifier>* visited = nullptr ) const;
+		size_t count_unique_variables( uid_set* visited = nullptr ) const;
 
 		// Updates the expression state.
 		//

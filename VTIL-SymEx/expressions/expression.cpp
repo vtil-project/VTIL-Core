@@ -53,10 +53,10 @@ namespace vtil::symbolic
 
 	// Returns the number of unique variables used in the expression.
 	//
-	size_t expression::count_unique_variables( std::set<unique_identifier>* visited ) const
+	size_t expression::count_unique_variables( uid_set* visited ) const
 	{
-		std::set<unique_identifier> tmp;
-		if ( !visited ) visited = &tmp;
+		uid_set tmp;
+		if ( !visited ) visited = &tmp, tmp.reserve( depth );
 
 		if ( is_variable() && visited->find( uid ) == visited->end() )
 		{
