@@ -40,24 +40,48 @@ namespace vtil::file
 	// Binary I/O.
 	//
 	template<Trivial T = uint8_t>
-	static std::vector<T> read_raw( const std::filesystem::path& path )
+	static std::vector<T> read_raw( const std::filesystem::path& path, size_t count = 0, size_t offset = 0 )
 	{
 		// Try to open file as binary for read.
 		//
 		std::ifstream file( path, std::ios::binary );
 		if ( !file.good() ) fthrow( "File %s cannot be opened for read.", path );
 
-		// Determine file length and validity.
+		// Determine file size.
 		//
 		file.seekg( 0, std::ios_base::end );
-		std::streampos length = file.tellg();
+		size_t file_size = file.tellg();
 		file.seekg( 0, std::ios_base::beg );
-		fassert( ( length % sizeof( T ) ) == 0 );
+
+		// Skip to requested offset.
+		//
+		if ( offset )
+		{
+			offset *= sizeof( T );
+			if( file_size <= offset )
+				fthrow( "Skipping beyond end of file %s.", path );
+			file.seekg( offset, std::ios::cur );
+			file_size -= offset;
+		}
+
+		// Validate and fix read count.
+		//
+		if ( !count )
+		{
+			count = file_size / sizeof( T );
+			if ( ( file_size % sizeof( T ) ) != 0 )
+				fthrow( "File %s is misaligned for type %s.", path, format::static_type_name<T>() );
+		}
+		else
+		{
+			if ( file_size < ( count * sizeof( T ) ) )
+				fthrow( "Trying to read beyond size of file %s.", path );
+		}
 
 		// Read the whole file and return.
 		//
-		std::vector<T> buffer( length / sizeof( T ) );
-		file.read( (char*) buffer.data(), length );
+		std::vector<T> buffer( count );
+		file.read( (char*) buffer.data(), count * sizeof( T ) );
 		return buffer;
 	}
 
