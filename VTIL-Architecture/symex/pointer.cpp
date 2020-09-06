@@ -75,6 +75,7 @@ namespace vtil::symbolic
 					return get_restricted_base( *e.rhs );
 			case math::operator_id::subtract:
 				return get_restricted_base( *e.lhs );
+			case math::operator_id::assuming:
 			case math::operator_id::value_if:
 				return get_restricted_base( *e.rhs );
 			default:
@@ -104,9 +105,9 @@ namespace vtil::symbolic
 			return 0ull;
 		} );
 
-		// Initialize x values.
+		// Initialize approximation.
 		//
-		xvalues = base->xvalues();
+		approximation = base->approximate();
 	}
 
 	// Simple pointer offseting.
@@ -114,12 +115,9 @@ namespace vtil::symbolic
 	pointer pointer::operator+( int64_t dst ) const
 	{
 		pointer copy = *this;
-		copy.base = std::move( copy.base ) + dst;
-		std::transform(
-			std::begin( xvalues ), std::end( xvalues ),
-			std::begin( copy.xvalues ),
-			[ = ] ( auto v ) { return v + dst; }
-		);
+		copy.base += dst;
+		for ( auto& x : copy.approximation )
+			x += dst;
 		return copy;
 	}
 
@@ -127,11 +125,19 @@ namespace vtil::symbolic
 	//
 	std::optional<int64_t> pointer::operator-( const pointer& o ) const
 	{
-		int64_t delta = xvalues[ 0 ] - o.xvalues[ 0 ];
-		for ( size_t n = 1; n < xvalues.size(); n++ )
-			if ( ( xvalues[ n ] - o.xvalues[ n ] ) != delta )
-				return std::nullopt;
-		return ( base - o.base ).get<true>();
+		std::optional<int64_t> result = std::nullopt;
+		for ( size_t n = 0; n != o.approximation.size(); n++ )
+		{
+			if ( !approximation.ud[ n ] && !o.approximation.ud[ n ] )
+			{
+				int64_t delta = approximation.values[ n ] - o.approximation.values[ n ];
+				if ( result && result.value() != delta )
+					return std::nullopt;
+				else
+					result = delta;
+			}
+		}
+		return result;
 	}
 
 	// Checks whether the two pointers can overlap in terms of real destination, 

@@ -26,6 +26,8 @@
 // POSSIBILITY OF SUCH DAMAGE.        
 //
 #pragma once
+#include <array>
+#include <bitset>
 #include <functional>
 #include <unordered_set>
 #include <vtil/math>
@@ -186,6 +188,45 @@ namespace vtil::symbolic
 		using uid_relation_table = std::vector<std::pair<expression::weak_reference, expression::weak_reference>>;
 		using uid_set            = std::unordered_set<std::reference_wrapper<const unique_identifier>, std::hash<unique_identifier>, std::equal_to<unique_identifier>>;
 
+		struct approximation
+		{
+			// Static keys.
+			//
+			inline static const std::array keys = make_crandom_n<VTIL_SYMEX_XVAL_KEYS>();
+			
+			// Currently held value and UD mask.
+			//
+			std::array<uint64_t, VTIL_SYMEX_XVAL_KEYS> values = { 0 };
+			std::bitset<VTIL_SYMEX_XVAL_KEYS> ud;
+
+			// Basic comparison.
+			//
+			template<typename Pr>
+			constexpr bool compare( const approximation& o ) const
+			{
+				for ( size_t n = 0; n != VTIL_SYMEX_XVAL_KEYS; n++ )
+					if ( !Pr{}( values[ n ], o.values[ n ] ) && !ud[ n ] && !o.ud[ n ] )
+						return false;
+				return true;
+			}
+			constexpr bool operator==( const approximation& o ) const { return compare<std::equal_to<uint64_t>>( o ); }
+			constexpr bool operator!=( const approximation& o ) const { return !compare<std::equal_to<uint64_t>>( o ); }
+			constexpr bool operator<( const approximation& o ) const  { return !compare<std::greater_equal<uint64_t>>( o ); }
+
+			// Wrap array interface.
+			//
+			constexpr auto begin() { return values.begin(); }
+			constexpr auto end() { return values.end(); }
+			constexpr auto begin() const { return values.begin(); }
+			constexpr auto end() const { return values.end(); }
+			constexpr size_t size() const { return VTIL_SYMEX_XVAL_KEYS; }
+
+			// String and hash conversion.
+			//
+			constexpr auto hash() const { return make_hash( values ); }
+			std::string to_string() const { return format::as_string( make_view( numeric_range<>( 0, VTIL_SYMEX_XVAL_KEYS ), [ & ] ( size_t n ) { return ud[ n ] ? "UD" : format::str( "%p", values[ n ] ); } ) ); }
+		};
+
 		// If symbolic variable, the unique identifier that it maps to.
 		//
 		unique_identifier uid = {};
@@ -340,79 +381,9 @@ namespace vtil::symbolic
 		//
 		bool contains( const expression& o ) const;
 
-		// Calculates the x values.
+		// Calculates the approximation for the current expression, argument reserved for internal use.
 		//
-		template<size_t N = VTIL_SYMEX_XVAL_KEYS>
-		std::array<uint64_t, N> xvalues() const
-		{
-			std::array<uint64_t, N> result;
-		
-			// If binary operation:
-			//
-			if ( lhs )
-			{
-				// Determine rhs mask.
-				//
-				uint64_t rhs_mask;
-				switch ( op )
-				{
-					case math::operator_id::shift_right:
-					case math::operator_id::shift_left:
-					case math::operator_id::rotate_right:
-					case math::operator_id::rotate_left:
-					case math::operator_id::bit_test:     rhs_mask = rhs->is_variable() 
-																	   ? lhs->size() - 1 : ~0ull; break;
-					default:                              rhs_mask = ~0ull;                       break;
-				}
-
-				// Evalute based on lhs's and rhs's xvalues.
-				//
-				auto xlhs = lhs->template xvalues<N>();
-				auto xrhs = rhs->template xvalues<N>();
-				for ( auto [out, vlhs, vrhs] : zip( result, xlhs, xrhs ) )
-					out = math::evaluate( op, lhs->size(), vlhs, rhs->size(), vrhs & rhs_mask ).first;
-			}
-			// If unary operation:
-			//
-			else if( rhs )
-			{
-				// Evalute based on rhs's xvalues.
-				//
-				auto xrhs = rhs->template xvalues<N>();
-				for ( auto [out, vrhs] : zip( result, xrhs ) )
-					out = math::evaluate( op, 0, 0, rhs->size(), vrhs ).first;
-			}
-			// If constant:
-			//
-			else if ( is_constant() )
-			{
-				// All x values are equivalent to the actual value.
-				//
-				result.fill( *value.get() );
-			}
-			// If variable:
-			//
-			else if ( is_variable() )
-			{
-				static constexpr auto keys = make_crandom_n<N>();
-
-				// Generate x values based on the hash.
-				//
-				for ( auto [out, key, idx] : zip( result, keys, iindices ) )
-				{
-					if ( idx != 0 )
-						out = ( hash_value ^ key ) & value.value_mask();
-					else
-						out = ( hash_value & 64 ) & value.value_mask();
-				}
-			}
-			else
-			{
-				unreachable();
-			}
-			return result;
-		}
-
+		approximation approximate( uint64_t mask = ~0ull ) const;
 
 		// Evaluates the expression invoking the callback passed for unknown variables,
 		// this avoids copying of the entire tree and any simplifier calls so is preferred

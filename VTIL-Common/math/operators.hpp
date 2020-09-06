@@ -92,6 +92,7 @@ namespace vtil::math
         mask,           // RHS.mask()
         bit_count,      // RHS.bitcount()
         value_if,       // LHS&1 ? RHS : 0
+        assuming,       // LHS&1 ? RHS : UD/0
 
         max_value,      // LHS>=RHS ? LHS : RHS
         min_value,      // LHS<=RHS ? LHS : RHS
@@ -145,6 +146,7 @@ namespace vtil::math
 
         // Coefficient of the expression complexity, will be multiplied with an additional x2 
         // in case bitwise/aritmethic mismatch is hit within child expressions.
+        //  - Note: -1 implies custom logic.
         //
         double complexity_coeff;
 
@@ -207,14 +209,15 @@ namespace vtil::math
         {   +1,       false,    1,    false,          nullptr,    "__mask",      1      },
         {    0,       false,    1,    false,          nullptr,    "__bcnt",      1      },
         {    0,       false,    2,    false,          "?",        "if",          1      },
+        {    0,       false,    2,    false,          "-->",      "assuming",   -1      },
         {    0,       false,    2,    true,           nullptr,    "max",         1      },
         {    0,       false,    2,    true,           nullptr,    "min",         1      },
         {    0,       true,     2,    true,           nullptr,    "umax",        1      },
         {    0,       true,     2,    true,           nullptr,    "umin",        1      },
         {   -1,       true,     2,    false,          ">",        "greater",     1      },
         {   -1,       true,     2,    false,          ">=",       "greater_eq",  1.2    },
-        {    0,       false,    2,    true,           "==",       "equal",       1      },
-        {    0,       false,    2,    true,           "!=",       "not_equal",   1      },
+        {    0,       true,     2,    true,           "==",       "equal",       1      },
+        {    0,       true,     2,    true,           "!=",       "not_equal",   1      },
         {   -1,       true,     2,    false,          "<=",       "less_eq",     1.2    },
         {   -1,       true,     2,    false,          "<",        "less",        1      },
         {   +1,       false,    2,    false,          "u>",       "ugreater",    1      },
@@ -253,6 +256,7 @@ namespace vtil::math
             case operator_id::negate:
             case operator_id::bitwise_not:
             case operator_id::mask:
+            case operator_id::assuming:
             case operator_id::value_if:       return bcnt_rhs;
             case operator_id::shift_right:
             case operator_id::shift_left:
@@ -359,6 +363,7 @@ namespace vtil::math
             case operator_id::bit_test:         result = ( lhs >> rhs ) & 1;                                        break;
             case operator_id::mask:             result = fill( bcnt_rhs );                                          break;
             case operator_id::bit_count:        result = bcnt_rhs;                                                  break;
+            case operator_id::assuming:
             case operator_id::value_if:         result = ( lhs & 1 ) ? rhs : 0;                                     break;
 
             // - MinMax operators
@@ -706,13 +711,25 @@ namespace vtil::math
                 //
                 return bit_vector( rhs.size(), bit_index_size );
 
-            case operator_id::value_if:
-                // Try to evaluate the (x&1)?y:0 statement.
+            case operator_id::assuming:
+                // Try to evaluate (x&1) ? y : 0.
                 //
-                if ( lhs.known_one() & 1 )         return rhs;
-                else if ( lhs.unknown_mask() & 1 ) return bit_vector{ rhs.size() };
-                else                               return bit_vector{ 0, rhs.size() };
+                if ( lhs.unknown_mask() & 1 )
+                    return bit_vector{ rhs.size() };
+                else if ( lhs.known_one() & 1 )
+                    return rhs;
+                else
+                    return bit_vector{ 0, rhs.size() }; // <
 
+            case operator_id::value_if:
+                // Try to evaluate (x&1) ? y : 0.
+                //
+                if ( lhs.unknown_mask() & 1 ) 
+                    return bit_vector{ rhs.size() };
+                else if ( lhs.known_one() & 1 )
+                    return rhs;
+                else
+                    return bit_vector{ 0, rhs.size() };
             
             //
             // Complex arithmetic operators.

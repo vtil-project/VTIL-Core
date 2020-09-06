@@ -857,12 +857,70 @@ namespace vtil::symbolic
 	bool simplify_expression( expression::reference& exp, bool pretty, bool unpack )
 	{
 #if VTIL_SYMEX_VERIFY
-		auto previous_value = exp->xvalues();
+		expression previous_exp = *exp;
 #endif
 		bool simplified = simplify_expression_i( exp, pretty, unpack );
 #if VTIL_SYMEX_VERIFY
-		if ( simplified )
-			fassert( previous_value == exp->xvalues() );
+		if ( previous_exp.hash() != exp->hash() )
+		{
+			// Spawning new unique variable?
+			//
+			expression::uid_set set_a, set_b;
+			previous_exp.count_unique_variables( &set_a );
+			exp->count_unique_variables( &set_b );
+			expression::uid_set set_unk;
+			std::set_difference( set_b.begin(), set_b.end(),
+								 set_a.begin(), set_a.end(),
+								 std::inserter( set_unk, set_unk.begin() ) );
+			if ( !set_unk.empty() )
+				logger::log<logger::CON_RED>( "Simplification spawned variables: %s\n", set_b );
+
+			// Mismatching approximation?
+			//
+			if ( previous_exp.approximate() != exp->approximate() )
+			{
+				auto to_string_i = [ ] ( auto&& self, const expression& e, int depth = 1 ) -> std::string
+				{
+					if ( e.depth > 15 )
+						return "<<<" + e.to_string() + ">>>\n";
+
+					auto padxval = [ & ] ( const std::string& str )
+					{
+						return format::str( "%*c%s%*c[%s]\n", depth, ' ', str, 192 - depth - str.length(), ' ', e.approximate() );
+					};
+
+					if ( e.is_expression() )
+					{
+						return
+							padxval( "{ " ) +
+							format::str( "%*c  %s\n", depth, ' ', e.get_op_desc().function_name ) +
+							( e.lhs ? self( self, *e.lhs, depth + 2 ) : "" ) +
+							self( self, *e.rhs, depth + 2 ) +
+							format::str( "%*c}\n", depth, ' ', e.get_op_desc().function_name );
+					}
+					else if ( e.is_constant() )
+					{
+						return padxval( format::str( "i%d : %s", e.value.size(), format::hex( e.value.get<true>().value() ) ) );
+					}
+					else if ( e.is_variable() )
+					{
+						return padxval( format::str( "v%d : %s", e.value.size(), e.uid.to_string() ) );
+					}
+					return "null [?]\n";
+				};
+
+				logger::log<logger::CON_YLW>( "Invalid simplification!\n%s\n%s\n=>\n", previous_exp.approximate(), to_string_i( to_string_i, previous_exp ) );
+				logger::log<logger::CON_YLW>( "%s\n%s\n", exp->approximate(), to_string_i( to_string_i, *exp ) );
+
+				// Debugbreak:
+				symbolic::expression::reference ref = { previous_exp };
+				simplify_expression_i( ref, pretty, unpack );
+				previous_exp.approximate();
+
+				exp = previous_exp;
+				return false;
+			}
+		}
 #endif
 		return simplified;
 	}

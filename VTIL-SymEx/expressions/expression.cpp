@@ -387,6 +387,7 @@ namespace vtil::symbolic
 
 			// Redirect to conditional output since zx 0 == sx 0.
 			//
+			case math::operator_id::assuming:
 			case math::operator_id::value_if:
 				if ( rhs.size() != new_size )
 				{
@@ -637,6 +638,16 @@ namespace vtil::symbolic
 				//
 				complexity *= desc.complexity_coeff;
 
+				// If complexity coefficient is below 0, handle special cost functor.
+				//
+				if ( desc.complexity_coeff < 0 )
+				{
+					if ( op == math::operator_id::assuming )
+						complexity = rhs->complexity;
+					else
+						unreachable();
+				}
+
 				// Begin hash as combine(op#1, op#2), make it unordered if operator is commutative.
 				//
 				hash_value = desc.is_commutative ? combine_unordered_hash( lhs->hash(), rhs->hash() ) : combine_hash( lhs->hash(), rhs->hash() );
@@ -798,9 +809,9 @@ namespace vtil::symbolic
 			 ( other.known_zero() & known_one() ))
 			return false;
 
-		// Fast path: if x values do not match, expressions cannot be equivalent.
+		// Fast path: if approximations do not match, expressions cannot be equivalent.
 		//
-		if( xvalues() != other.xvalues() )
+		if( approximate() != other.approximate() )
 			return false;
 
 		// Simplify both expressions.
@@ -960,6 +971,92 @@ namespace vtil::symbolic
 		// Check child-nodes where possible.
 		//
 		return rhs && ( rhs->contains( o ) || ( lhs && lhs->contains( o ) ) );
+	}
+
+	// Calculates the approximation for the current expression, argument reserved for internal use.
+	//
+	expression::approximation expression::approximate( uint64_t mask ) const
+	{
+		approximation result = {};
+
+		// If binary operation:
+		//
+		if ( lhs )
+		{
+			// Determine rhs mask.
+			//
+			uint64_t lhs_mask = mask;
+			uint64_t rhs_mask = mask;
+			auto& tmask = op == math::operator_id::assuming ? lhs_mask : rhs_mask;
+			switch ( op == math::operator_id::assuming ? rhs->op : op )
+			{
+				case math::operator_id::shift_right:
+				case math::operator_id::shift_left:
+				case math::operator_id::rotate_right:
+				case math::operator_id::rotate_left:
+				case math::operator_id::bit_test:     tmask &= 63;    break;
+				default:                                              break;
+			}
+
+			// Evalute based on lhs's and rhs's approximations.
+			//
+			auto xlhs = lhs->approximate( lhs_mask );
+			auto xrhs = rhs->approximate( rhs_mask );
+
+			if ( op == math::operator_id::assuming )
+			{
+				for ( size_t i = 0; i != result.size(); i++ )
+					result.ud[ i ] = !( xlhs.values[ i ] & 1 );
+			}
+			else
+			{
+				for ( size_t i = 0; i != result.size(); i++ )
+					result.ud[ i ] = xlhs.ud[ i ] || xrhs.ud[ i ];
+			}
+
+			for ( auto [out, vlhs, vrhs] : zip( result.values, xlhs.values, xrhs.values ) )
+				out = math::evaluate( op, lhs->size(), vlhs, rhs->size(), vrhs ).first;
+		}
+		// If unary operation:
+		//
+		else if ( rhs )
+		{
+			// Evalute based on rhs's approximation.
+			//
+			auto xrhs = rhs->approximate( mask );
+			for ( size_t i = 0; i != result.size(); i++ )
+			{
+				result.ud[ i ] = xrhs.ud[ i ];
+				result.values[ i ] = math::evaluate( op, 0, 0, rhs->size(), xrhs.values[ i ] ).first;
+			}
+		}
+		// If constant:
+		//
+		else if ( is_constant() )
+		{
+			// All values are equivalent to the actual value.
+			//
+			result.values.fill( *value.get() );
+		}
+		// If variable:
+		//
+		else if ( is_variable() )
+		{
+			// Generate values based on the hash and approximation keys.
+			//
+			for ( auto [out, key, idx] : zip( result.values, approximation::keys, iindices ) )
+			{
+				if ( idx != 0 )
+					out = ( hash_value ^ key ) & value.value_mask() & mask;
+				else
+					out = ( hash_value & 63 ) & value.value_mask() & mask;
+			}
+		}
+		else
+		{
+			unreachable();
+		}
+		return result;
 	}
 
 	// Converts to human-readable format.

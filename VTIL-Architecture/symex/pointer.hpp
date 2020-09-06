@@ -54,9 +54,9 @@ namespace vtil::symbolic
 		//
 		uint64_t flags = 0;
 
-		// X values cached from expression.
+		// Approximation cached from expression.
 		//
-		std::array<uint64_t, VTIL_SYMEX_XVAL_KEYS> xvalues;
+		expression::approximation approximation;
 
 		// Construct null pointer.
 		//
@@ -101,6 +101,6 @@ namespace vtil::symbolic
 
 		// Define reduction.
 		//
-		REDUCE_TO( flags, xvalues.front(), base ? ( boxed_expression& ) *base : make_static<boxed_expression>() );
+		REDUCE_TO( flags, approximation, base ? ( boxed_expression& ) *base : make_static<boxed_expression>() );
 	};
 };

@@ -269,6 +269,23 @@ namespace vtil
 				block->push_back( { map_operator( op ), { lhs, rhs } } );
 				return lhs;
 			}
+			case math::operator_id::assuming:
+			{
+				// If Lhs is a constant, it must be false.
+				//
+				if ( exp->lhs->is_constant() && exp->lhs->get<bool>() )
+				{
+					logger::warning( "Translating constraint unsat expression '%s' into UD.", *exp );
+
+					operand tmp = block->tmp( exp->rhs->size() );
+					block->mov( tmp, make_undefined( exp->rhs->size() ) );
+					return tmp;
+				}
+
+				// Ignore variable condition, redirect to Rhs.
+				//
+				return cvt( *exp->rhs );
+			}
 			case math::operator_id::value_if:
 			{
 				// If Lhs is a register:

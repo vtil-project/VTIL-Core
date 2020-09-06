@@ -308,15 +308,15 @@ namespace vtil::analysis
 								//
 								auto hash_unchanged = statement->hash();
 
-								// Calculate the xvalues for CC:
+								// Calculate the approximation for CC:
 								//
-								std::array xvals = ccexp.xvalues();
+								auto exp_approx = ccexp.approximate();
 
-								// Reverse the condition and calculate xvalues for !CC:
+								// Reverse the condition and calculate approximation for !CC:
 								//
-								auto rccexp = ~ccexp;
-								std::array rvals = xvals;
-								for ( auto& v : rvals )
+								auto inv_cc = ~ccexp;
+								auto inv_approx = exp_approx;
+								for ( auto& v : inv_approx.values )
 									v ^= 1;
 
 								// Declare the value of CC for current transformation and the transformer.
@@ -347,16 +347,15 @@ namespace vtil::analysis
 									{
 										// If expected value or inverse, replace.
 										//
-										std::array xvals2 = pexp->xvalues();
-										// Intellisense really does not like std::array::operator==.
-										if ( !memcmp( xvals.data(), xvals2.data(), sizeof( xvals2 ) ) )
+										auto approx = pexp->approximate();
+										if ( exp_approx == approx )
 										{
 											if ( pexp->equals( ccexp ) )
 												*+pexp = { expected_value, 1 };
 										}
-										else if ( !memcmp( rvals.data(), xvals2.data(), sizeof( xvals2 ) ) )
+										else if ( inv_approx == approx )
 										{
-											if ( pexp->equals( rccexp ) )
+											if ( pexp->equals( inv_cc ) )
 												*+pexp = { !expected_value, 1 };
 										}
 									}
