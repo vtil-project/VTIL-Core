@@ -33,6 +33,12 @@
 	#define __has_builtin(x) 0
 #endif
 
+// Fix intellisense dying.
+//
+#ifdef __INTELLISENSE__
+    #define is_constant_evaluated() true_type::value
+#endif
+
 // Determine RTTI support.
 //
 #if defined(_CPPRTTI)
