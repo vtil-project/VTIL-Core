@@ -87,11 +87,7 @@ namespace vtil
 	//
 	__forceinline static constexpr hash_t combine_hash( hash_t a, const hash_t& b )
 	{
-		constexpr auto rotl64 = [ ] ( uint64_t x, int r )
-		{
-			return ( x << r ) | ( x >> ( 64 - r ) );
-		};
-		a.value[ 0 ] = rotl64( a.value[ 0 ] + b.value[ 0 ], 21 );
+		a.value[ 0 ] = rotlq( a.value[ 0 ] + b.value[ 0 ], 21 );
 		a.value[ 0 ] -= b.value[ 0 ] ^ impl::hash_combination_keys[ a.value[ 0 ] & 63 ];
 		return a;
 	}

@@ -27,6 +27,7 @@
 //
 #pragma once
 #include <stdint.h>
+#include <type_traits>
 
 #ifndef __has_builtin
 	#define __has_builtin(x) 0
@@ -56,6 +57,24 @@
     #include <intrin.h>
     #define unreachable() __assume(0)
     #define FUNCTION_NAME __FUNCSIG__
+
+    // Declare rotlq | rotrq
+    //
+    __forceinline static constexpr uint64_t rotlq( uint64_t value, int count )
+    {
+        if ( !std::is_constant_evaluated() )
+            return _rotl64( value, count );
+        count %= 64;
+        return ( value << count ) | ( value >> ( 64 - count ) );
+    }
+    __forceinline static constexpr uint64_t rotrq( uint64_t value, int count )
+    {
+        if ( !std::is_constant_evaluated() )
+            return _rotr64( value, count );
+        count %= 64;
+        return ( value >> count ) | ( value << ( 64 - count ) );
+    }
+
 #else
     #if defined(__aarch64__)
         #define _mm_pause() asm volatile ("yield")
@@ -69,6 +88,22 @@
     #define __forceinline __attribute__((always_inline))
     #define _AddressOfReturnAddress() ((void*)__builtin_frame_address(0))
     #define FUNCTION_NAME __PRETTY_FUNCTION__
+
+
+    // Declare rotlq | rotrq
+    //
+    __forceinline static constexpr uint64_t rotlq( uint64_t value, int count )
+    {
+        if ( std::is_constant_evaluated() )
+            count %= 64;
+        return ( value << count ) | ( value >> ( 64 - count ) );
+    }
+    __forceinline static constexpr uint64_t rotrq( uint64_t value, int count )
+    {
+        if ( std::is_constant_evaluated() )
+            count %= 64;
+        return ( value >> count ) | ( value << ( 64 - count ) );
+    }
 
     // Declare _?mul128
     //
