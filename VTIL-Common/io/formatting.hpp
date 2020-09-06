@@ -228,9 +228,7 @@ namespace vtil::format
 		else if constexpr ( is_specialization_v<std::pair, base_type> )
 		{
 			if constexpr ( StringConvertible<decltype( x.first )> && StringConvertible<decltype( x.second )> )
-			{
 				return "(" + as_string( x.first ) + ", " + as_string( x.second ) + ")";
-			}
 			else return type_tag<T>{};
 		}
 		else if constexpr ( is_specialization_v<std::tuple, base_type> )
@@ -269,6 +267,12 @@ namespace vtil::format
 				else
 					return std::string{ "nullopt" };
 			}
+			else return type_tag<T>{};
+		}
+		else if constexpr ( is_specialization_v<std::reference_wrapper, base_type> )
+		{
+			if constexpr ( StringConvertible<decltype( x.get() )> )
+				return as_string( x.get() );
 			else return type_tag<T>{};
 		}
 		else if constexpr ( Iterable<T> )

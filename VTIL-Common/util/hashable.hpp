@@ -191,6 +191,18 @@ namespace vtil
 		return hash;
 	}
 
+	// Overload for std::reference_wrapper.
+	//
+	template<typename T>
+	struct hasher<std::reference_wrapper<T>>
+	{
+		__forceinline constexpr hash_t operator()( const std::reference_wrapper<T>& value ) const noexcept
+		{
+			if ( value ) return make_hash( value.get() );
+			else         return lt_typeid_v<T>;
+		}
+	};
+
 	// Overload for std::optional.
 	//
 	template<typename T>
