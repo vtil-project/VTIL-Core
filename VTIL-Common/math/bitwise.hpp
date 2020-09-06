@@ -34,6 +34,7 @@
 #include "../util/reducable.hpp"
 #include "../io/asserts.hpp"
 #include "../util/type_helpers.hpp"
+#include "../util/intrinsics.hpp"
 
 // Declare the type we will used for bit lenghts of data.
 // - We are using int instead of char since most operations will end up casting
@@ -265,68 +266,74 @@ namespace vtil::math
         else                                 return ( uint64_t ) imm;
     }
 
-    // Implement the jump-table based, compiler optimized sign/zero extension.
+    // Micro-optimized implementation to trick MSVC into actually optimizing it, like Clang :).
     //
     namespace impl
     {
-        // For all N except 0 / 1 / 64:
-        //
-        template<auto N>
-        struct integer_resizer
+        __forceinline static bitcnt_t rshiftcnt( bitcnt_t n )
         {
-            static_assert( N <= 63, "Invalid table generation." );
-
-            union zx_t { uint64_t input; struct { unsigned long long result : N; }; };
-            union sx_t { uint64_t input; struct { signed   long long result : N; }; };
-            
-            static constexpr uint64_t zx( uint64_t value ) { return zx_t{ value }.result; }
-            static constexpr int64_t  sx( uint64_t value ) { return sx_t{ value }.result; }
-        };
-        // N = 64 should return as is.
-        //
-        template<>
-        struct integer_resizer<64>
-        {
-            static constexpr uint64_t zx( uint64_t value ) { return value; }
-            static constexpr int64_t  sx( uint64_t value ) { return value; }
-        };
-        // N = 1 should not perform sign extension as it's intended for boolean use.
-        //
-        template<>
-        struct integer_resizer<1>
-        {
-            static constexpr uint64_t zx( uint64_t value ) { return value & 1; }
-            static constexpr int64_t  sx( uint64_t value ) { return value & 1; }
-        };
-        // N = 0 should throw upon invokation.
-        //
-        template<>
-        struct integer_resizer<0>
-        {
-            static uint64_t zx( uint64_t value )           { unreachable(); }
-            static int64_t  sx( uint64_t value )           { unreachable(); }
-        };
-
-        // Generate entire table.
-        //
-        static constexpr std::array zx_table = make_visitor_series<65, integer_resizer>( [ ] ( auto tag ) { return &decltype( tag )::type::zx; } );
-        static constexpr std::array sx_table = make_visitor_series<65, integer_resizer>( [ ] ( auto tag ) { return &decltype( tag )::type::sx; } );
+            // If MSVC x86-64, Clang does it for us:
+            //
+#if defined(_M_X64) && !defined(__INTELLISENSE__)
+            // SAR/SHR/SHL will ignore anything besides [x % 64], which lets us 
+            // optimize (64 - n) into [-n] by substracting modulo size {64}.
+            //
+            return -n;
+#else
+            return 64 - n;
+#endif
+        }
     };
 
     // Zero extends the given integer.
     //
-    static constexpr uint64_t zero_extend( uint64_t value, bitcnt_t bcnt_src )
+    __forceinline static constexpr uint64_t zero_extend( uint64_t value, bitcnt_t bcnt_src )
     {
         dassert( 0 < bcnt_src && bcnt_src <= 64 );
-        return impl::zx_table[ bcnt_src ]( value );
+
+        // Constexpr implementation, the VM does not like signed/overflowing shifts very much.
+        //
+        if ( std::is_constant_evaluated() )
+        {
+            return value & ( ~0ull >> ( 64 - bcnt_src ) );
+        }
+        else
+        {
+            // Shift left matching the MSB and shift right.
+            //
+            value <<= impl::rshiftcnt( bcnt_src );
+            value >>= impl::rshiftcnt( bcnt_src );
+            return value;
+        }
     }
 
     // Sign extends the given integer.
     //
-    static constexpr int64_t sign_extend( uint64_t value, bitcnt_t bcnt_src )
+    __forceinline static constexpr int64_t sign_extend( uint64_t value, bitcnt_t bcnt_src )
     {
         dassert( 0 < bcnt_src && bcnt_src <= 64 );
-        return impl::sx_table[ bcnt_src ]( value );
+
+        // Constexpr implementation, the VM does not like signed/overflowing shifts very much.
+        //
+        if ( std::is_constant_evaluated() )
+        {
+            value &= ( ~0ull >> ( 64 - bcnt_src ) );
+            if ( bcnt_src != 1 && bcnt_src != 64 && ( value >> ( bcnt_src - 1 ) ) )
+                value |= ( ~0ull << bcnt_src );
+            return value;
+        }
+        else
+        {
+            // Interprete as signed, shift left matching the MSB and shift right.
+            //
+            int64_t signed_value = ( int64_t ) value;
+            signed_value = signed_value << impl::rshiftcnt( bcnt_src );
+            signed_value = signed_value >> impl::rshiftcnt( bcnt_src );
+
+            // Check for the edge case at return to generate conditional move.
+            //
+            return bcnt_src == 1 ? signed_value & 1 : signed_value; // CMOV
+        }
     }
 
     // Return value from bit-vector lookup where the result can be either unknown or constant 0/1.

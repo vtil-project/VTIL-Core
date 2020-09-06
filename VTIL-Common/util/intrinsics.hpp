@@ -57,7 +57,7 @@
     #define unreachable() __assume(0)
     #define FUNCTION_NAME __FUNCSIG__
 #else
-    #if defined(__aarch64__) || defined(__arm__)
+    #if defined(__aarch64__)
         #define _mm_pause() asm volatile ("yield")
     #elif defined(__amd64__) || defined(__amd64) || defined(__x86_64__) || defined(__x86_64)
         #include <emmintrin.h>

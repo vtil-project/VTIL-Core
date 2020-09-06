@@ -291,6 +291,13 @@ namespace vtil::math
     {
         using namespace logger;
 
+        // Handle __cast and __ucast.
+        //
+        if ( id == operator_id::ucast )
+            return { zero_extend( lhs, narrow_cast<bitcnt_t>( rhs ) ), narrow_cast<bitcnt_t>( rhs ) };
+        if ( id == operator_id::cast )
+            return { sign_extend( lhs, narrow_cast<bitcnt_t>( rhs ) ), narrow_cast<bitcnt_t>( rhs ) };
+
         // Normalize the input.
         //
         const operator_desc& desc = descriptor_of( id );
@@ -303,13 +310,6 @@ namespace vtil::math
         //
         int64_t& ilhs = ( int64_t& ) lhs;
         int64_t& irhs = ( int64_t& ) rhs;
-        
-        // Handle __cast and __ucast.
-        //
-        if ( id == operator_id::ucast )
-            return { zero_extend( lhs, narrow_cast<bitcnt_t>( rhs ) ), narrow_cast<bitcnt_t>( rhs ) };
-        if ( id == operator_id::cast )
-            return { sign_extend( lhs, narrow_cast<bitcnt_t>( rhs ) ), narrow_cast<bitcnt_t>( rhs ) };
 
         // Calculate the result of the operation.
         //

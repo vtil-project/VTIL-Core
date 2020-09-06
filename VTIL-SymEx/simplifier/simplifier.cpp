@@ -38,7 +38,7 @@
 // properties of the LRU cache and whether simplifications are verified or not.
 //
 #ifndef VTIL_SYMEX_SELFGEN_SIGMATCH_DEPTH_LIM
-	#define	VTIL_SYMEX_SELFGEN_SIGMATCH_DEPTH_LIM   3
+	#define	VTIL_SYMEX_SELFGEN_SIGMATCH_DEPTH_LIM   4
 #endif
 #ifndef VTIL_SYMEX_LRU_CACHE_SIZE
 	#define VTIL_SYMEX_LRU_CACHE_SIZE               0x18000
