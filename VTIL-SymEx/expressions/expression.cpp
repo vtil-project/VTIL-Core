@@ -58,10 +58,9 @@ namespace vtil::symbolic
 		uid_set tmp;
 		if ( !visited ) visited = &tmp, tmp.reserve( depth );
 
-		if ( is_variable() && visited->find( uid ) == visited->end() )
+		if ( is_variable() )
 		{
-			visited->insert( uid );
-			return 1;
+			return visited->emplace( uid ).second ? 1 : 0;
 		}
 		else
 		{
@@ -83,9 +82,9 @@ namespace vtil::symbolic
 		//
 		if ( signed_cast )
 		{
-			// If result is a boolean or is smaller than current value, sign is irrelevant:
+			// If result is smaller than current value or operation involves booleans sign is irrelevant:
 			//
-			if ( new_size == 1 || new_size < value.size() )
+			if ( new_size == 1 || value.size() == 1 || new_size < value.size() )
 			{
 				signed_cast = false;
 			}

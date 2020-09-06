@@ -418,7 +418,7 @@ namespace vtil::math
 		{
 			fassert( 0 < new_size && new_size <= 64 );
 
-			if( signed_cast && new_size > bit_count )
+			if( signed_cast && new_size > bit_count && bit_count != 1 )
 			{
 				bit_state sign_bit = at( bit_count - 1 );
 				bool sign_bit_unk = at( bit_count - 1 ) == bit_state::unknown;
