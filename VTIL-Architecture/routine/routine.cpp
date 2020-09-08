@@ -90,7 +90,7 @@ namespace vtil
 			//
 			auto& src_links = path_cache[ src ];
 			auto& fwd_d = src_links[ dst ];
-			bool new_f = fwd_d.insert( dst ).second;
+			fwd_d.insert( dst );
 			fwd_d.insert( src );
 
 			// Backward propagate.

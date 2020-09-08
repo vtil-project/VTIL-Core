@@ -282,21 +282,21 @@ namespace vtil::symbolic::directive
 
     // Symbolic variables to be used in rule creation:
     //
-    static const instance A = { "α", 0 };
-    static const instance B = { "β", 1 };
-    static const instance C = { "δ", 2 };
-    static const instance D = { "ε", 3 };
-    static const instance E = { "ζ", 4 };
-    static const instance F = { "η", 5 };
-    static const instance G = { "λ", 6 };
+    inline const instance A = { "α", 0 };
+    inline const instance B = { "β", 1 };
+    inline const instance C = { "δ", 2 };
+    inline const instance D = { "ε", 3 };
+    inline const instance E = { "ζ", 4 };
+    inline const instance F = { "η", 5 };
+    inline const instance G = { "λ", 6 };
 
     // Special variables, one per type:
     // 
-    static const instance V = { "Π", 7,  match_variable };
-    static const instance U = { "Σ", 8,  match_constant };
-    static const instance Q = { "Ω", 9,  match_expression };
-    static const instance W = { "Ψ", 10, match_non_constant };
-    static const instance X = { "Θ", 11, match_non_expression };
+    inline const instance V = { "Π", 7,  match_variable };
+    inline const instance U = { "Σ", 8,  match_constant };
+    inline const instance Q = { "Ω", 9,  match_expression };
+    inline const instance W = { "Ψ", 10, match_non_constant };
+    inline const instance X = { "Θ", 11, match_non_expression };
 
     // To avoid string comparison each directive variable gets assigned a 
     // lookup table index. This is an arbitrary constant to avoid heap 
@@ -306,24 +306,24 @@ namespace vtil::symbolic::directive
 
     // Operable-like directive operators.
     //
-    static instance s( const instance& a ) { return { tagged<directive_op_desc::try_simplify>, a }; }
-    static instance operator!( const instance& a ) { return { tagged<directive_op_desc::simplify>, a }; }
-    static instance __iff( const instance& a, const instance& b ) { return { a, tagged<directive_op_desc::iff>, b }; }
-    static instance __or( const instance& a, const instance& b ) { return { a, tagged<directive_op_desc::or_also>, b }; }
-    static instance __mask_unk( const instance& a ) { return { tagged<directive_op_desc::mask_unknown>, a }; }
-    static instance __mask_knw1( const instance& a ) { return { tagged<directive_op_desc::mask_one>, a }; }
-    static instance __mask_knw0( const instance& a ) { return { tagged<directive_op_desc::mask_zero>, a }; }
+    inline static instance s( const instance& a ) { return { tagged<directive_op_desc::try_simplify>, a }; }
+    inline static instance operator!( const instance& a ) { return { tagged<directive_op_desc::simplify>, a }; }
+    inline static instance __iff( const instance& a, const instance& b ) { return { a, tagged<directive_op_desc::iff>, b }; }
+    inline static instance __or( const instance& a, const instance& b ) { return { a, tagged<directive_op_desc::or_also>, b }; }
+    inline static instance __mask_unk( const instance& a ) { return { tagged<directive_op_desc::mask_unknown>, a }; }
+    inline static instance __mask_knw1( const instance& a ) { return { tagged<directive_op_desc::mask_one>, a }; }
+    inline static instance __mask_knw0( const instance& a ) { return { tagged<directive_op_desc::mask_zero>, a }; }
 
     // Changes the characteristics of the first variable to match the second.
     //
-    static instance c( const instance& o, const instance& i ) { return { o.id, o.lookup_index, i.mtype }; }
+    inline static instance c( const instance& o, const instance& i ) { return { o.id, o.lookup_index, i.mtype }; }
 };
 
 // Implement comparison operators between [directive::directive_op_desc] x [math::operator_id].
 //
-static bool operator==( vtil::symbolic::directive::directive_op_desc a, vtil::math::operator_id b ) { return uint8_t( b ) > vtil::symbolic::directive::directive_op_desc::begin_id && uint8_t( a ) == uint8_t( b ); }
-static bool operator==( vtil::math::operator_id a, vtil::symbolic::directive::directive_op_desc b ) { return uint8_t( a ) > vtil::symbolic::directive::directive_op_desc::begin_id && uint8_t( b ) == uint8_t( a ); }
-static bool operator==( vtil::symbolic::directive::directive_op_desc a, vtil::symbolic::directive::directive_op_desc b ) { return a.value == b.value; }
-static bool operator!=( vtil::symbolic::directive::directive_op_desc a, vtil::math::operator_id b ) { return uint8_t( b ) <= vtil::symbolic::directive::directive_op_desc::begin_id && uint8_t( a ) != uint8_t( b ); }
-static bool operator!=( vtil::math::operator_id a, vtil::symbolic::directive::directive_op_desc b ) { return uint8_t( a ) <= vtil::symbolic::directive::directive_op_desc::begin_id && uint8_t( b ) != uint8_t( a ); }
-static bool operator!=( vtil::symbolic::directive::directive_op_desc a, vtil::symbolic::directive::directive_op_desc b ) { return a.value != b.value; }
+inline static bool operator==( vtil::symbolic::directive::directive_op_desc a, vtil::math::operator_id b ) { return uint8_t( b ) > vtil::symbolic::directive::directive_op_desc::begin_id && uint8_t( a ) == uint8_t( b ); }
+inline static bool operator==( vtil::math::operator_id a, vtil::symbolic::directive::directive_op_desc b ) { return uint8_t( a ) > vtil::symbolic::directive::directive_op_desc::begin_id && uint8_t( b ) == uint8_t( a ); }
+inline static bool operator==( vtil::symbolic::directive::directive_op_desc a, vtil::symbolic::directive::directive_op_desc b ) { return a.value == b.value; }
+inline static bool operator!=( vtil::symbolic::directive::directive_op_desc a, vtil::math::operator_id b ) { return uint8_t( b ) <= vtil::symbolic::directive::directive_op_desc::begin_id && uint8_t( a ) != uint8_t( b ); }
+inline static bool operator!=( vtil::math::operator_id a, vtil::symbolic::directive::directive_op_desc b ) { return uint8_t( a ) <= vtil::symbolic::directive::directive_op_desc::begin_id && uint8_t( b ) != uint8_t( a ); }
+inline static bool operator!=( vtil::symbolic::directive::directive_op_desc a, vtil::symbolic::directive::directive_op_desc b ) { return a.value != b.value; }

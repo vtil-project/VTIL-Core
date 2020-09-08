@@ -186,7 +186,7 @@ namespace vtil
 
     // List of all instructions.
     //
-    static const auto& get_instruction_list()
+    inline static const auto& get_instruction_list()
     {
         static std::array instruction_list =
         {

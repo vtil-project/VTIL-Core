@@ -67,7 +67,7 @@ namespace vtil
 
 		// Wrap around base clock.
 		//
-		static stamp_t now() { return base_clock::now(); }
+		inline static stamp_t now() { return base_clock::now(); }
 
 		// Declare conversion to string.
 		//
@@ -99,7 +99,7 @@ namespace vtil
 		// Platform specific fast monotic counter.
 		//
 		namespace mimpl { inline std::atomic<uint64_t> tcounter = 0; };
-		static uint64_t monotonic()
+		inline static uint64_t monotonic()
 		{
 #if WINDOWS_TARGET
 			return *( volatile uint64_t* ) 0x7FFE0014;

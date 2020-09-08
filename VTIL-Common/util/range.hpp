@@ -60,8 +60,8 @@ namespace vtil
 				
 				// Constructed by the original iterator and a reference to transformation function.
 				//
-				const F& transform;
 				base_iterator at;
+				const F& transform;
 				constexpr iterator( const base_iterator& i, const F& transform ) : at( i ), transform( transform ) {}
 
 				// Support bidirectional iteration.

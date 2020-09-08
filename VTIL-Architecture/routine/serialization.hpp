@@ -219,12 +219,12 @@ namespace vtil
 
 	// Simple wrappers for serialize / deserialize routine.
 	//
-	static void save_routine( const routine* rtn, const std::filesystem::path& path )
+	inline static void save_routine( const routine* rtn, const std::filesystem::path& path )
 	{
 		std::ofstream fs( path, std::ios::binary );
 		serialize( fs, rtn );
 	}
-	static routine* load_routine( const std::filesystem::path& path )
+	inline static routine* load_routine( const std::filesystem::path& path )
 	{
 		routine* rtn;
 		std::ifstream fs( path, std::ios::binary );

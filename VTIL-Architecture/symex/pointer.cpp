@@ -48,40 +48,6 @@ namespace vtil::symbolic
 		const register_desc& reg = var.reg();
 		return pointer::restricted_bases.contains( reg ) ? std::optional{ reg } : std::nullopt;
 	}
-	static std::optional<register_desc> get_restricted_base( const expression& e )
-	{
-		// If expression is a variable, check as is:
-		//
-		if ( e.is_variable() )
-			return get_restricted_base( e.uid.get<variable>() );
-
-		// Else apply a custom logic per operation:
-		//
-		switch ( e.op )
-		{
-			case math::operator_id::add:
-			{
-				auto lhs = get_restricted_base( *e.lhs );
-				auto rhs = get_restricted_base( *e.rhs );
-				if ( !rhs ) return lhs;
-				if ( !lhs ) return rhs;
-				return lhs == rhs ? rhs : std::nullopt;
-			}
-			case math::operator_id::bitwise_or:
-			case math::operator_id::bitwise_and:
-				if ( auto lhs = get_restricted_base( *e.lhs ) )
-					return lhs;
-				else
-					return get_restricted_base( *e.rhs );
-			case math::operator_id::subtract:
-				return get_restricted_base( *e.lhs );
-			case math::operator_id::assuming:
-			case math::operator_id::value_if:
-				return get_restricted_base( *e.rhs );
-			default:
-				return {};
-		}
-	}
 
 	// Construct from symbolic expression.
 	//

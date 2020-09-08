@@ -73,7 +73,7 @@ namespace vtil::format
 
 		// Fixes the type name to be more friendly.
 		//
-		static std::string fix_type_name( std::string in )
+		inline static std::string fix_type_name( std::string in )
 		{
 			static const std::string remove_list[] = {
 				"struct ",
@@ -340,7 +340,7 @@ namespace vtil::format
 
 	// Formats the integer into a signed hexadecimal with explicit + if positive.
 	//
-	static std::string offset( int64_t value )
+	inline static std::string offset( int64_t value )
 	{
 		if ( value >= 0 ) return str( "+ 0x%llx", value );
 		else              return str( "- 0x%llx", -value );
