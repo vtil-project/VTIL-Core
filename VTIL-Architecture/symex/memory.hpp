@@ -52,7 +52,7 @@ namespace vtil::symbolic
 			// Calculate displacement and return.
 			//
 			std::optional byte_distance = p1 - p2;
-			return byte_distance ? uncertain{ math::narrow_cast<bitcnt_t>( *byte_distance * 8 ) } : uncertain_t::unknown;
+			return byte_distance ? uncertain{ math::narrow_cast_s<bitcnt_t>( *byte_distance * 8 ) } : uncertain_t::unknown;
 		}
 
 		// The memory state.
