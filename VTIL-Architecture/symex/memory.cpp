@@ -124,7 +124,7 @@ namespace vtil::symbolic
 
 		// Declare common bit selector.
 		//
-		constexpr auto select = [ ] ( expression::reference& value, bitcnt_t size, bitcnt_t offset )
+		constexpr auto select = [ ] ( expression::reference value, bitcnt_t size, bitcnt_t offset ) -> expression::reference
 		{
 			if ( offset < 0 )      value >>= -offset, value.resize( size );
 			else if ( offset > 0 ) value.resize( size ) <<= offset;
@@ -138,10 +138,10 @@ namespace vtil::symbolic
 		if ( mask_pending )
 			result = MEMORY( reference_iterator )( ptr, size ) & expression { mask_pending, size };
 		else
-			result = select( merge_list.back().second, size, merge_list.back().first ), merge_list.pop_back();
+			result = select( std::move( merge_list.back().second ), size, merge_list.back().first ), merge_list.pop_back();
 
 		for ( auto& [dst, value] : merge_list )
-			result |= std::move( select( value, size, dst ) );
+			result |= select( std::move( value ), size, dst );
 		return result;
 	}
 

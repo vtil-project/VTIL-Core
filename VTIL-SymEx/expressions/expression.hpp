@@ -569,7 +569,7 @@ namespace vtil::symbolic
 					changed = true;
 					owning->rhs = nrhs;
 					if ( auto& lhs = owning->lhs )
-						( bool ) lhs.transform_rec( func, bottom, auto_simplify );
+						lhs.transform_rec( func, bottom, auto_simplify );
 				}
 				// If not, but LHS exists:
 				//

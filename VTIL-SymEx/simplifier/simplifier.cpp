@@ -126,14 +126,6 @@ namespace vtil::symbolic
 			~depth_tracker() { if ( s->max_depth ) s->max_depth++; }
 		};
 
-		// Default move, no copy.
-		//
-		simplifier_state() {}
-		simplifier_state( simplifier_state&& ) = default;
-		simplifier_state( const simplifier_state& ) = delete;
-		simplifier_state& operator=( simplifier_state&& ) = default;
-		simplifier_state& operator=( const simplifier_state& ) = delete;
-
 		// Resets the cache.
 		//
 		void reset() { cache.clear(); }

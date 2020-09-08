@@ -288,7 +288,7 @@ namespace vtil
 		basic_block( routine* owner, vip_t entry_vip ) 
 			: owner( owner ), entry_vip( entry_vip ), epoch( make_random<epoch_t>() ) {}
 		basic_block( const basic_block& o )
-			: owner( o.owner ), entry_vip( o.entry_vip ), next( o.next ), prev( o.prev ),
+			: owner( o.owner ), entry_vip( o.entry_vip ), prev( o.prev ), next( o.next ),
 			  sp_index( o.sp_index ), sp_offset( o.sp_offset ), last_temporary_index( o.last_temporary_index ),
 			  label_stack( o.label_stack ), epoch( o.epoch )
 		{

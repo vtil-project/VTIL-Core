@@ -178,8 +178,8 @@ namespace vtil::symbolic::directive
         // and type of expressions it can match.
         //
         const char* id = nullptr;
-        matching_type mtype = match_any;
         int lookup_index = 0;
+        matching_type mtype = match_any;
 
         // Priority hint for transformer.
         //
@@ -221,7 +221,7 @@ namespace vtil::symbolic::directive
         // Constructor for directive representing the result of an unary operator.
         //
         instance( math::operator_id op, const instance& e1 ) :
-            rhs( e1 ), op( op ), num_nodes( e1.num_nodes + 1 )
+            op( op ), rhs( e1 ), num_nodes( e1.num_nodes + 1 )
         {
             for ( auto [out, rhs] : zip( signatures, e1.signatures ) )
                 out = { op, rhs };
@@ -237,7 +237,7 @@ namespace vtil::symbolic::directive
         // Constructor for directive representing the result of a binary operator.
         //
         instance( const instance& e1, math::operator_id op, const instance& e2 ) :
-            lhs( e1 ), rhs( e2 ), op( op ), num_nodes( e1.num_nodes + e2.num_nodes + 1 )
+            op( op ), lhs( e1 ), rhs( e2 ), num_nodes( e1.num_nodes + e2.num_nodes + 1 )
         {
             for ( auto [lhs, out, rhs] : zip( e1.signatures, signatures, e2.signatures ) )
                 out = { lhs, op, rhs };

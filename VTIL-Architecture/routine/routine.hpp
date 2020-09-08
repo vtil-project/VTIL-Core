@@ -134,7 +134,7 @@ namespace vtil
 		// Constructed from architecture identifier.
 		//
 		routine( architecture_identifier arch_id ) 
-			: arch_id( arch_id ), epoch( make_random<epoch_t>() ), cfg_epoch( make_random<epoch_t>() )
+			: arch_id( arch_id ), cfg_epoch( make_random<epoch_t>() ), epoch( make_random<epoch_t>() )
 		{
 			switch ( arch_id )
 			{
