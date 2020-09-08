@@ -94,11 +94,6 @@ namespace vtil::logger
 		//
 		int padding_carry = 0;
 
-		// Whether to use ANSI escape codes or Windows console API for colors.
-		// Defaults to false on Windows, unless in a Gitlab CI environment.
-		//
-		bool ansi_escape_codes = true;
-
 		// Constructor initializes logger.
 		//
 		logger_state_t();

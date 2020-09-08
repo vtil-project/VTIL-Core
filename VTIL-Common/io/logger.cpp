@@ -42,7 +42,6 @@ namespace vtil::logger
 	{
 #if _WIN64
 		SetConsoleOutputCP( CP_UTF8 );
-		ansi_escape_codes = std::getenv( "GITLAB_CI" ) != nullptr;
 #endif
 	}
 
@@ -50,26 +49,17 @@ namespace vtil::logger
 	//
 	void set_color( console_color color )
 	{
-		if ( logger_state.ansi_escape_codes )
+		switch ( color )
 		{
-			switch ( color )
-			{
-				case CON_BRG: printf( "\x1b[37m" ); break;
-				case CON_YLW: printf( "\x1b[33m" ); break;
-				case CON_PRP: printf( "\x1b[35m" ); break;
-				case CON_RED: printf( "\x1b[31m" ); break;
-				case CON_CYN: printf( "\x1b[36m" ); break;
-				case CON_GRN: printf( "\x1b[32m" ); break;
-				case CON_BLU: printf( "\x1b[34m" ); break;
-				case CON_DEF:
-				default:      printf( "\x1b[0m" );  break;
-			}
+			case CON_BRG: printf( "\x1b[1;37m" ); break;
+			case CON_YLW: printf( "\x1b[1;33m" ); break;
+			case CON_PRP: printf( "\x1b[1;35m" ); break;
+			case CON_RED: printf( "\x1b[1;31m" ); break;
+			case CON_CYN: printf( "\x1b[1;36m" ); break;
+			case CON_GRN: printf( "\x1b[1;32m" ); break;
+			case CON_BLU: printf( "\x1b[1;34m" ); break;
+			case CON_DEF:
+			default:      printf( "\x1b[0m" );  break;
 		}
-#if _WIN64
-		else
-		{
-			SetConsoleTextAttribute( GetStdHandle( STD_OUTPUT_HANDLE ), color );
-		}
-#endif
 	}
 };
