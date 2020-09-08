@@ -43,6 +43,10 @@ namespace vtil::logger
 	{
 #if WINDOWS_TARGET
 		SetConsoleOutputCP( CP_UTF8 );
+
+		DWORD ConsoleMode;
+		GetConsoleMode( GetStdHandle( STD_OUTPUT_HANDLE ), &ConsoleMode );
+		SetConsoleMode( GetStdHandle( STD_OUTPUT_HANDLE ), ConsoleMode | ENABLE_VIRTUAL_TERMINAL_PROCESSING );
 #endif
 	}
 
