@@ -3,27 +3,31 @@ language: cpp
 os: linux
 dist: bionic
 
-before_script:
-  - mkdir build
-  - cd build
-  
-  # Install latest CMake from Kitware
-  - sudo DEBIAN_FRONTEND=noninteractive apt-get -yq  install apt-transport-https ca-certificates gnupg software-properties-common wget
-  - wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc 2>/dev/null | gpg --dearmor - | sudo tee /etc/apt/trusted.gpg.d/kitware.gpg >/dev/null
-  - sudo apt-add-repository 'deb https://apt.kitware.com/ubuntu/ bionic main'
-  - sudo DEBIAN_FRONTEND=noninteractive apt-get -yq update
-  - sudo DEBIAN_FRONTEND=noninteractive apt-get -yq install cmake cmake-data
-
-  # Install latest LLVM from LLVM repository
-  - sudo bash -c "$(wget -O - https://apt.llvm.org/llvm.sh)"
-  - sudo DEBIAN_FRONTEND=noninteractive apt-get -yq install libc++-10-dev libc++abi-10-dev
-
-  # Run CMake generator
-  - /usr/bin/cmake --version # print so we can see which version travis is using
-  - /usr/bin/cmake -DCMAKE_C_COMPILER=/usr/bin/clang-10 -DCMAKE_CXX_COMPILER=/usr/bin/clang++-10 -DVTIL_BUILD_TESTS=ON ..
-
-
+addons:
+  apt:
+    sources:
+    - sourceline: 'deb http://apt.llvm.org/bionic/ llvm-toolchain-bionic-10 main'
+      key_url: 'https://apt.llvm.org/llvm-snapshot.gpg.key'
+    - sourceline: 'deb https://apt.kitware.com/ubuntu/ xenial main'
+      key_url: 'https://apt.kitware.com/keys/kitware-archive-latest.asc'
+    update: true
+    packages:
+    - clang++-10
+    - clang-10
+    - libc++-10-dev
+    - libc++abi-10-dev
+    - cmake
+    - cmake-data
+    - ninja-build
 
 script:
-  - /usr/bin/cmake --build .
+  # Fix issue caused by previous cmake version.
+  - alias cmake='/usr/bin/cmake'
+  - /usr/bin/cmake --version
+  
+  # Build and run tests.
+  - mkdir build
+  - cd build
+  - /usr/bin/cmake -G Ninja -DCMAKE_C_COMPILER=clang-10 -DCMAKE_CXX_COMPILER=clang++-10 -DCMAKE_CXX_FLAGS="-stdlib=libc++" -DVTIL_BUILD_TESTS=ON ..
+  - ninja -j8
   - ./VTIL-Tests/VTIL-Tests
