@@ -20,19 +20,18 @@ addons:
     - clang-10
     - libc++-10-dev
     - libc++abi-10-dev
+    - cmake
+    - cmake-data
     - ninja-build
 
 script:
-  # Reset CMake, Travis keeps using old version somehow.
-  - sudo apt-get purge cmake -y
-
   # Make sure we have the required versions
   - sudo DEBIAN_FRONTEND=noninteractive apt-get -yq update
   - sudo DEBIAN_FRONTEND=noninteractive apt-get -yq install cmake cmake-data clang-10 clang++-10 libc++-10-dev libc++abi-10-dev
   
   # Fix issue caused by previous cmake version.
   - alias cmake='/usr/bin/cmake'
-  - cmake --version
+  - /usr/bin/cmake --version
   
   # If native, build and run tests.
   #
@@ -40,7 +39,7 @@ script:
      if [ $TARGET == "Native" ]; then
        mkdir build
        cd build
-       cmake -DCMAKE_C_COMPILER=clang-10 -DCMAKE_CXX_COMPILER=clang++-10 -DCMAKE_CXX_FLAGS="-stdlib=libc++" -DVTIL_BUILD_TESTS=ON -G Ninja ..
+       /usr/bin/cmake -G Ninja -DCMAKE_C_COMPILER=clang-10 -DCMAKE_CXX_COMPILER=clang++-10 -DCMAKE_CXX_FLAGS="-stdlib=libc++" -DVTIL_BUILD_TESTS=ON ..
        ninja -j8
        ./VTIL-Tests/VTIL-Tests
      fi
@@ -49,6 +48,7 @@ script:
   #
   - |
      if [ $TARGET == "WebAssembly" ]; then
+       cd ..
        git clone https://github.com/emscripten-core/emsdk.git
        cd emsdk
        ./emsdk install latest
@@ -57,6 +57,6 @@ script:
        cd ..
        mkdir build-www
        cd build-www
-       emcmake cmake -DCMAKE_CXX_FLAGS="-std=c++20" -G Ninja ..
+       emcmake /usr/bin/cmake -G Ninja -DCMAKE_CXX_FLAGS="-std=c++20" ..
        ninja -j8
      fi
