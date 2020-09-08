@@ -41,7 +41,11 @@ namespace vtil::symbolic::directive
 		// Adds the mapping of a variable to an expression. 
 		// 
 		bool add( const instance* dir, expression::weak_reference exp ) 
-		{ 
+		{
+			// Assert the looked up type is variable. 
+			// 
+			dassert( dir->op == math::operator_id::invalid && !dir->is_constant() );
+
 			// If it's the first time this variable is being used: 
 			// 
 			if ( !lookup_table[ dir->lookup_index ] ) 
@@ -78,7 +82,7 @@ namespace vtil::symbolic::directive
 		{ 
 			// Assert the looked up type is variable. 
 			// 
-			fassert( dir->op == math::operator_id::invalid && !dir->is_constant() ); 
+			dassert( dir->op == math::operator_id::invalid && !dir->is_constant() ); 
  
 			// Translate using the lookup table. 
 			// 

@@ -44,41 +44,25 @@
 
 // Allow expression::reference to be used with expression type directly as operable.
 //
-namespace vtil::symbolic { struct expression; struct expression_reference; };
+namespace vtil::symbolic { struct expression; struct expression_reference; struct expression_delegate; };
 namespace vtil::math { template<> struct resolve_alias<symbolic::expression_reference> { using type = symbolic::expression; }; };
+
+// Specialize reference.
+//
+namespace vtil
+{
+	template<>
+	struct specialized_shared_reference<symbolic::expression, void>
+	{
+		using type = symbolic::expression_reference;
+	};
+};
 
 namespace vtil::symbolic
 {
-	struct expression;
-
-	// Expression delegates used to implement copyless write detection 
-	// in case the reference is already owning.
-	//
-	struct expression_delegate
-	{
-		shared_reference<expression>& ref;
-		bool dirty;
-
-		expression_delegate( shared_reference<expression>& ref ) : ref( ref ), dirty( false ) {}
-		expression_delegate( const expression_delegate& ) = delete;
-		expression_delegate& operator=( const expression_delegate& ) = delete;
-
-		template<typename T, std::enable_if_t<!std::is_same_v<std::decay_t<T>, expression_delegate>, int> = 0>
-		expression_delegate& operator=( T&& value )
-		{
-			ref = std::forward<T>( value );
-			dirty = true;
-			return *this;
-		}
-
-		const expression* operator->() const { return ref.get(); }
-		const expression& operator*() const { return *ref.get(); }
-		expression* operator+() { dirty = 1; return ref.own(); }
-	};
-
 	// Expression references.
 	//
-	struct expression_reference : shared_reference<expression>
+	struct expression_reference : base_shared_reference<expression>
 	{
 		// Declare hasher and equivalence checker.
 		//
@@ -99,21 +83,25 @@ namespace vtil::symbolic
 
 		// Forward operators and constructor.
 		//
-		template<typename... Tx>
-		expression_reference( Tx&&... args ) 
-			: shared_reference( std::forward<Tx>( args )...) {}
+		template<typename... Tx> requires ( Constructable<expression, Tx...> && sizeof...(Tx) > 0 )
+		expression_reference( Tx&&... args ) : base_shared_reference( std::forward<Tx>( args )... ) {}
+		constexpr expression_reference() {}
+		constexpr expression_reference( std::nullptr_t ) {}
 
-		using shared_reference::operator bool;
-		using shared_reference::operator*;
-		using shared_reference::operator+;
-		using shared_reference::operator->;
+		expression_reference( expression_reference&& o ) : base_shared_reference( std::move( o ) ) {}
+		expression_reference( const expression_reference& o ) : base_shared_reference( o ) {}
+		expression_reference& operator=( expression_reference&& o ) { base_shared_reference::operator=( std::move( o ) ); return *this; }
+		expression_reference& operator=( const expression_reference& o ) { base_shared_reference::operator=( o ); return *this; }
 
-		// Basic comparison operators are redirected to the pointer type.
-		//
-		bool operator<( const shared_reference& o ) const { return combined_value < o.combined_value; }
-		bool operator==( const shared_reference& o ) const { return combined_value == o.combined_value; }
-		bool operator<( const expression_reference& o ) const { return combined_value < o.combined_value; }
-		bool operator==( const expression_reference& o ) const { return combined_value == o.combined_value; }
+		template<typename Tv> requires Constructable<expression, Tv>
+		expression_reference& operator=( Tv&& o ) { base_shared_reference::operator=( std::forward<Tv>( o ) ); return *this; }
+
+		using base_shared_reference::operator bool;
+		using base_shared_reference::operator*;
+		using base_shared_reference::operator+;
+		using base_shared_reference::operator->;
+		using base_shared_reference::operator<;
+		using base_shared_reference::operator==;
 
 		// Implement some helpers to conditionally copy.
 		//
@@ -176,6 +164,31 @@ namespace vtil::symbolic
 		{
 			return std::move( make_copy( *this ).transform( func, bottom, auto_simplify ) );
 		}
+	};
+
+	// Expression delegates used to implement copyless write detection 
+	// in case the reference is already owning.
+	//
+	struct expression_delegate
+	{
+		expression_reference& ref;
+		bool dirty;
+
+		expression_delegate( expression_reference& ref ) : ref( ref ), dirty( false ) {}
+		expression_delegate( const expression_delegate& ) = delete;
+		expression_delegate& operator=( const expression_delegate& ) = delete;
+
+		template<typename T, std::enable_if_t<!std::is_same_v<std::decay_t<T>, expression_delegate>, int> = 0>
+		expression_delegate& operator=( T&& value )
+		{
+			ref = std::forward<T>( value );
+			dirty = true;
+			return *this;
+		}
+
+		const expression* operator->() const { return ref.get(); }
+		const expression& operator*() const { return *ref.get(); }
+		expression* operator+() { dirty = 1; return ref.own(); }
 	};
 
 	// Expression descriptor.

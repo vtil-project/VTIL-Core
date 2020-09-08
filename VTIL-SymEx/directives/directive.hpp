@@ -178,7 +178,7 @@ namespace vtil::symbolic::directive
         // and type of expressions it can match.
         //
         const char* id = nullptr;
-        int lookup_index = 0;
+        uint32_t lookup_index = 0xFFFFFFFF;
         matching_type mtype = match_any;
 
         // Priority hint for transformer.
@@ -215,7 +215,7 @@ namespace vtil::symbolic::directive
             for ( auto [out, idx] : zip( signatures, iindices ) )
                 out = { make_copy( value ).resize( math::narrow_cast<bitcnt_t>( idx + 1 ) ) };
         }
-        instance( const char* id, int lookup_index, matching_type mtype = match_any ) : 
+        instance( const char* id, uint32_t lookup_index, matching_type mtype = match_any ) :
             id( id ), lookup_index( lookup_index ), mtype( mtype ), num_nodes( 1 ) {}
 
         // Constructor for directive representing the result of an unary operator.
@@ -292,9 +292,9 @@ namespace vtil::symbolic::directive
 
     // Special variables, one per type:
     // 
-    static const instance V = { "Π", 7, match_variable };
-    static const instance U = { "Σ", 8, match_constant };
-    static const instance Q = { "Ω", 9, match_expression };
+    static const instance V = { "Π", 7,  match_variable };
+    static const instance U = { "Σ", 8,  match_constant };
+    static const instance Q = { "Ω", 9,  match_expression };
     static const instance W = { "Ψ", 10, match_non_constant };
     static const instance X = { "Θ", 11, match_non_expression };
 

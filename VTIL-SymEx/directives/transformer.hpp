@@ -96,7 +96,7 @@ namespace vtil::symbolic
 						//
 						if ( exp_new->is_constant() )
 						{
-							exp_new = { *exp_new->value.get(), exp->size() };
+							exp_new = expression{ *exp_new->value.get(), exp->size() };
 						}
 						else
 						{

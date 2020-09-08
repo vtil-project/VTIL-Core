@@ -160,7 +160,7 @@ namespace vtil::format
 	template<typename T>
 	static auto as_string( const T& x );
 	template<typename T>
-	concept StringConvertible = requires( T v ) { !is_specialization_v<type_tag, decltype( as_string( v ) )>; };
+	concept StringConvertible = requires( std::string res, T v ) { res = as_string( v ); };
 
 	template<typename T>
 	__forceinline static auto as_string( const T& x )
@@ -190,7 +190,7 @@ namespace vtil::format
 		}
 		else if constexpr ( std::is_same_v<base_type, bool> )
 		{
-			return std::string{ x ? "true" : "false" };
+			return x ? "true"s : "false"s;
 		}
 		else if constexpr ( StdStringConvertible<T> )
 		{
@@ -248,7 +248,7 @@ namespace vtil::format
 			}();
 
 			if constexpr ( std::tuple_size_v<base_type> == 0 )
-				return "{}";
+				return "{}"s;
 			else if constexpr ( is_tuple_str_cvtable )
 			{
 				std::string res = std::apply( [ ] ( auto&&... args ) {
@@ -265,7 +265,7 @@ namespace vtil::format
 				if ( x.has_value() )
 					return as_string( x.value() );
 				else
-					return std::string{ "nullopt" };
+					return "nullopt"s;
 			}
 			else return type_tag<T>{};
 		}
@@ -277,11 +277,11 @@ namespace vtil::format
 		}
 		else if constexpr ( Iterable<T> )
 		{
-			if constexpr ( StringConvertible<decltype( *std::begin( x ) )> )
+			if constexpr ( StringConvertible<iterator_value_type_t<T>> )
 			{
 				std::string items = {};
 				for ( auto&& entry : x )
-					items += as_string( entry ) + ", ";
+					items += as_string( entry ) + ", "s;
 				if ( !items.empty() ) items.resize( items.size() - 2 );
 				return "{" + items + "}";
 			}

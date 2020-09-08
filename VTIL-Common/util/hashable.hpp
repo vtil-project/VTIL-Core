@@ -123,12 +123,17 @@ namespace vtil
 			//
 			else if constexpr ( Iterable<const T&> )
 			{
-				hash_t hash = {};
-				size_t i = 0;
-				for ( const auto& entry : value )
-					hash = combine_hash( hash, hasher<std::decay_t<decltype( entry )>>{}( entry ) ), i++;
-				hash.add_bytes( sizeof( T ) + i );
-				return hash;
+				using value_type = std::decay_t<iterator_value_type_t<const T&>>;
+
+				if constexpr ( !std::is_void_v<decltype( hasher<value_type>{}( std::declval<value_type&>() ) ) > )
+				{
+					hash_t hash = {};
+					size_t i = 0;
+					for ( const auto& entry : value )
+						hash = combine_hash( hash, hasher<value_type>{}( entry ) ), i++;
+					hash.add_bytes( sizeof( T ) + i );
+					return hash;
+				}
 			}
 			// If hash, combine with default seed.
 			//

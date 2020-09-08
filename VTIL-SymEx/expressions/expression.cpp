@@ -351,7 +351,7 @@ namespace vtil::symbolic
 				//
 				else
 				{
-					*+rhs = new_size;
+					rhs = expression{ new_size, 8 };
 					return update( false );
 				}
 				break;
@@ -361,7 +361,7 @@ namespace vtil::symbolic
 			case math::operator_id::cast:
 				// Signed cast should not be used to shrink.
 				//
-				fassert( lhs->size() <= rhs->get().value() );
+				dassert( lhs->size() <= rhs->get().value() );
 
 				// If sizes match, escape cast operator.
 				//
@@ -373,7 +373,7 @@ namespace vtil::symbolic
 				//
 				else if ( signed_cast )
 				{
-					*+rhs = new_size;
+					rhs = expression{ new_size, 8 };
 					return update( false );
 				}
 				// Else, convert to unsigned cast since top bits will be zero.
@@ -490,7 +490,7 @@ namespace vtil::symbolic
 				//
 				if ( ( is_lazy || auto_simplify ) && value.is_known() )
 				{
-					lhs = {}; rhs = {};
+					lhs.reset(); rhs.reset();
 					op = math::operator_id::invalid;
 					is_lazy = false;
 					return update( false );
@@ -531,7 +531,7 @@ namespace vtil::symbolic
 				//
 				if ( ( is_lazy || auto_simplify ) && value.is_known() )
 				{
-					lhs = {}; rhs = {};
+					lhs.reset(); rhs.reset();
 					op = math::operator_id::invalid;
 					is_lazy = false;
 					return update( false );
@@ -718,7 +718,7 @@ namespace vtil::symbolic
 		// this way and additionally we avoid copying where an operand is being simplified
 		// as that can be replaced by a simple swap of shared references.
 		//
-		reference ref = ( reference&& ) make_local_reference( this );
+		reference ref = make_local_reference( this );
 		simplify_expression( ref, prettify );
 
 		// Set the simplifier hint to indicate skipping further calls to simplify_expression.
@@ -816,8 +816,8 @@ namespace vtil::symbolic
 
 		// Simplify both expressions.
 		//
-		expression::reference a = make_local_reference( this );
-		expression::reference b = make_local_reference( &other );
+		reference a = make_local_reference( this );
+		reference b = make_local_reference( &other );
 		a.simplify();
 		b.simplify();
 

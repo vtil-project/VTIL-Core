@@ -195,7 +195,7 @@ namespace vtil::symbolic
 					// Return the unknown mask.
 					//
 					
-					return ( *+exp = expression{ exp->unknown_mask(), exp->size() }, exp );
+					return exp = expression{ exp->unknown_mask(), exp->size() };
 				}
 				break;
 			}
@@ -207,7 +207,7 @@ namespace vtil::symbolic
 				{
 					// Return the unknown mask.
 					//
-					return ( *+exp = expression{ exp->known_one(), exp->size() }, exp );
+					return exp = expression{ exp->known_one(), exp->size() };
 				}
 				break;
 			}
@@ -219,7 +219,7 @@ namespace vtil::symbolic
 				{
 					// Return the unknown mask.
 					//
-					return ( *+exp = expression{ exp->known_zero(), exp->size() }, exp );
+					return exp = expression{ exp->known_zero(), exp->size() };
 				}
 				break;
 			}

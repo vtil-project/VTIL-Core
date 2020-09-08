@@ -34,6 +34,7 @@
 #include <mutex>
 #include <thread>
 #include <functional>
+#include <cstdarg>
 #include "formatting.hpp"
 #include "../util/intrinsics.hpp"
 #include "../util/literals.hpp"
@@ -176,68 +177,84 @@ namespace vtil::logger
 
 	// Main function used when logging.
 	//
+	namespace impl
+	{
+		template<bool has_args>
+		static int log_w( FILE* dst, console_color color, const char* fmt, ... )
+		{
+			// Hold the lock for the critical section guarding ::log.
+			//
+			std::lock_guard g( logger_state );
+
+			// Do not execute if logs are disabled.
+			//
+			if ( logger_state.mute ) return 0;
+
+			// If we should pad this output:
+			//
+			int out_cnt = 0;
+			if ( logger_state.padding > 0 )
+			{
+				// If it was not carried from previous:
+				//
+				if ( int pad_by = logger_state.padding - logger_state.padding_carry )
+				{
+					for ( int i = 0; i < pad_by; i++ )
+					{
+						if ( ( i + 1 ) == pad_by )
+						{
+							out_cnt += fprintf( dst, "%*c", log_padding_step - 1, ' ' );
+							if ( fmt[ 0 ] == ' ' ) putchar( log_padding_c );
+						}
+						else
+						{
+							out_cnt += fprintf( dst, "%*c%c", log_padding_step - 1, ' ', log_padding_c );
+						}
+					}
+				}
+
+				// Set or clear the carry for next.
+				//
+				if ( fmt[ strlen( fmt ) - 1 ] == '\n' )
+					logger_state.padding_carry = 0;
+				else
+					logger_state.padding_carry = logger_state.padding;
+			}
+
+			// Set to requested color and redirect to printf.
+			//
+			set_color( color );
+
+			// If string literal with no parameters, use puts instead.
+			//
+			if ( has_args )
+			{
+				va_list args;
+				va_start( args, fmt );
+				out_cnt += vfprintf( dst, fmt, args );
+				va_end( args );
+			}
+			else
+			{
+				out_cnt += fputs( fmt, dst );
+			}
+
+			// Reset to defualt color.
+			//
+			set_color( CON_DEF );
+			return out_cnt;
+		}
+	};
+
 	template<typename... params>
 	static int log( console_color color, const char* fmt, params&&... ps )
 	{
-		// Hold the lock for the critical section guarding ::log.
-		//
-		std::lock_guard g( logger_state );
-
-		// Do not execute if logs are disabled.
-		//
-		if ( logger_state.mute ) return 0;
-
-		// If we should pad this output:
-		//
-		int out_cnt = 0;
-		if ( logger_state.padding > 0 )
-		{
-			// If it was not carried from previous:
-			//
-			if ( int pad_by = logger_state.padding - logger_state.padding_carry )
-			{
-				for ( int i = 0; i < pad_by; i++ )
-				{
-					if ( ( i + 1 ) == pad_by )
-					{
-						out_cnt += fprintf( VTIL_LOGGER_DST, "%*c", log_padding_step - 1, ' ' );
-						if ( fmt[ 0 ] == ' ' ) putchar( log_padding_c );
-					}
-					else
-					{
-						out_cnt += fprintf( VTIL_LOGGER_DST, "%*c%c", log_padding_step - 1, ' ', log_padding_c );
-					}
-				}
-			}
-
-			// Set or clear the carry for next.
-			//
-			if ( fmt[ strlen( fmt ) - 1 ] == '\n' )
-				logger_state.padding_carry = 0;
-			else
-				logger_state.padding_carry = logger_state.padding;
-		}
-
-		// Set to requested color and redirect to printf.
-		//
-		set_color( color );
-
-		// If string literal with no parameters, use puts instead.
-		//
-		if ( sizeof...( ps ) == 0 )
-			out_cnt += fputs( fmt, VTIL_LOGGER_DST );
-		else
-			out_cnt += fprintf( VTIL_LOGGER_DST, fmt, format::fix_parameter<params>( std::forward<params>( ps ) )... );
-
-		// Reset to defualt color.
-		//
-		set_color( CON_DEF );
-		return out_cnt;
+		return impl::log_w<sizeof...( params ) != 0>( VTIL_LOGGER_DST, color, fmt, format::fix_parameter<params>( std::forward<params>( ps ) )... );
 	}
 	template<console_color color = CON_DEF, typename... params>
 	static int log( const char* fmt, params&&... ps )
 	{
-		return log( color, fmt, std::forward<params>( ps )... );
+		return impl::log_w<sizeof...( params ) != 0>( VTIL_LOGGER_DST, color, fmt, format::fix_parameter<params>( std::forward<params>( ps ) )... );
 	}
 
 	// Prints a warning message.

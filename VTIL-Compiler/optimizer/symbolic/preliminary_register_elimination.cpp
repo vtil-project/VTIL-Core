@@ -198,7 +198,7 @@ namespace vtil::optimizer
 					if ( !( math::fill( vctx.linear_store[ n ].size(), n ) & read_mask ) )
 					{
 						math::bit_reset( vctx.bitmap, n );
-						vctx.linear_store[ n ] = nullptr;
+						vctx.linear_store[ n ].reset();
 						cnt++;
 					}
 					// Otherwise, or with value mask.

@@ -42,33 +42,6 @@ namespace vtil
 {
 	namespace impl
 	{
-		template<typename... params> struct first_of { using type = std::tuple_element_t<0, std::tuple<params...>>; };
-		template<> struct first_of<> { using type = void; };
-
-		template<typename... params>
-		using first_of_t = typename first_of<params...>::type;
-
-		template<typename T, typename... params>
-		static constexpr bool should_invoke_constructor()
-		{
-			// Constructor should be always invoked if we have more than one parameter and 
-			// never if we have zero parameters.
-			//
-			if constexpr ( sizeof...( params ) != 1 )
-			{
-				return sizeof...( params ) != 0;
-			}
-			else
-			{
-				// Invoke if not equal to the reference type.
-				//
-				return !std::is_base_of_v<T, std::remove_cvref_t<first_of_t<params...>>>;
-			}
-		}
-
-		template<typename T, typename... params>
-		using enable_if_constructor = typename std::enable_if_t<should_invoke_constructor<T, params...>(), int>;
-
 		template<typename T>
 		inline static T* reloc_const( const T* ptr, const void* src, void* dst )
 		{
@@ -87,7 +60,7 @@ namespace vtil
 	// Used to implement shared and extremely fast Copy-on-Write memory.
 	//
 	template<typename T>
-	struct shared_reference
+	struct base_shared_reference
 	{
 		// Declare the object entry and its pool.
 		//
@@ -138,25 +111,24 @@ namespace vtil
 
 		// Null reference construction.
 		//
-		constexpr shared_reference() : combined_value( 0 ) {}
-		constexpr shared_reference( std::nullptr_t ) : shared_reference() {}
-		constexpr shared_reference( std::nullopt_t ) : shared_reference() {}
+		constexpr base_shared_reference() : combined_value( 0 ) {}
+		constexpr base_shared_reference( std::nullptr_t ) : base_shared_reference() {}
 
 		// Owning reference constructor.
 		//
-		template<typename... params, impl::enable_if_constructor<shared_reference<T>, params...> = 0>
-		shared_reference( params&&... p ) 
+		template<typename... Tx> requires ( Constructable<T, Tx...> && sizeof...( Tx ) > 0 )
+		base_shared_reference( Tx&&... p )
 		{
 			combined_value = ( uint64_t ) object_pool::construct
 			(
-				/*Object itself*/     T( std::forward<params>( p )... ), 
+				/*Object itself*/     T( std::forward<Tx>( p )... ),
 				/*Reference counter*/ 1
 			);
 		}
 
 		// Shared reference constructor.
 		//
-		shared_reference( const shared_reference& ref )
+		base_shared_reference( const base_shared_reference& ref )
 			: combined_value( ref.combined_value )
 		{
 			// If object is null, return.
@@ -173,7 +145,7 @@ namespace vtil
 			else
 				inc_ref( get_entry() );
 		}
-		shared_reference& operator=( const shared_reference& o ) 
+		base_shared_reference& operator=( const base_shared_reference& o )
 		{ 
 			// If object is null, reset and return.
 			//
@@ -225,12 +197,41 @@ namespace vtil
 
 		// Construction and assignment operator for rvalue references.
 		//
-		shared_reference( shared_reference&& ref )
+		base_shared_reference( base_shared_reference&& ref )
 			: combined_value( std::exchange( ref.combined_value, 0 ) ) {}
-		shared_reference& operator=( shared_reference&& o )
+		base_shared_reference& operator=( base_shared_reference&& o )
 		{
 			uint64_t value = std::exchange( o.combined_value, 0 );
 			reset().combined_value = value;
+			return *this;
+		}
+
+		// Assignment of value.
+		//
+		template<typename Tv> requires Constructable<T, Tv>
+		base_shared_reference& operator=( Tv&& value )
+		{
+			// If we have valid memory:
+			//
+			if ( combined_value )
+			{
+				// If it's unique memory, move over it and return, otherwise dereference.
+				//
+				if ( is_temporary() || get_ref( get_entry() ) == 1 )
+				{
+					*( T* ) pointer = std::forward<Tv>( value );
+					return *this;
+				}
+				dec_ref( get_entry() );
+			}
+
+			// Construct a new object and return.
+			//
+			combined_value = ( uint64_t ) object_pool::construct
+			(
+				/*Object itself*/     std::forward<Tv>( value ),
+				/*Reference counter*/ 1
+			);
 			return *this;
 		}
 
@@ -292,8 +293,8 @@ namespace vtil
 
 		// Basic comparison operators are redirected to the pointer type.
 		//
-		constexpr bool operator==( const shared_reference& o ) const { return combined_value == o.combined_value; }
-		constexpr bool operator<( const shared_reference& o ) const { return combined_value < o.combined_value; }
+		constexpr bool operator==( const base_shared_reference& o ) const { return combined_value == o.combined_value; }
+		constexpr bool operator<( const base_shared_reference& o ) const { return combined_value < o.combined_value; }
 
 		// Redirect pointer and dereferencing operator to the reference and cast to const-qualified equivalent.
 		//
@@ -312,7 +313,7 @@ namespace vtil
 
 		// Resets the reference to nullptr.
 		//
-		__forceinline shared_reference& reset()
+		__forceinline base_shared_reference& reset()
 		{
 			// If non-temporary and non-null, decrement reference count, if 
 			// it reaches 0, destroy the object and deallocate.
@@ -328,8 +329,15 @@ namespace vtil
 
 		// Constructor invokes reset.
 		//
-		~shared_reference() { reset(); }
+		~base_shared_reference() { reset(); }
 	};
+
+	// Can be overloaded to implement customization.
+	//
+	template<typename T, typename = void>
+	struct specialized_shared_reference { using type = base_shared_reference<T>; };
+	template<typename T>
+	using shared_reference = typename specialized_shared_reference<T>::type;
 
 	// Weak references are used to store shared references without implying 
 	// ownership. This class should not be used together with temporaries.

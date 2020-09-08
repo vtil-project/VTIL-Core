@@ -149,9 +149,19 @@ namespace vtil
 	template <template<typename...> typename Tmp, typename T>
 	concept Specialization = is_specialization_v<Tmp, T>;
 	template<typename T, typename... Args>
-	concept Constructable = requires { T( std::declval<Args>()... ); };
+	concept Constructable = requires( Args&&... a ) { T( a... ); };
 	template<typename T, typename X>
 	concept Assignable = requires( T r, X v ) { r = v; };
+
+	// Comparison traits.
+	//
+	template<typename T, typename O> concept ThreeWayComparable =   requires( T&& a, O&& b ) { a <=> b; };
+	template<typename T, typename O> concept LessEqualComparable =  requires( T&& a, O&& b ) { a <= b; };
+	template<typename T, typename O> concept LessComparable =       requires( T&& a, O&& b ) { a <  b; };
+	template<typename T, typename O> concept EqualComparable =      requires( T&& a, O&& b ) { a == b; };
+	template<typename T, typename O> concept NotEqualComparable =   requires( T&& a, O&& b ) { a != b; };
+	template<typename T, typename O> concept GreatComparable =      requires( T&& a, O&& b ) { a >  b; };
+	template<typename T, typename O> concept GreatEqualComparable = requires( T&& a, O&& b ) { a >= b; };
 
 	// Functor traits.
 	//
@@ -207,7 +217,7 @@ namespace vtil
 	// Atomicity-related traits.
 	//
 	template<typename T>
-	concept Lockable = requires( T & x ) { x.lock(); x.unlock(); };
+	concept Lockable = requires( T& x ) { x.lock(); x.unlock(); };
 	template<typename T>
 	concept Atomic = is_specialization_v<std::atomic, T>;
 

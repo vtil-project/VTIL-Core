@@ -144,7 +144,7 @@ namespace vtil::analysis
 					branch_targets.emplace_back( cvt_operand( 0 ) );
 					is_branch_real = true;
 					is_branch_exiting = ins.base == &ins::vexit;
-					branch_cc = nullptr;
+					branch_cc.reset();
 					return vm_exit_reason::stream_end;
 				}
 				// If unconditional jump:
@@ -153,7 +153,7 @@ namespace vtil::analysis
 				{
 					branch_targets.emplace_back( cvt_operand( 0 ) );
 					is_branch_real = false;
-					branch_cc = nullptr;
+					branch_cc.reset();
 					return vm_exit_reason::stream_end;
 				}
 				// If conditional jump:
@@ -351,12 +351,12 @@ namespace vtil::analysis
 										if ( exp_approx == approx )
 										{
 											if ( pexp->equals( ccexp ) )
-												*+pexp = { expected_value, 1 };
+												pexp = symbolic::expression{ expected_value, 1 };
 										}
 										else if ( inv_approx == approx )
 										{
 											if ( pexp->equals( inv_cc ) )
-												*+pexp = { !expected_value, 1 };
+												pexp = symbolic::expression{ !expected_value, 1 };
 										}
 									}
 								};

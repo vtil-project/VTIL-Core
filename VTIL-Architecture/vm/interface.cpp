@@ -61,7 +61,7 @@ namespace vtil
 			//
 			else
 			{
-				fassert( op.is_immediate() );
+				dassert( op.is_immediate() );
 				return { op.imm().i64, op.imm().bit_count };
 			}
 		};
@@ -186,7 +186,7 @@ namespace vtil
 
 			// Operand 0 should always be the result for this class.
 			//
-			fassert( ins.base->operand_types[ 0 ] >= operand_type::write );
+			dassert( ins.base->operand_types[ 0 ] >= operand_type::write );
 			return vm_exit_reason::none;
 		}
 		// If NOP:

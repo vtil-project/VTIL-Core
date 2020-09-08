@@ -342,7 +342,7 @@ namespace vtil::optimizer::aux
 				{
 					auto& var = ex->uid.get<symbolic::variable>();
 					if ( var.is_register() && var.reg() == REG_IMGBASE )
-						*+ex = { 0, ex->size() };
+						ex = symbolic::expression{ 0, ex->size() };
 				}
 			}, true, false ).simplify( true );
 
@@ -393,12 +393,12 @@ namespace vtil::optimizer::aux
 						{
 							if ( exp->is_identical( *cnd_out ) )
 							{
-								*+exp = symbolic::expression{ state, exp->size() };
+								exp = symbolic::expression{ state, exp->size() };
 								confirmed |= !state;
 							}
 							else if ( exp->is_identical( ~cnd_out ) )
 							{
-								*+exp = symbolic::expression{ state ^ 1, exp->size() };
+								exp = symbolic::expression{ state ^ 1, exp->size() };
 								confirmed |= !state;
 							}
 						}
@@ -420,7 +420,7 @@ namespace vtil::optimizer::aux
 
 					dst->enumerate( explore_cc_space );
 					if ( cnd_out )    dst.transform( transform_cc );
-					if ( !confirmed ) cnd_out = {};
+					if ( !confirmed ) cnd_out.reset();
 				};
 
 				symbolic::expression::reference cc = {};

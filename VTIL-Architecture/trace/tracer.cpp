@@ -274,7 +274,7 @@ namespace vtil
 			ref.simplify();
 			return false;
 		}
-		ref = {};
+		ref.reset();
 		return *result;
     }
 
@@ -414,7 +414,7 @@ namespace vtil
 								{
 									symbolic::variable&& var = std::move( ( +exp )->uid.get<symbolic::variable>() );
 									var.is_branch_dependant = true;
-									*+exp = { var, exp->size() };
+									exp = symbolic::expression{ var, exp->size() };
 								}
 							}, true, false );
 						}

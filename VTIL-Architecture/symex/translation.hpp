@@ -47,9 +47,9 @@ namespace vtil
 			return tbl;
 		}();
 
-		fassert( lookup_table.size() > ( size_t ) op );
+		dassert( lookup_table.size() > ( size_t ) op );
 		const instruction_desc* desc = lookup_table[ ( size_t ) op ];
-		fassert( desc );
+		dassert( desc );
 		return desc;
 	}
 

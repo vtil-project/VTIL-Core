@@ -49,7 +49,7 @@
 	#define VTIL_SYMEX_LRU_CACHE_SIZE               0x18000
 #endif
 #ifndef VTIL_SYMEX_LRU_PRUNE_COEFF
-	#define VTIL_SYMEX_LRU_PRUNE_COEFF              0.2
+	#define VTIL_SYMEX_LRU_PRUNE_COEFF              0.2f
 #endif
 #ifndef VTIL_SYMEX_HASH_COLLISION_MAX
 	#define VTIL_SYMEX_HASH_COLLISION_MAX           8
