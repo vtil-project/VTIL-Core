@@ -74,10 +74,20 @@
 
 #if defined(_WIN64)
     #define WINDOWS_TARGET 1
-    #define LINUX_TARGET   0
-#elif defined(__linux__)
+    #define UNIX_TARGET    0
+    #define OSX_TARGET     0
+#elif defined(__APPLE__)
     #define WINDOWS_TARGET 0
-    #define LINUX_TARGET   1
+    #define UNIX_TARGET    0
+    #define OSX_TARGET     1
+#elif defined(__EMSCRIPTEN__)
+    #define WINDOWS_TARGET 0
+    #define UNIX_TARGET    0
+    #define OSX_TARGET     0
+#elif defined(__linux__) || defined(__unix__) || defined(__unix)
+    #define WINDOWS_TARGET 0
+    #define UNIX_TARGET    1
+    #define OSX_TARGET     0
 #else
     #error "Unknown target OS."
 #endif
@@ -306,7 +316,7 @@
 //
 #if DEMO_BUILD
     #define debugbreak()  __debugbreak()
-    #define unreachable() { __debugbreak(); while( 1 ) yield_cpu(); }
+    #define unreachable() { __debugbreak(); __fastfail( 0xDD ); }
     #define __noreturn         
 #else
     #define debugbreak()  __fastfail( 0xCC )

@@ -367,7 +367,6 @@ namespace vtil
 		}
 
 		unreachable();
-		return {};
 	}
 	static operand translate_expression( const symbolic::expression::reference& exp, basic_block* block, const il_const_iterator& it_sp = symbolic::free_form_iterator )
 	{
