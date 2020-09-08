@@ -71,7 +71,7 @@ namespace vtil
 		//
 		__forceinline static void inc_ref( object_entry* entry )
 		{
-#ifdef _MSC_VER
+#if MS_COMPILER
 			std::atomic_fetch_add_explicit( &entry->second, +1, std::memory_order::relaxed );
 #else
 			entry->second++;
@@ -79,7 +79,7 @@ namespace vtil
 		}
 		__forceinline static bool dec_ref( object_entry* entry )
 		{
-#ifdef _MSC_VER
+#if MS_COMPILER
 			return std::atomic_fetch_add_explicit( &entry->second, -1, std::memory_order::acq_rel ) == 1;
 #else
 			return --entry->second == 0;
@@ -87,7 +87,7 @@ namespace vtil
 		}
 		__forceinline static long get_ref( object_entry* entry )
 		{
-#ifdef _MSC_VER
+#if MS_COMPILER
 			return std::atomic_load_explicit( &entry->second, std::memory_order::relaxed );
 #else
 			return entry->second.load();

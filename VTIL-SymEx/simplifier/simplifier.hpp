@@ -29,6 +29,7 @@
 #include <iterator>
 #include <unordered_map>
 #include <memory>
+#include <vtil/utility>
 #include "../expressions/expression.hpp"
 
 // [Configuration]
@@ -55,7 +56,7 @@
 	#define VTIL_SYMEX_HASH_COLLISION_MAX           8
 #endif
 #ifndef VTIL_SYMEX_VERIFY
-	#ifdef _DEBUG
+	#if DEBUG_BUILD
 		#define	VTIL_SYMEX_VERIFY                   1
 	#else
 		#define	VTIL_SYMEX_VERIFY                   0

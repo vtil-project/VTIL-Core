@@ -58,7 +58,7 @@ namespace vtil
 		{
 			std::string_view sig = FUNCTION_NAME;
 			auto [begin, delta, end] = std::tuple{
-#if defined(_MSC_VER)
+#if MS_COMPILER
 				std::string_view{ "<" },                      0,  ">"
 #else
 				std::string_view{ "vvvv__identifier__vvvv" }, +3, "];"

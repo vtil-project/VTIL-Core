@@ -27,8 +27,8 @@
 //
 #include "tracer.hpp"
 #include <vtil/io>
-#include "../vm/lambda.hpp"
 #include <vtil/utility>
+#include "../vm/lambda.hpp"
 
 namespace vtil
 {
@@ -328,7 +328,7 @@ namespace vtil
 				{
 					// Skip if it does not reach target.
 					//
-#if _DEBUG
+#if DEBUG_BUILD
 					if ( !target->owner->has_path( it.block, target ) )
 					{
 						warning( "Iterator %s has no path to %s but is still being considered in backpropagation.",

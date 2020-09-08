@@ -302,7 +302,7 @@ namespace vtil
 
 			// If building in debug mode, mark dead.
 			//
-#ifdef _DEBUG
+#if DEBUG_BUILD
 			entry->bucket_entry.high = ( bucket_header* ) 0xDDDDDDDDDDDDDDDD;
 			entry->bucket_entry.low =  ( bucket_header* ) 0xDDDDDDDDDDDDDDDD;
 			entry->lru_next = ( entry_type* ) 0xDDDDDDDDDDDDDDDD;

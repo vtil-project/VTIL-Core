@@ -101,7 +101,7 @@ namespace vtil
 		namespace mimpl { inline std::atomic<uint64_t> tcounter = 0; };
 		static uint64_t monotonic()
 		{
-#ifdef _WIN64
+#if WINDOWS_TARGET
 			return *( volatile uint64_t* ) 0x7FFE0014;
 #else
 			return ++mimpl::tcounter;

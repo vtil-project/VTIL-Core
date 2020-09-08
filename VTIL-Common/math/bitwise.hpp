@@ -80,7 +80,7 @@ namespace vtil::math
 		{
 			// If MSVC x86-64:
 			//
-#if defined(_M_X64) && !defined(__INTELLISENSE__)
+#if MS_COMPILER && AMD64_TARGET && !defined(__INTELLISENSE__)
 			// SAR/SHR/SHL will ignore anything besides [x % 64], which lets us 
 			// optimize (64 - n) into [-n] by substracting modulo size {64}.
 			//
@@ -95,12 +95,16 @@ namespace vtil::math
 	//
 	__forceinline static constexpr bitcnt_t popcnt( uint64_t x )
 	{
-		// Optimized using intrinsic on MSVC, Clang should be smart enough to do this on its own.
+		// Optimized using intrinsics if not const evaluated.
 		//
-#ifdef _MSC_VER
 		if ( !std::is_constant_evaluated() )
+		{
+#if MS_COMPILER && AMD64_TARGET
 			return ( bitcnt_t ) __popcnt64( x );
+#elif __has_builtin(__builtin_popcountll)
+			return ( bitcnt_t ) __builtin_popcountll( x );
 #endif
+		}
 		bitcnt_t count = 0;
 		for ( bitcnt_t i = 0; i < 64; i++, x >>= 1 )
 			count += ( bitcnt_t ) ( x & 1 );
@@ -112,7 +116,7 @@ namespace vtil::math
 		//
 		if ( !std::is_constant_evaluated() )
 		{
-#ifdef _MSC_VER
+#if MS_COMPILER && AMD64_TARGET
 			unsigned long idx;
 			return _BitScanReverse64( &idx, x ) ? idx : -1;
 #elif __has_builtin(__builtin_ctzll)
@@ -133,7 +137,7 @@ namespace vtil::math
 		//
 		if ( !std::is_constant_evaluated() )
 		{
-#ifdef _MSC_VER
+#if MS_COMPILER && AMD64_TARGET
 			unsigned long idx;
 			return _BitScanForward64( &idx, x ) ? idx : -1;
 #elif __has_builtin(__builtin_ctzll)
@@ -159,7 +163,7 @@ namespace vtil::math
 	{
 		// Optimized using intrinsic on MSVC, Clang should be smart enough to do this on its own.
 		//
-#ifdef _MSC_VER
+#if MS_COMPILER && AMD64_TARGET
 		if ( !std::is_constant_evaluated() )
 			return _bittestandset64( ( long long* ) &value, n );
 #endif
@@ -172,7 +176,7 @@ namespace vtil::math
 	{
 		// Optimized using intrinsic on MSVC, Clang should be smart enough to do this on its own.
 		//
-#ifdef _MSC_VER
+#if MS_COMPILER && AMD64_TARGET
 		if ( !std::is_constant_evaluated() )
 			return _bittestandreset64( ( long long* ) &value, n );
 #endif

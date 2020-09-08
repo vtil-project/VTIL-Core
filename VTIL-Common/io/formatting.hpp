@@ -42,10 +42,6 @@
 #include "../util/intrinsics.hpp"
 #include "enum_name.hpp"
 
-#ifdef __GNUG__
-	#include <cxxabi.h>
-#endif
-
 // [Configuration]
 // Determine the way we format the instructions.
 //
@@ -54,10 +50,6 @@
 	#define VTIL_FMT_INS_OPR	"%-12s"
 	#define VTIL_FMT_INS_MNM_S	8
 	#define VTIL_FMT_INS_OPR_S	12
-	#define VTIL_FMT_SUFFIX_1	'b'
-	#define VTIL_FMT_SUFFIX_2	'w'
-	#define VTIL_FMT_SUFFIX_4	'd'
-	#define VTIL_FMT_SUFFIX_8	'q'
 	#define VTIL_FMT_DEFINED
 #endif
 
@@ -83,20 +75,6 @@ namespace vtil::format
 		//
 		static std::string fix_type_name( std::string in )
 		{
-#ifdef __GNUG__
-			int status;
-			char* demangled_name = abi::__cxa_demangle( in.data(), nullptr, nullptr, &status );
-			// If demangling succeeds, set the name.
-			//
-			if ( status == 0 )
-			{
-				in = demangled_name;
-			}
-			// Free unconditionally.
-			//
-			free( demangled_name );
-#endif
-			
 			static const std::string remove_list[] = {
 				"struct ",
 				"class ",
@@ -118,7 +96,7 @@ namespace vtil::format
 
 	// Suffixes used to indicate registers of N bytes.
 	//
-	static constexpr char suffix_map[] = { 0, VTIL_FMT_SUFFIX_1, VTIL_FMT_SUFFIX_2, 0, VTIL_FMT_SUFFIX_4, 0, 0, 0, VTIL_FMT_SUFFIX_8 };
+	static constexpr char suffix_map[] = { 0, 'b', 'w', 0, 'd', 0, 0, 0, 'q' };
 
 	// Returns the type name of the object passed, dynamic type name will
 	// redirect to static type name if RTTI is not supported.
@@ -127,7 +105,7 @@ namespace vtil::format
 	static std::string static_type_name()
 	{
 #if HAS_RTTI
-		static const std::string res = impl::fix_type_name( typeid( T ).name() );
+		static const std::string res = impl::fix_type_name( compiler_demangle_type_name( typeid( T ) ) );
 		return res;
 #else
 		char buf[ 32 ];
@@ -139,7 +117,7 @@ namespace vtil::format
 	static std::string dynamic_type_name( const T& o )
 	{
 #if HAS_RTTI
-		return impl::fix_type_name( typeid( o ).name() );
+		return impl::fix_type_name( compiler_demangle_type_name( typeid( o ) ) );
 #else
 		return static_type_name<T>();
 #endif

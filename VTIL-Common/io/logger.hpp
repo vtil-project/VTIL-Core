@@ -286,7 +286,7 @@ namespace vtil::logger
 	// Prints an error message and breaks the execution.
 	//
 	template<typename... params>
-	static void error [[noreturn]] ( const char* fmt, params&&... ps )
+	static void error __noreturn ( const char* fmt, params&&... ps )
 	{
 		// Format error message.
 		//

@@ -25,13 +25,14 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE  
 // POSSIBILITY OF SUCH DAMAGE.        
 //
-#if _WIN64
+#include "logger.hpp"
+#include "../util/intrinsics.hpp"
+#if WINDOWS_TARGET
 	#define _CRT_SECURE_NO_WARNINGS
 	#define WIN32_LEAN_AND_MEAN
 	#define NOMINMAX
 	#include <Windows.h>
 #endif
-#include "logger.hpp"
 #include <cstdlib>
 
 namespace vtil::logger
@@ -40,7 +41,7 @@ namespace vtil::logger
 	//
 	logger_state_t::logger_state_t()
 	{
-#if _WIN64
+#if WINDOWS_TARGET
 		SetConsoleOutputCP( CP_UTF8 );
 #endif
 	}

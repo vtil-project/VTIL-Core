@@ -39,7 +39,7 @@ namespace vtil
 	{
 		// If condition met:
 		//
-		if ( condition )
+		if ( condition ) [[unlikely]]
 		{
 			// Throw exception if consteval, else invoke logger error.
 			//
@@ -62,21 +62,30 @@ namespace vtil
 	}
 };
 
-// Declare assert macro.
+// Declare main assert macro.
 //
-#define fassert__stringify(x) #x
-#define fassert__istringify(x) fassert__stringify(x)
-#define fassert(...) vtil::abort_if(!bool(__VA_ARGS__), fassert__stringify(__VA_ARGS__) " at " __FILE__ ":" fassert__istringify(__LINE__) )
+#define xassert__stringify(x) #x
+#define xassert__istringify(x) xassert__stringify(x)
+#define xassert(...) vtil::abort_if(!bool(__VA_ARGS__), xassert__stringify(__VA_ARGS__) " at " __FILE__ ":" xassert__istringify(__LINE__) )
 
-// Declare debug assertions, dassert is only asserted in debug mode, dassert_s
-// has the same functionality but is still evaluated in release mode.
+// Declare assertions, dassert is debug mode only, fassert is demo mode only, _s helpers 
+// have the same functionality but still evaluate the statement.
 //
-#ifdef _DEBUG
-	#define dassert(...)     fassert( __VA_ARGS__ )
-	#define dassert_s( ... ) fassert( __VA_ARGS__ )
+#if VASSERT_LEVEL >= 2
+	#define dassert(...)     xassert( __VA_ARGS__ )
+	#define dassert_s( ... ) xassert( __VA_ARGS__ )
+	#define fassert(...)     xassert( __VA_ARGS__ )
+	#define fassert_s( ... ) xassert( __VA_ARGS__ )
+#elif VASSERT_LEVEL >= 1
+	#define dassert(...)     
+	#define dassert_s( ... ) ( __VA_ARGS__ )
+	#define fassert(...)     xassert( __VA_ARGS__ )
+	#define fassert_s( ... ) xassert( __VA_ARGS__ )
 #else
 	#define dassert(...)     
 	#define dassert_s( ... ) ( __VA_ARGS__ )
+	#define fassert(...)     
+	#define fassert_s( ... ) ( __VA_ARGS__ )
 #endif
 
 // Declare validation macro, used for generic is_valid() declaration where you want 

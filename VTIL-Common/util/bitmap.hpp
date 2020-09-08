@@ -28,9 +28,6 @@
 #pragma once
 #include <iterator>
 #include "../math/bitwise.hpp"
-#ifdef _MSC_VER
-	#include <intrin.h>
-#endif
 
 namespace vtil
 {

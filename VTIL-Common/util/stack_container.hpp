@@ -37,6 +37,7 @@
 #include <stdlib.h>
 #include <optional>
 #include "../io/asserts.hpp"
+#include "../util/intrinsics.hpp"
 
 namespace vtil
 {
@@ -191,10 +192,10 @@ namespace vtil
 		typename container_t = impl::swap_allocator_t<T, allocator_t>>
 	struct stack_buffered_container : public container_t
 	{
-		// Append 0x20 bytes for _DEBUG binaries to compensate for std::_Container_proxy;
+		// Append 0x20 bytes for DEBUG binaries to compensate for std::_Container_proxy;
 		//
 		static constexpr size_t align_mask = alignof( T ) - 1;
-#ifdef _DEBUG
+#if DEBUG_BUILD
 		static constexpr size_t buffer_size = N * sizeof( typename T::value_type ) + ( 0x20 + sizeof( T ) + align_mask ) * 2;
 #else
 		static constexpr size_t buffer_size = N * sizeof( typename T::value_type );

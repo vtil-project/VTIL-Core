@@ -25,13 +25,14 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE  
 // POSSIBILITY OF SUCH DAMAGE.        
 //
+#include "intrinsics.hpp"
 #include "thread_identifier.hpp"
 
-#if _WIN64
+#if WINDOWS_TARGET
 	#include <intrin.h>
-#elif defined(__EMSCRIPTEN__)
+#elif WASM_TARGET
 	#include <pthread.h>
-#else
+#elif LINUX_TARGET
 	#include <unistd.h>
 	#include <sys/syscall.h>
 #endif
@@ -44,13 +45,14 @@ namespace vtil
 	//
 	tid_t get_thread_id()
 	{
-#if _WIN64
-		static_assert( sizeof( tid_t ) == 8, "Thread identifier must be defined as a quadword." );
-		return __readgsqword( 0x48 );
-#elif defined( __EMSCRIPTEN__ )
-		return ( int ) pthread_self();
-#else
+#if WINDOWS_TARGET
+		return ( tid_t ) __readgsqword( 0x48 );
+#elif WASM_TARGET
+		return ( tid_t ) pthread_self();
+#elif LINUX_TARGET
 		return ( tid_t ) syscall( SYS_gettid );
+#else
+		unreachable();
 #endif
 	}
 };

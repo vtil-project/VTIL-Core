@@ -86,7 +86,7 @@ namespace vtil
 			if constexpr ( !atomic )
 				return;
 			while ( spinlock.exchange( true, std::memory_order_acquire ) != false )
-				_mm_pause();
+				yield_cpu();
 		}
 		void unlock() const
 		{

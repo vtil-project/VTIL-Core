@@ -25,8 +25,9 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE  
 // POSSIBILITY OF SUCH DAMAGE.        
 //
-#include "expression.hpp"
 #include <vtil/io>
+#include <vtil/utility>
+#include "expression.hpp"
 #include "../simplifier/simplifier.hpp"
 
 namespace vtil::symbolic
@@ -743,7 +744,7 @@ namespace vtil::symbolic
 
 		auto report_hash_collision = [ & ] ()
 		{
-#ifdef _DEBUG
+#if DEBUG_BUILD
 			logger::log( "Hash collision detected!\n" );
 			logger::log( "[0]: %s\n", self );
 			logger::log( "[1]: %s\n", other );

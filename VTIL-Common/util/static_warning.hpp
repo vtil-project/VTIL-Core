@@ -26,11 +26,11 @@
 // POSSIBILITY OF SUCH DAMAGE.        
 //
 #pragma once
-
+#include "intrinsics.hpp"
 #define ____SW_SX2(x, y) x##y
 #define ____SW_SX1(x, y) ____SW_SX2(x, y)
 
-#ifdef _MSC_VER
+#if MS_COMPILER
 	#define static_warning(condition, message)                          \
        constexpr auto ____SW_SX1(____sw_, __LINE__) = []{               \
        	__pragma( warning( push ) )                                     \
