@@ -59,9 +59,9 @@ namespace vtil::debug
 		// Print name
 		//
 		if ( ins.is_volatile() )
-			log<CON_RED>( VTIL_FMT_INS_MNM " ", ins.base->to_string( ins.access_size() ) );			// Volatile instruction
+			log<CON_RED>( "%-8s ", ins.base->to_string( ins.access_size() ) );			// Volatile instruction
 		else
-			log<CON_BRG>( VTIL_FMT_INS_MNM " ", ins.base->to_string( ins.access_size() ) );			// Non-volatile instruction
+			log<CON_BRG>( "%-8s ", ins.base->to_string( ins.access_size() ) );			// Non-volatile instruction
 
 		// Print each operand
 		//
@@ -70,11 +70,11 @@ namespace vtil::debug
 			if ( op.is_register() )
 			{
 				if ( op.reg().is_stack_pointer() )
-					log<CON_PRP>( VTIL_FMT_INS_OPR " ", op.reg() );									// Stack pointer
+					log<CON_PRP>( "%-12s ", op.reg() );									// Stack pointer
 				else if ( op.reg().is_physical() )
-					log<CON_BLU>( VTIL_FMT_INS_OPR " ", op.reg() );									// Any hardware/special register
+					log<CON_BLU>( "%-12s ", op.reg() );									// Any hardware/special register
 				else
-					log<CON_GRN>( VTIL_FMT_INS_OPR " ", op.reg() );									// Virtual register
+					log<CON_GRN>( "%-12s ", op.reg() );									// Virtual register
 			}
 			else
 			{
@@ -85,13 +85,13 @@ namespace vtil::debug
 					 ins.operands[ ins.base->memory_operand_index ].reg().is_stack_pointer() )
 				{
 					if ( op.imm().i64 >= 0 )
-						log<CON_YLW>( VTIL_FMT_INS_OPR " ", format::hex( op.imm().i64 ) );			 // External stack
+						log<CON_YLW>( "%-12s ", format::hex( op.imm().i64 ) );			 // External stack
 					else
-						log<CON_BRG>( VTIL_FMT_INS_OPR " ", format::hex( op.imm().i64 ) );			 // VM stack
+						log<CON_BRG>( "%-12s ", format::hex( op.imm().i64 ) );			 // VM stack
 				}
 				else
 				{
-					log<CON_CYN>( VTIL_FMT_INS_OPR " ", format::hex( op.imm().i64 ) );				 // Any immediate
+					log<CON_CYN>( "%-12s ", format::hex( op.imm().i64 ) );				 // Any immediate
 				}
 			}
 		}

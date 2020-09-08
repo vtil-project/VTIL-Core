@@ -107,16 +107,11 @@ namespace vtil
 
 	// Conversion to human-readable format.
 	//
-	std::string instruction::to_string( bool pad_right ) const
+	std::string instruction::to_string() const
 	{
-		std::string output = format::str( VTIL_FMT_INS_MNM, base->to_string( access_size() ) );
+		std::string output = base->to_string( access_size() );
 		for ( auto& op : operands )
-			output += format::str( " " VTIL_FMT_INS_OPR, op.to_string() );
-		if ( pad_right )
-		{
-			size_t padding_cnt = ( VTIL_ARCH_MAX_OPERAND_COUNT - operands.size() ) * ( VTIL_FMT_INS_OPR_S + 1 );
-			std::fill_n( std::back_inserter( output ), padding_cnt, ' ' );
-		}
+			output += " " + op.to_string();
 		return output;
 	}
 };

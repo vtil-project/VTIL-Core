@@ -43,14 +43,10 @@
 #include "enum_name.hpp"
 
 // [Configuration]
-// Determine the way we format the instructions.
+// Macro wrapping ANSI escape codes, can be replaced by '#define ANSI_ESCAPE(...)' in legacy Windows to disable colors completely.
 //
-#ifndef VTIL_FMT_DEFINED
-	#define VTIL_FMT_INS_MNM	"%-8s"
-	#define VTIL_FMT_INS_OPR	"%-12s"
-	#define VTIL_FMT_INS_MNM_S	8
-	#define VTIL_FMT_INS_OPR_S	12
-	#define VTIL_FMT_DEFINED
+#ifndef ANSI_ESCAPE
+	#define ANSI_ESCAPE(...) ("\x1B[" __VA_ARGS__)
 #endif
 
 namespace vtil::format

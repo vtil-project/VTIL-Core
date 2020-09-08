@@ -129,7 +129,7 @@ namespace vtil
 
 		// Conversion to human-readable format.
 		//
-		std::string to_string( bool pad_right = false ) const;
+		std::string to_string() const;
 
 		// Declare reduction.
 		//

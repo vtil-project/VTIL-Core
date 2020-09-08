@@ -56,15 +56,15 @@ namespace vtil::logger
 	{
 		switch ( color )
 		{
-			case CON_BRG: printf( "\x1b[1;37m" ); break;
-			case CON_YLW: printf( "\x1b[1;33m" ); break;
-			case CON_PRP: printf( "\x1b[1;35m" ); break;
-			case CON_RED: printf( "\x1b[1;31m" ); break;
-			case CON_CYN: printf( "\x1b[1;36m" ); break;
-			case CON_GRN: printf( "\x1b[1;32m" ); break;
-			case CON_BLU: printf( "\x1b[1;34m" ); break;
+			case CON_BRG: fputs( ANSI_ESCAPE( "1;37m" ), VTIL_LOGGER_DST ); break;
+			case CON_YLW: fputs( ANSI_ESCAPE( "1;33m" ), VTIL_LOGGER_DST ); break;
+			case CON_PRP: fputs( ANSI_ESCAPE( "1;35m" ), VTIL_LOGGER_DST ); break;
+			case CON_RED: fputs( ANSI_ESCAPE( "1;31m" ), VTIL_LOGGER_DST ); break;
+			case CON_CYN: fputs( ANSI_ESCAPE( "1;36m" ), VTIL_LOGGER_DST ); break;
+			case CON_GRN: fputs( ANSI_ESCAPE( "1;32m" ), VTIL_LOGGER_DST ); break;
+			case CON_BLU: fputs( ANSI_ESCAPE( "1;34m" ), VTIL_LOGGER_DST ); break;
 			case CON_DEF:
-			default:      printf( "\x1b[0m" );  break;
+			default:      fputs( ANSI_ESCAPE( "0m" ),    VTIL_LOGGER_DST );  break;
 		}
 	}
 };
