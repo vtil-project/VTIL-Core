@@ -20,7 +20,7 @@ before_script:
 
   # Run CMake generator
   - /usr/bin/cmake --version # print so we can see which version travis is using
-  - /usr/bin/cmake -DCMAKE_C_COMPILER=/usr/bin/clang-10 -DCMAKE_CXX_COMPILER=/usr/bin/clang++-10 -DVTIL_BUILD_TESTS=ON ..
+  - /usr/bin/cmake -DCMAKE_C_COMPILER=/usr/bin/clang-11 -DCMAKE_CXX_COMPILER=/usr/bin/clang++-11 -DVTIL_BUILD_TESTS=ON ..
 
 
 
