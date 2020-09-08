@@ -20,11 +20,12 @@ addons:
     - clang-10
     - libc++-10-dev
     - libc++abi-10-dev
-    - cmake
-    - cmake-data
     - ninja-build
 
 script:
+  # Reset CMake, Travis keeps using old version somehow.
+  - sudo apt-get purge cmake -y
+
   # Make sure we have the required versions
   - sudo DEBIAN_FRONTEND=noninteractive apt-get -yq update
   - sudo DEBIAN_FRONTEND=noninteractive apt-get -yq install cmake cmake-data clang-10 clang++-10 libc++-10-dev libc++abi-10-dev
@@ -39,7 +40,7 @@ script:
      if [ $TARGET == "Native" ]; then
        mkdir build
        cd build
-       /usr/bin/cmake -DCMAKE_C_COMPILER=clang-10 -DCMAKE_CXX_COMPILER=clang++-10 -DCMAKE_CXX_FLAGS="-stdlib=libc++" -DVTIL_BUILD_TESTS=ON -G Ninja ..
+       cmake -DCMAKE_C_COMPILER=clang-10 -DCMAKE_CXX_COMPILER=clang++-10 -DCMAKE_CXX_FLAGS="-stdlib=libc++" -DVTIL_BUILD_TESTS=ON -G Ninja ..
        ninja -j8
        ./VTIL-Tests/VTIL-Tests
      fi
@@ -48,7 +49,6 @@ script:
   #
   - |
      if [ $TARGET == "WebAssembly" ]; then
-       cd ..
        git clone https://github.com/emscripten-core/emsdk.git
        cd emsdk
        ./emsdk install latest
