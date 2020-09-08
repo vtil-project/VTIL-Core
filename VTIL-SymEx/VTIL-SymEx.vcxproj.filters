@@ -22,6 +22,9 @@
     <ClCompile Include="directives\expression_signature.cpp">
       <Filter>Directives</Filter>
     </ClCompile>
+    <ClCompile Include="expressions\auxiliaries.cpp">
+      <Filter>Expressions</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="directives\directive.hpp">
@@ -53,6 +56,9 @@
     </ClInclude>
     <ClInclude Include="directives\expression_signature.hpp">
       <Filter>Directives</Filter>
+    </ClInclude>
+    <ClInclude Include="expressions\auxiliaries.hpp">
+      <Filter>Expressions</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -200,57 +200,39 @@ namespace vtil::optimizer
 				//
 				symbolic::variable::pack_all( v.simplify( true ) );
 
-				// If pointer can be rewritten as $sp + C:
+				// Extract the offset from the compound expression.
 				//
-				if ( auto displacement = ( k - symbolic::CTX[ REG_SP ] ) )
+				auto [mem_base, offset] = symbolic::aux::split_offset( symbolic::variable::pack_all( k.base.simplify() ) );
+
+				// Use REG_SP, if stack.
+				//
+				operand base = {};
+				if ( mem_base->is_variable() )
 				{
-					// Buffer a str $sp, c, value.
-					//
-					instruction_buffer.emplace_back(
-						&ins::str,
-						REG_SP, make_imm<int64_t>( *displacement ), translator << v
-					);
+					auto& var = mem_base->uid.get<symbolic::variable>();
+					if ( var.is_register() && var.reg().is_stack_pointer() )
+						base = REG_SP;
 				}
-				else
+
+				// Translate the base address if not.
+				//
+				if ( base.is_null() )
 				{
-					// Try to extract the offset from the compound expression.
-					//
-					int64_t offset = 0;
-					auto exp = symbolic::variable::pack_all( k.base ).simplify( true );
-					if ( !exp->is_constant() )
-					{
-						using namespace symbolic::directive;
-
-						std::vector<symbol_table_t> results;
-						if ( fast_match( &results, A + U, exp ) )
-						{
-							exp = results.front().translate( A );
-							offset = *results.front().translate( U )->get<int64_t>();
-						}
-						else if ( fast_match( &results, A - U, exp ) )
-						{
-							exp = results.front().translate( A );
-							offset = -*results.front().translate( U )->get<int64_t>();
-						}
-					}
-
-					// Translate the base address.
-					//
-					operand base = translator << exp;
+					base = translator << mem_base;
 					if ( base.is_immediate() )
 					{
 						operand tmp = temporary_block.tmp( base.bit_count() );
 						instruction_buffer.emplace_back( &ins::mov, tmp, base );
 						base = tmp;
 					}
-
-					// Buffer a str <ptr>, 0, value.
-					//
-					instruction_buffer.emplace_back(
-						&ins::str,
-						base, make_imm( offset ), translator << v
-					);
 				}
+
+				// Emit a STR.
+				//
+				instruction_buffer.emplace_back(
+					&ins::str,
+					base, make_imm( offset ), translator << v
+				);
 			}
 
 			// Emit entire buffer.

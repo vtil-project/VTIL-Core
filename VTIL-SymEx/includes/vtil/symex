@@ -7,3 +7,4 @@
 #include "../../directives/expression_signature.hpp"
 #include "../../directives/transformer.hpp"
 #include "../../directives/fast_matcher.hpp"
+#include "../../expressions/auxiliaries.hpp"
