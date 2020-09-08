@@ -3,27 +3,56 @@ language: cpp
 os: linux
 dist: bionic
 
-before_script:
-  - mkdir build
-  - cd build
-  
-  # Install latest CMake from Kitware
-  - sudo DEBIAN_FRONTEND=noninteractive apt-get -yq  install apt-transport-https ca-certificates gnupg software-properties-common wget
-  - wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc 2>/dev/null | gpg --dearmor - | sudo tee /etc/apt/trusted.gpg.d/kitware.gpg >/dev/null
-  - sudo apt-add-repository 'deb https://apt.kitware.com/ubuntu/ bionic main'
-  - sudo DEBIAN_FRONTEND=noninteractive apt-get -yq update
-  - sudo DEBIAN_FRONTEND=noninteractive apt-get -yq install cmake cmake-data
+env:
+  - TARGET="Native"
+  - TARGET="WebAssembly"
 
-  # Install LLVM 10 from LLVM repository
-  - wget https://apt.llvm.org/llvm.sh
-  - chmod +x llvm.sh
-  - sudo ./llvm.sh 10
-  - sudo DEBIAN_FRONTEND=noninteractive apt-get -yq install libc++-10-dev libc++abi-10-dev
-
-  # Run CMake generator
-  - /usr/bin/cmake -DCMAKE_C_COMPILER=/usr/bin/clang-10 -DCMAKE_CXX_COMPILER=/usr/bin/clang++-10 -DCMAKE_CXX_FLAGS="-stdlib=libc++" -DVTIL_BUILD_TESTS=ON ..
-
+addons:
+  apt:
+    sources:
+    - sourceline: 'deb http://apt.llvm.org/bionic/ llvm-toolchain-bionic-10 main'
+      key_url: 'https://apt.llvm.org/llvm-snapshot.gpg.key'
+    - sourceline: 'deb https://apt.kitware.com/ubuntu/ xenial main'
+      key_url: 'https://apt.kitware.com/keys/kitware-archive-latest.asc'
+    update: true
+    packages:
+    - clang++-10
+    - clang-10
+    - libc++-10-dev
+    - libc++abi-10-dev
+    - cmake
+    - cmake-data
+    - ninja-build
 
 script:
-  - /usr/bin/cmake --build .
-  - ./VTIL-Tests/VTIL-Tests
+  # Make sure we have the required versions
+  - sudo DEBIAN_FRONTEND=noninteractive apt-get -yq update
+  - sudo DEBIAN_FRONTEND=noninteractive apt-get -yq install cmake cmake-data clang-10 clang++-10 libc++-10-dev libc++abi-10-dev
+  
+  # If native, build and run tests.
+  #
+  - |
+     if [ $TARGET == "Native" ]; then
+       mkdir build
+       cd build
+       cmake -DCMAKE_C_COMPILER=clang-10 -DCMAKE_CXX_COMPILER=clang++-10 -DCMAKE_CXX_FLAGS="-stdlib=libc++" -DVTIL_BUILD_TESTS=ON -G Ninja ..
+       ninja -j8
+       ./VTIL-Tests/VTIL-Tests
+     fi
+  
+  # If WebAssembly, just build for it.
+  #
+  - |
+     if [ $TARGET == "WebAssembly" ]; then
+       cd ..
+       git clone https://github.com/emscripten-core/emsdk.git
+       cd emsdk
+       ./emsdk install latest
+       ./emsdk activate latest
+       source ./emsdk_env.sh
+       cd ..
+       mkdir build-www
+       cd build-www
+       emcmake cmake -DCMAKE_CXX_FLAGS="-std=c++20" -G Ninja ..
+       ninja -j8
+     fi
