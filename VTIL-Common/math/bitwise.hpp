@@ -161,7 +161,7 @@ namespace vtil::math
 	}
 	__forceinline static constexpr bool bit_set( uint64_t& value, bitcnt_t n )
 	{
-		// Optimized using intrinsic on MSVC, Clang should be smart enough to do this on its own.
+		// Optimized using intrinsics if not const evaluated.
 		//
 #if MS_COMPILER && AMD64_TARGET
 		if ( !std::is_constant_evaluated() )
@@ -174,7 +174,7 @@ namespace vtil::math
 	}
 	__forceinline static constexpr bool bit_reset( uint64_t& value, bitcnt_t n )
 	{
-		// Optimized using intrinsic on MSVC, Clang should be smart enough to do this on its own.
+		// Optimized using intrinsics if not const evaluated.
 		//
 #if MS_COMPILER && AMD64_TARGET
 		if ( !std::is_constant_evaluated() )

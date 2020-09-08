@@ -49,22 +49,4 @@ namespace vtil::logger
 		SetConsoleMode( GetStdHandle( STD_OUTPUT_HANDLE ), ConsoleMode | ENABLE_VIRTUAL_TERMINAL_PROCESSING );
 #endif
 	}
-
-	// Changes color where possible.
-	//
-	void set_color( console_color color )
-	{
-		switch ( color )
-		{
-			case CON_BRG: fputs( ANSI_ESCAPE( "1;37m" ), VTIL_LOGGER_DST ); break;
-			case CON_YLW: fputs( ANSI_ESCAPE( "1;33m" ), VTIL_LOGGER_DST ); break;
-			case CON_PRP: fputs( ANSI_ESCAPE( "1;35m" ), VTIL_LOGGER_DST ); break;
-			case CON_RED: fputs( ANSI_ESCAPE( "1;31m" ), VTIL_LOGGER_DST ); break;
-			case CON_CYN: fputs( ANSI_ESCAPE( "1;36m" ), VTIL_LOGGER_DST ); break;
-			case CON_GRN: fputs( ANSI_ESCAPE( "1;32m" ), VTIL_LOGGER_DST ); break;
-			case CON_BLU: fputs( ANSI_ESCAPE( "1;34m" ), VTIL_LOGGER_DST ); break;
-			case CON_DEF:
-			default:      fputs( ANSI_ESCAPE( "0m" ),    VTIL_LOGGER_DST );  break;
-		}
-	}
 };

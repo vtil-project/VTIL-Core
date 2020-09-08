@@ -281,7 +281,6 @@
     <ClInclude Include="util\type_helpers.hpp" />
     <ClInclude Include="util\random.hpp" />
     <ClInclude Include="util\static_warning.hpp" />
-    <ClInclude Include="util\thread_identifier.hpp" />
     <ClInclude Include="util\multivariate.hpp" />
     <ClInclude Include="util\conditional_lock.hpp" />
     <ClInclude Include="util\lt_typeid.hpp" />
@@ -306,7 +305,6 @@
     <ClCompile Include="arch\arm64\arm64_assembler.cpp" />
     <ClCompile Include="arch\arm64\arm64_disassembler.cpp" />
     <ClCompile Include="io\logger.cpp" />
-    <ClCompile Include="util\thread_identifier.cpp" />
     <ClCompile Include="util\variant.cpp" />
   </ItemGroup>
   <ItemGroup>

@@ -115,10 +115,6 @@ namespace vtil::logger
 	};
 	inline logger_state_t logger_state = {};
 
-	// Changes color where possible.
-	//
-	void set_color( console_color color );
-
 	// RAII hack for incrementing the padding until routine ends.
 	// Can be used with the argument u=0 to act as a lock guard.
 	// - Will wait for the critical section ownership and hold it
@@ -174,6 +170,22 @@ namespace vtil::logger
 	//
 	namespace impl
 	{
+		inline static void set_color( FILE* dst, console_color color )
+		{
+			switch ( color )
+			{
+				case CON_BRG: fputs( ANSI_ESCAPE( "1;37m" ), dst ); break;
+				case CON_YLW: fputs( ANSI_ESCAPE( "1;33m" ), dst ); break;
+				case CON_PRP: fputs( ANSI_ESCAPE( "1;35m" ), dst ); break;
+				case CON_RED: fputs( ANSI_ESCAPE( "1;31m" ), dst ); break;
+				case CON_CYN: fputs( ANSI_ESCAPE( "1;36m" ), dst ); break;
+				case CON_GRN: fputs( ANSI_ESCAPE( "1;32m" ), dst ); break;
+				case CON_BLU: fputs( ANSI_ESCAPE( "1;34m" ), dst ); break;
+				case CON_DEF:
+				default:      fputs( ANSI_ESCAPE( "0m" ), dst );  break;
+			}
+		}
+
 		template<bool has_args>
 		static int log_w( FILE* dst, console_color color, const char* fmt, ... )
 		{
@@ -218,7 +230,7 @@ namespace vtil::logger
 
 			// Set to requested color and redirect to printf.
 			//
-			set_color( color );
+			set_color( dst, color );
 
 			// If string literal with no parameters, use puts instead.
 			//
@@ -236,7 +248,7 @@ namespace vtil::logger
 
 			// Reset to defualt color.
 			//
-			set_color( CON_DEF );
+			set_color( dst, CON_DEF );
 			return out_cnt;
 		}
 	};
@@ -270,7 +282,7 @@ namespace vtil::logger
 		
 		// Print the warning.
 		//
-		set_color( CON_YLW );
+		impl::set_color( VTIL_LOGGER_ERR_DST, CON_YLW );
 		fprintf( VTIL_LOGGER_ERR_DST, "\n[!] Warning: %s\n", message.c_str() );
 
 		// Unlock if previously locked.
@@ -305,7 +317,7 @@ namespace vtil::logger
 
 		// Print the error message.
 		//
-		set_color( CON_RED );
+		impl::set_color( VTIL_LOGGER_ERR_DST, CON_RED );
 		fprintf( VTIL_LOGGER_ERR_DST, "\n[*] Error: %s\n", message.c_str() );
 
 		// Break the program, leave the logger locked since we'll break anyways.
@@ -328,7 +340,7 @@ namespace vtil::logger
 				// Same as ::error logic, but do not terminate nor redirect to hook.
 				//
 				std::string message = format::as_string( e );
-				set_color( CON_RED );
+				impl::set_color( VTIL_LOGGER_ERR_DST, CON_RED );
 				fprintf( VTIL_LOGGER_ERR_DST, "\n[*] Error: %s\n", message.c_str() );
 				sleep_for( 1000ms );
 			}
