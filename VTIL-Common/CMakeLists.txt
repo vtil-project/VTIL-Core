@@ -32,10 +32,6 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
     
     # Clang-only flags
     if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-        # Use libc++ if compiling C++
-        # NOTE: bad practice, technically you should specify this in your CMake invocation
-        target_compile_options(${PROJECT_NAME} PUBLIC -stdlib=libc++)
-        target_link_options(${PROJECT_NAME} PUBLIC -stdlib=libc++)
         target_compile_options(${PROJECT_NAME} PUBLIC -Wno-unknown-attributes)
     endif()
 
