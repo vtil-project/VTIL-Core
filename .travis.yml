@@ -14,14 +14,14 @@ before_script:
   - sudo DEBIAN_FRONTEND=noninteractive apt-get -yq update
   - sudo DEBIAN_FRONTEND=noninteractive apt-get -yq install cmake cmake-data
 
-  # Install latest LLVM from LLVM repository
-  - sudo wget https://apt.llvm.org/llvm.sh
-  - sudo chmod +x llvm.sh
+  # Install LLVM 10 from LLVM repository
+  - wget https://apt.llvm.org/llvm.sh
+  - chmod +x llvm.sh
   - sudo ./llvm.sh 10
   - sudo DEBIAN_FRONTEND=noninteractive apt-get -yq install libc++-10-dev libc++abi-10-dev
 
   # Run CMake generator
-  - /usr/bin/cmake -DCMAKE_C_COMPILER=/usr/bin/clang-10 -DCMAKE_CXX_COMPILER=/usr/bin/clang++-10 -DCMAKE_CXX_FLAGS "-stdlib=libc++" -DVTIL_BUILD_TESTS=ON ..
+  - /usr/bin/cmake -DCMAKE_C_COMPILER=/usr/bin/clang-10 -DCMAKE_CXX_COMPILER=/usr/bin/clang++-10 -DCMAKE_CXX_FLAGS="-stdlib=libc++" -DVTIL_BUILD_TESTS=ON ..
 
 
 script:
