@@ -92,8 +92,9 @@ namespace vtil::optimizer
 						if ( !vmask )
 							return rmask;
 
-						// Continue onto each segment.
+						// Continue onto each segment if xblock.
 						//
+						if ( !xblock ) return vmask;
 						for ( auto& next : blk.segments.front().segment_begin.block->next )
 						{
 							// Get a reference to the block's symbolic analysis.

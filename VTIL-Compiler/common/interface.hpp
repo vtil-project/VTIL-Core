@@ -389,7 +389,7 @@ namespace vtil::optimizer
 			//
 			transform_parallel( update_list, [ ] ( const std::pair<basic_block*, T*>& pair )
 			{
-				pair.second->update_if( pair.first );
+				pair.second->update( pair.first );
 			} );
 			return 0;
 		}

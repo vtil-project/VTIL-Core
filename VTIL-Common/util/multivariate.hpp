@@ -58,9 +58,9 @@ namespace vtil
 		//
 		mutable relaxed_atomic<const owner*> prev_owner = nullptr;
 
-		// Implemented by parent, should update the context.
+		// Implemented by parent, should create the context.
 		//
-		virtual void update( const owner* ) = 0;
+		virtual void create( const owner* ) = 0;
 
 		// Checks if the current context is updated for the given owner.
 		//
@@ -69,9 +69,9 @@ namespace vtil
 			return p == prev_owner && p->epoch == prev_epoch;
 		}
 
-		// Returns a self-reference after making sure context is updated.
+		// Updates context if not up to date already.
 		//
-		void update_if( const owner* p )
+		void update( const owner* p )
 		{
 			// If context is not updated:
 			//
@@ -82,7 +82,7 @@ namespace vtil
 				std::lock_guard _g( update_lock );
 				if ( !is_updated( p ) )
 				{
-					update( p );
+					create( p );
 					prev_owner = p; 
 					prev_epoch = p->epoch;
 				}
@@ -183,7 +183,7 @@ namespace vtil
 
 				// Updated context if required.
 				//
-				ref.update_if( ptr_at<owner>( this, -make_offset( &owner::context ) ) );
+				ref.update( ptr_at<owner>( this, -make_offset( &owner::context ) ) );
 			}
 			return ref;
 		}
