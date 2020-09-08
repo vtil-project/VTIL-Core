@@ -242,14 +242,24 @@
     //
     __forceinline static constexpr uint64_t rotlq( uint64_t value, int count )
     {
-        if ( std::is_constant_evaluated() )
-            count %= 64;
+        if ( !std::is_constant_evaluated() )
+        {
+#if __has_builtin(__builtin_rotateleft64)
+            return __builtin_rotateleft64( value, ( uint64_t ) count );
+#endif
+        }
+        count %= 64;
         return ( value << count ) | ( value >> ( 64 - count ) );
     }
     __forceinline static constexpr uint64_t rotrq( uint64_t value, int count )
     {
-        if ( std::is_constant_evaluated() )
-            count %= 64;
+        if ( !std::is_constant_evaluated() )
+        {
+#if __has_builtin(__builtin_rotateright64)
+            return __builtin_rotateright64( value, ( uint64_t ) count );
+#endif
+        }
+        count %= 64;
         return ( value >> count ) | ( value << ( 64 - count ) );
     }
 
