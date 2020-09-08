@@ -150,6 +150,14 @@
     //
     #define yield_cpu() _mm_pause()
 
+    // Declare fastfail. (Default is not marked [[noreturn]])
+    //
+    __forceinline static void fastfail [[noreturn]] ( int status ) 
+    {
+        __fastfail( status );
+        mark_unreachable();
+    }
+
     // Declare rotlq | rotrq
     //
     __forceinline static constexpr uint64_t rotlq( uint64_t value, int count )
@@ -180,9 +188,9 @@
     #define __forceinline __attribute__((always_inline))
     #define _AddressOfReturnAddress() ((void*)__builtin_frame_address(0))
 
-    // Declare fast fail.
+    // Declare fastfail.
     //
-    __forceinline static void __fastfail [[noreturn]] ( int status ) 
+    __forceinline static void fastfail [[noreturn]] ( int status ) 
     {
         if ( status ) exit( status );
         else abort();
@@ -195,11 +203,11 @@
     #elif __has_builtin(__builtin_trap)
         #define mark_unreachable() __builtin_trap();
     #elif AMD64_TARGET
-        #define mark_unreachable() { asm volatile ( "int $3" );      __fastfail( 0xDEAD ); }
+        #define mark_unreachable() { asm volatile ( "int $3" );      fastfail( 0xDEAD ); }
     #elif ARM64_TARGET
-        #define mark_unreachable() { asm volatile ( "bkpt #0" );     __fastfail( 0xDEAD ); }
+        #define mark_unreachable() { asm volatile ( "bkpt #0" );     fastfail( 0xDEAD ); }
     #else
-        #define mark_unreachable() { *(int*)0xDEADC0DE = 0xDEADC0DE; __fastfail( 0xDEAD ); }
+        #define mark_unreachable() { *(int*)0xDEADC0DE = 0xDEADC0DE; fastfail( 0xDEAD ); }
     #endif
 
     // Declare debugbreak.
@@ -316,10 +324,10 @@
 //
 #if DEMO_BUILD
     #define debugbreak()  __debugbreak()
-    #define unreachable() { __debugbreak(); __fastfail( 0xDD ); }
+    #define unreachable() { __debugbreak(); fastfail( 0xDD ); }
     #define __noreturn         
 #else
-    #define debugbreak()  __fastfail( 0xCC )
+    #define debugbreak()  fastfail( 0xCC )
     #define unreachable() mark_unreachable()
     #define __noreturn    [[noreturn]]
 #endif
