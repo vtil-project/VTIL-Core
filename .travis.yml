@@ -29,13 +29,17 @@ script:
   - sudo DEBIAN_FRONTEND=noninteractive apt-get -yq update
   - sudo DEBIAN_FRONTEND=noninteractive apt-get -yq install cmake cmake-data clang-10 clang++-10 libc++-10-dev libc++abi-10-dev
   
+  # Fix issue caused by previous cmake version.
+  - alias cmake='/usr/bin/cmake'
+  - cmake --version
+  
   # If native, build and run tests.
   #
   - |
      if [ $TARGET == "Native" ]; then
        mkdir build
        cd build
-       cmake -DCMAKE_C_COMPILER=clang-10 -DCMAKE_CXX_COMPILER=clang++-10 -DCMAKE_CXX_FLAGS="-stdlib=libc++" -DVTIL_BUILD_TESTS=ON -G Ninja ..
+       /usr/bin/cmake -DCMAKE_C_COMPILER=clang-10 -DCMAKE_CXX_COMPILER=clang++-10 -DCMAKE_CXX_FLAGS="-stdlib=libc++" -DVTIL_BUILD_TESTS=ON -G Ninja ..
        ninja -j8
        ./VTIL-Tests/VTIL-Tests
      fi
