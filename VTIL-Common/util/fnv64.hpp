@@ -64,19 +64,22 @@ namespace vtil
 			if ( std::is_constant_evaluated() && !std::is_same_v<array_t, T> )
 			{
 				if constexpr ( Bitcastable<T> )
-					return add_bytes( bit_cast<array_t>( data ) );
+				{
+					auto byte_view = bit_cast<array_t>( data );
+
+					for ( uint8_t byte : byte_view )
+					{
+						value[ 0 ] ^= byte;
+						value[ 0 ] *= prime;
+					}
+					return;
+				}
 				unreachable();
 			}
 #endif
-
-			for ( uint8_t byte : ( const array_t& ) data )
+			for ( size_t n = 0; n != sizeof( T ); n++ )
 			{
-				// Apply XOR over the byte.
-				//
-				value[ 0 ] ^= byte;
-
-				// Calculate [value * prime].
-				//
+				value[ 0 ] ^= ( ( const uint8_t* ) &data )[ n ];
 				value[ 0 ] *= prime;
 			}
 		}
