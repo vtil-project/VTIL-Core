@@ -199,7 +199,11 @@ namespace vtil::symbolic
 		using reference =          expression_reference;
 		using weak_reference =     weak_reference<expression>;
 		using uid_relation_table = std::vector<std::pair<expression::weak_reference, expression::weak_reference>>;
-		using uid_set            = std::unordered_set<std::reference_wrapper<const unique_identifier>, std::hash<unique_identifier>, std::equal_to<unique_identifier>>;
+		using uid_set            = std::unordered_set<
+			std::reference_wrapper<const unique_identifier>, 
+			std::hash<unique_identifier>, 
+			std::equal_to<unique_identifier>
+		>;
 
 		struct approximation
 		{
