@@ -263,6 +263,13 @@ namespace vtil::format
 		}
 		else return type_tag<T>{};
 	}
+	template<typename T, typename... Tx>
+	__forceinline static auto as_string( const T& f, const Tx&... r )
+	{
+		std::string result = as_string( f ) + ", " + as_string( r... );
+		result.erase( result.end() - 2, result.end() );
+		return result;
+	}
 
 	// Used to fix std::(w)string usage in combination with "%(l)s".
 	//
@@ -309,13 +316,18 @@ namespace vtil::format
 
 	// Returns formatted string according to <fms>.
 	//
-	template<typename... params>
-	static std::string str( const char* fmt, params&&... ps )
+	template<typename... Tx>
+	static std::string str( const char* fmt, Tx&&... ps )
 	{
-		std::string buffer;
-		buffer.resize( snprintf( nullptr, 0, fmt, fix_parameter( ps )... ) );
-		snprintf( buffer.data(), buffer.size() + 1, fmt, fix_parameter<params>( std::forward<params>( ps ) )... );
-		return buffer;
+		auto print_to_buffer = [ ] ( const char* fmt, auto&&... args )
+		{
+			std::string buffer( 128, ' ' );
+			buffer.resize( snprintf( buffer.data(), buffer.size() + 1, fmt, args... ) );
+			if ( buffer.size() >= 128 )
+				snprintf( buffer.data(), buffer.size() + 1, fmt, args... );
+			return buffer;
+		};
+		return print_to_buffer( fmt, fix_parameter<Tx>( std::forward<Tx>( ps ) )... );
 	}
 
 	// Formats the integer into a signed hexadecimal.
