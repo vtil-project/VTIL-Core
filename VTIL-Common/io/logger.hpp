@@ -170,19 +170,19 @@ namespace vtil::logger
 	//
 	namespace impl
 	{
-		inline static void set_color( FILE* dst, console_color color )
+		static constexpr const char* translate_color( console_color color )
 		{
 			switch ( color )
 			{
-				case CON_BRG: fputs( ANSI_ESCAPE( "1;37m" ), dst ); break;
-				case CON_YLW: fputs( ANSI_ESCAPE( "1;33m" ), dst ); break;
-				case CON_PRP: fputs( ANSI_ESCAPE( "1;35m" ), dst ); break;
-				case CON_RED: fputs( ANSI_ESCAPE( "1;31m" ), dst ); break;
-				case CON_CYN: fputs( ANSI_ESCAPE( "1;36m" ), dst ); break;
-				case CON_GRN: fputs( ANSI_ESCAPE( "1;32m" ), dst ); break;
-				case CON_BLU: fputs( ANSI_ESCAPE( "1;34m" ), dst ); break;
+				case CON_BRG: return ANSI_ESCAPE( "1;37m" );
+				case CON_YLW: return ANSI_ESCAPE( "1;33m" );
+				case CON_PRP: return ANSI_ESCAPE( "1;35m" );
+				case CON_RED: return ANSI_ESCAPE( "1;31m" );
+				case CON_CYN: return ANSI_ESCAPE( "1;36m" );
+				case CON_GRN: return ANSI_ESCAPE( "1;32m" );
+				case CON_BLU: return ANSI_ESCAPE( "1;34m" );
 				case CON_DEF:
-				default:      fputs( ANSI_ESCAPE( "0m" ), dst );  break;
+				default:      return ANSI_ESCAPE( "0m" );
 			}
 		}
 
@@ -230,7 +230,7 @@ namespace vtil::logger
 
 			// Set to requested color and redirect to printf.
 			//
-			set_color( dst, color );
+			fputs( translate_color( color ), dst );
 
 			// If string literal with no parameters, use puts instead.
 			//
@@ -248,7 +248,7 @@ namespace vtil::logger
 
 			// Reset to defualt color.
 			//
-			set_color( dst, CON_DEF );
+			fputs( translate_color( CON_DEF ), dst );
 			return out_cnt;
 		}
 	};
@@ -271,19 +271,15 @@ namespace vtil::logger
 	{
 		// Format warning message.
 		//
-		std::string message = format::str(
+		std::string message = "\n"s + impl::translate_color( CON_YLW ) + "[!] Warning: "s + format::str(
 			fmt,
 			format::fix_parameter<params>( std::forward<params>( ps ) )...
-		);
+		) + "\n";
 
-		// Try acquiring the lock.
+		// Try acquiring the lock and print the warning, if properly locked skiped the first newline.
 		//
-		bool locked = logger_state.try_lock( 100ms );
-		
-		// Print the warning.
-		//
-		impl::set_color( VTIL_LOGGER_ERR_DST, CON_YLW );
-		fprintf( VTIL_LOGGER_ERR_DST, "\n[!] Warning: %s\n", message.c_str() );
+		bool locked = logger_state.try_lock( 10s );
+		fputs( message.c_str() + locked, VTIL_LOGGER_ERR_DST );
 
 		// Unlock if previously locked.
 		//
@@ -307,18 +303,15 @@ namespace vtil::logger
 			format::fix_parameter<params>( std::forward<params>( ps ) )...
 		);
 
-		// If there is an active hook, call into it.
+		// If there is an active hook, call into it, then add formatting.
 		//
 		if ( error_hook ) error_hook( message );
+		message = "\n"s + impl::translate_color( CON_RED ) + "[*] Error:" + std::move( message ) + "\n";
 
-		// Try acquiring the lock.
+		// Try acquiring the lock and print the error, if properly locked skiped the first newline.
 		//
-		bool locked = logger_state.try_lock( 100ms );
-
-		// Print the error message.
-		//
-		impl::set_color( VTIL_LOGGER_ERR_DST, CON_RED );
-		fprintf( VTIL_LOGGER_ERR_DST, "\n[*] Error: %s\n", message.c_str() );
+		bool locked = logger_state.try_lock( 100s );
+		fputs( message.c_str() + locked, VTIL_LOGGER_ERR_DST );
 
 		// Break the program, leave the logger locked since we'll break anyways.
 		//
@@ -337,11 +330,11 @@ namespace vtil::logger
 			try { throw; }
 			catch ( const std::exception& e ) 
 			{
-				// Same as ::error logic, but do not terminate nor redirect to hook.
+				// Try lock if possible, print the error.
 				//
+				logger_state.try_lock();
 				std::string message = format::as_string( e );
-				impl::set_color( VTIL_LOGGER_ERR_DST, CON_RED );
-				fprintf( VTIL_LOGGER_ERR_DST, "\n[*] Error: %s\n", message.c_str() );
+				fprintf( VTIL_LOGGER_ERR_DST, "%s\n[*] Error: %s\n", impl::translate_color( CON_RED ), message.c_str() );
 				sleep_for( 1000ms );
 			}
 			catch ( ... ) {}
