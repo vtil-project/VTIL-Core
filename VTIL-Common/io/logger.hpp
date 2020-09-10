@@ -256,17 +256,14 @@ namespace vtil::logger
 	template<typename... Tx>
 	static int log( console_color color, const char* fmt, Tx&&... ps )
 	{
-		return impl::log_w<sizeof...( Tx ) != 0>( VTIL_LOGGER_DST, color, fmt, format::fix_parameter<Tx>( std::forward<Tx>( ps ) )... );
+		auto buf = format::create_string_buffer_for<Tx...>();
+		return impl::log_w<sizeof...( Tx ) != 0>( VTIL_LOGGER_DST, color, fmt, format::fix_parameter<Tx>( buf, std::forward<Tx>( ps ) )... );
 	}
 	template<console_color color = CON_DEF, typename... Tx>
 	static int log( const char* fmt, Tx&&... ps )
 	{
-		return impl::log_w<sizeof...( Tx ) != 0>( VTIL_LOGGER_DST, color, fmt, format::fix_parameter<Tx>( std::forward<Tx>( ps ) )... );
-	}
-	template<console_color color = CON_DEF, typename... params>
-	static int log( const char* fmt, params&&... ps )
-	{
-		return impl::log_w<sizeof...( params ) != 0>( VTIL_LOGGER_DST, color, fmt, format::fix_parameter<params>( std::forward<params>( ps ) )... );
+		auto buf = format::create_string_buffer_for<Tx...>();
+		return impl::log_w<sizeof...( Tx ) != 0>( VTIL_LOGGER_DST, color, fmt, format::fix_parameter<Tx>( buf, std::forward<Tx>( ps ) )... );
 	}
 
 	// Prints a warning message.
@@ -278,7 +275,7 @@ namespace vtil::logger
 		//
 		std::string message = "\n"s + impl::translate_color( CON_YLW ) + "[!] Warning: "s + format::str(
 			fmt,
-			format::fix_parameter<params>( std::forward<params>( ps ) )...
+			std::forward<params>( ps )...
 		) + "\n";
 
 		// Try acquiring the lock and print the warning, if properly locked skiped the first newline.
@@ -305,7 +302,7 @@ namespace vtil::logger
 		//
 		std::string message = format::str(
 			fmt,
-			format::fix_parameter<params>( std::forward<params>( ps ) )...
+			std::forward<params>( ps )...
 		);
 
 		// If there is an active hook, call into it, then add formatting.

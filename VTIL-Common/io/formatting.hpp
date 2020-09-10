@@ -51,22 +51,29 @@
 
 namespace vtil::format
 {
+	using string_buffer = std::vector<std::string>;
+
 	namespace impl
 	{
-		// Returns a temporary but valid const (w)char* for the given std::(w)string.
+		// Types that will require no explicit conversion to string when being passed to *printf will pass.
 		//
 		template<typename T>
-		static T* buffer_string( std::basic_string<T>&& value )
-		{
-			static thread_local size_t index = 0;
-			static thread_local std::basic_string<T> ring_buffer[ 32 ];
-			
-			auto& ref = ring_buffer[ index ];
-			ref = std::move( value );
-			index = ++index % std::size( ring_buffer );
-			return ref.data();
-		}
+		concept ValidFormatStringArgument = 
+			std::is_fundamental_v<std::remove_cvref_t<T>> || std::is_enum_v<std::remove_cvref_t<T>>  ||
+			std::is_pointer_v<std::remove_cvref_t<T>>     || std::is_array_v<std::remove_cvref_t<T>> || CppString<std::remove_cvref_t<T>>;
+	};
 
+	template<typename... Tx> 
+	__forceinline static string_buffer create_string_buffer_for()
+	{
+		string_buffer buffer;
+		if constexpr ( sizeof...( Tx ) != 0 )
+			buffer.reserve( ( ( impl::ValidFormatStringArgument<Tx> ? 1 : 0 ) + ... ) );
+		return buffer;
+	}
+
+	namespace impl
+	{
 		// Fixes the type name to be more friendly.
 		//
 		inline static std::string fix_type_name( std::string in )
@@ -274,7 +281,7 @@ namespace vtil::format
 	// Used to fix std::(w)string usage in combination with "%(l)s".
 	//
 	template<typename T>
-	__forceinline static auto fix_parameter( T&& x )
+	__forceinline static auto fix_parameter( string_buffer& buffer, T&& x )
 	{
 		using base_type = std::remove_cvref_t<T>;
 
@@ -287,30 +294,21 @@ namespace vtil::format
 		}
 		// If it is a basic string:
 		//
-		else if constexpr ( std::is_same_v<base_type, std::string> || std::is_same_v<base_type, std::wstring> )
+		else if constexpr ( CppString<base_type> )
 		{
-			// If it is a reference, invoke ::data()
-			//
-			if constexpr ( std::is_reference_v<T> )
-				return x.data();
-			// Otherwise call buffer helper.
-			//
-			else
-				return impl::buffer_string( std::move( x ) );
+			return x.data();
 		}
 		// If string convertible:
 		//
 		else if constexpr ( StringConvertible<T> )
 		{
-			return impl::buffer_string( as_string( std::forward<T>( x ) ) );
+			return buffer.emplace_back( as_string( std::forward<T>( x ) ) ).data();
 		}
 		// If none matched, forcefully convert into [type @ pointer].
 		//
 		else
 		{
-			char buffer[ 32 ];
-			snprintf( buffer, 32, "%p", &x );
-			return impl::buffer_string( "[" + dynamic_type_name( x ) + "@" + std::string( buffer ) + "]" );
+			return buffer.emplace_back( "[" + dynamic_type_name( x ) + "@" + as_string( &x ) + "]" ).data();
 		}
 	}
 
@@ -327,7 +325,8 @@ namespace vtil::format
 				snprintf( buffer.data(), buffer.size() + 1, fmt, args... );
 			return buffer;
 		};
-		return print_to_buffer( fmt, fix_parameter<Tx>( std::forward<Tx>( ps ) )... );
+		auto buf = create_string_buffer_for<Tx...>();
+		return print_to_buffer( fmt, fix_parameter<Tx>( buf, std::forward<Tx>( ps ) )... );
 	}
 
 	// Formats the integer into a signed hexadecimal.

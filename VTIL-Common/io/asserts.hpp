@@ -57,7 +57,7 @@ namespace vtil
 		//
 		throw std::runtime_error( format::str(
 			fmt,
-			format::fix_parameter<params>( std::forward<params>( ps ) )...
+			std::forward<params>( ps )...
 		) );
 	}
 };
