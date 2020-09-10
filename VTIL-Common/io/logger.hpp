@@ -253,10 +253,15 @@ namespace vtil::logger
 		}
 	};
 
-	template<typename... params>
-	static int log( console_color color, const char* fmt, params&&... ps )
+	template<typename... Tx>
+	static int log( console_color color, const char* fmt, Tx&&... ps )
 	{
-		return impl::log_w<sizeof...( params ) != 0>( VTIL_LOGGER_DST, color, fmt, format::fix_parameter<params>( std::forward<params>( ps ) )... );
+		return impl::log_w<sizeof...( Tx ) != 0>( VTIL_LOGGER_DST, color, fmt, format::fix_parameter<Tx>( std::forward<Tx>( ps ) )... );
+	}
+	template<console_color color = CON_DEF, typename... Tx>
+	static int log( const char* fmt, Tx&&... ps )
+	{
+		return impl::log_w<sizeof...( Tx ) != 0>( VTIL_LOGGER_DST, color, fmt, format::fix_parameter<Tx>( std::forward<Tx>( ps ) )... );
 	}
 	template<console_color color = CON_DEF, typename... params>
 	static int log( const char* fmt, params&&... ps )
