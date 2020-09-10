@@ -213,11 +213,11 @@ namespace vtil
 		{
 			// If we have valid memory:
 			//
-			if ( combined_value )
+			if ( combined_value ) [[likely]]
 			{
 				// If it's unique memory, move over it and return, otherwise dereference.
 				//
-				if ( is_temporary() || get_ref( get_entry() ) == 1 )
+				if ( is_temporary() || get_ref( get_entry() ) == 1 ) [[likely]]
 				{
 					*( T* ) pointer = std::forward<Tv>( value );
 					return *this;
@@ -253,15 +253,9 @@ namespace vtil
 		//
 		T* own()
 		{
-			// If temporary, copy first.
+			// If non-temporary shared with reference count above 1, copy.
 			//
-			if ( is_temporary() ) [[unlikely]]
-			{
-				combined_value = ( uint64_t ) object_pool::construct( *get(), 1 );
-			}
-			// If shared, copy if reference count is above 1.
-			//
-			else if ( get_ref( get_entry() ) != 1 ) [[likely]]
+			if ( !is_temporary() && get_ref( get_entry() ) != 1 ) [[likely]]
 			{
 				auto prev = get_entry();
 				combined_value = ( uint64_t ) object_pool::construct( *_value, 1 );
@@ -271,7 +265,7 @@ namespace vtil
 
 			// Return the current pointer without const-qualifiers.
 			//
-			return ( T* ) combined_value;
+			return ( T* ) pointer;
 		}
 
 		// Simple validity checks.
