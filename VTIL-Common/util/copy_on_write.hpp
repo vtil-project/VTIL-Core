@@ -253,9 +253,14 @@ namespace vtil
 		//
 		T* own()
 		{
+			// If temporary, simply return without const-qualifiers.
+			//
+			if ( is_temporary() ) [[unlikely]]
+				return ( T* ) pointer;
+
 			// If non-temporary shared with reference count above 1, copy.
 			//
-			if ( !is_temporary() && get_ref( get_entry() ) != 1 ) [[likely]]
+			if ( get_ref( get_entry() ) != 1 ) [[likely]]
 			{
 				auto prev = get_entry();
 				combined_value = ( uint64_t ) object_pool::construct( *_value, 1 );
@@ -265,7 +270,7 @@ namespace vtil
 
 			// Return the current pointer without const-qualifiers.
 			//
-			return ( T* ) pointer;
+			return ( T* ) combined_value;
 		}
 
 		// Simple validity checks.
