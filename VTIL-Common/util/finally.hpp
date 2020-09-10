@@ -30,6 +30,14 @@
 
 namespace vtil
 {
+	namespace impl
+	{
+		template<typename T>
+		concept HasIncDec = requires( T x ){ x++; x--; };
+	};
+
+	// Implements a simple RAII style scope-deferred task.
+	//
 	template<typename T> requires Invocable<T, void>
 	struct finally
 	{
@@ -39,5 +47,16 @@ namespace vtil
 		finally( finally&& o ) : functor( o.functor ), set( std::exchange( o.set, false ) ) {}
 		finally( const finally& ) = delete;
 		~finally() { if( set ) functor(); }
+	};
+
+	// Commonly used guard for the counter increment/decrement.
+	//
+	template<impl::HasIncDec T>
+	struct counter_guard
+	{
+		T& ref;
+		counter_guard( T& ref ) : ref( ref ) { ref++; }
+		counter_guard( const counter_guard& ) = delete;
+		~counter_guard() { ref--; }
 	};
 };
