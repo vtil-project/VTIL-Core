@@ -96,10 +96,10 @@ namespace vtil
 	template <template<typename...> typename Tmp, typename T>
 	static constexpr bool is_specialization_v = impl::is_specialization_v<Tmp, std::remove_cvref_t<T>>;
 
-	// Check whether data is stored linearly in the iterable.
+	// Check whether data is stored contiguously in the iterable.
 	//
 	template<typename T>
-	static constexpr bool is_linear_iterable_v = 
+	static constexpr bool is_contiguous_iterable_v = 
 	(
 		is_specialization_v<std::vector, T> ||
 		is_specialization_v<std::basic_string, T> ||
@@ -172,6 +172,7 @@ namespace vtil
 
 	// Container traits.
 	//
+#ifndef __INTELLISENSE__
 	template<typename T>
 	concept Iterable = requires( T v ) { std::begin( v ); std::end( v ); };
 	template<typename T>
@@ -191,6 +192,27 @@ namespace vtil
 	concept CustomRandomAccessible = requires( T v ) { make_const( v )[ 0 ]; v.size(); };
 	template<typename T>
 	concept RandomAccessible = DefaultRandomAccessible<T> || CustomRandomAccessible<T>;
+#else
+	template<typename T>
+	concept Iterable = requires( T v ) { (T)v; };
+	template<typename T>
+	concept ReverseIterable = requires( T v ) { ( T ) v; };
+
+	template<Iterable T>
+	using iterator_reference_type_t = decltype( *std::begin( std::declval<T>() ) );
+	template<Iterable T>
+	using iterator_value_type_t = typename std::remove_cvref_t<iterator_reference_type_t<T>>;
+
+	template<typename V, typename T>
+	concept TypedIterable = requires( T v ) { ( T ) v; };
+
+	template<typename T>
+	concept DefaultRandomAccessible = requires( T v ) { ( T ) v; };
+	template<typename T>
+	concept CustomRandomAccessible = requires( T v ) { ( T ) v; };
+	template<typename T>
+	concept RandomAccessible = requires( T v ) { ( T ) v; };
+#endif
 
 	// String traits.
 	//

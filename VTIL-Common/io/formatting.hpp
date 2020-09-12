@@ -68,7 +68,7 @@ namespace vtil::format
 	{
 		string_buffer buffer;
 		if constexpr ( sizeof...( Tx ) != 0 )
-			buffer.reserve( ( ( impl::ValidFormatStringArgument<Tx> ? 1 : 0 ) + ... ) );
+			buffer.reserve( ( ( impl::ValidFormatStringArgument<Tx> ? 0 : 1 ) + ... ) );
 		return buffer;
 	}
 

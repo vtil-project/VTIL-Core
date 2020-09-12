@@ -107,7 +107,7 @@ namespace vtil::file
 
 		// Write every element and return.
 		//
-		if constexpr ( !is_linear_iterable_v<C> )
+		if constexpr ( !is_contiguous_iterable_v<C> )
 		{
 			for ( auto& e : container )
 				file.write( ( char* ) e, sizeof( iterator_value_type_t<C> ) );
