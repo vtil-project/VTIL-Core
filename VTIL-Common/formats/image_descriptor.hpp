@@ -106,6 +106,8 @@ namespace vtil
 		uint64_t rva;
 		size_t length;
 		void( *relocator )( void* data, int64_t delta );
+
+		void* ctx; // implementation specific data.
 	};
 
 	// Generic image interface.
@@ -169,6 +171,14 @@ namespace vtil
 		// Invokes the enumerator for each relocation entry in the binary, breaks if enumerator returns true.
 		//
 		virtual void enum_relocations( const function_view<bool( const relocation_descriptor& )>& fn ) const = 0;
+
+		// Removes the relocation entry with the associated descriptor.
+		//
+		virtual void delete_relocation( const relocation_descriptor& desc ) = 0;
+
+		// Adds a native pointer sized relocation with default relocator at the RVA.
+		//
+		virtual void add_relocation( uint64_t rva ) = 0;
 
 		// Returns the image base.
 		//
@@ -242,7 +252,7 @@ namespace vtil
 			bool found = false;
 			enum_relocations( [ & ] ( const relocation_descriptor& e )
 			{
-				return ( found = ( e.rva < ( rva + n ) && rva < ( e.rva + e.length ) && e.length ) );
+				return ( found = ( e.rva < ( rva + n ) && rva < ( e.rva + e.length ) ) );
 			} );
 			return found;
 		}

@@ -795,7 +795,8 @@ namespace vtil
 					// Create entry based on relocation type.
 					//
 					relocation_descriptor entry = {
-						.rva = uint64_t( block->base_rva ) + block->entries[ i ].offset
+						.rva = uint64_t( block->base_rva ) + block->entries[ i ].offset,
+						.ctx = make_mutable( &block->entries[ i ] )
 					};
 
 					switch ( block->entries[ i ].type )
@@ -817,9 +818,9 @@ namespace vtil
 							entry.relocator = [ ] ( void* data, int64_t delta ) { *( ( int16_t* ) data ) += ( int16_t ) ( ( ( uint32_t ) delta ) >> 16 ); };
 							break;
 						case rel_based_absolute:
-							entry.length = 0;
-							entry.relocator = [ ] ( void* data, int64_t delta ) { /*nop*/ };
-							break;
+							// Omit this type.
+							//
+							continue;
 						default:
 							logger::error( "Unknown relocation type: %d\n", block->entries[ i ].type );
 							break;
@@ -832,5 +833,12 @@ namespace vtil
 				}
 			}
 		}
+	}
+
+	void pe_image::delete_relocation( const relocation_descriptor& desc )
+	{
+		// Effectively disable the relocation.
+		//
+		( ( reloc_entry_t* ) desc.ctx )->type = rel_based_absolute;
 	}
 };
