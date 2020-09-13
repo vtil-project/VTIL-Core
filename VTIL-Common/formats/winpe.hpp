@@ -63,6 +63,7 @@ namespace vtil
 		virtual void* data()  override { return raw_bytes.data(); }
 		virtual const void* cdata() const override { return raw_bytes.data(); }
 		virtual bool is_valid() const override;
+		virtual void flush() override;
 
 		// Helpers used to declare the functions.
 		//

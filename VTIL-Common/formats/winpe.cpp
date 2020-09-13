@@ -693,6 +693,48 @@ namespace vtil
 		//
 		return true;
 	}
+	
+	void pe_image::flush()
+	{
+		// Erase security descriptor, signature will be invalidated anyways.
+		//
+		visit_nt( this, [ & ] ( auto* nt )
+		{
+			auto& sec = nt->optional_header.data_directories.security_directory;
+			if ( sec.present() )
+				memset( rva_to_ptr( sec.rva ), 0, sec.size );
+			sec = { 0 , 0 };
+		} );
+			
+		// Update image checksum.
+		//
+		visit_nt( this, [ & ] ( auto* nt )
+		{
+			// Zero out current checksum so that it doesn't contribute.
+			//
+			nt->optional_header.checksum = 0;
+
+			// Sum over each word.
+			//
+			uint32_t chksum = 0;
+			const uint16_t* wdata = ( const uint16_t* ) raw_bytes.data();
+			for ( size_t n = 0; n < raw_bytes.size() / 2; n++ )
+			{
+				uint32_t sum = wdata[ n ] + chksum;
+				chksum = ( uint16_t ) sum + ( sum >> 16 );
+			}
+
+			// If there's a byte left append it.
+			//
+			uint16_t result = chksum + ( chksum >> 16 );
+			if ( raw_bytes.size() & 1 )
+				result += raw_bytes.back();
+
+			// Write the final checksum.
+			//
+			nt->optional_header.checksum = result + raw_bytes.size();
+		} );
+	}
 
 	void pe_image::add_section( section_descriptor& in_out, const void* data, size_t size )
 	{

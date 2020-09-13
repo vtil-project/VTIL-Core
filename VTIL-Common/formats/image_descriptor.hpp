@@ -196,6 +196,10 @@ namespace vtil
 		//
 		virtual bool is_valid() const = 0;
 
+		// Flushes any buffered changes to the image.
+		//
+		virtual void flush() = 0;
+
 		// Returns the data associated with the given relative virtual address.
 		//
 		template<typename T = void>
@@ -238,7 +242,7 @@ namespace vtil
 			bool found = false;
 			enum_relocations( [ & ] ( const relocation_descriptor& e )
 			{
-				return ( found = ( e.rva < ( rva + n ) && rva < ( e.rva + e.length ) ) );
+				return ( found = ( e.rva < ( rva + n ) && rva < ( e.rva + e.length ) && e.length ) );
 			} );
 			return found;
 		}
