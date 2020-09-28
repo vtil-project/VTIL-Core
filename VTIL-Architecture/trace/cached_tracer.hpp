@@ -46,8 +46,8 @@ namespace vtil
         using cache_type =  std::unordered_map<symbolic::variable, symbolic::expression::reference>;
         using cache_entry = cache_type::value_type;
 
-        // Declare the lookup map for the cache mapping each variable to the
-        // result of the primitive traver.
+        // Declare the lookup map for the cache, mapping each variable to the
+        // result of the primitive tracer.
         //
         mutable cache_type cache;
         
@@ -59,7 +59,7 @@ namespace vtil
         //
         symbolic::expression::reference trace( const symbolic::variable& lookup ) override;
 
-        // Default construtor.
+        // Default constructor.
         //
         cached_tracer() {}
 

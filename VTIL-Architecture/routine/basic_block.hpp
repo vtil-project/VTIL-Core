@@ -51,7 +51,7 @@ namespace vtil
 	//
 	// - During the translation phase, only .prev links should be
 	//   accessed, under the strict condition that owning routine's
-	//   mutex is held by the accesser. For the sake of "basic" 
+	//   mutex is held by the accessor. For the sake of "basic"
 	//   expression simplification in order to resolve branch destinations
 	//   or stack pointer value when required.
 	//
@@ -184,7 +184,7 @@ namespace vtil
 				return *this;
 			}
 
-			// Enumerates the possible paths the iterator can follow if it reaches it's end.
+			// Enumerates the possible paths the iterator can follow if it reaches its end.
 			//
 			template<typename T>
 			void enum_paths( bool fwd, T&& fn ) const
@@ -500,8 +500,8 @@ namespace vtil
 	};
 
 	// Escape basic block namespace for the iterator type 
-	// for the sake of convinience.
+	// for the sake of convenience.
 	//
 	using il_iterator =       basic_block::iterator;
 	using il_const_iterator = basic_block::const_iterator;
-};	
+};
