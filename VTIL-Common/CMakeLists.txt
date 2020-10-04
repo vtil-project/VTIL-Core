@@ -13,7 +13,7 @@ source_group(TREE ${PROJECT_SOURCE_DIR} FILES ${SOURCES} ${INCLUDES})
 target_include_directories(${PROJECT_NAME} PUBLIC includes)
 
 # Common needs Capstone & Keystone
-target_link_libraries(${PROJECT_NAME} capstone-static keystone)
+target_link_libraries(${PROJECT_NAME} PUBLIC capstone-static keystone)
 
 # Put all VTIL-specific compiler flags here
 # Linking (indirectly) to VTIL-Common will automatically propagate these flags
@@ -48,3 +48,7 @@ if(MSVC)
     # -fpermissive MSVC equivalent
     target_compile_options(${PROJECT_NAME} PUBLIC /permissive-)
 endif()
+
+# Include Threads
+find_package(Threads REQUIRED)
+target_link_libraries(${PROJECT_NAME} PUBLIC ${CMAKE_THREAD_LIBS_INIT})
