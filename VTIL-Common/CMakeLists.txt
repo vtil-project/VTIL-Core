@@ -22,6 +22,11 @@ target_link_libraries(${PROJECT_NAME} PUBLIC capstone-static keystone)
 # https://cmake.org/cmake/help/v3.14/manual/cmake-compile-features.7.html#requiring-language-standards
 target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_20)
 
+# Make sure ::min/max does not resolve to a Windows.h macro
+if(WIN32)
+    target_compile_definitions(${PROJECT_NAME} PUBLIC WIN32_LEAN_AND_MEAN NOMINMAX)
+endif()
+
 # For portability on non-MSVC compilers, add some compile options
 if(CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
     target_compile_options(${PROJECT_NAME} PUBLIC -Wno-narrowing)
