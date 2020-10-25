@@ -5,6 +5,7 @@ cmake_minimum_required(VERSION 3.14.5)
 project(VTIL)
 
 option(VTIL_BUILD_TESTS "Build tests" OFF)
+option(VTIL_INSTALL "Generate install target" ON)
 
 # Append the CMake module search path so we can use our own modules
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/cmake)

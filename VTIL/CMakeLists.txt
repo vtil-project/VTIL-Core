@@ -10,4 +10,8 @@ target_include_directories(${PROJECT_NAME} INTERFACE includes)
 
 # Mark all other VTIL targets as a dependency of VTIL
 #
-target_link_libraries(${PROJECT_NAME} INTERFACE VTIL-Architecture VTIL-SymEx VTIL-Common VTIL-Compiler) 
+target_link_libraries(${PROJECT_NAME} INTERFACE VTIL-Architecture VTIL-SymEx VTIL-Common VTIL-Compiler)
+
+if(VTIL_INSTALL)
+    install(DIRECTORY includes/ DESTINATION include FILES_MATCHING PATTERN "*")
+endif()

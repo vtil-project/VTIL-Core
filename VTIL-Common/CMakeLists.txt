@@ -52,3 +52,8 @@ endif()
 # Include Threads
 find_package(Threads REQUIRED)
 target_link_libraries(${PROJECT_NAME} PUBLIC ${CMAKE_THREAD_LIBS_INIT})
+
+if(VTIL_INSTALL)
+    install(TARGETS ${PROJECT_NAME} DESTINATION lib)
+    install(DIRECTORY includes/ DESTINATION include FILES_MATCHING PATTERN "*")
+endif()

@@ -17,3 +17,8 @@ if(MSVC)
     # /bigobj for reasons
     target_compile_options(${PROJECT_NAME} PRIVATE /bigobj)
 endif()
+
+if(VTIL_INSTALL)
+    install(TARGETS ${PROJECT_NAME} DESTINATION lib)
+    install(DIRECTORY includes/ DESTINATION include FILES_MATCHING PATTERN "*")
+endif()
