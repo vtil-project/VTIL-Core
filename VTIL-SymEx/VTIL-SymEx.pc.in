@@ -1,0 +1,13 @@
+prefix=@CMAKE_INSTALL_PREFIX@
+exec_prefix=${prefix}
+libdir=${prefix}/@CMAKE_INSTALL_LIBDIR@
+includedir=${prefix}/include
+
+Name: VTIL-SymEx
+Description: VTIL symbolic execution libraries
+Version: @PROJECT_VERSION_MAJOR@.@PROJECT_VERSION_MINOR@.@PROJECT_VERSION_PATCH@
+URL: https://vtil.org
+archive=${libdir}/libVTIL-SymEx.a
+Requires: VTIL-Common
+Libs: -L${libdir} -lVTIL-SymEx
+Cflags: -I${includedir}

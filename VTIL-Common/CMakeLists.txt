@@ -1,4 +1,4 @@
-project(VTIL-Common)
+project(VTIL-Common VERSION 0.1.0)
 
 file(GLOB_RECURSE SOURCES CONFIGURE_DEPENDS *.cpp *.hpp)
 file(GLOB_RECURSE INCLUDES CONFIGURE_DEPENDS includes/*)
@@ -53,7 +53,10 @@ endif()
 find_package(Threads REQUIRED)
 target_link_libraries(${PROJECT_NAME} PUBLIC ${CMAKE_THREAD_LIBS_INIT})
 
+configure_file(VTIL-Common.pc.in ${CMAKE_BINARY_DIR}/VTIL-Common.pc @ONLY)
+
 if(VTIL_INSTALL)
     install(TARGETS ${PROJECT_NAME} DESTINATION lib)
     install(DIRECTORY includes/ DESTINATION include FILES_MATCHING PATTERN "*")
+    install(FILES ${CMAKE_BINARY_DIR}/VTIL-Common.pc DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig)
 endif()

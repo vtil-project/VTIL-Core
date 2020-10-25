@@ -1,0 +1,13 @@
+prefix=@CMAKE_INSTALL_PREFIX@
+exec_prefix=${prefix}
+libdir=${prefix}/@CMAKE_INSTALL_LIBDIR@
+includedir=${prefix}/include
+
+Name: VTIL-Architecture
+Description: VTIL architecture libraries
+Version: @PROJECT_VERSION_MAJOR@.@PROJECT_VERSION_MINOR@.@PROJECT_VERSION_PATCH@
+URL: https://vtil.org
+archive=${libdir}/libVTIL-Architecture.a
+Requires: VTIL-Common VTIL-SymEx
+Libs: -L${libdir} -lVTIL-Architecture
+Cflags: -I${includedir}

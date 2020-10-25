@@ -1,0 +1,12 @@
+prefix=@CMAKE_INSTALL_PREFIX@
+exec_prefix=${prefix}
+libdir=${prefix}/@CMAKE_INSTALL_LIBDIR@
+includedir=${prefix}/include
+
+Name: VTIL-Common
+Description: VTIL common libraries
+Version: @PROJECT_VERSION_MAJOR@.@PROJECT_VERSION_MINOR@.@PROJECT_VERSION_PATCH@
+URL: https://vtil.org
+archive=${libdir}/libVTIL-Common.a
+Libs: -L${libdir} -lVTIL-Common
+Cflags: -I${includedir}

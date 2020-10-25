@@ -1,4 +1,4 @@
-project(VTIL-SymEx)
+project(VTIL-SymEx VERSION 0.1.0)
 
 file(GLOB_RECURSE SOURCES CONFIGURE_DEPENDS *.cpp *.hpp)
 file(GLOB_RECURSE INCLUDES CONFIGURE_DEPENDS includes/*)
@@ -18,7 +18,10 @@ if(MSVC)
     target_compile_options(${PROJECT_NAME} PRIVATE /bigobj)
 endif()
 
+configure_file(VTIL-SymEx.pc.in ${CMAKE_BINARY_DIR}/VTIL-SymEx.pc @ONLY)
+
 if(VTIL_INSTALL)
     install(TARGETS ${PROJECT_NAME} DESTINATION lib)
     install(DIRECTORY includes/ DESTINATION include FILES_MATCHING PATTERN "*")
+    install(FILES ${CMAKE_BINARY_DIR}/VTIL-SymEx.pc DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig)
 endif()
