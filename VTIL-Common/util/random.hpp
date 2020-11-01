@@ -32,10 +32,19 @@
 #include <array>
 #include "type_helpers.hpp"
 
+// [Configuration]
+// Determine whether we should output reproducible random numbers or not.
+//
+#ifndef VTIL_REPRODUCIBLE_RANDOM
+	#define VTIL_REPRODUCIBLE_RANDOM 0
+#endif
+
 namespace vtil
 {
 	namespace impl
 	{
+#if !VTIL_REPRODUCIBLE_RANDOM
+
 		// Declare the constexpr random seed.
 		//
 		static constexpr uint64_t crandom_default_seed = ([]()
@@ -46,16 +55,22 @@ namespace vtil
 			return value;
 		} )();
 
+		// Declare a random engine state per thread.
+		//
+		static thread_local std::default_random_engine local_rng( std::random_device{}( ) );
+#else
+		// Declare both random generators with a fixed seed.
+		//
+		static constexpr uint64_t crandom_default_seed = 0x6f3e8a13f28d3812;
+		static thread_local std::default_random_engine local_rng( 0x1f160758 );
+#endif
+
 		// Linear congruential generator using the constants from Numerical Recipes.
 		//
 		static constexpr uint64_t lce_64( uint64_t& value )
 		{
 			return ( value = 1664525 * value + 1013904223 );
 		}
-
-		// Declare a random engine state per thread.
-		//
-		static thread_local std::default_random_engine local_rng( std::random_device{}() );
 	};
 
 	// Generates a single random number.

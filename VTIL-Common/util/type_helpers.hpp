@@ -204,14 +204,13 @@ namespace vtil
 	using iterator_value_type_t = typename std::remove_cvref_t<iterator_reference_type_t<T>>;
 
 	template<typename V, typename T>
-	concept TypedIterable = requires( T v ) { ( T ) v; };
-
+	concept TypedIterable = true;
 	template<typename T>
-	concept DefaultRandomAccessible = requires( T v ) { ( T ) v; };
+	concept DefaultRandomAccessible = true;
 	template<typename T>
-	concept CustomRandomAccessible = requires( T v ) { ( T ) v; };
+	concept CustomRandomAccessible = true;
 	template<typename T>
-	concept RandomAccessible = requires( T v ) { ( T ) v; };
+	concept RandomAccessible = true;
 #endif
 
 	// String traits.

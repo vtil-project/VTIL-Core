@@ -181,6 +181,6 @@ namespace vtil::file
 		// Write the whole string and return.
 		//
 		std::basic_string_view<char_type> view = data;
-		file.write( view.begin(), view.size() );
+		file.write( view.data(), view.size() );
 	}
 };
