@@ -374,8 +374,8 @@ FodyWeavers.xsd
 
 ## VTIL Project related
 build/
-Capstone/
-Keystone/
+/Capstone/
+/Keystone/
 
 ## Intel VTune
 VTune Results/
