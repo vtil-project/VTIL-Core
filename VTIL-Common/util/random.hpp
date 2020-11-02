@@ -44,7 +44,6 @@ namespace vtil
 	namespace impl
 	{
 #if !VTIL_REPRODUCIBLE_RANDOM
-
 		// Declare the constexpr random seed.
 		//
 		static constexpr uint64_t crandom_default_seed = ([]()

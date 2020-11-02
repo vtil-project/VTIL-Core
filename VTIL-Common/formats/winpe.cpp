@@ -702,7 +702,7 @@ namespace vtil
 		{
 			auto& sec = nt->optional_header.data_directories.security_directory;
 			if ( sec.present() )
-				memset( rva_to_ptr( sec.rva ), 0, sec.size );
+				memset( raw_bytes.data() + sec.rva, 0, sec.size );
 			sec = { 0 , 0 };
 		} );
 			

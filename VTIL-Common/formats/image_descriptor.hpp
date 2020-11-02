@@ -215,6 +215,9 @@ namespace vtil
 		template<typename T = void>
 		T* rva_to_ptr( uint64_t rva )
 		{
+			if ( get_section( 0 ).virtual_address > rva )
+				return ( T* ) ( ( const uint8_t* ) cdata() + rva );
+
 			auto scn = rva_to_section( rva );
 			if ( !scn ) return nullptr;
 			auto offset = scn.translate( rva );
@@ -224,6 +227,9 @@ namespace vtil
 		template<typename T = void>
 		const T* rva_to_ptr( uint64_t rva ) const
 		{
+			if ( get_section( 0 ).virtual_address > rva )
+				return ( const T* ) ( ( const uint8_t* ) cdata() + rva );
+
 			auto scn = rva_to_section( rva );
 			if ( !scn ) return nullptr;
 			auto offset = scn.translate( rva );
