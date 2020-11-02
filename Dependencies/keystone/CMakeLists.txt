@@ -7,11 +7,14 @@ FetchContent_Declare(
 )
 
 FetchContent_GetProperties(keystone)
-if(keystone_POPULATED)
-    return()
+if(NOT keystone_POPULATED)
+    FetchContent_Populate(keystone)
 endif()
 
-FetchContent_Populate(keystone)
+# Do not modify a keystone target that already exists
+if(TARGET keystone)
+    return()
+endif()
 
 file(GLOB_RECURSE SOURCES CONFIGURE_DEPENDS
     ${keystone_SOURCE_DIR}/include/keystone/*.h
