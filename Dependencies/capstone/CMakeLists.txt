@@ -7,6 +7,7 @@ set(CAPSTONE_INSTALL OFF CACHE BOOL "")
 set(BUILD_LIBS_ONLY ON CACHE BOOL "")
 
 # Fetch the repository and execute capstone's CMakeLists.txt
+message(STATUS "Fetching capstone (this might take a while)...")
 FetchContent_Declare(
     capstone
     GIT_REPOSITORY https://github.com/aquynh/capstone

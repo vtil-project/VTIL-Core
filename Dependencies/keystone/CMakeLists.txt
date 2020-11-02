@@ -1,3 +1,4 @@
+message(STATUS "Fetching keystone (this might take a while)...")
 FetchContent_Declare(
     keystone
     GIT_REPOSITORY https://github.com/keystone-engine/keystone
