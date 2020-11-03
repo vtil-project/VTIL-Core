@@ -42,7 +42,7 @@ namespace vtil::logger
 	{
 #if _WIN64
 		SetConsoleOutputCP( CP_UTF8 );
-		ansi_escape_codes = std::getenv( "GITLAB_CI" ) != nullptr;
+		ansi_escape_codes = std::getenv( "GITLAB_CI" ) != nullptr || std::getenv( "APPVEYOR" ) != nullptr;
 #endif
 	}
 
