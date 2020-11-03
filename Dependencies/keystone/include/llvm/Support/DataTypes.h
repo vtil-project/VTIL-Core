@@ -1,8 +1,7 @@
 #include <cstdint>
 #include <cmath>
+#include <cstddef>
 
-#if defined(_WIN64)
-typedef signed __int64 ssize_t;
-#else
-typedef signed int ssize_t;
-#endif /* _WIN64 */
+#ifdef _WIN32
+using ssize_t = ptrdiff_t;
+#endif // _WIN32
