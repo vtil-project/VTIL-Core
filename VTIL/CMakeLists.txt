@@ -10,4 +10,10 @@ target_include_directories(${PROJECT_NAME} INTERFACE includes)
 
 # Mark all other VTIL targets as a dependency of VTIL
 #
-target_link_libraries(${PROJECT_NAME} INTERFACE VTIL-Architecture VTIL-SymEx VTIL-Common VTIL-Compiler) 
+target_link_libraries(${PROJECT_NAME} INTERFACE VTIL-Architecture VTIL-SymEx VTIL-Common VTIL-Compiler)
+
+# Increase stack size to allow static initialization
+#
+if(MSVC)
+	target_link_options(${PROJECT_NAME} INTERFACE /STACK:67108864)
+endif()
