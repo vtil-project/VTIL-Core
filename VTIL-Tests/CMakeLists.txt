@@ -6,4 +6,6 @@ add_executable(${PROJECT_NAME}
 	${SOURCES}
 )
 
+source_group(TREE ${PROJECT_SOURCE_DIR} FILES ${SOURCES})
+
 target_link_libraries(${PROJECT_NAME} VTIL)
