@@ -720,11 +720,43 @@ namespace vtil::math
             //
             // ####################################################################################################################################
             case operator_id::multiply_high:
+                return bit_vector(std::max(rhs.size(), lhs.size()));
             case operator_id::multiply:
+                // result of imul and mul are same at low operand size bits.
+                return evaluate_partial(operator_id::umultiply, lhs, rhs);
             case operator_id::divide:
             case operator_id::remainder:
             case operator_id::umultiply_high:
+                return bit_vector(std::max(rhs.size(), lhs.size()));
             case operator_id::umultiply:
+            {
+                bitcnt_t out_size = std::max(lhs.size(), rhs.size());
+
+                bit_vector lhs_sx = bit_vector{ lhs }.resize(out_size, true);
+                bit_vector rhs_sx = bit_vector{ rhs }.resize(out_size, true);
+                bit_vector result = bit_vector(0, out_size);
+                for (int i = 0; i < rhs.size(); i++)
+                {
+                    bit_state b = rhs_sx[i];
+                    if (b == bit_state::unknown)
+                    {
+                        result = evaluate_partial(operator_id::add,
+                                evaluate_partial(operator_id::shift_left, 
+                                            bit_vector(out_size),
+                                            bit_vector(i, out_size))
+                            , result);
+                    }
+                    else if (b == bit_state::one)
+                    {
+                        result = evaluate_partial(operator_id::add,
+                            evaluate_partial(operator_id::shift_left,
+                                lhs_sx,
+                                bit_vector(i, out_size))
+                            , result);
+                    }
+                }
+                return result;
+            }
             case operator_id::udivide:
             case operator_id::uremainder:
                 return bit_vector( std::max( rhs.size(), lhs.size() ) );
