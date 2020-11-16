@@ -12,7 +12,7 @@ FetchContent_Declare(
     capstone
     GIT_REPOSITORY https://github.com/aquynh/capstone
     GIT_TAG        d71c95b09b1fa478c0ab9294b07fd6f2efaa1b31
-    GIT_SHALLOW    true
+    GIT_SHALLOW    false
 )
 FetchContent_MakeAvailable(capstone)
 
