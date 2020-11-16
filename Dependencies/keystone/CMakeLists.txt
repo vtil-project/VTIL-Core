@@ -3,7 +3,7 @@ FetchContent_Declare(
     keystone
     GIT_REPOSITORY https://github.com/keystone-engine/keystone
     GIT_TAG        e1547852d9accb9460573eb156fc81645b8e1871
-    GIT_SHALLOW    true
+    GIT_SHALLOW    false
 )
 
 FetchContent_GetProperties(keystone)
