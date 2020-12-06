@@ -2,7 +2,6 @@
 #include "../../expressions/expression.hpp"
 #include "../../expressions/unique_identifier.hpp"
 #include "../../simplifier/simplifier.hpp"
-#include "../../simplifier/directives.hpp"
 #include "../../directives/directive.hpp"
 #include "../../directives/expression_signature.hpp"
 #include "../../directives/transformer.hpp"

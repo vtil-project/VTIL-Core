@@ -280,7 +280,9 @@ namespace vtil::symbolic
 		{
 			// Get calling convention.
 			//
-			call_convention cc = it.block->owner->get_cconv( it->vip );
+			call_convention cc = it->base == &ins::vexit 
+				? it.block->owner->routine_convention 
+				: it.block->owner->get_cconv( it->vip );
 
 			// If variable is a register:
 			//
