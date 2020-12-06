@@ -106,6 +106,8 @@ namespace vtil
 		uint64_t rva;
 		size_t length;
 		void( *relocator )( void* data, int64_t delta );
+
+		void* ctx; // implementation specific data.
 	};
 
 	// Generic image interface.
@@ -170,6 +172,14 @@ namespace vtil
 		//
 		virtual void enum_relocations( const function_view<bool( const relocation_descriptor& )>& fn ) const = 0;
 
+		// Removes the relocation entry with the associated descriptor.
+		//
+		virtual void delete_relocation( const relocation_descriptor& desc ) = 0;
+
+		// Adds a native pointer sized relocation with default relocator at the RVA.
+		//
+		virtual void add_relocation( uint64_t rva ) = 0;
+
 		// Returns the image base.
 		//
 		virtual uint64_t get_image_base() const = 0;
@@ -196,11 +206,18 @@ namespace vtil
 		//
 		virtual bool is_valid() const = 0;
 
+		// Flushes any buffered changes to the image.
+		//
+		virtual void flush() = 0;
+
 		// Returns the data associated with the given relative virtual address.
 		//
 		template<typename T = void>
 		T* rva_to_ptr( uint64_t rva )
 		{
+			if ( get_section( 0 ).virtual_address > rva )
+				return ( T* ) ( ( const uint8_t* ) cdata() + rva );
+
 			auto scn = rva_to_section( rva );
 			if ( !scn ) return nullptr;
 			auto offset = scn.translate( rva );
@@ -210,6 +227,9 @@ namespace vtil
 		template<typename T = void>
 		const T* rva_to_ptr( uint64_t rva ) const
 		{
+			if ( get_section( 0 ).virtual_address > rva )
+				return ( const T* ) ( ( const uint8_t* ) cdata() + rva );
+
 			auto scn = rva_to_section( rva );
 			if ( !scn ) return nullptr;
 			auto offset = scn.translate( rva );
