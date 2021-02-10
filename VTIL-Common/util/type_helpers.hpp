@@ -28,7 +28,7 @@
 #pragma once
 #include <type_traits>
 #include <optional>
-#include <stdint.h>
+#include <cstdint>
 #include <array>
 #include <tuple>
 #include <string>

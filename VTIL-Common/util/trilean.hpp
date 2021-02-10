@@ -26,7 +26,7 @@
 // POSSIBILITY OF SUCH DAMAGE.        
 //
 #pragma once
-#include <stdint.h>
+#include <cstdint>
 #include <optional>
 #include "../io/asserts.hpp"
 #include "../io/formatting.hpp"

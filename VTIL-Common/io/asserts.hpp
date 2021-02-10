@@ -26,7 +26,7 @@
 // POSSIBILITY OF SUCH DAMAGE.        
 //
 #pragma once
-#include <stdint.h>
+#include <cstdint>
 #include <stdexcept>
 #include "logger.hpp"
 #include "../util/intrinsics.hpp"

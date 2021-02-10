@@ -28,7 +28,7 @@
 #pragma once
 #include <type_traits>
 #include <functional>
-#include <stdint.h>
+#include <cstdint>
 #include <cstring>
 #include <optional>
 #include "vtype_traits.hpp"

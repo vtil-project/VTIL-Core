@@ -27,7 +27,7 @@
 //
 #pragma once
 #include <iostream>
-#include <stdint.h>
+#include <cstdint>
 #include <cstring>
 #include <cstdlib>
 #include <string>
