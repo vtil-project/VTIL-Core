@@ -744,7 +744,7 @@ namespace vtil
 
 		// Resize the raw image and copy the bytes.
 		//
-		size_t img_original_size = raw_bytes.size();
+		size_t img_original_size = ( raw_bytes.size() + alignment ) & ~alignment;
 		raw_bytes.resize( img_original_size + aligned_size );
 		memcpy( raw_bytes.data() + img_original_size, data, size );
 
