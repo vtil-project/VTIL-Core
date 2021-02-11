@@ -26,7 +26,7 @@
 // POSSIBILITY OF SUCH DAMAGE.        
 //
 
-// Furthermore, the following pieces of software have additional copyrights
+// Furthermore, the following pieces of software have additional copyright
 // licenses, and/or restrictions:
 //
 // |--------------------------------------------------------------------------|

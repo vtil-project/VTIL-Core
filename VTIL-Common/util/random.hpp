@@ -27,7 +27,7 @@
 //
 #pragma once
 #include <random>
-#include <stdint.h>
+#include <cstdint>
 #include <type_traits>
 #include <array>
 #include "type_helpers.hpp"
