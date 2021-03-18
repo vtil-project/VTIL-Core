@@ -72,7 +72,7 @@ namespace vtil
 		//
 		for ( auto& list : { base->branch_operands_rip, base->branch_operands_vip } )
 			for ( int idx : list )
-				cvalidate( operands[ idx ].bit_count() == 64 );
+				cvalidate( operands[ idx ].bit_count() == 64 || operands[ idx ].is_immediate() );
 		return true;
 	}
 
