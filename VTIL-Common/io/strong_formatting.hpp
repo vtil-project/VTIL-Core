@@ -27,6 +27,7 @@
 //
 #pragma once
 #include "formatting.hpp"
+#include <cmath>
 
 // Trivial types with useful explict formatting wrappers.
 //
@@ -110,7 +111,7 @@ namespace vtil::format
 			//
 			for ( auto [abbrv, i] : backwards( zip( unit_abbrv, iindices ) ) )
 			{
-				double limit = pow( 1024.0, i );
+				double limit = std::pow( 1024.0, i );
 
 				// If value is larger than the unit given or if we're at the last unit:
 				//
