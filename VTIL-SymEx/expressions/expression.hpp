@@ -401,7 +401,7 @@ namespace vtil::symbolic
 					if ( idx != 0 )
 						out = ( hash_value ^ key ) & value.value_mask();
 					else
-						out = ( hash_value & 64 ) & value.value_mask();
+						out = ( hash_value & 63 ) & value.value_mask();
 				}
 			}
 			else
