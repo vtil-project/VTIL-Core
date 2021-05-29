@@ -826,13 +826,10 @@ namespace vtil::symbolic
 		//
 		int8_t a_hint = a->is_expression() ? a->get_op_desc().hint_bitwise : 0;
 		int8_t b_hint = b->is_expression() ? b->get_op_desc().hint_bitwise : 0;
-		int8_t m_hint = a_hint != 0 && b_hint != 0 
-			? ( a_hint == 1 && b_hint == 1 ) 
-			: ( a_hint != 0 ? a_hint : b_hint );
 
 		// If arithmetic hint, try A-B==0 first and then A^B==0.
 		//
-		if ( m_hint == +1 )
+		if ( ( a_hint + b_hint ) <= -1 )
 			return ( a - b ).get().value_or( -1 ) == 0 || 
 			       ( a ^ b ).get().value_or( -1 ) == 0;
 
