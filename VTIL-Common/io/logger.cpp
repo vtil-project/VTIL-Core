@@ -25,7 +25,7 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE  
 // POSSIBILITY OF SUCH DAMAGE.        
 //
-#if _WIN64
+#if _WIN32 || _WIN64
 	#define _CRT_SECURE_NO_WARNINGS
 	#define WIN32_LEAN_AND_MEAN
 	#define NOMINMAX
@@ -40,7 +40,7 @@ namespace vtil::logger
 	//
 	logger_state_t::logger_state_t()
 	{
-#if _WIN64
+#if _WIN32 || _WIN64
 		SetConsoleOutputCP( CP_UTF8 );
 		ansi_escape_codes = std::getenv( "GITLAB_CI" ) != nullptr || std::getenv( "APPVEYOR" ) != nullptr;
 #endif
@@ -65,7 +65,7 @@ namespace vtil::logger
 				default:      printf( "\x1b[0m" );  break;
 			}
 		}
-#if _WIN64
+#if _WIN32 || _WIN64
 		else
 		{
 			SetConsoleTextAttribute( GetStdHandle( STD_OUTPUT_HANDLE ), color );

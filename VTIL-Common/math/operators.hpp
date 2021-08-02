@@ -334,11 +334,13 @@ namespace vtil::math
             case operator_id::negate:           result = -irhs;                                                     break;
             case operator_id::add:              result = ilhs + irhs;                                               break;
             case operator_id::subtract:         result = ilhs - irhs;                                               break;
+
+            // if bcnt_res == 64, use __mulh, otherwise using >> bcnt_res(for example: 32)
             case operator_id::multiply_high:    result = bcnt_res == 64
-                                                        ? __mulh( ilhs, irhs )
+                                                        ? mulh64( ilhs, irhs )
                                                         : uint64_t( ilhs * irhs ) >> bcnt_res;                      break;
             case operator_id::umultiply_high:   result = bcnt_res == 64
-                                                        ? __umulh( lhs, rhs )
+                                                        ? umulh64( lhs, rhs )
                                                         : ( lhs * rhs ) >> bcnt_res;                                break;
             case operator_id::multiply:         result = ilhs * irhs;                                               break;
             case operator_id::umultiply:        result = lhs * rhs;                                                 break;

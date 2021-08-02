@@ -27,7 +27,7 @@
 //
 #include "thread_identifier.hpp"
 
-#if _WIN64
+#if _WIN32 || _WIN64
 	#include <intrin.h>
 #else
 	#include <unistd.h>
@@ -42,9 +42,15 @@ namespace vtil
 	//
 	tid_t get_thread_id()
 	{
-#if _WIN64
+#if _WIN32 || _WIN64
 		static_assert( sizeof( tid_t ) == 8, "Thread identifier must be defined as a quadword." );
-		return __readgsqword( 0x48 );
+
+#ifdef _WIN64
+		return __readgsqword(0x48);
+#else
+		return __readfsqword(0x24);
+#endif
+
 #else
 		return ( tid_t ) syscall( SYS_gettid );
 #endif
