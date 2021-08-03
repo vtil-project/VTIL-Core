@@ -38,7 +38,7 @@ This documentation explains how to build VTIL on Windows with Visual Studio.
         $ cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF -DLLVM_TARGETS_TO_BUILD="all" -DLLVM_USE_CRT_RELEASE=MD -DKEYSTONE_BUILD_STATIC_RUNTIME=0 -DBUILD_LIBS_ONLY=1 -G "NMake Makefiles" ..
         $ nmake && copy /Y llvm\lib\keystone.lib llvm\lib\x64\Release\
 
-        $ call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Auxiliary\Build\vcvars32.bat"
+        $ call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Auxiliary\Build\vcvars64.bat"
         $ del /Q CMakeCache.txt
         $ cmake -DCMAKE_BUILD_TYPE=Debug -DBUILD_SHARED_LIBS=OFF -DLLVM_TARGETS_TO_BUILD="all" -DLLVM_USE_CRT_DEBUG=MDd -DKEYSTONE_BUILD_STATIC_RUNTIME=0 -DBUILD_LIBS_ONLY=1 -G "NMake Makefiles" ..
         $ nmake && copy /Y llvm\lib\keystone.lib llvm\lib\x64\Debug\
