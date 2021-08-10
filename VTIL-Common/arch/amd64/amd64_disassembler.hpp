@@ -99,7 +99,7 @@ namespace vtil::amd64
 		//
 		std::string to_string() const
 		{
-			return format::str( "%p: %s\t%s", address, mnemonic, operand_string );
+			return format::str( "%p: %s\t%s", (uintptr_t) address, mnemonic, operand_string );
 		}
 
 		// Helper to check if instruction is of type <x86_INS_*, {X86_OP_*...}>.

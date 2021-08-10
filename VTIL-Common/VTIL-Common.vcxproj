@@ -225,6 +225,9 @@
     </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="arch\x86\x86_assembler.hpp" />
+    <ClInclude Include="arch\x86\x86_disassembler.hpp" />
+    <ClInclude Include="arch\x86\x86_register_details.hpp" />
     <ClInclude Include="formats\image_descriptor.hpp" />
     <ClInclude Include="formats\winpe.hpp" />
     <ClInclude Include="arch\amd64\amd64_assembler.hpp" />
@@ -285,6 +288,8 @@
     <ClInclude Include="util\variant.hpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="arch\x86\x86_assembler.cpp" />
+    <ClCompile Include="arch\x86\x86_disassembler.cpp" />
     <ClCompile Include="formats\winpe.cpp" />
     <ClCompile Include="arch\amd64\amd64_assembler.cpp" />
     <ClCompile Include="arch\amd64\amd64_disassembler.cpp" />

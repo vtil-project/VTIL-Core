@@ -26,6 +26,9 @@
     <Filter Include="Architecture\arm64">
       <UniqueIdentifier>{cee1cbfd-3d49-43f8-9efc-77d85f117d5f}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Architecture\x86">
+      <UniqueIdentifier>{2dec2b36-ec87-4086-807e-95bd714f0f00}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="io\asserts.hpp">
@@ -202,6 +205,15 @@
     <ClInclude Include="io\table_view.hpp">
       <Filter>I/O</Filter>
     </ClInclude>
+    <ClInclude Include="arch\x86\x86_assembler.hpp">
+      <Filter>Architecture\x86</Filter>
+    </ClInclude>
+    <ClInclude Include="arch\x86\x86_disassembler.hpp">
+      <Filter>Architecture\x86</Filter>
+    </ClInclude>
+    <ClInclude Include="arch\x86\x86_register_details.hpp">
+      <Filter>Architecture\x86</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="io\logger.cpp">
@@ -227,6 +239,12 @@
     </ClCompile>
     <ClCompile Include="util\thread_identifier.cpp">
       <Filter>Utility</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\x86\x86_assembler.cpp">
+      <Filter>Architecture\x86</Filter>
+    </ClCompile>
+    <ClCompile Include="arch\x86\x86_disassembler.cpp">
+      <Filter>Architecture\x86</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
