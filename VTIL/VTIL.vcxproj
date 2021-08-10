@@ -74,25 +74,29 @@
     <LinkIncremental>true</LinkIncremental>
     <IncludePath>$(ProjectDir)..\Capstone\include;$(ProjectDir)..\Keystone\include;$(ProjectDir)..\VTIL-Common\includes;$(ProjectDir)..\VTIL-SymEx\includes;$(ProjectDir)..\VTIL-Architecture\includes;$(ProjectDir)..\VTIL-Optimizer\includes;$(VC_IncludePath);$(WindowsSDK_IncludePath)</IncludePath>
     <SourcePath>$(VC_SourcePath)</SourcePath>
-    <OutDir>$(ProjectDir)..\$(Platform)\$(Configuration)\</OutDir>
+    <OutDir>$(SolutionDir)$(PlatformTarget)\$(Configuration)\</OutDir>
+    <IntDir>$(PlatformTarget)\$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
     <IncludePath>$(ProjectDir)..\Capstone\include;$(ProjectDir)..\Keystone\include;$(ProjectDir)..\VTIL-Common\includes;$(ProjectDir)..\VTIL-SymEx\includes;$(ProjectDir)..\VTIL-Architecture\includes;$(ProjectDir)..\VTIL-Optimizer\includes;$(VC_IncludePath);$(WindowsSDK_IncludePath)</IncludePath>
     <SourcePath>$(VC_SourcePath)</SourcePath>
-    <OutDir>$(ProjectDir)..\$(Platform)\$(Configuration)\</OutDir>
+    <OutDir>$(SolutionDir)$(PlatformTarget)\$(Configuration)\</OutDir>
+    <IntDir>$(PlatformTarget)\$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
     <IncludePath>$(ProjectDir)..\Capstone\include;$(ProjectDir)..\Keystone\include;$(ProjectDir)..\VTIL-Common\includes;$(ProjectDir)..\VTIL-SymEx\includes;$(ProjectDir)..\VTIL-Architecture\includes;$(ProjectDir)..\VTIL-Optimizer\includes;$(VC_IncludePath);$(WindowsSDK_IncludePath)</IncludePath>
     <SourcePath>$(VC_SourcePath)</SourcePath>
-    <OutDir>$(ProjectDir)..\$(Platform)\$(Configuration)\</OutDir>
+    <OutDir>$(SolutionDir)$(PlatformTarget)\$(Configuration)\</OutDir>
+    <IntDir>$(PlatformTarget)\$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
     <IncludePath>$(ProjectDir)..\Capstone\include;$(ProjectDir)..\Keystone\include;$(ProjectDir)..\VTIL-Common\includes;$(ProjectDir)..\VTIL-SymEx\includes;$(ProjectDir)..\VTIL-Architecture\includes;$(ProjectDir)..\VTIL-Optimizer\includes;$(VC_IncludePath);$(WindowsSDK_IncludePath)</IncludePath>
     <SourcePath>$(VC_SourcePath)</SourcePath>
-    <OutDir>$(ProjectDir)..\$(Platform)\$(Configuration)\</OutDir>
+    <OutDir>$(SolutionDir)$(PlatformTarget)\$(Configuration)\</OutDir>
+    <IntDir>$(PlatformTarget)\$(Configuration)\</IntDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -110,7 +114,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
     <PostBuildEvent>
-      <Command>lib.exe /out:"$(ProjectDir)..\$(Platform)\$(Configuration)\VTIL.lib" "$(ProjectDir)..\$(Platform)\$(Configuration)\VTIL-Architecture.lib" "$(ProjectDir)..\$(Platform)\$(Configuration)\VTIL-Common.lib" "$(ProjectDir)..\$(Platform)\$(Configuration)\VTIL-Compiler.lib" "$(ProjectDir)..\$(Platform)\$(Configuration)\VTIL-SymEx.lib"</Command>
+      <Command>lib.exe /out:""$(OutDir)VTIL.lib" "$(OutDir)VTIL-Architecture.lib" "$(OutDir)VTIL-Common.lib" "$(OutDir)VTIL-Compiler.lib" "$(OutDir)VTIL-SymEx.lib"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -129,7 +133,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
     <PostBuildEvent>
-      <Command>lib.exe /out:"$(ProjectDir)..\$(Platform)\$(Configuration)\VTIL.lib" "$(ProjectDir)..\$(Platform)\$(Configuration)\VTIL-Architecture.lib" "$(ProjectDir)..\$(Platform)\$(Configuration)\VTIL-Common.lib" "$(ProjectDir)..\$(Platform)\$(Configuration)\VTIL-Compiler.lib" "$(ProjectDir)..\$(Platform)\$(Configuration)\VTIL-SymEx.lib"</Command>
+      <Command>lib.exe /out:""$(OutDir)VTIL.lib" "$(OutDir)VTIL-Architecture.lib" "$(OutDir)VTIL-Common.lib" "$(OutDir)VTIL-Compiler.lib" "$(OutDir)VTIL-SymEx.lib"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -152,7 +156,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
     <PostBuildEvent>
-      <Command>lib.exe /out:"$(ProjectDir)..\$(Platform)\$(Configuration)\VTIL.lib" "$(ProjectDir)..\$(Platform)\$(Configuration)\VTIL-Architecture.lib" "$(ProjectDir)..\$(Platform)\$(Configuration)\VTIL-Common.lib" "$(ProjectDir)..\$(Platform)\$(Configuration)\VTIL-Compiler.lib" "$(ProjectDir)..\$(Platform)\$(Configuration)\VTIL-SymEx.lib"</Command>
+      <Command>lib.exe /out:""$(OutDir)VTIL.lib" "$(OutDir)VTIL-Architecture.lib" "$(OutDir)VTIL-Common.lib" "$(OutDir)VTIL-Compiler.lib" "$(OutDir)VTIL-SymEx.lib"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -175,7 +179,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
     <PostBuildEvent>
-      <Command>lib.exe /out:"$(ProjectDir)..\$(Platform)\$(Configuration)\VTIL.lib" "$(ProjectDir)..\$(Platform)\$(Configuration)\VTIL-Architecture.lib" "$(ProjectDir)..\$(Platform)\$(Configuration)\VTIL-Common.lib" "$(ProjectDir)..\$(Platform)\$(Configuration)\VTIL-Compiler.lib" "$(ProjectDir)..\$(Platform)\$(Configuration)\VTIL-SymEx.lib"</Command>
+      <Command>lib.exe /out:""$(OutDir)VTIL.lib" "$(OutDir)VTIL-Architecture.lib" "$(OutDir)VTIL-Common.lib" "$(OutDir)VTIL-Compiler.lib" "$(OutDir)VTIL-SymEx.lib"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
