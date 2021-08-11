@@ -132,7 +132,7 @@ namespace vtil
 			return { T( _reg ), 0, 8 };
 		}
 
-		// Gets the base register for the given register.
+		// Gets the base register for the given register. (EAX->RAX)
 		//
 		constexpr T extend( uint32_t _reg ) const
 		{

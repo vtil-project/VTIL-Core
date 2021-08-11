@@ -64,13 +64,82 @@ namespace vtil::math
     template<Integral T>
     static constexpr bool sgn( T type ) { return bool( type >> ( ( sizeof( T ) * 8 ) - 1 ) ); }
 
+    // Implement x64 mulh: Returns the high 64 bits of the product of two 64-bit signed integers.
+    // 
+    static int64_t mulh64(int64_t a, int64_t b) {
+#if defined(_WIN64)
+        return __mulh(a, b);
+#else
+        uint64_t    a_lo = (uint32_t)a;
+        uint64_t    a_hi = a >> 32;
+        if (a < 0) {
+            a_lo = (uint32_t)-a;
+            a_hi = -a >> 32;
+        }
+        uint64_t    b_lo = (uint32_t)b;
+        uint64_t    b_hi = b >> 32;
+        if (b < 0) {
+            b_lo = (uint32_t)-b;
+            b_hi = -b >> 32;
+        }
+
+        uint64_t    a_x_b_hi = a_hi * b_hi;
+        uint64_t    a_x_b_mid = a_hi * b_lo;
+        uint64_t    b_x_a_mid = b_hi * a_lo;
+        uint64_t    a_x_b_lo = a_lo * b_lo;
+
+        uint64_t    carry_bit = ((uint64_t)(uint32_t)a_x_b_mid +
+            (uint64_t)(uint32_t)b_x_a_mid +
+            (a_x_b_lo >> 32)) >> 32;
+
+        uint64_t    multhi = a_x_b_hi +
+            (a_x_b_mid >> 32) + (b_x_a_mid >> 32) +
+            carry_bit;
+
+        // cannot use a*b < 0
+        if ((a > 0 && b < 0) || (a < 0 && b > 0)) {
+            return ~multhi;
+        }
+        return multhi;
+#endif
+    }
+
+    // Implement x64 umulh: Return the high 64 bits of the product of two 64-bit unsigned integers.
+    // 
+    static uint64_t umulh64(uint64_t a, uint64_t b) {
+#if defined(_WIN64)
+        return __umulh(a, b);
+#else
+        uint64_t    a_lo = (uint32_t)a;
+        uint64_t    a_hi = a >> 32;
+        uint64_t    b_lo = (uint32_t)b;
+        uint64_t    b_hi = b >> 32;
+
+        uint64_t    a_x_b_hi = a_hi * b_hi;
+        uint64_t    a_x_b_mid = a_hi * b_lo;
+        uint64_t    b_x_a_mid = b_hi * a_lo;
+        uint64_t    a_x_b_lo = a_lo * b_lo;
+
+        uint64_t    carry_bit = ((uint64_t)(uint32_t)a_x_b_mid +
+            (uint64_t)(uint32_t)b_x_a_mid +
+            (a_x_b_lo >> 32)) >> 32;
+
+        uint64_t    multhi = a_x_b_hi +
+            (a_x_b_mid >> 32) + (b_x_a_mid >> 32) +
+            carry_bit;
+
+        return multhi;
+#endif
+    }
+
+
     // Implement platform-indepdenent bitwise operations.
     //
     static constexpr bitcnt_t popcnt( uint64_t x )
     {
         // Optimized using intrinsic on MSVC, Clang should be smart enough to do this on its own.
         //
-#ifdef _MSC_VER
+#if defined(_MSC_VER) && defined(_WIN64)
         if ( !std::is_constant_evaluated() )
         {
             return ( bitcnt_t ) __popcnt64( x );
@@ -85,7 +154,7 @@ namespace vtil::math
     {
         // Optimized using intrinsic on MSVC, Clang should be smart enough to do this on its own.
         //
-#ifdef _MSC_VER
+#if defined(_MSC_VER) && defined(_WIN64)
         if ( !std::is_constant_evaluated() )
         {
             unsigned long idx = 0;
@@ -105,7 +174,7 @@ namespace vtil::math
     {
         // Optimized using intrinsic on MSVC, Clang should be smart enough to do this on its own.
         //
-#ifdef _MSC_VER
+#if defined(_MSC_VER) && defined(_WIN64)
         if ( !std::is_constant_evaluated() )
         {
             unsigned long idx = 0;
@@ -125,7 +194,7 @@ namespace vtil::math
     {
         // Optimized using intrinsic on MSVC, Clang should be smart enough to do this on its own.
         //
-#ifdef _MSC_VER
+#if defined(_MSC_VER) && defined(_WIN64)
         if ( !std::is_constant_evaluated() )
             return _bittest64( ( long long* ) &value, n );
 #endif
@@ -135,7 +204,7 @@ namespace vtil::math
     {
         // Optimized using intrinsic on MSVC, Clang should be smart enough to do this on its own.
         //
-#ifdef _MSC_VER
+#if defined(_MSC_VER) && defined(_WIN64)
         if ( !std::is_constant_evaluated() )
             return _bittestandset64( ( long long* ) &value, n );
 #endif
@@ -148,7 +217,7 @@ namespace vtil::math
     {
         // Optimized using intrinsic on MSVC, Clang should be smart enough to do this on its own.
         //
-#ifdef _MSC_VER
+#if defined(_MSC_VER) && defined(_WIN64)
         if ( !std::is_constant_evaluated() )
             return _bittestandreset64( ( long long* ) &value, n );
 #endif

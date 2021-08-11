@@ -32,7 +32,7 @@
 // |--------------------------------------------------------------------------|
 // | File name               | Link for further information                   |
 // |-------------------------|------------------------------------------------|
-// | amd64/*                 | https://github.com/aquynh/capstone/            |
+// | x86/*                   | https://github.com/aquynh/capstone/            |
 // |                         | https://github.com/keystone-engine/keystone/   |
 // |--------------------------------------------------------------------------|
 //
@@ -46,7 +46,7 @@
 #include <algorithm>
 #include "../../io/formatting.hpp"
 
-namespace vtil::amd64
+namespace vtil::x86
 {
 	struct instruction
 	{

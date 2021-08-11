@@ -25,34 +25,26 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE  
 // POSSIBILITY OF SUCH DAMAGE.        
 //
-#include "thread_identifier.hpp"
 
-#if _WIN32 || _WIN64
-	#include <intrin.h>
-#else
-	#include <unistd.h>
-	#include <sys/syscall.h>
-#endif
+// Furthermore, the following pieces of software have additional copyrights
+// licenses, and/or restrictions:
+//
+// |--------------------------------------------------------------------------|
+// | File name               | Link for further information                   |
+// |-------------------------|------------------------------------------------|
+// | x86/*                   | https://github.com/aquynh/capstone/            |
+// |                         | https://github.com/keystone-engine/keystone/   |
+// |--------------------------------------------------------------------------|
+//
+#pragma once
+#include <string>
+#include <vector>
+#include <keystone/keystone.h>
 
-namespace vtil
+// Simple wrapper around Keystone assembler.
+//
+namespace vtil::x86
 {
-	// Returns the thread identifier in a platform independent way,
-	// used instead of std::thread::get_id() as conversion to an integer
-	// requires std::hash...
-	//
-	tid_t get_thread_id()
-	{
-#if _WIN32 || _WIN64
-		static_assert( sizeof( tid_t ) == 8, "Thread identifier must be defined as a quadword." );
-
-#ifdef _WIN64
-		return __readgsqword(0x48);
-#else
-		return __readfsqword(0x24);
-#endif
-
-#else
-		return ( tid_t ) syscall( SYS_gettid );
-#endif
-	}
+	ks_struct* get_ks_handle();
+	std::vector<uint8_t> assemble( const std::string& src, uint64_t va = 0 );
 };

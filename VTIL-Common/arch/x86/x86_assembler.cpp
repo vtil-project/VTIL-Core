@@ -25,34 +25,56 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE  
 // POSSIBILITY OF SUCH DAMAGE.        
 //
-#include "thread_identifier.hpp"
 
-#if _WIN32 || _WIN64
-	#include <intrin.h>
-#else
-	#include <unistd.h>
-	#include <sys/syscall.h>
-#endif
+// Furthermore, the following pieces of software have additional copyrights
+// licenses, and/or restrictions:
+//
+// |--------------------------------------------------------------------------|
+// | File name               | Link for further information                   |
+// |-------------------------|------------------------------------------------|
+// | x86/*                   | https://github.com/aquynh/capstone/            |
+// |                         | https://github.com/keystone-engine/keystone/   |
+// |--------------------------------------------------------------------------|
+//
+#include "x86_assembler.hpp"
+#include <stdexcept>
 
-namespace vtil
+namespace vtil::x86
 {
-	// Returns the thread identifier in a platform independent way,
-	// used instead of std::thread::get_id() as conversion to an integer
-	// requires std::hash...
-	//
-	tid_t get_thread_id()
+	ks_struct* get_ks_handle()
 	{
-#if _WIN32 || _WIN64
-		static_assert( sizeof( tid_t ) == 8, "Thread identifier must be defined as a quadword." );
+		// Keystone engine is not created until the first call.
+		//
+		static ks_engine* handle = [ ] ()
+		{
+			ks_engine* handle;
+			if ( ks_open( KS_ARCH_X86, KS_MODE_64, &handle ) != KS_ERR_OK )
+				throw std::runtime_error( "Failed to create the Keystone engine!" );
+			return handle;
+		}( );
+		return handle;
+	}
 
-#ifdef _WIN64
-		return __readgsqword(0x48);
-#else
-		return __readfsqword(0x24);
-#endif
+	std::vector<uint8_t> assemble( const std::string& src, uint64_t va )
+	{
+		// Assemble the given instruction in text format.
+		// - (Not too sure why I have to do the .code64; hack, but won't question.)
+		//
+		size_t size;
+		size_t count;
+		unsigned char* encode = nullptr;
+		if ( ks_asm( get_ks_handle(), ( ".code64;" + src ).data(), va, &encode, &size, &count ) )
+		{
+			// Free (if relevant) and return on failure.
+			//
+			if ( encode ) ks_free( encode );
+			return {};
+		}
 
-#else
-		return ( tid_t ) syscall( SYS_gettid );
-#endif
+		// Convert to a vector of bytes, free the encoding and return it.
+		//
+		std::vector<uint8_t> output = { encode, encode + size };
+		ks_free( encode );
+		return output;
 	}
 };
