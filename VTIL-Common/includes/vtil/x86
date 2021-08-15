@@ -1,4 +1,5 @@
 #pragma once
+#include "../../arch/arch_size.hpp"
 #include "../../arch/x86/x86_assembler.hpp"
 #include "../../arch/x86/x86_disassembler.hpp"
 #include "../../arch/x86/x86_register_details.hpp"

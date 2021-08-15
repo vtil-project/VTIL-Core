@@ -63,7 +63,7 @@ namespace vtil
 		{
 			const operand& mem_base = operands[ base->memory_operand_index ];
 			const operand& mem_offset = operands[ base->memory_operand_index + 1 ];
-			cvalidate( mem_base.is_register() && mem_base.bit_count() == 64 );
+			cvalidate( mem_base.is_register() && mem_base.bit_count() == vtil::arch::bit_count );
 			cvalidate( mem_offset.is_immediate() );
 			cvalidate( access_size() && !( access_size() & 7 ) );
 		}
@@ -72,26 +72,13 @@ namespace vtil
 		//
 		for ( auto& list : { base->branch_operands_rip, base->branch_operands_vip } )
 			for ( int idx : list )
-				cvalidate( operands[ idx ].bit_count() == 64 || operands[ idx ].is_immediate() );
+				cvalidate( operands[ idx ].bit_count() == arch::bit_count || operands[ idx ].is_immediate() );
 		return true;
 	}
 
 	// Returns the memory location this instruction references.
 	//
-	std::pair<register_desc&, int64_t&> instruction::memory_location()
-	{
-		// Assert that instruction does access memory.
-		//
-		fassert( base->accesses_memory() );
-
-		// Reference the pair of operands used to create the pointer and return them.
-		//
-		return {
-			operands[ base->memory_operand_index ].reg(), 
-			operands[ base->memory_operand_index + 1 ].imm().i64 
-		};
-	}
-	std::pair<const register_desc&, const int64_t&> instruction::memory_location() const
+	std::pair<register_desc&, intptr_t&> instruction::memory_location()
 	{
 		// Assert that instruction does access memory.
 		//
@@ -101,7 +88,20 @@ namespace vtil
 		//
 		return {
 			operands[ base->memory_operand_index ].reg(),
-			operands[ base->memory_operand_index + 1 ].imm().i64
+			operands[ base->memory_operand_index + 1 ].imm().ival
+		};
+	}
+	std::pair<const register_desc&, const intptr_t&> instruction::memory_location() const
+	{
+		// Assert that instruction does access memory.
+		//
+		fassert( base->accesses_memory() );
+
+		// Reference the pair of operands used to create the pointer and return them.
+		//
+		return {
+			operands[ base->memory_operand_index ].reg(),
+			operands[ base->memory_operand_index + 1 ].imm().ival
 		};
 	}
 

@@ -139,10 +139,18 @@ namespace vtil
 		{
 			switch ( arch_id )
 			{
-				case architecture_arm64:   routine_convention =    arm64::default_call_convention;
-				                           subroutine_convention = arm64::default_call_convention; break;
+
+#if _M_X64 || __x86_64__
 				case architecture_amd64:   routine_convention =    amd64::default_call_convention;
 				                           subroutine_convention = amd64::default_call_convention; break;
+#elif _M_IX86 || __i386__
+				case architecture_x86:   routine_convention =      x86::default_call_convention;
+					                       subroutine_convention = x86::default_call_convention; break;
+#elif _M_ARM64 || __aarch64__
+			case architecture_arm64:   routine_convention =    arm64::default_call_convention;
+			                           subroutine_convention = arm64::default_call_convention; break;
+#endif
+
 				case architecture_virtual: routine_convention =    { .purge_stack = true };
 				                           subroutine_convention = { .purge_stack = true }; break;
 			}

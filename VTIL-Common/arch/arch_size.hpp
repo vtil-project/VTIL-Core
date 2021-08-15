@@ -1,4 +1,4 @@
-// Copyright (c) 2020 Can Boluk and contributors of the VTIL Project   
+﻿// Copyright (c) 2020 Can Boluk and contributors of the VTIL Project   
 // All rights reserved.   
 //    
 // Redistribution and use in source and binary forms, with or without   
@@ -25,18 +25,24 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE  
 // POSSIBILITY OF SUCH DAMAGE.        
 //
-#pragma once
-#include <cstdint>
 
+// Furthermore, the following pieces of software have additional copyrights
+// licenses, and/or restrictions:
+//
+// |--------------------------------------------------------------------------|
+// | File name               | Link for further information                   |
+// |-------------------------|------------------------------------------------|
+// | Architecture/*          | https://github.com/aquynh/capstone/            |
+// |                         | https://github.com/keystone-engine/keystone/   |
+// |--------------------------------------------------------------------------|
+//
+
+#pragma once
 namespace vtil
 {
-	// Declare a physical architecture identifier.
-	//
-	enum architecture_identifier : uint8_t
-	{
-		architecture_amd64   = 0,
-		architecture_arm64   = 1,
-		architecture_virtual = 2,
-		architecture_x86     = 3,
-	};
-};
+    namespace arch
+    {
+        constexpr auto size = sizeof(void*);
+        constexpr auto bit_count = size * 8;
+    }
+}

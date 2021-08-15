@@ -12,8 +12,14 @@ DOCTEST_TEST_CASE("dummy")
 
 DOCTEST_TEST_CASE("Simplification")
 {
-    auto block = vtil::basic_block::begin(0x1337);
-    vtil::register_desc eax(vtil::register_physical, X86_REG_EAX, 32, 0);
+#if _M_X64 || __x86_64__
+    constexpr auto architecture = vtil::architecture_amd64;
+#else
+    constexpr auto architecture = vtil::architecture_x86;
+#endif
+
+    auto block = vtil::basic_block::begin(0x1337, architecture);
+    vtil::register_desc eax(vtil::register_physical, X86_REG_EAX, vtil::arch::bit_count, 0, architecture);
 
     block->mov(eax, 0);
 
@@ -47,5 +53,6 @@ DOCTEST_TEST_CASE("Simplification")
 
     vtil::logger::log(":: After:\n");
     vtil::debug::dump(block->owner);
+
     CHECK(1 == 1);
 }

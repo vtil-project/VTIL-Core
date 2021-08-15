@@ -62,7 +62,7 @@ namespace vtil
 			else
 			{
 				fassert( op.is_immediate() );
-				return { op.imm().i64, op.imm().bit_count };
+				return { op.imm().ival, op.imm().bit_count };
 			}
 		};
 

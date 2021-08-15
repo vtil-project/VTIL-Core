@@ -30,6 +30,7 @@
 #include <vtil/math>
 #include <vtil/utility>
 #include <vtil/amd64>
+#include <vtil/x86>
 #include <vtil/arm64>
 #include "identifier.hpp"
 
@@ -175,7 +176,7 @@ namespace vtil
 		{
 			// Validate bit count and offset.
 			//
-			cvalidate( bit_count != 0 && ( bit_count + bit_offset ) <= 64 );
+			cvalidate( bit_count != 0 && ( bit_count + bit_offset ) <= arch::bit_count );
 
 			// Handle special registers:
 			//
@@ -300,7 +301,7 @@ namespace vtil
 			//
 			std::string suffix = "";
 			if ( bit_offset != 0 ) suffix = "@" + std::to_string( bit_offset );
-			if ( bit_count != 64 ) suffix += ":" + std::to_string( bit_count );
+			if ( bit_count != arch::bit_count ) suffix += ":" + std::to_string( bit_count );
 
 			// If special/local, use a fixed convention.
 			//
@@ -319,6 +320,8 @@ namespace vtil
 				{
 					case architecture_amd64:
 						return prefix + amd64::name( amd64::registers.extend( math::narrow_cast<uint8_t>( local_id ) ) ) + suffix;
+					case architecture_x86:
+						return prefix + x86::name( x86::registers.extend( math::narrow_cast<uint8_t>( local_id ) ) ) + suffix;
 					case architecture_arm64:
 						return prefix + arm64::name( arm64::registers.extend( math::narrow_cast<uint8_t>( local_id ) ) ) + suffix;
 					default:
@@ -356,13 +359,20 @@ namespace vtil
 	{
 		constexpr register_desc operator()( x86_reg value )
 		{
+#if _M_X64 || __x86_64__
+		    constexpr auto architecture = architecture_amd64;
 			auto [base, offset, size] = amd64::registers.resolve_mapping( value );
+#else
+			constexpr auto architecture = architecture_x86;
+			auto [base, offset, size] = x86::registers.resolve_mapping(value);
+#endif
+
 			if ( base == X86_REG_RSP )
 				return { register_physical | register_stack_pointer, 0, size * 8, offset * 8            };
 			else if ( base == X86_REG_EFLAGS )													       
 				return { register_physical | register_flags,         0, size * 8, offset * 8            };
 			else
-				return { register_physical, ( uint64_t ) base, size * 8, offset * 8, architecture_amd64 };
+				return { register_physical, ( uint64_t ) base, size * 8, offset * 8, architecture };
 		}
 	};
 	template<>
@@ -382,10 +392,10 @@ namespace vtil
 
 	// VTIL special registers.
 	//
-	static constexpr register_desc UNDEFINED =   { register_volatile | register_undefined,     0, 64 };
-	static constexpr register_desc REG_IMGBASE = { register_readonly | register_image_base,    0, 64 };
-	static constexpr register_desc REG_FLAGS =   { register_physical | register_flags,         0, 64 };
-	static constexpr register_desc REG_SP =      { register_physical | register_stack_pointer, 0, 64 };
+	static constexpr register_desc UNDEFINED =   { register_volatile | register_undefined,     0, arch::bit_count };
+	static constexpr register_desc REG_IMGBASE = { register_readonly | register_image_base,    0, arch::bit_count };
+	static constexpr register_desc REG_FLAGS =   { register_physical | register_flags,         0, arch::bit_count };
+	static constexpr register_desc REG_SP =      { register_physical | register_stack_pointer, 0, arch::bit_count };
 
 	// Helper to make undefined of N bits.
 	//

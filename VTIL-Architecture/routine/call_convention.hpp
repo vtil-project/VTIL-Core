@@ -63,7 +63,8 @@ namespace vtil
 		//
 		bool purge_stack = false;
 	};
-	
+
+#if _M_X64 || __x86_64__
 	namespace amd64
 	{
 		// Define a convention preserving all changes.
@@ -142,6 +143,73 @@ namespace vtil
 			true,
 		};
 	}
+
+#elif _M_IX86 || __i386__
+	namespace x86
+{
+		// Define a convention preserving all changes.
+		//
+		static const call_convention preserve_all_convention = {
+			/*.volatile_registers =*/ {
+				{ register_physical, X86_REG_EAX, 32 }, { register_physical, X86_REG_EBX, 32 },
+				{ register_physical, X86_REG_ECX, 32 }, { register_physical, X86_REG_EDX, 32 },
+				{ register_physical, X86_REG_ESI, 32 }, { register_physical, X86_REG_EDI, 32 },
+				{ register_physical, X86_REG_EBP, 32 },
+				REG_FLAGS,
+			},
+
+			/*.param_registers =*/ {
+				{ register_physical, X86_REG_EAX, 32 }, { register_physical, X86_REG_EBX, 32 },
+				{ register_physical, X86_REG_ECX, 32 }, { register_physical, X86_REG_EDX, 32 },
+				{ register_physical, X86_REG_ESI, 32 }, { register_physical, X86_REG_EDI, 32 },
+				{ register_physical, X86_REG_EBP, 32 },
+				REG_FLAGS,
+			},
+
+			/*.retval_registers =*/ {
+				{ register_physical, X86_REG_EAX, 32 }, { register_physical, X86_REG_EBX, 32 },
+				{ register_physical, X86_REG_ECX, 32 }, { register_physical, X86_REG_EDX, 32 },
+				{ register_physical, X86_REG_ESI, 32 }, { register_physical, X86_REG_EDI, 32 },
+				{ register_physical, X86_REG_EBP, 32 },
+				REG_FLAGS,
+			},
+
+			/*.frame_register =*/
+			{ register_physical, X86_REG_EBP, 32 },
+
+			/*.shadow_space =*/
+			0x0,
+
+			/*.purge_stack =*/
+			true,
+		};
+
+		static const call_convention default_call_convention = {
+			/*.volatile_registers =*/ {
+				{ register_physical, X86_REG_ECX, 32 }, { register_physical, X86_REG_EDX, 32 },
+				REG_FLAGS,
+			},
+
+			/*.param_registers =*/ {
+
+			},
+
+			/*.retval_registers =*/ {
+				{ register_physical, X86_REG_RAX, 32 },
+			},
+
+			/*.frame_register =*/
+			{ register_physical, X86_REG_EBP, 32 },
+
+			/*.shadow_space =*/
+			0x20,
+
+			/*.purge_stack =*/
+			true,
+		};
+	}
+
+#elif _M_ARM64 || __aarch64__
 
 	namespace arm64
 	{
@@ -384,4 +452,6 @@ namespace vtil
 			true,
 		};
 	}
+
+#endif
 };

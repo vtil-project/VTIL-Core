@@ -151,7 +151,7 @@ namespace vtil
 		//
 		if ( op.is_register() && op.reg().is_stack_pointer() )
 		{
-			auto t0 = tmp( 64 );
+			auto t0 = tmp( arch::bit_count );
 			return mov( t0, op )->push( t0 );
 		}
 

@@ -127,7 +127,7 @@ namespace vtil::optimizer
 
 				// If partially inherited flags register:
 				//
-				if ( k.is_flags() && k.bit_count != 64 && preferred_exp_sizes.contains( 1 ) )
+				if ( k.is_flags() && k.bit_count != arch::bit_count && preferred_exp_sizes.contains( 1 ) )
 				{
 					// For each bit:
 					//

@@ -125,7 +125,7 @@ namespace vtil::optimizer::validation
 					// Validate target.
 					//
 					auto target_call = ins.operands[ 0 ].is_immediate()
-						? symbolic::expression::reference{ ins.operands[ 0 ].imm().u64 }
+						? symbolic::expression::reference{ ins.operands[ 0 ].imm().uval }
 						: vm.read_register( ins.operands[ 0 ].reg() );
 					if ( target_call->value.get() != call.address )
 					{
@@ -198,7 +198,7 @@ namespace vtil::optimizer::validation
 					// Validate return address.
 					//
 					auto sreturn_address = ins.operands[ 0 ].is_immediate()
-						? symbolic::expression::reference{ ins.operands[ 0 ].imm().u64 }
+						? symbolic::expression::reference{ ins.operands[ 0 ].imm().uval }
 						: vm.read_register( ins.operands[ 0 ].reg() );
 					if ( sreturn_address->value.get() != return_address )
 					{
@@ -322,7 +322,7 @@ namespace vtil::optimizer::validation
 				//
 				basic_block* blk = nullptr;
 				if ( dst.is_immediate() )
-					blk = rtn->find_block( dst.imm().u64 );
+					blk = rtn->find_block( dst.imm().uval );
 				// Otherwise read VM context.
 				//
 				else if ( auto jmp_dst = vm.read_register( dst.reg() )->get() )

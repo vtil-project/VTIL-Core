@@ -104,7 +104,7 @@ namespace vtil::optimizer
 						}
 					}
 
-					if ( ins.base == &ins::mov && op.bit_count() == 64 )
+					if ( ins.base == &ins::mov && op.bit_count() == arch::bit_count )
 					{
 						auto to_write = ins.operands [ 1 ];
 						if ( !to_write.is_register() || ( !to_write.reg().is_volatile() && !to_write.reg().is_stack_pointer() ) )
@@ -143,17 +143,17 @@ namespace vtil::optimizer
 			{
 				const auto sz = ins.access_size();
 				auto [reg, offset] = ins.memory_location();
-				const auto offset_mod = ( 8 + ( offset % 8 ) ) % 8;
+				const auto offset_mod = ( arch::size + ( offset % arch::size ) ) % arch::size;
 				const int64_t aligned_offset = offset - offset_mod;
 
 				const auto reg_id = register_id( reg );
 
 				// If this instruction is unaligned and can't be reduced to an aligned store with an offset, flush relevant caches and bail.
 				//
-				if ( offset_mod * 8 + sz > 64 )
+				if ( offset_mod * 8 + sz > arch::bit_count )
 				{
 					aligned_mem_cache [ reg_id ][ aligned_offset ].clear();
-					aligned_mem_cache [ reg_id ][ aligned_offset + 8 ].clear();
+					aligned_mem_cache [ reg_id ][ aligned_offset + arch::size ].clear();
 					continue;
 				}
 				
@@ -199,7 +199,7 @@ namespace vtil::optimizer
 									did_write = true;
 									cache_store_offset = offset_mod;
 									cache_store_mask = store_mask;
-									cache_ins_reg = blk->tmp( 64 );
+									cache_ins_reg = blk->tmp( arch::bit_count );
 
 									// Emit a move here after incrementing the iterator. If it's not used, DCE will kill it.
 									//
@@ -223,7 +223,7 @@ namespace vtil::optimizer
 					//
 					if ( !did_write )
 					{
-						auto ins_reg = blk->tmp( 64 );
+						auto ins_reg = blk->tmp( arch::bit_count );
 						blk->insert( it, { &ins::mov, { { ins_reg }, ins.operands [ 2 ] } } );
 						cache_entry.emplace_back( offset_mod, store_mask, ins_reg );
 					}
@@ -254,12 +254,12 @@ namespace vtil::optimizer
 			{
 				const auto sz = ins.access_size();
 				auto [reg, offset] = ins.memory_location();
-				const auto offset_mod = ( 8 + ( offset % 8 ) ) % 8;
+				const auto offset_mod = ( arch::size + ( offset % arch::size ) ) % arch::size;
 				const int64_t aligned_offset = offset - offset_mod;
 
 				// If this instruction is unaligned and can't be reduced to an aligned load with an offset, bail.
 				//
-				if ( offset_mod * 8 + sz > 64 )
+				if ( offset_mod * 8 + sz > arch::bit_count )
 					continue;
 
 				const auto reg_id = register_id( reg );
@@ -316,18 +316,18 @@ namespace vtil::optimizer
 					else
 					{
 						// Otherwise, do bit math.
-						auto tmp = blk->tmp( 64 );
+						auto tmp = blk->tmp( arch::bit_count );
 						const auto prev_it = std::prev( it );
 
 						blk->insert( prev_it, { &ins::mov, { { tmp }, { ins_reg } } } );
 						if ( store_offset > 0 )
-							blk->insert( prev_it, { &ins::bshl, { { tmp }, { store_offset * 8, 64 } } } );
-						blk->insert( prev_it, { &ins::band, { { tmp }, { store_mask, 64 } } } );
+							blk->insert( prev_it, { &ins::bshl, { { tmp }, { store_offset * 8, arch::bit_count } } } );
+						blk->insert( prev_it, { &ins::band, { { tmp }, { store_mask, arch::bit_count } } } );
 
 						// Shift by offset.
 						//
 						if ( offset_mod != 0 )
-							blk->insert( prev_it, { &ins::bshr, { { tmp }, { offset_mod * 8, 64 } } } );
+							blk->insert( prev_it, { &ins::bshr, { { tmp }, { offset_mod * 8, arch::bit_count } } } );
 
 						// Set operand.
 						//
@@ -338,7 +338,7 @@ namespace vtil::optimizer
 				{
 					// Create a temporary that we will use to store the final result.
 					//
-					auto final_tmp = blk->tmp( 64 );
+					auto final_tmp = blk->tmp( arch::bit_count );
 					const auto prev_it = std::prev( it );
 
 					// For every overlapping store, create a temporary, shift by offset, and with mask, and add to final temporary.
@@ -358,13 +358,13 @@ namespace vtil::optimizer
 						else
 						{
 							if ( first )
-								blk->insert( prev_it, { &ins::mov, { { final_tmp }, { 0ULL, 64 } } } );
+								blk->insert( prev_it, { &ins::mov, { { final_tmp }, { 0ULL, arch::bit_count } } } );
 
-							auto tmp = blk->tmp( 64 );
+							auto tmp = blk->tmp( arch::bit_count );
 							blk->insert( prev_it, { &ins::mov, { { tmp }, { ins_reg } } } );
 							if ( store_offset > 0 )
-								blk->insert( prev_it, { &ins::bshl, { { tmp }, { store_offset * 8, 64 } } } );
-							blk->insert( prev_it, { &ins::band, { { tmp }, { store_mask, 64 } } } );
+								blk->insert( prev_it, { &ins::bshl, { { tmp }, { store_offset * 8, arch::bit_count } } } );
+							blk->insert( prev_it, { &ins::band, { { tmp }, { store_mask, arch::bit_count } } } );
 							blk->insert( prev_it, { &ins::bor, { { final_tmp }, { tmp } } } );
 						}
 					}
@@ -372,7 +372,7 @@ namespace vtil::optimizer
 					// Shift by offset.
 					//
 					if ( offset_mod != 0 )
-						blk->insert( prev_it, { &ins::bshr, { { final_tmp }, { offset_mod * 8, 64 } } } );
+						blk->insert( prev_it, { &ins::bshr, { { final_tmp }, { offset_mod * 8, arch::bit_count } } } );
 
 					ins.operands = { ins.operands [ 0 ], { final_tmp } };
 				}
@@ -393,7 +393,7 @@ namespace vtil::optimizer
 				{
 					const auto reg_id = register_id( op.reg() );
 					const auto to_write = ins.operands [ 1 ];
-					if ( *ins.base == ins::mov && op.bit_count() == 64 && to_write.is_register() )
+					if ( *ins.base == ins::mov && op.bit_count() == arch::bit_count && to_write.is_register() )
 					{
 						aligned_mem_cache [ reg_id ] = aligned_mem_cache [ register_id( to_write.reg() ) ];
 					}

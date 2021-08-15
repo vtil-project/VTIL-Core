@@ -232,7 +232,7 @@ namespace vtil::symbolic
 
 		// Construct from constants.
 		//
-		template<Integral T = uint64_t>
+		template<Integral T = uintptr_t>
 		expression( T value, bitcnt_t bit_count = sizeof( T ) * 8 ) : operable( value, bit_count ), simplify_hint( true ) { update( false ); }
 
 		// Constructor for symbolic variables.

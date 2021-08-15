@@ -146,7 +146,7 @@ namespace vtil::optimizer
 
 						// Mov to temporary and substract the target offset.
 						//
-						auto tmp = blk->tmp( 64 );
+						auto tmp = blk->tmp( arch::bit_count );
 						auto mov = blk->insert( it, { &ins::mov, { tmp, REG_SP } } );
 						auto sub = blk->insert( it, { &ins::sub, { tmp, make_imm<int64_t>( sp_offset - it->sp_offset ) } } );
 						( +mov )->sp_offset = sp_offset;

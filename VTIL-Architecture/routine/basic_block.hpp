@@ -259,7 +259,7 @@ namespace vtil
 		// or the beginning of the basic block and the index of the stack instance.
 		//
 		uint32_t sp_index = 0;
-		int64_t sp_offset = 0;
+		intptr_t sp_offset = 0;
 
 		// Last temporary index used.
 		//

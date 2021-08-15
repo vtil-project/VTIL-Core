@@ -71,7 +71,7 @@ namespace vtil::optimizer
 							if ( src.is_register() )
 								result = symbolic::variable{ lookup.at, src.reg() }.to_expression();
 							else
-								result = { src.imm().u64, src.bit_count() };
+								result = { src.imm().uval, src.bit_count() };
 
 							// Shift and resize accordingly and return.
 							//

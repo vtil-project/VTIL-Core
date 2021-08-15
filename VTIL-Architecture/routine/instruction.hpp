@@ -40,7 +40,7 @@ namespace vtil
 
 	// Type we use to describe virtual instruction pointer in.
 	//
-	using vip_t = uint64_t;
+	using vip_t = uintptr_t;
 	static constexpr vip_t invalid_vip = ~0;
 
 	// This structure is used to describe instances of VTIL instructions in
@@ -65,7 +65,7 @@ namespace vtil
 		// [MOV SP, <>] if applicable, or the beginning of 
 		// the basic block and the index of the stack instance.
 		//
-		int64_t sp_offset = 0;
+		intptr_t sp_offset = 0;
 		uint32_t sp_index = 0;
 		bool sp_reset = false;
 
@@ -112,15 +112,15 @@ namespace vtil
 				return 0;
 			
 			if ( base->vaccess_size_index < 0 )
-				return math::narrow_cast<bitcnt_t>( operands[ ( -base->vaccess_size_index ) - 1 ].imm().u64 );
+				return math::narrow_cast<bitcnt_t>( operands[ ( -base->vaccess_size_index ) - 1 ].imm().uval );
 			else
 				return operands[ base->vaccess_size_index - 1 ].bit_count();
 		}
 
 		// Returns the memory location this instruction references.
 		//
-		std::pair<register_desc&, int64_t&> memory_location();
-		std::pair<const register_desc&, const int64_t&> memory_location() const;
+		std::pair<register_desc&, intptr_t&> memory_location();
+		std::pair<const register_desc&, const intptr_t&> memory_location() const;
 
 		// Returns operands with their types zipped for enumeration.
 		//

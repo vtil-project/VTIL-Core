@@ -112,7 +112,7 @@ namespace vtil
 					{
 						// Try to extract the offset from the compound expression.
 						//
-						int64_t offset = 0;
+						intptr_t offset = 0;
 						auto mem_base = symbolic::variable::pack_all( var.mem().decay() ).simplify( true );
 						if ( !mem_base->is_constant() )
 						{
@@ -136,7 +136,7 @@ namespace vtil
 						operand base = cvt( mem_base );
 						if ( base.is_immediate() )
 						{
-							operand tmp2 = block->tmp( 64 );
+							operand tmp2 = block->tmp( arch::bit_count );
 							block->mov( tmp2, base );
 							base = tmp2;
 						}
@@ -290,7 +290,7 @@ namespace vtil
 				}
 				// If Lhs was [true], return Rhs:
 				//
-				else if( lhs.imm().u64 & 1 )
+				else if( lhs.imm().uval & 1 )
 				{
 					return cvt( *exp->rhs, true );
 				}

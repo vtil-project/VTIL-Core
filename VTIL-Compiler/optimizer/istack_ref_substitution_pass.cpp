@@ -57,7 +57,7 @@ namespace vtil::optimizer
 				if ( auto stack_offset = delta.get<int64_t>() )
 				{
 					( +it )->operands[ it->base->memory_operand_index ] = { REG_SP };
-					( +it )->operands[ it->base->memory_operand_index + 1 ].imm().i64 += *stack_offset;
+					( +it )->operands[ it->base->memory_operand_index + 1 ].imm().ival += *stack_offset;
 
 					// Validate modification and increment counter.
 					//
