@@ -46,10 +46,10 @@ namespace vtil
 
 		// Validate all operand indices.
 		//
-		fassert( vaccess_size_index == 0 || abs( vaccess_size_index ) <= operand_count() );
-		fassert( memory_operands.first == 0 || abs( memory_operands.first ) <= operand_count() );
+		fassert( vaccess_size_index == 0 || (size_t) abs( vaccess_size_index ) <= operand_count() );
+		fassert( memory_operands.first == 0 || (size_t) abs( memory_operands.first ) <= operand_count() );
 		for ( int op : branch_operands )
-			fassert( op != 0 && abs( op ) <= operand_count() );
+			fassert( op != 0 && (size_t) abs( op ) <= operand_count() );
 
 		// Validate variable access size.
 		//

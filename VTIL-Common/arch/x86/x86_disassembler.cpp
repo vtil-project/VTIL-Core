@@ -74,7 +74,7 @@ namespace vtil::x86
 		// Convert each output into vtil::amd64 format and push it to a vector.
 		//
 		std::vector<instruction> vec;
-		for ( int i = 0; i < count; i++ )
+		for ( size_t i = 0; i < count; i++ )
 		{
 			instruction out;
 			cs_insn& in = ins[ i ];

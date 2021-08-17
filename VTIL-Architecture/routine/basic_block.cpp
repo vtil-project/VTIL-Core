@@ -66,7 +66,7 @@ namespace vtil
 
 	// Queues a stack shift.
 	//
-	basic_block* basic_block::shift_sp( int64_t offset, bool merge_instance, const const_iterator& it_const )
+	basic_block* basic_block::shift_sp( intptr_t offset, bool merge_instance, const const_iterator& it_const )
 	{
 		// Drop const qualifier of the iterator, since we are in a non-const 
 		// qualified member function, this qualifier is unnecessary.
@@ -161,7 +161,7 @@ namespace vtil
 		{
 			// Adjust for misalignment and zero the padding.
 			//
-			int64_t padding_size = VTIL_ARCH_POPPUSH_ENFORCED_STACK_ALIGN - misalignment;
+			intptr_t padding_size = VTIL_ARCH_POPPUSH_ENFORCED_STACK_ALIGN - misalignment;
 			shift_sp( -padding_size );
 			str( REG_SP, sp_offset, operand( 0, math::narrow_cast<bitcnt_t>( padding_size * 8 ) ) );
 		}

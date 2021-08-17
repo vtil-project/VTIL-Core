@@ -131,7 +131,7 @@ namespace vtil::optimizer
 		// Offset, Mask, Descriptor
 		using store_descriptor = std::tuple<uint64_t, uint64_t, register_desc>;
 
-		std::unordered_map<register_id, std::unordered_map<int64_t, std::vector<store_descriptor>>> aligned_mem_cache;
+		std::unordered_map<register_id, std::unordered_map<intptr_t, std::vector<store_descriptor>>> aligned_mem_cache;
 		for ( auto it = blk->begin(); !it.is_end(); )
 		{
 			auto& ins = *+it;
@@ -144,7 +144,7 @@ namespace vtil::optimizer
 				const auto sz = ins.access_size();
 				auto [reg, offset] = ins.memory_location();
 				const auto offset_mod = ( arch::size + ( offset % arch::size ) ) % arch::size;
-				const int64_t aligned_offset = offset - offset_mod;
+				const intptr_t aligned_offset = offset - (intptr_t) offset_mod;
 
 				const auto reg_id = register_id( reg );
 
@@ -153,7 +153,7 @@ namespace vtil::optimizer
 				if ( offset_mod * 8 + sz > arch::bit_count )
 				{
 					aligned_mem_cache [ reg_id ][ aligned_offset ].clear();
-					aligned_mem_cache [ reg_id ][ aligned_offset + arch::size ].clear();
+					aligned_mem_cache [ reg_id ][ aligned_offset + (intptr_t) arch::size ].clear();
 					continue;
 				}
 				
@@ -255,7 +255,7 @@ namespace vtil::optimizer
 				const auto sz = ins.access_size();
 				auto [reg, offset] = ins.memory_location();
 				const auto offset_mod = ( arch::size + ( offset % arch::size ) ) % arch::size;
-				const int64_t aligned_offset = offset - offset_mod;
+				const intptr_t aligned_offset = offset - offset_mod;
 
 				// If this instruction is unaligned and can't be reduced to an aligned load with an offset, bail.
 				//

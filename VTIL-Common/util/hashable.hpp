@@ -257,7 +257,7 @@ namespace std
 	{
 		__forceinline constexpr size_t operator()( const T& value ) const noexcept
 		{
-			return vtil::hash_t{ value.hash() }.as64();
+			return ( size_t ) vtil::hash_t{ value.hash() }.as64();
 		}
 	};
 };

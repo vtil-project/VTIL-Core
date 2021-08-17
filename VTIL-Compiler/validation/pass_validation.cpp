@@ -325,7 +325,7 @@ namespace vtil::optimizer::validation
 					blk = rtn->find_block( dst.imm().uval );
 				// Otherwise read VM context.
 				//
-				else if ( auto jmp_dst = vm.read_register( dst.reg() )->get() )
+				else if ( auto jmp_dst = vm.read_register( dst.reg() )->get<vip_t>() )
 					blk = rtn->find_block( *jmp_dst );
 
 				// If no valid destination, fail.

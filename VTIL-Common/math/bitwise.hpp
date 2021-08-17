@@ -53,9 +53,9 @@ namespace vtil::math
         static_assert( sizeof( T ) <= sizeof( T2 ), "Narrow cast is extending." );
 
         if constexpr ( std::is_signed_v<T2> ^ std::is_signed_v<T> )
-            dassert( 0 <= o && o <= std::numeric_limits<T>::max() );
+            dassert( 0 <= o && (T) o <= std::numeric_limits<T>::max() );
         else
-            dassert( std::numeric_limits<T>::min() <= o && o <= std::numeric_limits<T>::max() );
+            dassert( std::numeric_limits<T>::min() <= o && (T) o <= std::numeric_limits<T>::max() );
 
         return ( T ) o;
     }

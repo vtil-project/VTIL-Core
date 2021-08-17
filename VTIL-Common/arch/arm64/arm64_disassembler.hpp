@@ -86,7 +86,7 @@ namespace vtil::arm64
 		{
 			if ( id != idx ) return false;
 			if ( operands.size() != operand_types.size() ) return false;
-			for ( int i = 0; i < operands.size(); i++ )
+			for ( size_t i = 0; i < operands.size(); i++ )
 				if ( operands[ i ].type != operand_types[ i ] )
 					return false;
 			return true;

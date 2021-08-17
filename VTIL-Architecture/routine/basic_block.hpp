@@ -376,7 +376,7 @@ namespace vtil
 
 		// Queues a stack shift.
 		//
-		basic_block* shift_sp( int64_t offset, bool merge_instance = false, const const_iterator& it = {} );
+		basic_block* shift_sp( intptr_t offset, bool merge_instance = false, const const_iterator& it = {} );
 
 		// Emits an entire instruction using series of VEMITs.
 		//

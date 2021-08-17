@@ -122,12 +122,12 @@ namespace vtil
 							if ( fast_match( &results, A + U, mem_base ) )
 							{
 								mem_base = results.front().translate( A );
-								offset = *results.front().translate( U )->get<int64_t>();
+								offset = *results.front().translate( U )->get<intptr_t>();
 							}
 							else if ( fast_match( &results, A - U, mem_base ) )
 							{
 								mem_base = results.front().translate( A );
-								offset = -*results.front().translate( U )->get<int64_t>();
+								offset = -*results.front().translate( U )->get<intptr_t>();
 							}
 						}
 

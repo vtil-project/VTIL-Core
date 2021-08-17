@@ -117,7 +117,7 @@ namespace vtil::optimizer
 				// If immediate return as is.
 				//
 				if ( exp->is_constant() )
-					return operand{ *exp->get<uint64_t>(), exp->size() };
+					return operand{ *exp->get<uintptr_t>(), exp->size() };
 
 				// If expression is not a register:
 				//

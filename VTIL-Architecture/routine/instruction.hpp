@@ -40,7 +40,7 @@ namespace vtil
 
 	// Type we use to describe virtual instruction pointer in.
 	//
-	using vip_t = uintptr_t;
+	using vip_t = uint64_t;
 	static constexpr vip_t invalid_vip = ~0;
 
 	// This structure is used to describe instances of VTIL instructions in

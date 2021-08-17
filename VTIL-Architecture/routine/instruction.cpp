@@ -44,7 +44,7 @@ namespace vtil
 
 		// Validate operand types against the expected type.
 		//
-		for ( int i = 0; i < base->operand_types.size(); i++ )
+		for ( size_t i = 0; i < base->operand_types.size(); i++ )
 		{
 			cvalidate( operands[ i ].is_valid() );
 			cvalidate( base->operand_types[ i ] != operand_type::read_imm || operands[ i ].is_immediate() );

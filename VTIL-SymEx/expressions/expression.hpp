@@ -81,7 +81,7 @@ namespace vtil::symbolic
 		//
 		struct hasher
 		{
-			size_t operator()( const expression_reference& value ) const noexcept { return value.hash(); }
+			hash_t operator()( const expression_reference& value ) const noexcept { return value.hash(); }
 		};
 		struct if_equal
 		{
