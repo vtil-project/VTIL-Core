@@ -282,7 +282,7 @@ namespace vtil
 
 		// Creates a new block bound to a new routine with the given parameters.
 		//
-		static basic_block* begin( vip_t entry_vip, architecture_identifier arch_id = architecture_amd64 );
+		static basic_block* begin( vip_t entry_vip, architecture_identifier arch_id = architecture_default );
 		
 		// Creates a new block connected to this block at the given vip, if already explored returns nullptr,
 		// should still be called if the caller knowns it is explored since this function creates the linkage.

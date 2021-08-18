@@ -146,7 +146,7 @@ namespace vtil
 
 #elif _M_IX86 || __i386__
 	namespace x86
-{
+    {
 		// Define a convention preserving all changes.
 		//
 		static const call_convention preserve_all_convention = {

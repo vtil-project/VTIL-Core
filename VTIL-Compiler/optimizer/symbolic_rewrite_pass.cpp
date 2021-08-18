@@ -287,7 +287,7 @@ namespace vtil::optimizer
 
 		// Skip rewriting if we produced larger code.
 		//
-		size_t opt_count = blk->size() - temporary_block.size();
+		int opt_count = (int)blk->size() - (int)temporary_block.size();
 		if ( opt_count <= 0 )
 		{
 			if ( !force ) return 0;
