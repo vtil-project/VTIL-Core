@@ -404,6 +404,15 @@ namespace vtil
 		iterator end()                   { return { this, nullptr }; }
 		const_iterator begin() const     { return { this, head }; }
 		const_iterator end() const       { return { this, nullptr }; }
+		const instruction& operator[]( size_t n ) const {
+			int i = 0;
+			auto it = head;
+			while ( it ) {
+				if (i == n) return it->value;
+				i++; it = it->next;
+			}
+			throw std::out_of_range("out of range");
+		}
 
 		// Instruction insertion.
 		//
