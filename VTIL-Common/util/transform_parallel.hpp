@@ -36,7 +36,7 @@
 // Determine whether or not to use parallel transformations.
 //
 #ifndef VTIL_USE_PARALLEL_TRANSFORM
-	#define VTIL_USE_PARALLEL_TRANSFORM true
+	#define VTIL_USE_PARALLEL_TRANSFORM false
 #endif
 
 namespace vtil

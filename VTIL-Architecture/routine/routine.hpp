@@ -30,6 +30,7 @@
 #include <mutex>
 #include <functional>
 #include <unordered_map>
+#include <map>
 #include "../arch/identifier.hpp"
 #include "instruction.hpp"
 #include "call_convention.hpp"
@@ -74,7 +75,7 @@ namespace vtil
 
 		// Cache of explored blocks, mapping virtual instruction pointer to the basic block structure.
 		//
-		std::unordered_map<vip_t, basic_block*> explored_blocks;
+		std::map<vip_t, basic_block*> explored_blocks;
 
 		// Cache of paths from block A to block B.
 		//
@@ -99,7 +100,7 @@ namespace vtil
 
 		// Convention of specialized calls, maps the vip of the VXCALL instruction onto the convention used.
 		//
-		std::unordered_map<vip_t, call_convention> spec_subroutine_conventions;
+		std::map<vip_t, call_convention> spec_subroutine_conventions;
 
 		// Misc. stats.
 		//
