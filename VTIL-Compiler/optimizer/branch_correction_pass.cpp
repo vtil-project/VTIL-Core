@@ -48,11 +48,21 @@ namespace vtil::optimizer
 		//
 		cached_tracer local_tracer = {};
 		auto lbranch_info = aux::analyze_branch( blk, &local_tracer, {} );
+		auto log_branch_info = [](const auto& branch_info, const char* name) {
+			logger::log("\n%s, cc: %s, is_jcc: %d, is_vm_exit: %d\n", name, branch_info.cc, branch_info.is_jcc, branch_info.is_vm_exit);
+			for (const auto& dest : branch_info.destinations)
+			{
+				logger::log("  dest: %s\n", dest);
+			}
+		};
+		log_branch_info(lbranch_info, "lbranch_info");
+
 		ctracer.mtx.lock();
 		for ( auto& [k, v] : local_tracer.cache )
 			ctracer.cache[ k ] = v;
 		ctracer.mtx.unlock();
 		auto branch_info = aux::analyze_branch( blk, &ctracer, { .cross_block = true, .pack = true, .resolve_opaque = true } );
+		log_branch_info(branch_info, "branch_info");
 
 		// If branching to real, assert single next block.
 		//
