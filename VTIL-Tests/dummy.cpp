@@ -24,7 +24,7 @@ DOCTEST_TEST_CASE("dummy")
 	CHECK(1 == 1);
 }
 
-DOCTEST_TEST_CASE("Optimization unit_test")
+DOCTEST_TEST_CASE("Optimization vtil file")
 {
     vtil::logger::log("\n\n>> %s \n", __FUNCTION__);
     // TODO vtil file
@@ -46,6 +46,7 @@ DOCTEST_TEST_CASE("Optimization stack_pinning_pass")
     block->pop(reg_ax);
     block->mov(reg_ax, vtil::arch::size);
     block->add(vtil::REG_SP, reg_ax);
+
     block->vexit(0ull); // marks the end of a basic_block
 
     vtil::logger::log(":: Before:\n");
@@ -86,7 +87,7 @@ DOCTEST_TEST_CASE("Optimization istack_ref_substitution_pass")
 
     auto ins = (*block) [2];
 
-    // strd     $sp          -0x4         0x1
+    // mov [eax-4], 1
     CHECK(ins.base == &vtil::ins::str);
     CHECK(ins.operands.size() == 3);
     CHECK(ins.operands[0].reg().to_string() == "$sp");
@@ -120,7 +121,7 @@ DOCTEST_TEST_CASE("Optimization stack_propagation_pass")
 
     auto ins = (*block)[1];
 
-    // movd     eax          0x1234
+    // mov eax, 0x1234
     CHECK(ins.base == &vtil::ins::mov);
     CHECK(ins.operands.size() == 2);
     CHECK(ins.operands[0].reg().local_id == registers::ax);
@@ -160,8 +161,9 @@ DOCTEST_TEST_CASE("Optimization mov_propagation_pass")
     vtil::register_desc reg_eax(vtil::register_physical, registers::ax, vtil::arch::bit_count, 0);
     vtil::register_desc reg_ebx(vtil::register_physical, registers::bx, vtil::arch::bit_count, 0);
 
-
+    // mov eax, 0x1
     block->mov(reg_eax, (uintptr_t) 1);
+    // mov ebx, eax
     block->mov(reg_ebx, reg_eax);
     block->vexit(0ull); // marks the end of a basic_block
 
@@ -176,7 +178,7 @@ DOCTEST_TEST_CASE("Optimization mov_propagation_pass")
 
     auto ins = (*block)[1];
 
-    //  movd     ebx          0x1
+    //  mov ebx, 0x1
     CHECK(ins.base == &vtil::ins::mov);
     CHECK(ins.operands.size() == 2);
     CHECK(ins.operands[0].reg().local_id == registers::bx);
@@ -196,6 +198,7 @@ DOCTEST_TEST_CASE("Optimization register_renaming_pass")
     block->mov(reg_eax, (uintptr_t) 1);
     // mov ebx, eax
     block->mov(reg_ebx, reg_eax);
+    // mov [esp+0], ebx
     block->str(vtil::REG_SP, 0, reg_ebx);
     block->mov(reg_eax, (uintptr_t) 1);
     block->mov(reg_ebx, (uintptr_t) 1);
@@ -232,6 +235,7 @@ DOCTEST_TEST_CASE("Optimization symbolic_rewrite_pass<true>")
     block->mov(reg_eax, (uintptr_t) 1);
     // mov ebx, eax
     block->mov(reg_ebx, reg_eax);
+    // mov[esp+0], ebx
     block->str(vtil::REG_SP, 0, reg_ebx);
     block->mov(reg_eax, (uintptr_t) 1);
     block->mov(reg_ebx, (uintptr_t) 1);
@@ -262,7 +266,7 @@ DOCTEST_TEST_CASE("Optimization symbolic_rewrite_pass<true>")
     CHECK(ins.operands[1].imm().ival == 0x1);
 
     ins = (*block)[2];
-    // strd     $sp          0x0          0x1
+    // mov[esp+0], 1
     CHECK(ins.base == &vtil::ins::str);
     CHECK(ins.operands.size() == 3);
     CHECK(ins.operands[0].reg().to_string() == "$sp");
