@@ -168,7 +168,7 @@ namespace vtil
 
 		// Shift and write the operand.
 		//
-		shift_sp( -int64_t( op.size() ) );
+		shift_sp( -intptr_t( op.size() ) );
 		str( REG_SP, sp_offset, op );
 		return this;
 	}
