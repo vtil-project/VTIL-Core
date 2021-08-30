@@ -453,7 +453,7 @@ namespace vtil::symbolic
 		static constexpr auto default_eval = [ ] ( const unique_identifier& v ) { return std::nullopt; };
 		template<typename type>
 		std::optional<type> get() const { return evaluate( default_eval ).get<type>(); }
-		template<bool as_signed = false, typename type = std::conditional_t<as_signed, int64_t, uint64_t>>
+		template<bool as_signed = false, typename type = std::conditional_t<as_signed, intptr_t, uintptr_t>>
 		std::optional<type> get() const { return evaluate( default_eval ).get<type>(); }
 
 		// Enumerates the whole tree.

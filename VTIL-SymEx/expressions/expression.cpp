@@ -306,7 +306,7 @@ namespace vtil::symbolic
 			case math::operator_id::ucast:
 				// If it was shrinked:
 				//
-				if ( lhs->size() > rhs->get().value() )
+				if ( lhs->size() > (int) rhs->get().value() )
 				{
 					// If sign extension, double cast.
 					//
@@ -343,7 +343,7 @@ namespace vtil::symbolic
 			case math::operator_id::cast:
 				// Signed cast should not be used to shrink.
 				//
-				fassert( lhs->size() <= rhs->get().value() );
+				fassert( lhs->size() <= (int) rhs->get().value() );
 
 				// If sizes match, escape cast operator.
 				//

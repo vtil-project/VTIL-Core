@@ -77,12 +77,12 @@ namespace vtil::symbolic
 
 		// Simple pointer offseting.
 		//
-		pointer operator+( int64_t dst ) const;
-		pointer operator-( int64_t dst ) const { return operator+( -dst ); }
+		pointer operator+( intptr_t dst ) const;
+		pointer operator-( intptr_t dst ) const { return operator+( -dst ); }
 
 		// Calculates the distance between two pointers as an optional constant.
 		//
-		std::optional<int64_t> operator-( const pointer& o ) const;
+		std::optional<intptr_t> operator-( const pointer& o ) const;
 
 		// Checks whether the two pointers can overlap in terms of real destination, 
 		// note that it will consider [rsp+C1] and [rsp+C2] "overlapping" so you will
