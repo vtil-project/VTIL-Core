@@ -169,6 +169,9 @@ namespace vtil
 		{
 			std::lock_guard _g( *this );
 
+			if(k->prev == key::invalid_value)
+				return; // HACK: this is a race condition and the value is already erased
+
 			if ( k->prev ) k->prev->next = k->next;
 			else head = k->next;
 
