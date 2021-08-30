@@ -639,7 +639,7 @@ namespace vtil::symbolic
 		// Log the input.
 		//
 		scope_padding _p( 1 );
-		if ( !state::get()->padding ) log( "\n" );
+		if ( !logger_state.padding ) log( "\n" );
 		log( "[Input]  = %s ", *exp );
 		log( "(Hash: %s)\n", exp->hash() );
 #endif
