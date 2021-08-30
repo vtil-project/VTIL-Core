@@ -64,7 +64,7 @@ namespace vtil::symbolic
 
 		// Construct from a string.
 		//
-		template<typename hasher_t = std::hash<std::string>>
+		template<typename hasher_t = vtil::hasher<std::string>>
 		unique_identifier( std::string name )
 		{
 			// Calculate hash using hasher.
@@ -89,7 +89,7 @@ namespace vtil::symbolic
 
 		// Construct from any other type.
 		//
-		template<typename T, typename hasher_t = std::hash<T>,
+		template<typename T, typename hasher_t = vtil::hasher<T>,
 			// Must not be an array or [const unique_identifier&].
 			std::enable_if_t<!std::is_same_v<T, unique_identifier> && !std::extent_v<T>, int> = 0>
 			unique_identifier( const T& v, std::string&& name = "" )
@@ -128,7 +128,7 @@ namespace vtil::symbolic
 			// If we don't have a hasher, hash the name.
 			//
 			if constexpr ( std::is_same_v<hasher_t, void> )
-				hash_value = std::hash<std::string>{}( to_string() );
+				hash_value = vtil::hasher<std::string>{}( to_string() );
 
 			// Otherwise use the hasher.
 			//

@@ -155,12 +155,6 @@ namespace vtil
 				hash.add_bytes( value );
 				return hash;
 			}
-			// If hashable using std::hash<>, redirect.
-			//
-			else if constexpr ( StdHashable<T> )
-			{
-				return hash_t{ std::hash<T>{}( value ) };
-			}
 			// Throw assert fail.
 			//
 			unreachable();
