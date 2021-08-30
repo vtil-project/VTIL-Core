@@ -30,6 +30,7 @@
 #include <array>
 #include <functional>
 #include <cstring>
+#include <cinttypes>
 #include "../io/formatting.hpp"
 
 namespace vtil
@@ -90,7 +91,7 @@ namespace vtil
 		//
 		std::string to_string() const
 		{
-			return format::str( "0x%p", value[ 0 ] );
+			return format::str( "0x%" PRIx64, value[ 0 ] );
 		}
 
 		// Basic comparison operators.
