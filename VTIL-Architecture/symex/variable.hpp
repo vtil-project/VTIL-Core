@@ -223,7 +223,7 @@ namespace vtil::symbolic
 
 		// Declare reduction.
 		//
-		REDUCE_TO( at.block, at.entry, descriptor, is_branch_dependant );
+		REDUCE_TO( at.block->block_id, at.entry, descriptor, is_branch_dependant );
 
 		// Packs all the variables in the expression where it'd be optimal.
 		//

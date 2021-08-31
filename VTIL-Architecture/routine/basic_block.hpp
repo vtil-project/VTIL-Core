@@ -244,6 +244,14 @@ namespace vtil
 		//
 		routine* owner = nullptr;
 
+		static uint64_t unique_block_id()
+		{
+			static uint64_t id = 0;
+			return id++;
+		}
+
+		uint64_t block_id = unique_block_id();
+
 		// Virtual instruction pointer to the first instruction this block originated 
 		// from. ::front().vip will not do the job here in case of any skipped or 
 		// optimized out instructions.
