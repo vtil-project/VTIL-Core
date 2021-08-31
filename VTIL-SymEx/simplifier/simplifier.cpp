@@ -640,8 +640,8 @@ namespace vtil::symbolic
 		//
 		scope_padding _p( 1 );
 		if ( !logger_state.padding ) log( "\n" );
-		log( "[Input]  = %s ", *exp );
-		log( "(Hash: %s)\n", exp->hash() );
+		log( "[Input]  = %s\n", *exp );
+		//log( "(Hash: %s)\n", exp->hash() );
 #endif
 
 		// Lookup the expression in the cache.
