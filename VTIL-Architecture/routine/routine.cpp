@@ -84,14 +84,16 @@ namespace vtil
 			// Backward propagate.
 			// src->prev => dst
 			//
-			for ( auto& [src2, entry] : path_cache )
+			for (auto kurwa = path_cache.begin(); kurwa != path_cache.end(); ++kurwa)
 			{
-				if ( auto it = entry.find( src ); it != entry.end() )
+				auto& src2 = kurwa.key();
+				auto& entry = kurwa.value();
+				if (auto it = entry.find(src); it != entry.end())
 				{
-					path_set& ps = it->second;
-					auto& fwd = entry[ dst ];
-					fwd.insert( ps.begin(), ps.end() );
-					fwd.insert( dst );
+					path_set& ps = it.value();
+					auto& fwd = entry[dst];
+					fwd.insert(ps.begin(), ps.end());
+					fwd.insert(dst);
 				}
 			}
 
@@ -235,21 +237,22 @@ namespace vtil
 				continue;
 			}
 
-			// Enumerate std::unordered_map<const basic_block*, path_set>:
+			// Enumerate tsl::ordered_map<const basic_block*, path_set>:
 			//
-			for ( auto it2 = it->second.begin(); it2 != it->second.end(); )
+			auto& itval = it.value();
+			for ( auto it2 = itval.begin(); it2 != itval.end(); )
 			{
 				// If entry key references deleted block, erase it and continue.
 				//
 				if ( it2->first == block )
 				{
-					it2 = it->second.erase( it2 );
+					it2 = it.value().erase( it2 );
 					continue;
 				}
 
 				// Remove any references from set.
 				//
-				it2->second.erase( block );
+				it2.value().erase( block );
 
 				// Continue iteration.
 				//
@@ -495,7 +498,7 @@ namespace vtil
 		//
 		for ( const auto& [k1, v] : this->path_cache )
 		{
-			std::unordered_map<const basic_block*, path_set, hasher<>> map_l2;
+			tsl::ordered_map<const basic_block*, path_set, hasher<>> map_l2;
 			for ( auto& [k2, set] : v )
 			{
 				path_set new_set;

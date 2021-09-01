@@ -42,7 +42,7 @@ namespace vtil::symbolic
 			symbolic::expression::reference linear_store[ 64 ] = { nullptr };
 			uint64_t bitmap = 0;
 		};
-		using store_type = std::unordered_map<register_desc::weak_id, segmented_value>;
+		using store_type = tsl::ordered_map<register_desc::weak_id, segmented_value>;
 
 		// The register state.
 		//

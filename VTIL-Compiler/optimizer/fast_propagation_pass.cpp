@@ -35,7 +35,7 @@ namespace vtil::optimizer
 	{
 		size_t counter = 0;
 
-		std::unordered_map<register_id, operand> reg_cache;
+		tsl::ordered_map<register_id, operand> reg_cache;
 		for ( auto it = blk->begin(); !it.is_end(); )
 		{
 			auto& ins = *+it;
@@ -131,7 +131,7 @@ namespace vtil::optimizer
 		// Offset, Mask, Descriptor
 		using store_descriptor = std::tuple<uint64_t, uint64_t, register_desc>;
 
-		std::unordered_map<register_id, std::unordered_map<intptr_t, std::vector<store_descriptor>>> aligned_mem_cache;
+		tsl::ordered_map<register_id, tsl::ordered_map<intptr_t, std::vector<store_descriptor>>> aligned_mem_cache;
 		for ( auto it = blk->begin(); !it.is_end(); )
 		{
 			auto& ins = *+it;
@@ -230,9 +230,15 @@ namespace vtil::optimizer
 
 					// Flush cache for other registers.
 					//
-					for ( auto& [id, cache] : aligned_mem_cache )
-						if ( id != reg_id )
+					for (auto kurwa = aligned_mem_cache.begin(); kurwa != aligned_mem_cache.end(); ++kurwa)
+					{
+						auto& id = kurwa.key();
+						auto& cache = kurwa.value();
+						if (id != reg_id)
+						{
 							cache.clear();
+						}
+					}
 				}
 				else
 				{
@@ -242,9 +248,15 @@ namespace vtil::optimizer
 
 					// Flush cache for other registers.
 					//
-					for ( auto& [id, cache] : aligned_mem_cache )
-						if ( id != reg_id )
+					for (auto kurwa = aligned_mem_cache.begin(); kurwa != aligned_mem_cache.end(); ++kurwa)
+					{
+						auto& id = kurwa.key();
+						auto& cache = kurwa.value();
+						if (id != reg_id)
+						{
 							cache.clear();
+						}
+					}
 				}
 			}
 

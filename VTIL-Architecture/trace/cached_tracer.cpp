@@ -88,7 +88,7 @@ namespace vtil
 				return result;
 			}*/
 
-			symbolic::expression::reference& result = it->second;
+			symbolic::expression::reference& result = it.value();
 #if VTIL_OPT_TRACE_VERBOSE
 			// Log result.
 			//

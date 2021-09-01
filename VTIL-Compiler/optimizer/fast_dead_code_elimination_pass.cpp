@@ -132,7 +132,7 @@ namespace vtil::optimizer
 						//
 						if ( auto read_iter = reg_read_masks.find( reg_id ); read_iter != reg_read_masks.end())
 						{
-							auto& read_mask = read_iter->second;
+							auto& read_mask = read_iter.value();
 
 							// If read mask does not overlap write mask, this instruction is dead.
 							//
@@ -217,7 +217,7 @@ namespace vtil::optimizer
 		// 2. Cache the last relevant writes through a vector to the write mask and the instruction that wrote them.
 		// 3. When a write is fully overwritten, check whether there was a read overlapping that write. If not, the write is dead.
 		//
-		std::unordered_map< register_id, uint64_t > reg_read_masks;
+		tsl::ordered_map< register_id, uint64_t > reg_read_masks;
 
 		// Assume written physical registers and all memory operands set are live at the end of the block.
 		//

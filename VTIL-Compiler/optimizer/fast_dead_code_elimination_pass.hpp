@@ -70,8 +70,8 @@ namespace vtil::optimizer
 	//
 	struct fast_dead_code_elimination_pass : pass_interface<execution_order::custom>
 	{
-		std::unordered_set< basic_block* > sealed;
-		std::unordered_map< basic_block*, std::unordered_map< register_id, uint64_t > > reg_map;
+		tsl::ordered_set< basic_block* > sealed;
+		tsl::ordered_map< basic_block*, tsl::ordered_map< register_id, uint64_t > > reg_map;
 
 		size_t fast_xblock_dce( basic_block* blk );
 		size_t pass( basic_block* blk, bool xblock = false ) { return 0; }

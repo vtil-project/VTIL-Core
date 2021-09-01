@@ -53,7 +53,7 @@ namespace vtil
 	struct multivariate
 	{
 		mutable relaxed<std::mutex> mtx;
-		mutable std::unordered_map<size_t, variant> database;
+		mutable tsl::ordered_map<size_t, variant> database;
 
 		// Default copy/move/construct.
 		//

@@ -37,6 +37,8 @@
 #include <stdlib.h>
 #include <optional>
 #include "../io/asserts.hpp"
+#include "ordered_map.h"
+#include "ordered_set.h"
 
 namespace vtil
 {
@@ -248,14 +250,14 @@ namespace vtil
 	template<typename T, typename P = std::less<T>, size_t N = 16>
 	using stack_set =                    stack_buffered_container<std::set<T, P>, N, false>;
 	template<typename T, typename H = vtil::hasher<T>, size_t N = 16>
-	using unordered_stack_set =          stack_buffered_container<std::unordered_set<T, H>, N, false>;
+	using unordered_stack_set =          stack_buffered_container<tsl::ordered_set<T, H>, N, false>;
 
 	// Wrap map derivatives:
 	//
 	template<typename K, typename V, typename P = std::less<K>, size_t N = 16>
 	using stack_map =                    stack_buffered_container<std::map<K, V, P>, N, false>;
 	template<typename K, typename V, typename H = vtil::hasher<K>, size_t N = 16>
-	using unordered_stack_map =          stack_buffered_container<std::unordered_map<K, V, H>, N, false>;
+	using unordered_stack_map =          stack_buffered_container<tsl::ordered_map<K, V, H>, N, false>;
 
 	// Wrap multimap derivatives:
 	//

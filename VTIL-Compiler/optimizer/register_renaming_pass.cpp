@@ -73,7 +73,7 @@ namespace vtil::optimizer
 			
 			// Iterate backwards:
 			//
-			std::unordered_set<il_iterator> pending, results;
+			tsl::ordered_set<il_iterator> pending, results;
 			auto fail = [ & ] () { pending.insert( {} ); return enumerator::obreak_r; };
 			it.block->owner->enumerate_bwd( [ &, mask = math::fill( it->operands[ 1 ].reg().bit_count ), lpending = il_iterator{} ]( const il_iterator& i ) mutable
 			{

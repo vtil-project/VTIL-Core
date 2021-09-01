@@ -31,9 +31,9 @@ namespace vtil::symbolic::directive
 {
 	// Enumerates each unique variable.
 	//
-	void instance::enum_variables( const function_view<void( const instance& )>& fn, std::unordered_set<const char*>* s ) const
+	void instance::enum_variables( const function_view<void( const instance& )>& fn, tsl::ordered_set<const char*>* s ) const
 	{
-		std::unordered_set<const char*> tmp;
+		tsl::ordered_set<const char*> tmp;
 		if ( !s ) s = &tmp;
 
 		if ( lhs ) lhs->enum_variables( fn, s );

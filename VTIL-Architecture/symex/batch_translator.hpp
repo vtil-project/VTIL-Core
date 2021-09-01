@@ -41,7 +41,7 @@ namespace vtil
 
 		// The expression cache.
 		//
-		std::unordered_map<symbolic::expression::reference, operand, 
+		tsl::ordered_map<symbolic::expression::reference, operand, 
 			               symbolic::expression::reference::hasher, 
 			               symbolic::expression::reference::if_identical> translation_cache;
 		

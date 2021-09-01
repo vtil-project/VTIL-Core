@@ -112,7 +112,7 @@ namespace vtil::symbolic
 			// an issue with libstdc++ but oh well.
 			// - Ref: https://github.com/vtil-project/VTIL-Core/issues/41
 			//
-			std::unordered_map<uint64_t, uint64_t>::const_iterator _iterator = {};
+			tsl::ordered_map<uint64_t, uint64_t>::const_iterator _iterator = {};
 			
 			template<typename map_type>
 			auto& iterator()
