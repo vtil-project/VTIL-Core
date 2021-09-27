@@ -294,9 +294,9 @@ namespace vtil::math
         // Normalize the input.
         //
         const operator_desc& desc = descriptor_of( id );
-        if ( bcnt_lhs != 64 && desc.operand_count != 1 )  
+        if ( bcnt_lhs != arch::bit_count && desc.operand_count != 1 )
             lhs = desc.is_signed ? sign_extend( lhs, bcnt_lhs ) : zero_extend( lhs, bcnt_lhs );
-        if ( bcnt_rhs != 64 )  
+        if ( bcnt_rhs != arch::bit_count )
             rhs = desc.is_signed ? sign_extend( rhs, bcnt_rhs ) : zero_extend( rhs, bcnt_rhs );
 
         // Create aliases for signed values to avoid ugly casts.

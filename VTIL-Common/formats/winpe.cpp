@@ -525,11 +525,11 @@ namespace vtil
 		auto dos_header = ( const dos_header_t* ) cdata();
 		return dos_header->get_nt_headers<true>()->optional_header.magic == OPT_HDR64_MAGIC;
 	}
-	uint64_t pe_image::get_alignment_mask() const
+	uintptr_t pe_image::get_alignment_mask() const
 	{
 		// Return maximum alignment required or PAGE_SIZE.
 		//
-		return visit_nt( this, [ ] ( auto* nt ) -> uint64_t
+		return visit_nt( this, [ ] ( auto* nt ) -> uintptr_t
 		{ 
 			return std::max( { nt->optional_header.section_alignment, nt->optional_header.file_alignment, 0x1000u } ) - 1;
 		} );
@@ -590,9 +590,9 @@ namespace vtil
 		scn_header->characteristics.mem_execute = desc.execute;
 	}
 
-	uint64_t pe_image::next_free_rva() const
+	uintptr_t pe_image::next_free_rva() const
 	{
-		return visit_nt( this, [ & ] ( auto nt_headers ) -> uint64_t
+		return visit_nt( this, [ & ] ( auto nt_headers ) -> uintptr_t
 		{
 			// Iterate each section:
 			//
@@ -615,7 +615,7 @@ namespace vtil
 
 			// Page align rva high and calculate where we place the next section.
 			//
-			uint64_t alignment = get_alignment_mask();
+			uintptr_t alignment = get_alignment_mask();
 			return ( rva_high + alignment ) & ~alignment;
 		} );
 	}
@@ -696,8 +696,8 @@ namespace vtil
 
 	void pe_image::add_section( section_descriptor& in_out, const void* data, size_t size )
 	{
-		uint64_t rva_sec = this->next_free_rva();
-		uint64_t alignment = get_alignment_mask();
+		uintptr_t rva_sec = this->next_free_rva();
+		uintptr_t alignment = get_alignment_mask();
 		size_t aligned_size = ( ( size + alignment ) & ~alignment );
 
 		// Resize the raw image and copy the bytes.

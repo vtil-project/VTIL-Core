@@ -52,7 +52,7 @@ namespace vtil::symbolic
 			//
 			if ( dir->op == math::operator_id::invalid )
 			{
-				if ( !dir->id ) return expression{ dir->get().value(), bit_cnt ? bit_cnt : 64 };
+				if ( !dir->id ) return expression{ dir->get().value(), bit_cnt ? bit_cnt : (bitcnt_t) arch::bit_count };
 				else            return sym.translate( dir );
 			}
 			// If it is an expression:

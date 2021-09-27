@@ -58,7 +58,7 @@ namespace vtil::optimizer
 
 				// If it simplifies to a constant:
 				//
-				if ( auto shift_offset = ( sp_next - sp_curr ).get<int64_t>() )
+				if ( auto shift_offset = ( sp_next - sp_curr ).get<intptr_t>() )
 				{
 					// Replace with a stack shift.
 					//
@@ -88,7 +88,7 @@ namespace vtil::optimizer
 		{
 			// Iterate each instruction in reverse:
 			//
-			int64_t sp_offset = blk->sp_offset;
+			intptr_t sp_offset = blk->sp_offset;
 			auto [bgn, end] = reverse_iterators( *blk );
 			for ( auto it = bgn; it != end; ++it )
 			{
@@ -146,9 +146,9 @@ namespace vtil::optimizer
 
 						// Mov to temporary and substract the target offset.
 						//
-						auto tmp = blk->tmp( 64 );
+						auto tmp = blk->tmp( arch::bit_count );
 						auto mov = blk->insert( it, { &ins::mov, { tmp, REG_SP } } );
-						auto sub = blk->insert( it, { &ins::sub, { tmp, make_imm<int64_t>( sp_offset - it->sp_offset ) } } );
+						auto sub = blk->insert( it, { &ins::sub, { tmp, make_imm<intptr_t>( sp_offset - it->sp_offset ) } } );
 						( +mov )->sp_offset = sp_offset;
 						( +sub )->sp_offset = sp_offset;
 						( +it )->sp_offset = sp_offset;

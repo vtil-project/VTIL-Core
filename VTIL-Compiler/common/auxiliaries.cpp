@@ -331,7 +331,7 @@ namespace vtil::optimizer::aux
 			// Determine the symbolic expression describing branch destination.
 			//
 			symbolic::expression::reference destination = op_dst.is_immediate()
-				? symbolic::expression{ op_dst.imm().u64 }
+				? symbolic::expression{ op_dst.imm().uval }
 				: trace( { branch, op_dst.reg() } );
 
 			// Remove any matches of REG_IMGBASE and pack.
@@ -515,7 +515,7 @@ namespace vtil::optimizer::aux
 				else
 					constant = math::zero_extend( constant, ins.access_size() );
 
-				if ( ins.operands[ index ].imm().u64 != constant )
+				if ( ins.operands[ index ].imm().uval != constant )
 					return false;
 			}
 

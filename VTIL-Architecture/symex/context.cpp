@@ -118,7 +118,7 @@ namespace vtil::symbolic
 
 		// Or with the bits that we do not know and return.
 		//
-		return result | ( variable{ reference_iterator, desc.select( 64, 0 ) }.to_expression() & ( read_mask & ~known_mask ) ) >> desc.bit_offset;
+		return result | ( variable{ reference_iterator, desc.select(vtil:: arch::bit_count, 0 ) }.to_expression() & uintptr_t ( read_mask & ~known_mask ) ) >> desc.bit_offset;
 	}
 
 	// Writes the given value to the region described by the register desc.

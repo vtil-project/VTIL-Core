@@ -36,6 +36,16 @@ namespace vtil
 	{
 		architecture_amd64   = 0,
 		architecture_arm64   = 1,
-		architecture_virtual = 2
+		architecture_virtual = 2,
+		architecture_x86     = 3,
 	};
+
+#if _M_X64 || __x86_64__
+	constexpr architecture_identifier architecture_default = architecture_amd64;
+#elif _M_IX86 || __i386__
+	constexpr architecture_identifier architecture_default = architecture_x86;
+#elif _M_ARM64 || __aarch64__
+	constexpr architecture_identifier architecture_default = architecture_arm64;
+#endif
+
 };

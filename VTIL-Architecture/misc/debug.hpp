@@ -84,14 +84,14 @@ namespace vtil::debug
 					 &ins.operands[ size_t( ins.base->memory_operand_index ) + 1 ] == &op &&
 					 ins.operands[ ins.base->memory_operand_index ].reg().is_stack_pointer() )
 				{
-					if ( op.imm().i64 >= 0 )
-						log<CON_YLW>( VTIL_FMT_INS_OPR " ", format::hex( op.imm().i64 ) );			 // External stack
+					if ( op.imm().ival >= 0 )
+						log<CON_YLW>( VTIL_FMT_INS_OPR " ", format::hex( op.imm().ival ) );			 // External stack
 					else
-						log<CON_BRG>( VTIL_FMT_INS_OPR " ", format::hex( op.imm().i64 ) );			 // VM stack
+						log<CON_BRG>( VTIL_FMT_INS_OPR " ", format::hex( op.imm().ival ) );			 // VM stack
 				}
 				else
 				{
-					log<CON_CYN>( VTIL_FMT_INS_OPR " ", format::hex( op.imm().i64 ) );				 // Any immediate
+					log<CON_CYN>( VTIL_FMT_INS_OPR " ", format::hex( op.imm().ival ) );				 // Any immediate
 				}
 			}
 		}
@@ -115,7 +115,11 @@ namespace vtil::debug
 		};
 
 		log<CON_DEF>( "Entry point VIP:       " );
+#if _M_X64 || __x86_64__
 		log<CON_CYN>( "0x%llx\n", blk->entry_vip );
+#else
+		log<CON_CYN>( "0x%x\n", blk->entry_vip );
+#endif
 		log<CON_DEF>( "Stack pointer:         " );
 		if ( blk->sp_offset < 0 )
 			log<CON_RED>( "%s\n", format::hex( blk->sp_offset ) );
@@ -145,7 +149,7 @@ namespace vtil::debug
 					{
 						if ( it2->base->name != "vemit" )
 							break;
-						uint8_t* bs = ( uint8_t* ) &it2->operands[ 0 ].imm().u64;
+						uint8_t* bs = ( uint8_t* ) &it2->operands[ 0 ].imm().uval;
 						bytes.insert( bytes.end(), bs, bs + it2->operands[ 0 ].size() );
 					}
 

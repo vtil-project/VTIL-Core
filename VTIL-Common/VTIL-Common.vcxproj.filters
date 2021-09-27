@@ -214,6 +214,9 @@
     <ClInclude Include="arch\x86\x86_register_details.hpp">
       <Filter>Architecture\x86</Filter>
     </ClInclude>
+    <ClInclude Include="arch\arch_size.hpp">
+      <Filter>Architecture</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="io\logger.cpp">

@@ -346,14 +346,29 @@ namespace vtil::format
 	template<Integral T>
 	static std::string hex( T value )
 	{
-		if constexpr ( !std::is_signed_v<T> )
+		if (sizeof(T) == 8)
 		{
-			return str( "0x%llx", value );
+			if constexpr ( !std::is_signed_v<T> )
+			{
+				return str( " 0x%llx", value );
+			}
+			else
+			{
+				if ( value >= 0 ) return str( "0x%llx", value );
+				else              return str( "-0x%llx", -value );
+			}
 		}
 		else
 		{
-			if ( value >= 0 ) return str( "0x%llx", value );
-			else              return str( "-0x%llx", -value );
+			if constexpr ( !std::is_signed_v<T> )
+			{
+				return str( " 0x%x", value );
+			}
+			else
+			{
+				if (value >= 0) return str( "0x%x", value );
+				else              return str( "-0x%x", -value );
+			}
 		}
 	}
 

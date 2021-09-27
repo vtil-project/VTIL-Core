@@ -259,7 +259,7 @@ namespace vtil
 		// or the beginning of the basic block and the index of the stack instance.
 		//
 		uint32_t sp_index = 0;
-		int64_t sp_offset = 0;
+		intptr_t sp_offset = 0;
 
 		// Last temporary index used.
 		//
@@ -282,7 +282,7 @@ namespace vtil
 
 		// Creates a new block bound to a new routine with the given parameters.
 		//
-		static basic_block* begin( vip_t entry_vip, architecture_identifier arch_id = architecture_amd64 );
+		static basic_block* begin( vip_t entry_vip, architecture_identifier arch_id = architecture_default );
 		
 		// Creates a new block connected to this block at the given vip, if already explored returns nullptr,
 		// should still be called if the caller knowns it is explored since this function creates the linkage.
@@ -376,7 +376,7 @@ namespace vtil
 
 		// Queues a stack shift.
 		//
-		basic_block* shift_sp( int64_t offset, bool merge_instance = false, const const_iterator& it = {} );
+		basic_block* shift_sp( intptr_t offset, bool merge_instance = false, const const_iterator& it = {} );
 
 		// Emits an entire instruction using series of VEMITs.
 		//
@@ -404,6 +404,15 @@ namespace vtil
 		iterator end()                   { return { this, nullptr }; }
 		const_iterator begin() const     { return { this, head }; }
 		const_iterator end() const       { return { this, nullptr }; }
+		const instruction& operator[]( size_t n ) const {
+			int i = 0;
+			auto it = head;
+			while ( it ) {
+				if (i == n) return it->value;
+				i++; it = it->next;
+			}
+			throw std::out_of_range("out of range");
+		}
 
 		// Instruction insertion.
 		//

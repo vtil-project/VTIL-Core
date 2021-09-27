@@ -58,7 +58,7 @@ namespace std
 	{
 		size_t operator()( const vtil::optimizer::register_id& id ) const
 		{
-			return (id.flags << 32u) | id.combined_id;
+			return size_t( id.flags << 16u ) | (size_t) id.combined_id;
 		}
 	};
 }

@@ -66,7 +66,7 @@ namespace vtil
 	{
 		static constexpr size_t max_entry_count = ( size_t ) limit;
 		static constexpr size_t max_xref_count = 8;
-		static constexpr size_t invalid_xref = ~0ull;
+		static constexpr size_t invalid_xref = ( size_t ) ~0ull;
 
 		// Type of entries provided in the constructor.
 		//

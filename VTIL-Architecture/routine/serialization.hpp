@@ -120,7 +120,8 @@ namespace vtil
 		// Read the actual value.
 		//
 		ss.read( ( char* ) &v, sizeof( T ) );
-		if ( ss.eof() || ss.fail() ) throw std::out_of_range( "Reading past file end." );
+		if ( ss.eof() || ss.fail() ) 
+			throw std::out_of_range( "Reading past file end." );
 	}
 
 	// Serialization of standard containers.
@@ -171,7 +172,8 @@ namespace vtil
 			//
 			v.resize( n );
 			ss.read( ( char* ) v.data(), n * sizeof( value_type ) );
-			if ( ss.eof() || ss.fail() ) throw std::out_of_range( "Reading past file end." );
+			if ( ss.eof() || ss.fail() ) 
+				throw std::out_of_range( "Reading past file end." );
 		}
 		// Otherwise, default back to per-element invokation.
 		//

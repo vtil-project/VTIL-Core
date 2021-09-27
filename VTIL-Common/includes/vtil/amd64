@@ -1,4 +1,5 @@
 #pragma once
+#include "../../arch/arch_size.hpp"
 #include "../../arch/amd64/amd64_assembler.hpp"
 #include "../../arch/amd64/amd64_disassembler.hpp"
 #include "../../arch/amd64/amd64_register_details.hpp"

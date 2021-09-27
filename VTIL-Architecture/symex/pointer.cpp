@@ -111,7 +111,7 @@ namespace vtil::symbolic
 
 	// Simple pointer offseting.
 	//
-	pointer pointer::operator+( int64_t dst ) const
+	pointer pointer::operator+( intptr_t dst ) const
 	{
 		pointer copy = *this;
 		copy.base = std::move( copy.base ) + dst;
@@ -125,7 +125,7 @@ namespace vtil::symbolic
 
 	// Calculates the distance between two pointers as an optional constant.
 	//
-	std::optional<int64_t> pointer::operator-( const pointer& o ) const
+	std::optional<intptr_t> pointer::operator-( const pointer& o ) const
 	{
 		int64_t delta = xvalues[ 0 ] - o.xvalues[ 0 ];
 		for ( size_t n = 1; n < xvalues.size(); n++ )

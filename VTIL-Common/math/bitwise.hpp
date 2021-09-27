@@ -31,6 +31,7 @@
 #include <optional>
 #include <type_traits>
 #include <numeric>
+#include "../arch/arch_size.hpp"
 #include "../util/reducable.hpp"
 #include "../io/asserts.hpp"
 #include "../util/type_helpers.hpp"
@@ -52,9 +53,9 @@ namespace vtil::math
         static_assert( sizeof( T ) <= sizeof( T2 ), "Narrow cast is extending." );
 
         if constexpr ( std::is_signed_v<T2> ^ std::is_signed_v<T> )
-            dassert( 0 <= o && o <= std::numeric_limits<T>::max() );
+            dassert( 0 <= o && (T) o <= std::numeric_limits<T>::max() );
         else
-            dassert( std::numeric_limits<T>::min() <= o && o <= std::numeric_limits<T>::max() );
+            dassert( std::numeric_limits<T>::min() <= o && (T) o <= std::numeric_limits<T>::max() );
 
         return ( T ) o;
     }
@@ -386,7 +387,7 @@ namespace vtil::math
     //
     static constexpr uint64_t zero_extend( uint64_t value, bitcnt_t bcnt_src )
     {
-        dassert( 0 < bcnt_src && bcnt_src <= 64 );
+        dassert( 0 < bcnt_src && bcnt_src <= arch::bit_count );
         return impl::zx_table[ bcnt_src ]( value );
     }
 
@@ -394,7 +395,7 @@ namespace vtil::math
     //
     static constexpr int64_t sign_extend( uint64_t value, bitcnt_t bcnt_src )
     {
-        dassert( 0 < bcnt_src && bcnt_src <= 64 );
+        dassert( 0 < bcnt_src && bcnt_src <= arch::bit_count );
         return impl::sx_table[ bcnt_src ]( value );
     }
 
@@ -481,7 +482,7 @@ namespace vtil::math
         //
         constexpr bit_vector& resize( bitcnt_t new_size, bool signed_cast = false )
         {
-            fassert( 0 < new_size && new_size <= 64 );
+            fassert( 0 < new_size && new_size <= arch::bit_count );
 
             if( signed_cast && new_size > bit_count )
             {

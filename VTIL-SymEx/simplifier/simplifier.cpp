@@ -128,7 +128,7 @@ namespace vtil::symbolic
 
 		struct signature_hasher
 		{
-			size_t operator()( const expression::reference& ref ) const noexcept { return ref->signature.hash(); }
+			hash_t operator()( const expression::reference& ref ) const noexcept { return ref->signature.hash(); }
 		};
 
 		struct cache_scanner

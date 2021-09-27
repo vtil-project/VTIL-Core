@@ -52,8 +52,8 @@ namespace vtil
 			//
 			union
 			{
-				int64_t i64;
-				uint64_t u64;
+				intptr_t ival;
+				uintptr_t uval;
 			};
 
 			// Number of bits it is expressed in.
@@ -62,13 +62,13 @@ namespace vtil
 
 			// Replicate default constructor, skipping the reducable base.
 			//
-			constexpr immediate_t() : u64( 0 ), bit_count( 0 ) {}
-			constexpr immediate_t( uint64_t u64, bitcnt_t bit_count )
-				: u64( u64 ), bit_count( bit_count ) {}
+			constexpr immediate_t() : uval( 0 ), bit_count( 0 ) {}
+			constexpr immediate_t(uintptr_t uval, bitcnt_t bit_count )
+				: uval( uval ), bit_count( bit_count ) {}
 
 			// Declare reduction.
 			//
-			REDUCE_TO( u64, bit_count );
+			REDUCE_TO( uval, bit_count );
 		};
 
 		// Descriptor of this operand.
@@ -93,7 +93,7 @@ namespace vtil
 		//
 		template<Integral T>
 		constexpr operand( T value, bitcnt_t bit_count = sizeof( T ) * 8 ) 
-			: descriptor( immediate_t{ ( uint64_t ) math::imm_extend( value ), bit_count } ) {}
+			: descriptor( immediate_t{ ( uintptr_t ) math::imm_extend( value ), bit_count } ) {}
 
 		// Wrappers around std::get.
 		//
@@ -109,7 +109,7 @@ namespace vtil
 
 		// Conversion to human-readable format.
 		//
-		std::string to_string() const { return is_register() ? reg().to_string() : format::hex( imm().i64 ); }
+		std::string to_string() const { return is_register() ? reg().to_string() : format::hex( imm().ival ); }
 
 		// Simple helpers to determine the type of operand.
 		//

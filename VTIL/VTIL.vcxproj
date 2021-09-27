@@ -114,7 +114,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
     <PostBuildEvent>
-      <Command>lib.exe /out:""$(OutDir)VTIL.lib" "$(OutDir)VTIL-Architecture.lib" "$(OutDir)VTIL-Common.lib" "$(OutDir)VTIL-Compiler.lib" "$(OutDir)VTIL-SymEx.lib"</Command>
+      <Command>lib.exe /out:"$(OutDir)VTIL.lib" "$(OutDir)VTIL-Architecture.lib" "$(OutDir)VTIL-Common.lib" "$(OutDir)VTIL-Compiler.lib" "$(OutDir)VTIL-SymEx.lib"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -133,7 +133,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
     <PostBuildEvent>
-      <Command>lib.exe /out:""$(OutDir)VTIL.lib" "$(OutDir)VTIL-Architecture.lib" "$(OutDir)VTIL-Common.lib" "$(OutDir)VTIL-Compiler.lib" "$(OutDir)VTIL-SymEx.lib"</Command>
+      <Command>lib.exe /out:"$(OutDir)VTIL.lib" "$(OutDir)VTIL-Architecture.lib" "$(OutDir)VTIL-Common.lib" "$(OutDir)VTIL-Compiler.lib" "$(OutDir)VTIL-SymEx.lib"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -156,7 +156,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
     <PostBuildEvent>
-      <Command>lib.exe /out:""$(OutDir)VTIL.lib" "$(OutDir)VTIL-Architecture.lib" "$(OutDir)VTIL-Common.lib" "$(OutDir)VTIL-Compiler.lib" "$(OutDir)VTIL-SymEx.lib"</Command>
+      <Command>lib.exe /out:"$(OutDir)VTIL.lib" "$(OutDir)VTIL-Architecture.lib" "$(OutDir)VTIL-Common.lib" "$(OutDir)VTIL-Compiler.lib" "$(OutDir)VTIL-SymEx.lib"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -179,7 +179,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
     <PostBuildEvent>
-      <Command>lib.exe /out:""$(OutDir)VTIL.lib" "$(OutDir)VTIL-Architecture.lib" "$(OutDir)VTIL-Common.lib" "$(OutDir)VTIL-Compiler.lib" "$(OutDir)VTIL-SymEx.lib"</Command>
+      <Command>lib.exe /out:"$(OutDir)VTIL.lib" "$(OutDir)VTIL-Architecture.lib" "$(OutDir)VTIL-Common.lib" "$(OutDir)VTIL-Compiler.lib" "$(OutDir)VTIL-SymEx.lib"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>

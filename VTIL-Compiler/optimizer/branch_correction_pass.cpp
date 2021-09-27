@@ -117,7 +117,7 @@ namespace vtil::optimizer
 				// If immediate return as is.
 				//
 				if ( exp->is_constant() )
-					return operand{ *exp->get<uint64_t>(), exp->size() };
+					return operand{ *exp->get<uintptr_t>(), exp->size() };
 
 				// If expression is not a register:
 				//
@@ -212,7 +212,7 @@ namespace vtil::optimizer
 			 branch->operands[ 0 ].is_register() )
 		{
 
-			( +branch )->operands[ 0 ] = { *branch_info.destinations[ 0 ]->get<vip_t>(), 64 };
+			( +branch )->operands[ 0 ] = { *branch_info.destinations[ 0 ]->get<vip_t>(), arch::bit_count };
 			cnt++;
 		}
 

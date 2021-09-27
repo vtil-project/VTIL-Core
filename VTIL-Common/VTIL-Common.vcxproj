@@ -225,6 +225,7 @@
     </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="arch\arch_size.hpp" />
     <ClInclude Include="arch\x86\x86_assembler.hpp" />
     <ClInclude Include="arch\x86\x86_disassembler.hpp" />
     <ClInclude Include="arch\x86\x86_register_details.hpp" />

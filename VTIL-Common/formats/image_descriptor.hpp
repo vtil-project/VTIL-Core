@@ -156,7 +156,7 @@ namespace vtil
 
 		// Returns the next relative virtual address that'd the next section added using ::add_section would be assigned.
 		//
-		virtual uint64_t next_free_rva() const = 0;
+		virtual uintptr_t next_free_rva() const = 0;
 
 		// Appends a new section to the binary. ::name/read/write/execute will be used, rest will be overwritten.
 		//

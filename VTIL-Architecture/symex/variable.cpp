@@ -188,7 +188,7 @@ namespace vtil::symbolic
 		{
 			// Iterate each operand:
 			//
-			for ( int i = 0; i < it->base->operand_count(); i++ )
+			for ( size_t i = 0; i < it->base->operand_count(); i++ )
 			{
 				// Skip if not register.
 				//
@@ -460,11 +460,11 @@ namespace vtil::symbolic
 
 			// Must have a valid pointer of 64 bits.
 			//
-			cvalidate( mem.decay() && mem.decay().size() == 64 );
+			cvalidate( mem.decay() && mem.decay().size() == arch::bit_count );
 
 			// Bit count should be within (0, 64] and byte-addressable.
 			//
-			cvalidate( 0 < mem.bit_count && mem.bit_count <= 64 && ( mem.bit_count & 7 ) == 0 );
+			cvalidate( 0 < mem.bit_count && mem.bit_count <= arch::bit_count && ( mem.bit_count & 7 ) == 0 );
 
 			return true;
 		}
@@ -500,7 +500,7 @@ namespace vtil::symbolic
 		// Extend to 64-bits with offset set at 0, shift it and
 		// mask it to experss the value of original register.
 		//
-		expression tmp = variable{ at, register_desc{ src.flags, src.local_id, 64, 0, src.architecture } }.to_expression( false );
+		expression tmp = variable{ at, register_desc{ src.flags, src.local_id, arch::bit_count, 0, src.architecture } }.to_expression( false );
 		if ( src.bit_offset ) tmp >>= src.bit_offset;
 		tmp.resize( src.bit_count );
 		return tmp;
