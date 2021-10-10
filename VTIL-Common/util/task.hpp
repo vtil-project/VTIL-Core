@@ -9,7 +9,11 @@
 // Determine whether or not to use thread pooling for tasks.
 //
 #ifndef VTIL_USE_THREAD_POOLING
-	#define VTIL_USE_THREAD_POOLING     true
+    #ifdef _DEBUG
+        #define VTIL_USE_THREAD_POOLING     false
+    #else
+        #define VTIL_USE_THREAD_POOLING     true
+    #endif
 #endif
 
 namespace vtil::task
