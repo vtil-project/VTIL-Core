@@ -36,7 +36,11 @@
 // Determine whether or not to use parallel transformations.
 //
 #ifndef VTIL_USE_PARALLEL_TRANSFORM
-	#define VTIL_USE_PARALLEL_TRANSFORM true
+    #if _DEBUG
+        #define VTIL_USE_PARALLEL_TRANSFORM false
+    #else
+        #define VTIL_USE_PARALLEL_TRANSFORM true
+    #endif
 #endif
 
 namespace vtil
@@ -66,7 +70,7 @@ namespace vtil
 		if ( !VTIL_USE_PARALLEL_TRANSFORM || container_size == 1 )
 		{
 			for ( auto it = std::begin( container ); it != std::end( container ); ++it )
-				return worker( *it );
+				worker( *it );
 		}
 		// Otherwise, create task pool and insert for each entry.
 		//
