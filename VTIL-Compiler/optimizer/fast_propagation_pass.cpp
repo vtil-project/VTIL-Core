@@ -366,6 +366,8 @@ namespace vtil::optimizer
 								blk->insert( prev_it, { &ins::bshl, { { tmp }, { store_offset * 8, arch::bit_count } } } );
 							blk->insert( prev_it, { &ins::band, { { tmp }, { store_mask, arch::bit_count } } } );
 							blk->insert( prev_it, { &ins::bor, { { final_tmp }, { tmp } } } );
+
+							first = false;
 						}
 					}
 
