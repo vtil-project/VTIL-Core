@@ -384,7 +384,7 @@ DOCTEST_TEST_CASE("Optimization dead_code_elimination_pass")
 
         auto block3 = block1->fork( 0x3000 );
         {
-            // mov ecx, [esp - 8]
+            // mov eax, [esp - 8]
             block3->ldd( reg_eax, vtil::REG_SP, -8 );
             // sp -= 0x10
             block3->shift_sp( 0x10 );
