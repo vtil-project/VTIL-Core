@@ -28,6 +28,29 @@ DOCTEST_TEST_CASE("dummy")
 	CHECK(1 == 1);
 }
 
+DOCTEST_TEST_CASE("Expression hash")
+{
+    vtil::logger::log("\n\n>> %s \n", __FUNCTION__);
+    auto const_a = vtil::symbolic::expression{ 123 };
+    auto const_b = (vtil::symbolic::expression{ 123 } + 1 - 1).simplify( true );
+    CHECK( const_a.hash() == const_b.hash() );
+
+    auto block = vtil::basic_block::begin( 0x1234 );
+    block->push( 0 );
+    auto variable_a = vtil::symbolic::variable{ block->begin(), vtil::REG_FLAGS }.to_expression();
+    auto variable_b = vtil::symbolic::variable{ block->begin(), vtil::REG_FLAGS }.to_expression();
+    // vtil::logger::log( "variable_a: %s \n", variable_a.to_string().c_str() );
+    CHECK( variable_a.hash() == variable_b.hash() );
+
+    auto exp_a = __bt( variable_a, (uint32_t)0x6 ).simplify(true);
+    auto exp_b = __bt( variable_b, (uint8_t)0x6 ).simplify(true);
+    vtil::logger::log( "exp_a: %s \n", exp_a.to_string().c_str() );
+    vtil::logger::log( "exp_b: %s \n", exp_b.to_string().c_str() );
+    CHECK( exp_a.hash() == exp_b.hash() );
+
+    CHECK( 1 == 1 );
+}
+
 DOCTEST_TEST_CASE("Optimization vtil file")
 {
     vtil::logger::log("\n\n>> %s \n", __FUNCTION__);
