@@ -74,27 +74,21 @@ DOCTEST_TEST_CASE("Expression hash")
         // eax@6:1
         vtil::register_desc temp_6(vtil::register_local, 1, 1, 6);
         auto exp_a = vtil::symbolic::variable{ block->begin(), temp_6 }.to_expression();
-        exp_a += (uint32_t)1;
+        exp_a.resize( vtil::arch::bit_count );
         exp_a = exp_a.simplify( true );
         vtil::logger::log( "exp_a.size: %d \n", exp_a.value.size() );
         vtil::logger::log( "exp_a: %s \n", exp_a.to_string().c_str() );
         
-
-        // eax >> 6 && 1
+        // eax >> 6 & 1
         vtil::register_desc temp(vtil::register_local, 1, vtil::arch::bit_count, 0);
         auto exp_b = vtil::symbolic::variable{ block->begin(), temp }.to_expression();
         exp_b >>= (uint8_t)6;
-        exp_b &= (uint64_t)1;
-        exp_b += (uint32_t)1;
+        exp_b &= (uint8_t)1;
         exp_b = exp_b.simplify( true );
         vtil::logger::log( "exp_b.size: %d \n", exp_b.value.size() );
         vtil::logger::log( "exp_b: %s \n", exp_b.to_string().c_str() );
-        // CHECK(exp_a.hash() == exp_b.hash());
+        CHECK(exp_a.hash() == exp_b.hash());
     }
-
-
-
-    CHECK( 1 == 1 );
 }
 
 DOCTEST_TEST_CASE("Optimization vtil file")

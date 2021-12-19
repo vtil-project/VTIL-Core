@@ -549,7 +549,7 @@ namespace vtil::symbolic
 					case math::operator_id::shift_left:
 					case math::operator_id::shift_right:
 					{
-						rhs.resize( sizeof(uint8_t), false );
+						rhs.resize( sizeof(uintptr_t), false );
 						break;
 					}
 					
