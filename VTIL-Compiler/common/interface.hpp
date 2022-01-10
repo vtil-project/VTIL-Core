@@ -372,6 +372,8 @@ namespace vtil::optimizer
 		std::string name() override { return T{}.name(); }
 	};
 
+	static int kurwa = 0;
+
 	// Used to profile the pass.
 	//
 	template<typename T>
@@ -384,7 +386,7 @@ namespace vtil::optimizer
 
 			auto [cnt, time] = profile( [ & ] () { return T::pass( blk, xblock ); } );
 			if ( !xblock )
-				logger::log( " Took %-10s (N=%d).\n", time, cnt );
+				logger::log( " Took %-10s (block N=%d).\n", time, cnt );
 			return cnt;
 		}
 
@@ -392,7 +394,13 @@ namespace vtil::optimizer
 		{
 			logger::log( "Routine => %-64s            |", T{}.name() );
 			auto [cnt, time] = profile( [ & ] () { return T::xpass( rtn ); } );
-			logger::log( " Took %-10s (N=%d).\n", time, cnt );
+			vtil::debug::dump(rtn);
+
+			char chuj[25] = "";
+			sprintf(chuj, "opt%03d.vtil", kurwa++);
+			save_routine(rtn, chuj);
+
+			logger::log( " Took %-10s (routine N=%d).\n", time, cnt );
 			return cnt;
 		}
 	};

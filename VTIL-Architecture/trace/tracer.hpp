@@ -33,7 +33,7 @@
 // Determine whether we should log the details of the variable tracing process.
 //
 #ifndef VTIL_OPT_TRACE_VERBOSE
-	#define VTIL_OPT_TRACE_VERBOSE 0
+	#define VTIL_OPT_TRACE_VERBOSE 1
 #endif
 
 namespace vtil

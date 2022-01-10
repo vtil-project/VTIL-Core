@@ -21,6 +21,7 @@ add_subdirectory(VTIL-Common)
 add_subdirectory(VTIL-SymEx)
 add_subdirectory(VTIL-Architecture)
 add_subdirectory(VTIL-Compiler)
+add_subdirectory(VTIL-Opt)
 
 # After all other targets are defined, include the VTIL interface target
 # Use this target in projects that use VTIL: https://github.com/vtil-project/VTIL-Samples
