@@ -379,3 +379,5 @@ build/
 
 ## Intel VTune
 VTune Results/
+cmake-build-*/
+.idea/
