@@ -30,4 +30,6 @@ add_subdirectory(VTIL)
 # Tests
 if(VTIL_BUILD_TESTS)
     add_subdirectory(VTIL-Tests)
+    enable_testing()
+    add_test(NAME VTIL-Tests COMMAND "$<TARGET_FILE:VTIL-Tests>")
 endif()
