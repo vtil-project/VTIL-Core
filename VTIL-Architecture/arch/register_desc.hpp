@@ -148,21 +148,20 @@ namespace vtil
 
 		// Default constructor / move / copy.
 		//
-		register_desc() = default;
-		register_desc( register_desc&& ) = default;
-		register_desc( const register_desc& ) = default;
-		register_desc& operator=( register_desc&& ) = default;
-		register_desc& operator=( const register_desc& ) = default;
+		constexpr register_desc() = default;
+		constexpr register_desc( register_desc&& ) = default;
+		constexpr register_desc( const register_desc& ) = default;
+		constexpr register_desc& operator=( register_desc&& ) = default;
+		constexpr register_desc& operator=( const register_desc& ) = default;
 
 		// Construct a fully formed register.
 		//
-	    register_desc( weak_id id, bitcnt_t bit_count, bitcnt_t bit_offset = 0 )
+		constexpr register_desc( weak_id id, bitcnt_t bit_count, bitcnt_t bit_offset = 0 )
 			: flags( ( register_flag ) id.flags ), combined_id( id.cid ), bit_count( bit_count ), bit_offset( bit_offset )
 		{
 			is_valid( true );
 		}
-
-	    register_desc( uint32_t flags, uint64_t id, bitcnt_t bit_count, bitcnt_t bit_offset = 0, uint64_t architecture = architecture_default )
+		constexpr register_desc( uint32_t flags, uint64_t id, bitcnt_t bit_count, bitcnt_t bit_offset = 0, uint64_t architecture = 0 )
 			: flags( ( register_flag ) flags ), local_id( id ), bit_count( bit_count ), bit_offset( bit_offset ), architecture( architecture )
 		{
 			is_valid( true );
@@ -173,7 +172,7 @@ namespace vtil
 
 		// Returns whether the descriptor is valid or not.
 		//
-		bool is_valid( bool force = false ) const
+		constexpr bool is_valid( bool force = false ) const
 		{
 			// Validate bit count and offset.
 			//
@@ -246,26 +245,26 @@ namespace vtil
 
 		// Simple helpers to determine some properties.
 		// 
-		bool is_flags() const { return flags & register_flags; }
-		bool is_undefined() const { return flags & register_undefined; }
-		bool is_local() const { return flags & register_local; }
-		bool is_global() const { return ( ~flags ) & register_local; }
-		bool is_virtual() const { return ( ~flags ) & register_physical; }
-		bool is_physical() const { return flags & register_physical; }
-		bool is_volatile() const { return flags & register_volatile; }
-		bool is_read_only() const { return flags & register_readonly; }
-		bool is_stack_pointer() const { return flags & register_stack_pointer; }
-		bool is_image_base() const { return flags & register_image_base; }
-		bool is_special() const { return flags & register_special; }
-		bool is_internal() const { return ( flags & register_internal ) == register_internal; }
+		constexpr bool is_flags() const { return flags & register_flags; }
+		constexpr bool is_undefined() const { return flags & register_undefined; }
+		constexpr bool is_local() const { return flags & register_local; }
+		constexpr bool is_global() const { return ( ~flags ) & register_local; }
+		constexpr bool is_virtual() const { return ( ~flags ) & register_physical; }
+		constexpr bool is_physical() const { return flags & register_physical; }
+		constexpr bool is_volatile() const { return flags & register_volatile; }
+		constexpr bool is_read_only() const { return flags & register_readonly; }
+		constexpr bool is_stack_pointer() const { return flags & register_stack_pointer; }
+		constexpr bool is_image_base() const { return flags & register_image_base; }
+		constexpr bool is_special() const { return flags & register_special; }
+		constexpr bool is_internal() const { return ( flags & register_internal ) == register_internal; }
 
 		// Returns the mask for the bits that this register's value would occupy in a 64-bit register.
 		//
-		uint64_t get_mask() const { return math::fill( bit_count, bit_offset ); }
+		constexpr uint64_t get_mask() const { return math::fill( bit_count, bit_offset ); }
 
 		// Checks whether bits from this register and the other register overlap.
 		//
-		bool overlaps( const register_desc& o ) const
+		constexpr bool overlaps( const register_desc& o ) const
 		{ 
 			if ( local_id != o.local_id || architecture != o.architecture || flags != o.flags )
 				return false;
@@ -274,15 +273,15 @@ namespace vtil
 
 		// Simple wrappers to resize/rebase a register.
 		//
-	    register_desc select( bitcnt_t new_bit_count, bitcnt_t new_bit_offset ) const
+		constexpr register_desc select( bitcnt_t new_bit_count, bitcnt_t new_bit_offset ) const
 		{
 			return { flags, local_id, new_bit_count, new_bit_offset, architecture };
 		}
-		register_desc rebase( bitcnt_t new_bit_offset ) const
+		constexpr register_desc rebase( bitcnt_t new_bit_offset ) const
 		{
 			return select( bit_count, new_bit_offset );
 		}
-		register_desc resize( bitcnt_t new_bit_count ) const  
+		constexpr register_desc resize( bitcnt_t new_bit_count ) const  
 		{ 
 			return select( new_bit_count, bit_offset );
 		}
@@ -395,12 +394,12 @@ namespace vtil
 
 	// VTIL special registers.
 	//
-	static register_desc UNDEFINED =   { register_volatile | register_undefined,     0, arch::bit_count };
-	static register_desc REG_IMGBASE = { register_readonly | register_image_base,    0, arch::bit_count };
-	static register_desc REG_FLAGS =   { register_physical | register_flags,         0, arch::bit_count };
-	static register_desc REG_SP =      { register_physical | register_stack_pointer, 0, arch::bit_count };
+	static constexpr register_desc UNDEFINED =   { register_volatile | register_undefined,     0, arch::bit_count };
+	static constexpr register_desc REG_IMGBASE = { register_readonly | register_image_base,    0, arch::bit_count };
+	static constexpr register_desc REG_FLAGS =   { register_physical | register_flags,         0, arch::bit_count };
+	static constexpr register_desc REG_SP =      { register_physical | register_stack_pointer, 0, arch::bit_count };
 
 	// Helper to make undefined of N bits.
 	//
-	static register_desc make_undefined( bitcnt_t sz ) { return UNDEFINED.select( sz, 0 ); }
+	static constexpr register_desc make_undefined( bitcnt_t sz ) { return UNDEFINED.select( sz, 0 ); }
 };

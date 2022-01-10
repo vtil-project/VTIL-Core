@@ -66,7 +66,11 @@ namespace vtil
 	{
 		static constexpr size_t max_entry_count = ( size_t ) limit;
 		static constexpr size_t max_xref_count = 8;
+#ifdef __GNUC__ // There is a very weird bug in gcc-11 that breaks this
+		static constexpr size_t invalid_xref = 0;
+#else
 		static constexpr size_t invalid_xref = ( size_t ) ~0ull;
+#endif // __GNUC__
 
 		// Type of entries provided in the constructor.
 		//
@@ -90,6 +94,8 @@ namespace vtil
 		{
 			for ( auto&& [id, entry] : entries )
 			{
+				fassert( id != invalid_xref );
+
 				// Must be the only reference to it.
 				//
 				auto& entry_n = linear_entries[ ( size_t ) id ];
