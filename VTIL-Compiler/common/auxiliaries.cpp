@@ -137,7 +137,8 @@ namespace vtil::optimizer::aux
 						symbolic::expression exp =
 							local_var.mem().decay()
 							- local_var.at.block->sp_offset
-							+ rel_ptr( symbolic::variable{ it.block->begin(), REG_SP } )
+							//+ rel_ptr( symbolic::variable{ it.block->begin(), REG_SP } )
+							+ symbolic::variable{ it.block->begin(), REG_SP }.to_expression()
 							- symbolic::variable{ local_var.at.block->begin(), REG_SP }.to_expression();
 						local_var = symbolic::variable{ it.block->begin(), { symbolic::pointer{ exp }, local_var.mem().bit_count } };
 					}

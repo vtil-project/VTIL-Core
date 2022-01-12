@@ -30,6 +30,7 @@
 #include "../optimizer/stack_pinning_pass.hpp"
 #include "../optimizer/istack_ref_substitution_pass.hpp"
 #include "../optimizer/bblock_extension_pass.hpp"
+#include "../optimizer/bblock_thunk_removal_pass.hpp"
 #include "../optimizer/stack_propagation_pass.hpp"
 #include "../optimizer/dead_code_elimination_pass.hpp"
 #include "../optimizer/fast_dead_code_elimination_pass.hpp"
@@ -103,7 +104,8 @@ namespace vtil::optimizer
 				>
 			>
 		>,
-		stack_pinning_pass
+		stack_pinning_pass,
+		bblock_thunk_removal_pass
 	>;
 
 	// Local optimization pass.
