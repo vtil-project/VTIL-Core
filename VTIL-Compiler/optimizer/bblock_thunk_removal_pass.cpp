@@ -83,7 +83,33 @@ namespace vtil::optimizer
 				{
 					ins.operands[i].imm().ival = next->entry_vip;
 				}	
-			}					
+			}
+
+			//TODO: should we do this with another operands loop? We currently only have "js" that qualifies so a simple if does the job for now
+			//			
+			auto branching_instruction = prev->back();
+			if (branching_instruction.base == &ins::js)
+			{
+				fassert(branching_instruction.operands.size() == 3);
+
+				//This pass should not interfer with blocks that aren't already touched by branch correction / our corrections above
+				//
+				if (branching_instruction.operands[1].is_immediate() && branching_instruction.operands[2].is_immediate())
+				{
+					if (branching_instruction.operands[1].imm().ival == branching_instruction.operands[2].imm().ival)
+					{
+						auto new_vip = branching_instruction.operands[1].imm();
+
+						auto ins = std::prev(prev->end());						
+
+						(+ins)->base = &ins::jmp;
+						(+ins)->operands.resize(1);
+						(+ins)->operands[0] = { new_vip.ival, arch::bit_count };
+
+						prev->next.resize(1);
+					}
+				}
+			}			
 			
 			obsolete_blocks.emplace(blk);
 			counter++;
@@ -95,12 +121,13 @@ namespace vtil::optimizer
 			counter += pass( dst, true );
 
 		// Remove queued obsolete blocks
-		// We can only do that after completing every recusive path
+		// We can only do that after completing every recursive path
 		//
+		auto rtn = blk->owner;
 		if (visited.size() == blk->owner->num_blocks())
 		{
 			for (auto it : obsolete_blocks)
-				blk->owner->delete_block(const_cast<vtil::basic_block*>(it));
+				rtn->delete_block(const_cast<vtil::basic_block*>(it));
 		}
 
 		return counter;
