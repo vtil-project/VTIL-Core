@@ -54,6 +54,10 @@ namespace vtil
 			{
 				intptr_t ival;
 				uintptr_t uval;
+#if _M_X64 || __x86_64__
+				int64_t i64;
+				uint64_t u64;
+#endif
 			};
 
 			// Number of bits it is expressed in.
