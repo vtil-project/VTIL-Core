@@ -1,4 +1,6 @@
-project(VTIL)
+# Extract project name from folder
+get_filename_component(PROJECT_NAME ${CMAKE_CURRENT_LIST_DIR} NAME)
+string(REPLACE " " "_" PROJECT_NAME "${PROJECT_NAME}")
 
 # This builds no sources -- it simply aliases a collection of all other targets created by VTIL
 #
