@@ -202,7 +202,7 @@ namespace vtil
 			{ register_physical, X86_REG_EBP, 32 },
 
 			/*.shadow_space =*/
-			0x20,
+			0x0,
 
 			/*.purge_stack =*/
 			true,
