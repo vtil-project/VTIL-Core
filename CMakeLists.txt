@@ -4,10 +4,16 @@ cmake_minimum_required(VERSION 3.14.5)
 # Define the VTIL project
 project(VTIL-Core)
 
-option(VTIL_BUILD_TESTS "Build tests" OFF)
+# Detect if VTIL-Core is compiled as the root project
+set(VTIL_ROOT_PROJECT OFF)
+if(CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
+    set(VTIL_ROOT_PROJECT ON)
 
-# Enable solution folder support
-set_property(GLOBAL PROPERTY USE_FOLDERS ON)
+    # Enable solution folder support
+    set_property(GLOBAL PROPERTY USE_FOLDERS ON)
+endif()
+
+option(VTIL_BUILD_TESTS "Build tests" ${VTIL_ROOT_PROJECT})
 
 # Load the dependencies
 set(CMAKE_FOLDER "VTIL-Core/Dependencies")

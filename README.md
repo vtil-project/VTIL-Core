@@ -40,3 +40,18 @@ This repository contains the core components of the VTIL Project used across the
 It is currently incomplete as the initial release is not done yet, and documentation and FAQ will be within this repository and the organization website once they're done.
 
 Until the initial release, you can keep up to date with the VTIL project by checking my [personal twitter account](https://twitter.com/_can1357) or the VTIL website [vtil.org](https://vtil.org/).
+
+## Building (Windows)
+
+```
+cmake -B build
+```
+
+Then open `build\VTIL-Core.sln`. You can also open this folder in a CMake-compatible IDE (Visual Studio, CLion, Qt Creator, VS Code).
+
+## Building (Linux/Mac)
+
+```
+cmake -G Ninja -B build -DCMAKE_BUILD_TYPE=Release
+cmake --build build
+```
