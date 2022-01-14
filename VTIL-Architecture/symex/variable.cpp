@@ -380,27 +380,24 @@ namespace vtil::symbolic
 
 				// If vmexit, declared trashed if below or at the shadow space:
 				//
-				if ( cwrite )
+				if ( cwrite && cc.purge_stack)
 				{
-					if ( it->base == &ins::vexit ? it.block->owner->routine_convention.purge_stack : cc.purge_stack )
-					{
-						// Determine the limit of the stack memory owned by this routine.
-						//
-						expression limit = 
-							tracer->trace( { it, REG_SP } ) + 
-							it.block->sp_offset + 
-							cc.shadow_space;
+					// Determine the limit of the stack memory owned by this routine.
+					//
+					expression limit = 
+						tracer->trace( { it, REG_SP } ) + 
+						it.block->sp_offset + 
+						( it->base == &ins::vexit ? 0 : cc.shadow_space );
 
-						// Calculate the displacement, if constant below 0, declare trashed.
-						//
-						access_details details;
-						fill_displacement( &details, mem.base, pointer{ std::move( limit ) }, tracer, xblock );
-						if ( !details.is_unknown() && ( details.bit_offset + var.bit_count() ) <= 0 )
-						{
-							result += { .bit_offset = 0, .bit_count = var.bit_count(), .read = false, .write = true };
-							return result;
-						}
-					}
+					// Calculate the displacement, if constant below 0, declare trashed.
+					//
+					access_details details;
+					fill_displacement( &details, mem.base, pointer{ std::move( limit ) }, tracer, xblock );
+					if ( !details.is_unknown() && ( details.bit_offset + var.bit_count() ) <= 0 )
+					{
+						result += { .bit_offset = 0, .bit_count = var.bit_count(), .read = false, .write = true };
+						return result;
+					}					
 				}
 
 				// Report unknown access: (TODO: Proper parsing!)
