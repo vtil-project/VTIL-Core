@@ -40,6 +40,7 @@ namespace vtil::optimizer
 		//
 		path_set visited;
 		path_set obsolete_blocks;
+		basic_block* first_block;
 
 		size_t pass( basic_block* blk, bool xblock = false ) override;
 		size_t xpass( routine* rtn ) override;

@@ -33,7 +33,13 @@ namespace vtil::optimizer
 	//
 	size_t bblock_thunk_removal_pass::pass(basic_block* blk, bool xblock)
 	{
-		fassert( xblock );		
+		fassert( xblock );
+
+		// Track at what block we start the recursive fixing.
+		// We can only delete blocks just before leaving the function
+		//
+		if(!first_block)
+			first_block = blk;
 
 		// Skip if already visited.
 		//
@@ -56,23 +62,25 @@ namespace vtil::optimizer
 			basic_block* prev = blk->prev[0];				
 
 			// Remove the block from the next hierarchy
-			//
-			for (size_t i = 0; i < prev->next.size(); i++)
+			//	
+			for (auto& it : prev->next)
 			{
-				if (prev->next[i]->entry_vip == blk->entry_vip)
-					prev->next[i] = next;
+				if (it->entry_vip == blk->entry_vip)
+					it = next;
 			}
 
 			// Remove the block from the prev hierarchy
 			//
-			for (size_t i = 0; i < next->prev.size(); i++)
+			for (auto& it : next->prev)
 			{
-				if (next->prev[i]->entry_vip == blk->entry_vip)
-					next->prev[i] = prev;
+				if (it->entry_vip == blk->entry_vip)
+					it = prev;
 			}
 			
 			fassert(prev->back().base->branch_operands_vip.size() != 0);
 
+			//Regular loop, because we need the operand index for make_mutable
+			//
 			for (size_t i = 0; i < prev->back().operands.size(); i++)
 			{
 				if (!prev->back().operands[i].is_immediate())
@@ -85,14 +93,14 @@ namespace vtil::optimizer
 				}	
 			}
 
-			//TODO: should we do this with another operands loop? We currently only have "js" that qualifies so a simple if does the job for now
+			// TODO: should we do this with another operands loop? We currently only have "js" that qualifies so a simple if does the job for now
 			//			
 			auto branching_instruction = prev->back();
 			if (branching_instruction.base == &ins::js)
 			{
 				fassert(branching_instruction.operands.size() == 3);
 
-				//This pass should not interfer with blocks that aren't already touched by branch correction / our corrections above
+				// This pass should not interfer with blocks that aren't already touched by branch correction / our corrections above
 				//
 				if (branching_instruction.operands[1].is_immediate() && branching_instruction.operands[2].is_immediate())
 				{
@@ -107,6 +115,8 @@ namespace vtil::optimizer
 						(+ins)->operands[0] = { new_vip.ival, arch::bit_count };
 
 						prev->next.resize(1);
+
+						next->prev.erase(std::find(next->prev.begin(), next->prev.end(), prev));
 					}
 				}
 			}			
@@ -121,11 +131,11 @@ namespace vtil::optimizer
 			counter += pass( dst, true );
 
 		// Remove queued obsolete blocks
-		// We can only do that after completing every recursive path
+		// Use the first_block variable we saved before to detect recursive depth
 		//
 		auto rtn = blk->owner;
-		if (visited.size() == blk->owner->num_blocks())
-		{
+		if (first_block == blk)
+		{			
 			for (auto it : obsolete_blocks)
 				rtn->delete_block(const_cast<vtil::basic_block*>(it));
 		}
