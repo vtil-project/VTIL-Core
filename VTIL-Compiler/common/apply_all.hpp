@@ -95,6 +95,11 @@ namespace vtil::optimizer
 		collective_propagation_pass,
 		//fast_dead_code_elimination_pass,
 		exhaust_pass<
+			branch_correction_pass,
+			bblock_extension_pass,
+			bblock_thunk_removal_pass
+		>,
+		exhaust_pass<
 			conditional_pass<
 				symbolic_rewrite_pass<false>,
 				exhaust_pass<
@@ -104,8 +109,7 @@ namespace vtil::optimizer
 				>
 			>
 		>,
-		stack_pinning_pass,
-		bblock_thunk_removal_pass
+		stack_pinning_pass
 	>;
 
 	// Local optimization pass.

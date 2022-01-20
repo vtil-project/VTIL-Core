@@ -58,6 +58,11 @@ namespace vtil::optimizer
 		{
 			fassert(blk->front() == blk->back());
 
+			// This should never happen in real world cases. We check for "jmp only", which implies zero changes to the stack
+			// This might happen if you write a test case, but shouldn't be possible otherwise
+			//
+			fassert(blk->sp_offset == 0);
+
 			basic_block* next = blk->next[0];
 			basic_block* prev = blk->prev[0];				
 
