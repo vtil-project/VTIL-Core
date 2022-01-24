@@ -594,6 +594,8 @@ DOCTEST_TEST_CASE("Optimization bblock_thunk_removal_pass")
 
 	//Check tracer validity
 	{
+		vtil::register_desc reg_ax(vtil::register_physical, registers::ax, vtil::arch::bit_count, 0);
+
 		auto block1 = vtil::basic_block::begin(0x1000);
 		{			
 			block1->push((uintptr_t)0x12345678);			
@@ -620,15 +622,15 @@ DOCTEST_TEST_CASE("Optimization bblock_thunk_removal_pass")
 
 		//Check tracer result before running passes
 		vtil::tracer tracer;
-		auto exp1 = tracer.rtrace_p({ std::prev(block4->end()), vtil::register_desc(registers::ax) });
+		auto exp1 = tracer.rtrace_p({ std::prev(block4->end()), reg_ax });
 		
 		vtil::optimizer::apply_all(block1->owner);
 		vtil::logger::log("After:\n");
 		vtil::debug::dump(block1->owner);	
 
-		//Check tracer result before running passes
+		//Check tracer result after running passes
 		vtil::tracer tracer2;
-		auto exp2 = tracer2.rtrace_p({ std::prev(block1->end()), vtil::register_desc(registers::ax) });			
+		auto exp2 = tracer2.rtrace_p({ std::prev(block1->end()), reg_ax });			
 		
 		CHECK(exp1.get()->equals(*exp2.get()));
 	}
