@@ -30,6 +30,7 @@
 #include "../optimizer/stack_pinning_pass.hpp"
 #include "../optimizer/istack_ref_substitution_pass.hpp"
 #include "../optimizer/bblock_extension_pass.hpp"
+#include "../optimizer/bblock_thunk_removal_pass.hpp"
 #include "../optimizer/stack_propagation_pass.hpp"
 #include "../optimizer/dead_code_elimination_pass.hpp"
 #include "../optimizer/fast_dead_code_elimination_pass.hpp"
@@ -93,6 +94,11 @@ namespace vtil::optimizer
 		core_local_propagation_pass,
 		collective_propagation_pass,
 		//fast_dead_code_elimination_pass,
+		exhaust_pass<
+			branch_correction_pass,
+			bblock_extension_pass,
+			bblock_thunk_removal_pass
+		>,
 		exhaust_pass<
 			conditional_pass<
 				symbolic_rewrite_pass<false>,

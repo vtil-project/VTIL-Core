@@ -130,7 +130,6 @@ DOCTEST_TEST_CASE("Optimization stack_pinning_pass")
 
 }
 
-
 DOCTEST_TEST_CASE("Optimization istack_ref_substitution_pass")
 {
     vtil::logger::log("\n\n>> %s \n", __FUNCTION__);
@@ -164,7 +163,6 @@ DOCTEST_TEST_CASE("Optimization istack_ref_substitution_pass")
 
 }
 
-
 DOCTEST_TEST_CASE("Optimization stack_propagation_pass")
 {
     vtil::logger::log("\n\n>> %s \n", __FUNCTION__);
@@ -196,7 +194,6 @@ DOCTEST_TEST_CASE("Optimization stack_propagation_pass")
     CHECK(ins.operands[1].imm().ival == 0x1234);
 }
 
-
 DOCTEST_TEST_CASE("Optimization dead_code_elimination_pass")
 {
     vtil::logger::log("\n\n>> %s \n", __FUNCTION__);
@@ -219,7 +216,6 @@ DOCTEST_TEST_CASE("Optimization dead_code_elimination_pass")
 
     CHECK(block->size() == 2);
 }
-
 
 DOCTEST_TEST_CASE("Optimization mov_propagation_pass")
 {
@@ -252,7 +248,6 @@ DOCTEST_TEST_CASE("Optimization mov_propagation_pass")
     CHECK(ins.operands[0].reg().local_id == registers::bx);
     CHECK(ins.operands[1].imm().ival == 0x1);
 }
-
 
 DOCTEST_TEST_CASE("Optimization register_renaming_pass")
 {
@@ -289,7 +284,6 @@ DOCTEST_TEST_CASE("Optimization register_renaming_pass")
     CHECK(ins.operands[0].reg().local_id == registers::bx);
     CHECK(ins.operands[1].imm().ival == 0x1);
 }
-
 
 DOCTEST_TEST_CASE("Optimization symbolic_rewrite_pass<true>")
 {
@@ -341,7 +335,6 @@ DOCTEST_TEST_CASE("Optimization symbolic_rewrite_pass<true>")
     CHECK(ins.operands[0].reg().to_string() == "$sp");
     CHECK(ins.operands[2].imm().ival == 0x1);
 }
-
 
 DOCTEST_TEST_CASE("Optimization dead_code_elimination_pass")
 {
@@ -469,11 +462,9 @@ DOCTEST_TEST_CASE("Optimization dead_code_elimination_pass")
         // Cant optimize the block1 (strq) because we use it in block3
         CHECK( block1->size() == 4 );
     }
-
-
 }
 
-DOCTEST_TEST_CASE("Simplification")
+DOCTEST_TEST_CASE("Optimization Simplification")
 {
     vtil::logger::log("\n\n>> %s \n", __FUNCTION__);
     auto block = vtil::basic_block::begin(0x1337);
@@ -553,3 +544,131 @@ DOCTEST_TEST_CASE("Simplification")
 
 }
 
+DOCTEST_TEST_CASE("Optimization bblock_thunk_removal_pass")
+{
+	vtil::logger::log("\n\n>> %s \n", __FUNCTION__);
+
+	//Check reduction
+	{	
+		auto block1 = vtil::basic_block::begin((uintptr_t)0x1000);
+		auto rtn = block1->owner;
+		{
+			// 0x1000: js eflags@11:1 0x2000, 0x3000
+			block1->js(vtil::REG_FLAGS.select(1, 11), (uintptr_t)0x2000, (uintptr_t)0x3000);
+		}
+		auto block2 = block1->fork((uintptr_t)0x2000);
+		{
+			// 0x2000: jmp 0x4000
+			block2->jmp((uintptr_t)0x4000);
+			block2->fork((uintptr_t)0x4000);
+		}
+		auto block3 = block1->fork((uintptr_t)0x3000);
+		{
+			// 0x3000: jmp 0x4000
+			block3->jmp((uintptr_t)0x4000);
+			block3->fork((uintptr_t)0x4000);
+		}
+		auto block4 = rtn->get_block((uintptr_t)0x4000);
+		{
+			// 0x4000: jmp 0x5000
+			block4->jmp((uintptr_t)0x5000);
+			block4->fork((uintptr_t)0x5000);
+		}
+		auto block5 = rtn->get_block((uintptr_t)0x5000);
+		{
+			// 0x5000: vexit 0
+			block5->vexit((uintptr_t)0);
+		}
+		vtil::logger::log("Before:\n");
+		vtil::debug::dump(rtn);
+
+		vtil::optimizer::apply_all(rtn);
+		vtil::logger::log("After:\n");
+		vtil::debug::dump(rtn);	
+
+		//block1 is now vexit
+		auto ins = (*block1)[0];
+		CHECK(ins.base == &vtil::ins::vexit);
+		CHECK(ins.operands.size() == 1);
+	}
+
+	//Check tracer validity
+	{
+		vtil::register_desc reg_ax(vtil::register_physical, registers::ax, vtil::arch::bit_count, 0);
+
+		auto block1 = vtil::basic_block::begin(0x1000);
+		{			
+			block1->push((uintptr_t)0x12345678);			
+			block1->js(registers::cx, 0x2000ull, 0x3000ull);
+		}		
+		auto block2 = block1->fork(0x2000ull);
+		{			
+			block2->jmp(0x4000ull);
+			block2->fork(0x4000ull);
+		}
+		auto block3 = block1->fork(0x3000ull);
+		{			
+			block3->jmp(0x4000ull);
+			block3->fork(0x4000ull);
+		}
+		auto block4 = block1->owner->get_block(0x4000ull);
+		{			
+			block4->pop(registers::ax);
+			block4->vexit(0ull);
+		}
+
+		vtil::logger::log("Before:\n");
+		vtil::debug::dump(block1->owner);
+
+		//Check tracer result before running passes
+		vtil::tracer tracer;
+		auto exp1 = tracer.rtrace_p({ std::prev(block4->end()), reg_ax });
+		
+		vtil::optimizer::apply_all(block1->owner);
+		vtil::logger::log("After:\n");
+		vtil::debug::dump(block1->owner);	
+
+		//Check tracer result after running passes
+		vtil::tracer tracer2;
+		auto exp2 = tracer2.rtrace_p({ std::prev(block1->end()), reg_ax });			
+		
+		CHECK(exp1.get()->equals(*exp2.get()));
+	}
+}
+
+DOCTEST_TEST_CASE("Optimization branch_correction_pass")
+{
+	vtil::logger::log("\n\n>> %s \n", __FUNCTION__);
+
+	auto block1 = vtil::basic_block::begin(0x1337);
+
+	vtil::register_desc reg_flags(vtil::register_physical | vtil::register_flags, 0, vtil::arch::bit_count, 0);
+	vtil::register_desc reg_ecx(vtil::register_physical, registers::cx, vtil::arch::bit_count, 0);
+
+	{
+		block1->mov(reg_flags.select(1, 0), 0x0);
+		block1->js(reg_flags.select(1, 0), (uintptr_t)0x2000, (uintptr_t)0x3000);
+	}
+
+	auto block2 = block1->fork(0x2000);
+	{		
+		block2->push(reg_flags); //dummy pin
+		block2->vexit(0ull);	 // marks the end
+	}
+
+	auto block3 = block1->fork(0x3000);
+	{		
+		block3->push(reg_flags); //dummy pin
+		block3->vexit(0ull);	 // marks the end
+	}
+
+	vtil::logger::log(":: Before:\n");
+	vtil::debug::dump(block1->owner);
+
+	vtil::optimizer::apply_all(block1->owner);
+
+	vtil::logger::log(":: After:\n");
+	vtil::debug::dump(block1->owner);	
+		
+	CHECK(block1->size() == 3);
+}

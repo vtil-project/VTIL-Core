@@ -393,11 +393,11 @@ namespace vtil::symbolic
 					//
 					access_details details;
 					fill_displacement( &details, mem.base, pointer{ std::move( limit ) }, tracer, xblock );
-					if ( !details.is_unknown() && ( details.bit_offset + var.bit_count() ) <= 0 ) 
+					if ( !details.is_unknown() && ( details.bit_offset + var.bit_count() ) <= 0 )
 					{
 						result += { .bit_offset = 0, .bit_count = var.bit_count(), .read = false, .write = true };
 						return result;
-					}
+					}					
 				}
 
 				// Report unknown access: (TODO: Proper parsing!)
