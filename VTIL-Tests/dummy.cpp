@@ -419,9 +419,9 @@ DOCTEST_TEST_CASE("Optimization dead_code_elimination_pass")
 
         {
             // push eax
-            block1->push( reg_eax );
+            block1->push( reg_eax ); // used in block3
             // push ebx
-            block1->push( reg_ebx );
+            block1->push( reg_ebx ); // Not used, DCE me
             // ecx = ecx == 0xAABB
             block1->te(  reg_ecx, reg_ecx, (uintptr_t)0xAABB );
             // js ecx ? 0x2000, 0x3000
@@ -430,8 +430,8 @@ DOCTEST_TEST_CASE("Optimization dead_code_elimination_pass")
 
         auto block2 = block1->fork( 0x2000 );
         {
-            // sp -= 0x10
-            block2->shift_sp( 0x10 );
+            // sp += 0x10
+            block2->shift_sp( vtil::arch::size*2 );
             // mov eax, 0
             block2->add( reg_eax, (uintptr_t)1 );  // need this to contains [shift_sp]
             // vexit 0
@@ -440,10 +440,10 @@ DOCTEST_TEST_CASE("Optimization dead_code_elimination_pass")
 
         auto block3 = block1->fork( 0x3000 );
         {
-            // mov eax, [esp - 8]
-            block3->ldd( reg_eax, vtil::REG_SP, -8 );
-            // sp -= 0x10
-            block3->shift_sp( 0x10 );
+            // mov rax, [esp + 8]
+            block3->ldd( reg_eax, vtil::REG_SP, block3->sp_offset + vtil::arch::size); // restore rax from stack
+            // sp += 0x10
+            block3->shift_sp( vtil::arch::size*2 );
             // add eax, 1
             block3->add( reg_eax, (uintptr_t)1 ); // need this to contains [shift_sp]
             // vexit 0
@@ -459,8 +459,7 @@ DOCTEST_TEST_CASE("Optimization dead_code_elimination_pass")
         vtil::logger::log( ":: After:\n" );
         vtil::debug::dump( block1->owner );
 
-        // Cant optimize the block1 (strq) because we use it in block3
-        CHECK( block1->size() == 4 );
+        CHECK( block1->size() == 3 );
     }
 }
 
