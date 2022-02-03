@@ -55,3 +55,6 @@ Then open `build\VTIL-Core.sln`. You can also open this folder in a CMake-compat
 cmake -G Ninja -B build -DCMAKE_BUILD_TYPE=Release
 cmake --build build
 ```
+
+**Note:**
+To build on Apple Silicon one needs to use `-DCMAKE_OSX_ARCHITECTURES=x86_64`.
