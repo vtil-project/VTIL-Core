@@ -1,11 +1,6 @@
 # Require at least CMake version 3.14.5 or later for FetchContent
 cmake_minimum_required(VERSION 3.14.5)
 
-# Force x86-64 on MacOS (for Apple Silicon)
-if(APPLE)
-    set(CMAKE_OSX_ARCHITECTURES "x86_64")
-endif()
-
 # Define the VTIL project
 project(VTIL-Core)
 
