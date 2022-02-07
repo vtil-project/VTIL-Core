@@ -44,6 +44,9 @@
     <ClCompile Include="optimizer\fast_propagation_pass.cpp">
       <Filter>Optimization Passes</Filter>
     </ClCompile>
+    <ClCompile Include="optimizer\bblock_thunk_removal_pass.cpp">
+      <Filter>Optimization Passes</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Includes">
@@ -113,6 +116,9 @@
     </ClInclude>
     <ClInclude Include="validation\unit_test.hpp">
       <Filter>Validation</Filter>
+    </ClInclude>
+    <ClInclude Include="optimizer\bblock_thunk_removal_pass.hpp">
+      <Filter>Optimization Passes</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

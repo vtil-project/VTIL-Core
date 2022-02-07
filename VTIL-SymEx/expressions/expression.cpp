@@ -548,15 +548,10 @@ namespace vtil::symbolic
 					}
 					case math::operator_id::shift_left:
 					case math::operator_id::shift_right:
-					{
-						rhs.resize( sizeof(uintptr_t), false );
-						break;
-					}
-					
 					case math::operator_id::rotate_left:
 					case math::operator_id::rotate_right:
 					{
-						rhs.resize( sizeof(uintptr_t), false );
+						rhs.resize( 32, false );
 						break;
 					}
 					case math::operator_id::multiply_high:
