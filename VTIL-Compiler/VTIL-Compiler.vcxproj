@@ -211,6 +211,7 @@
   <ItemGroup>
     <ClCompile Include="common\auxiliaries.cpp" />
     <ClCompile Include="optimizer\bblock_extension_pass.cpp" />
+    <ClCompile Include="optimizer\bblock_thunk_removal_pass.cpp" />
     <ClCompile Include="optimizer\branch_correction_pass.cpp" />
     <ClCompile Include="optimizer\dead_code_elimination_pass.cpp" />
     <ClCompile Include="optimizer\fast_dead_code_elimination_pass.cpp" />
@@ -230,6 +231,7 @@
     <ClInclude Include="common\interface.hpp" />
     <ClInclude Include="includes\vtil\optimizer-tests" />
     <ClInclude Include="optimizer\bblock_extension_pass.hpp" />
+    <ClInclude Include="optimizer\bblock_thunk_removal_pass.hpp" />
     <ClInclude Include="optimizer\branch_correction_pass.hpp" />
     <ClInclude Include="optimizer\dead_code_elimination_pass.hpp" />
     <ClInclude Include="optimizer\fast_dead_code_elimination_pass.hpp" />
