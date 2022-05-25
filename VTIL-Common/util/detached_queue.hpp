@@ -169,10 +169,10 @@ namespace vtil
 		{
 			std::lock_guard _g( *this );
 
-			if ( k->prev ) k->prev->next = k->next;
+			if ( k->prev && k->prev != key::invalid_value) k->prev->next = k->next;
 			else head = k->next;
 
-			if ( k->next ) k->next->prev = k->prev;
+			if ( k->next && k->next != key::invalid_value) k->next->prev = k->prev;
 			else tail = k->prev;
 
 			k->prev = key::invalid_value;
