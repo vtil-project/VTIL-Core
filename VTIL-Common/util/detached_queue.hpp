@@ -146,7 +146,7 @@ namespace vtil
 
 			k->prev = nullptr;
 			k->next = head;
-			if ( head ) head->prev = k;
+			if ( head && head != key::invalid_value) head->prev = k;
 			if ( !tail ) tail = k;
 			head = k;
 			list_size++;
