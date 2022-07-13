@@ -124,6 +124,9 @@ namespace vtil
 		//
 		register_flag flags = ( register_flag ) 0;
 
+		// unused, padding for msvc bug, see https://github.com/vtil-project/VTIL-Core/issues/74
+		uint32_t _pad0 = 0;
+
 		// Arbitrary identifier, is intentionally not universally unique to let ids of user registers make use
 		// of the full 64-bit range as otherwise we'd have to reserve some magic numbers for flags and stack pointer. 
 		// Due to this reason, flags should also be compared when doing comparison.
