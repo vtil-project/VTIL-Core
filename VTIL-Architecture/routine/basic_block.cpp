@@ -132,6 +132,7 @@ namespace vtil
 		{
 			case architecture_amd64: bytes = amd64::assemble( assembly ); break;
 			case architecture_arm64: bytes = arm64::assemble( assembly ); break;
+            case architecture_x86: bytes = x86::assemble( assembly ); break;
 			default: unreachable();
 		}
 

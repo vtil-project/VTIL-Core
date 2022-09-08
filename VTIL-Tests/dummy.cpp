@@ -3,18 +3,29 @@
 #include <vtil/arch>
 #include <vtil/optimizer-tests>
 
+// Hack since the tests were created for x86-64
+static auto basic_block_begin(auto address)
+{
+#if _M_IX86 || __i386__
+    auto arch = vtil::architecture_x86;
+#else
+    auto arch = vtil::architecture_amd64;
+#endif
+    return vtil::basic_block::begin(address, arch);
+}
+
 namespace registers
 {
-#if _M_X64 || __x86_64__
-    constexpr auto ax = X86_REG_RAX;
-    constexpr auto bx = X86_REG_RBX;
-    constexpr auto cx = X86_REG_RCX;
-    constexpr auto dx = X86_REG_RDX;
-#elif _M_IX86 || __i386__
+#if _M_IX86 || __i386__
     constexpr auto ax = X86_REG_EAX;
     constexpr auto bx = X86_REG_EBX;
     constexpr auto cx = X86_REG_ECX;
     constexpr auto dx = X86_REG_EDX;
+#else
+    constexpr auto ax = X86_REG_RAX;
+    constexpr auto bx = X86_REG_RBX;
+    constexpr auto cx = X86_REG_RCX;
+    constexpr auto dx = X86_REG_RDX;
 #endif
 }
 
@@ -22,7 +33,7 @@ namespace registers
 DOCTEST_TEST_CASE("dummy")
 {
     vtil::logger::log("\n\n>> %s \n", __FUNCTION__);
-	auto block = vtil::basic_block::begin(0);
+	auto block = basic_block_begin(0);
 	block->vemits("cpuid");
 	vtil::debug::dump(block);
 	CHECK(1 == 1);
@@ -35,7 +46,7 @@ DOCTEST_TEST_CASE("Expression hash")
     auto const_b = (vtil::symbolic::expression{ 123 } + 1 - 1).simplify( true );
     CHECK( const_a.hash() == const_b.hash() );
 
-    auto block = vtil::basic_block::begin( 0x1234 );
+    auto block = basic_block_begin( 0x1234 );
     block->push( 0 );
     auto variable_a = vtil::symbolic::variable{ block->begin(), vtil::REG_FLAGS };
     auto variable_b = vtil::symbolic::variable{ block->begin(), vtil::REG_FLAGS };
@@ -103,7 +114,7 @@ DOCTEST_TEST_CASE("Optimization vtil file")
 DOCTEST_TEST_CASE("Optimization stack_pinning_pass")
 {
     vtil::logger::log("\n\n>> %s \n", __FUNCTION__);
-    auto block = vtil::basic_block::begin(0x1337);
+    auto block = basic_block_begin(0x1337);
 
     vtil::register_desc reg_ax(vtil::register_physical, registers::ax, vtil::arch::bit_count, 0);
 
@@ -133,7 +144,7 @@ DOCTEST_TEST_CASE("Optimization stack_pinning_pass")
 DOCTEST_TEST_CASE("Optimization istack_ref_substitution_pass")
 {
     vtil::logger::log("\n\n>> %s \n", __FUNCTION__);
-    auto block = vtil::basic_block::begin(0x1337);
+    auto block = basic_block_begin(0x1337);
     vtil::register_desc reg_eax(vtil::register_physical, registers::ax, vtil::arch::bit_count, 0);
 
     // mov eax,esp
@@ -167,7 +178,7 @@ DOCTEST_TEST_CASE("Optimization stack_propagation_pass")
 {
     vtil::logger::log("\n\n>> %s \n", __FUNCTION__);
 
-    auto block = vtil::basic_block::begin(0x1337);
+    auto block = basic_block_begin(0x1337);
     vtil::register_desc reg_eax(vtil::register_physical, registers::ax, vtil::arch::bit_count, 0);
 
 
@@ -198,7 +209,7 @@ DOCTEST_TEST_CASE("Optimization dead_code_elimination_pass")
 {
     vtil::logger::log("\n\n>> %s \n", __FUNCTION__);
 
-    auto block = vtil::basic_block::begin(0x1337);
+    auto block = basic_block_begin(0x1337);
     vtil::register_desc reg_eax(vtil::register_physical, registers::ax, vtil::arch::bit_count, 0);
 
 
@@ -221,7 +232,7 @@ DOCTEST_TEST_CASE("Optimization mov_propagation_pass")
 {
     vtil::logger::log("\n\n>> %s \n", __FUNCTION__);
 
-    auto block = vtil::basic_block::begin(0x1337);
+    auto block = basic_block_begin(0x1337);
     vtil::register_desc reg_eax(vtil::register_physical, registers::ax, vtil::arch::bit_count, 0);
     vtil::register_desc reg_ebx(vtil::register_physical, registers::bx, vtil::arch::bit_count, 0);
 
@@ -253,7 +264,7 @@ DOCTEST_TEST_CASE("Optimization register_renaming_pass")
 {
     vtil::logger::log("\n\n>> %s \n", __FUNCTION__);
 
-    auto block = vtil::basic_block::begin(0x1337);
+    auto block = basic_block_begin(0x1337);
     vtil::register_desc reg_eax(vtil::register_physical, registers::ax, vtil::arch::bit_count, 0);
     vtil::register_desc reg_ebx(vtil::register_physical, registers::bx, vtil::arch::bit_count, 0);
 
@@ -289,7 +300,7 @@ DOCTEST_TEST_CASE("Optimization symbolic_rewrite_pass<true>")
 {
     vtil::logger::log("\n\n>> %s \n", __FUNCTION__);
 
-    auto block = vtil::basic_block::begin(0x1337);
+    auto block = basic_block_begin(0x1337);
     vtil::register_desc reg_eax(vtil::register_physical, registers::ax, vtil::arch::bit_count, 0);
     vtil::register_desc reg_ebx(vtil::register_physical, registers::bx, vtil::arch::bit_count, 0);
 
@@ -342,7 +353,7 @@ DOCTEST_TEST_CASE("Optimization dead_code_elimination_pass")
 
     // simple single block
     {
-        auto block = vtil::basic_block::begin( 0x1337 );
+        auto block = basic_block_begin( 0x1337 );
         vtil::register_desc reg_eax( vtil::register_physical, registers::ax, vtil::arch::bit_count, 0 );
         vtil::register_desc reg_ebx( vtil::register_physical, registers::bx, vtil::arch::bit_count, 0 );
 
@@ -373,7 +384,7 @@ DOCTEST_TEST_CASE("Optimization dead_code_elimination_pass")
     
     // with jmp
     {
-        auto block1 = vtil::basic_block::begin( 0x1337 );
+        auto block1 = basic_block_begin( 0x1337 );
         
         vtil::register_desc reg_eax( vtil::register_physical, registers::ax, vtil::arch::bit_count, 0 );
         vtil::register_desc reg_ebx( vtil::register_physical, registers::bx, vtil::arch::bit_count, 0 );
@@ -411,7 +422,7 @@ DOCTEST_TEST_CASE("Optimization dead_code_elimination_pass")
 
     // with te jmp
     {
-        auto block1 = vtil::basic_block::begin( 0x1337 );
+        auto block1 = basic_block_begin( 0x1337 );
 
         vtil::register_desc reg_eax( vtil::register_physical, registers::ax, vtil::arch::bit_count, 0 );
         vtil::register_desc reg_ebx( vtil::register_physical, registers::bx, vtil::arch::bit_count, 0 );
@@ -466,7 +477,7 @@ DOCTEST_TEST_CASE("Optimization dead_code_elimination_pass")
 DOCTEST_TEST_CASE("Optimization Simplification")
 {
     vtil::logger::log("\n\n>> %s \n", __FUNCTION__);
-    auto block = vtil::basic_block::begin(0x1337);
+    auto block = basic_block_begin(0x1337);
     vtil::register_desc eax(vtil::register_physical, registers::ax, vtil::arch::bit_count);
 
     block->mov(eax, 0);
@@ -549,7 +560,7 @@ DOCTEST_TEST_CASE("Optimization bblock_thunk_removal_pass")
 
 	//Check reduction
 	{	
-		auto block1 = vtil::basic_block::begin((uintptr_t)0x1000);
+		auto block1 = basic_block_begin((uintptr_t)0x1000);
 		auto rtn = block1->owner;
 		{
 			// 0x1000: js eflags@11:1 0x2000, 0x3000
@@ -595,7 +606,7 @@ DOCTEST_TEST_CASE("Optimization bblock_thunk_removal_pass")
 	{
 		vtil::register_desc reg_ax(vtil::register_physical, registers::ax, vtil::arch::bit_count, 0);
 
-		auto block1 = vtil::basic_block::begin(0x1000);
+		auto block1 = basic_block_begin(0x1000);
 		{			
 			block1->push((uintptr_t)0x12345678);			
 			block1->js(registers::cx, 0x2000ull, 0x3000ull);
@@ -639,7 +650,7 @@ DOCTEST_TEST_CASE("Optimization branch_correction_pass")
 {
 	vtil::logger::log("\n\n>> %s \n", __FUNCTION__);
 
-	auto block1 = vtil::basic_block::begin(0x1337);
+	auto block1 = basic_block_begin(0x1337);
 
 	vtil::register_desc reg_flags(vtil::register_physical | vtil::register_flags, 0, vtil::arch::bit_count, 0);
 	vtil::register_desc reg_ecx(vtil::register_physical, registers::cx, vtil::arch::bit_count, 0);
