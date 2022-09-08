@@ -57,12 +57,13 @@
     #define unreachable() __assume(0)
     #define FUNCTION_NAME __FUNCSIG__
 #else
-    #include <emmintrin.h>
     #define unreachable() __builtin_unreachable()
     #define __forceinline __attribute__((always_inline))
     #define _AddressOfReturnAddress() ((void*)__builtin_frame_address(0))
     #define FUNCTION_NAME __PRETTY_FUNCTION__
 
+#if defined(__x86_64__)
+    #include <emmintrin.h>
     // Declare _?mul128
     //
     __forceinline static uint64_t _umul128( uint64_t _Multiplier, uint64_t _Multiplicand, uint64_t* _HighProduct )
@@ -90,6 +91,53 @@
         *_HighProduct = HighProduct;
         return LowProduct;
     }
+#else
+
+    #define _mm_pause() std::this_thread::yield()
+
+    // Source: https://stackoverflow.com/a/31662911
+    __forceinline static void _umul64wide( uint64_t a, uint64_t b, uint64_t *hi, uint64_t *lo )
+    {
+        uint64_t a_lo = (uint64_t)(uint32_t)a;
+        uint64_t a_hi = a >> 32;
+        uint64_t b_lo = (uint64_t)(uint32_t)b;
+        uint64_t b_hi = b >> 32;
+
+        uint64_t p0 = a_lo * b_lo;
+        uint64_t p1 = a_lo * b_hi;
+        uint64_t p2 = a_hi * b_lo;
+        uint64_t p3 = a_hi * b_hi;
+
+        uint32_t cy = (uint32_t)(((p0 >> 32) + (uint32_t)p1 + (uint32_t)p2) >> 32);
+
+        *lo = p0 + (p1 << 32) + (p2 << 32);
+        *hi = p3 + (p1 >> 32) + (p2 >> 32) + cy;
+    }
+
+    __forceinline static void _mul64wide( int64_t a, int64_t b, int64_t *hi, int64_t *lo )
+    {
+        _umul64wide ((uint64_t)a, (uint64_t)b, (uint64_t *)hi, (uint64_t *)lo);
+        if (a < 0LL) *hi -= b;
+        if (b < 0LL) *hi -= a;
+    }
+
+    __forceinline static uint64_t _umul128( uint64_t _Multiplier, uint64_t _Multiplicand, uint64_t* _HighProduct )
+    {
+        uint64_t LowProduct;
+        uint64_t HighProduct;
+        _umul64wide (_Multiplier, _Multiplicand, &HighProduct, &LowProduct);
+        return LowProduct;
+    }
+
+    __forceinline static int64_t _mul128( int64_t _Multiplier, int64_t _Multiplicand, int64_t* _HighProduct )
+    {
+        int64_t LowProduct;
+        int64_t HighProduct;
+        _mul64wide (_Multiplier, _Multiplicand, &HighProduct, &LowProduct);
+        return LowProduct;
+    }
+
+#endif
 
     // Declare _?mulh
     //
@@ -106,4 +154,5 @@
         _umul128( _Multiplier, _Multiplicand, &HighProduct );
         return HighProduct;
     }
+
 #endif
