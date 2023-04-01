@@ -285,6 +285,46 @@ DOCTEST_TEST_CASE("Optimization register_renaming_pass")
     CHECK(ins.operands[1].imm().ival == 0x1);
 }
 
+DOCTEST_TEST_CASE("Optimization register_renaming_pass vxcall")
+{
+    vtil::logger::log("\n\n>> %s \n", __FUNCTION__);
+
+    auto block = vtil::basic_block::begin(0x1337);
+
+    vtil::register_desc reg_ecx(vtil::register_physical, registers::cx, vtil::arch::bit_count, 0);
+
+    auto sr0 = block->owner->alloc(vtil::arch::bit_count);
+
+    // The ecx register here is a potential function argument, register_renaming_pass should not work here.
+    block->mov(reg_ecx, (uintptr_t)0x880000);
+    block->vxcall((uintptr_t)0x10000);
+
+    auto block2 = block->fork(0x2000);
+    block2->mov(sr0, reg_ecx);
+    block2->mov(reg_ecx, (uintptr_t)1);
+    block2->mov(reg_ecx, sr0);
+    block2->vxcall((uintptr_t)0x10000);
+
+    auto block3 = block2->fork(0x3000);
+    block3->vexit(0ull); // marks the end of a basic_block
+
+    vtil::logger::log(":: Before:\n");
+    vtil::debug::dump(block->owner);
+
+    vtil::optimizer::register_renaming_pass{}(block->owner);
+
+    vtil::logger::log(":: After:\n");
+    vtil::debug::dump(block->owner);
+
+    auto ins = (*block)[0];
+
+    //  mov ecx, 0x880000
+    CHECK(ins.base == &vtil::ins::mov);
+    CHECK(ins.operands.size() == 2);
+    CHECK(ins.operands[0].reg().local_id == registers::cx);
+    CHECK(ins.operands[1].imm().ival == 0x880000);
+}
+
 DOCTEST_TEST_CASE("Optimization symbolic_rewrite_pass<true>")
 {
     vtil::logger::log("\n\n>> %s \n", __FUNCTION__);
