@@ -111,6 +111,11 @@ namespace vtil::optimizer
 					//
 					if ( i->is_volatile() )
 						return fail();
+
+					// If source is being accessed by a vxcall instruction, fail.
+					//
+					if ( mask && i->base == &ins::vxcall )
+						return fail();
 				}
 
 				// If destination is used by the instruction, fail.
