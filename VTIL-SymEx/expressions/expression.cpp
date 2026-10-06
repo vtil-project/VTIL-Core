@@ -186,7 +186,18 @@ namespace vtil::symbolic
 					update( false );
 					break;
 				}
-			case math::operator_id::shift_right:
+			// If we're zero-extending the result, preserve the original shift width.
+				if ( !signed_cast && new_size > value.size() )
+				{
+					bitcnt_t old_size = value.size();
+					auto lhs_v = std::move( lhs );
+					auto rhs_v = std::move( rhs );
+				
+					*this = ( lhs_v.resize( new_size, false ) << rhs_v ) & expression{ math::fill( old_size ), new_size };
+					break;
+				}
+			
+			 case math::operator_id::shift_right:
 				// If we're zero-extending the result:
 				//
 				if( !signed_cast && new_size > value.size() )
